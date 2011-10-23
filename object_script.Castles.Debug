@@ -1,0 +1,17 @@
+INPUT(
+./debug\Action.o
+./debug\Building.o
+./debug\CastleWindow.o
+./debug\glextensions.o
+./debug\Hex.o
+./debug\Logger.o
+./debug\Mirrorable.o
+./debug\Player.o
+./debug\PopUnit.o
+./debug\RiderGame.o
+./debug\RoadButton.o
+./debug\ThreeDSprite.o
+./debug\moc_CastleWindow.o
+./debug\moc_Logger.o
+./debug\moc_RoadButton.o
+);
