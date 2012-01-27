@@ -5,6 +5,7 @@ INPUT(
 ./debug\glextensions.o
 ./debug\Hex.o
 ./debug\Logger.o
+./debug\MilUnit.o
 ./debug\Mirrorable.o
 ./debug\Player.o
 ./debug\PopUnit.o

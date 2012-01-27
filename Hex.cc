@@ -1,5 +1,6 @@
 #include "Hex.hh" 
-#include "PopUnit.hh" 
+#include "PopUnit.hh"
+#include "MilUnit.hh" 
 #include <string> 
 #include "Player.hh" 
 #include <set> 
@@ -19,52 +20,67 @@ int abs(int x) {
 }
 
 Vertex::Vertex ()
-  : supplies(0)
+  : Mirrorable<Vertex>()
+  , supplies(0)
   , groupNum(0)
   , fortLevel(0)
 {
   neighbours.resize(Hex::NoVertex);
-  static bool makeMirror = true; 
-  if (makeMirror) {
-    allVertices.insert(this);
-    makeMirror = false;
-    mirror = new Vertex();
-    makeMirror = true;
-  }
+  allVertices.insert(this); 
 }
+
+Vertex::Vertex (Vertex* other)
+  : Mirrorable<Vertex>(other)
+  , supplies(other->supplies)
+  , groupNum(other->groupNum)
+  , fortLevel(other->fortLevel)
+{
+  neighbours.resize(Hex::NoVertex);
+}
+
 Vertex::~Vertex () {
-  if (getMirror()) {
-    for (std::vector<MilUnit*>::iterator u = units.begin(); u != units.end(); ++u) {
-      delete (*u);
-    }
+  for (std::vector<MilUnit*>::iterator u = units.begin(); u != units.end(); ++u) {
+    (*u)->destroyIfReal();
   }
   units.clear(); 
 }
 
 
 Hex::Hex (int x, int y, TerrainType t)
-  : pos(x, y)
+  : Mirrorable<Hex>()
+  , pos(x, y)
   , popGrowth(0)
   , myType(t)
   , owner(0)
   , devastation(0)
 {
+  initialise();
+  allHexes.insert(this);
+
+  mirror->pos.first = x;
+  mirror->pos.second = y;
+  mirror->popGrowth = popGrowth;
+  mirror->myType = myType;
+  mirror->owner = owner;
+  mirror->devastation = devastation; 
+  mirror->initialise(); 
+}
+
+Hex::Hex (Hex* other)
+  : Mirrorable<Hex>(other)
+  , pos(0, 0) // Mirror constructor gets called before main initialise list is finished!
+  , popGrowth(0)
+  , myType(other->myType)
+  , owner(0)
+  , devastation(0)
+{}
+
+void Hex::initialise () {
   vertices.resize(NoVertex);
   neighbours.resize(None);
   lines.resize(None);
-  sprintf(stringbuffer, "(%i, %i)", x, y);
+  sprintf(stringbuffer, "(%i, %i)", pos.first, pos.second);
   setName(stringbuffer);
-  static bool makeMirror = true; 
-  if (makeMirror) {
-    allHexes.insert(this);
-    makeMirror = false; 
-    mirror = new Hex(x, y, t);
-    makeMirror = true;    
-  }
-  else {
-    sprintf(stringbuffer, "(%i, %i (M))", x, y);
-    setName(stringbuffer);
-  }
 }
 
 Hex::~Hex () {}
@@ -176,7 +192,7 @@ std::pair<int, int> Hex::getPos (Direction dat) const {
 void Hex::setNeighbour (Direction d, Hex* dat) {
   if (!dat) return; 
   neighbours[d] = dat;
-  if (mirror) mirror->setNeighbour(d, dat->getMirror()); 
+  if (real == this) mirror->setNeighbour(d, dat->getMirror()); 
 }
 
 void Vertex::buildRoad (Vertex* target) {
@@ -241,11 +257,9 @@ void Hex::createVertices () {
     sprintf(stringbuffer, "[%i, %i, %s (M)]", pos.first, pos.second, getVertexName(convertToVertex(i)).c_str());
     vertices[i]->getMirror()->setName(stringbuffer);
   }
-  
-  if (mirror) {
-    for (int i = 0; i < NoVertex; ++i) {
-      mirror->vertices[i] = vertices[i]->getMirror(); 
-    }
+
+  for (int i = 0; i < NoVertex; ++i) {
+    mirror->vertices[i] = vertices[i]->getMirror(); 
   }
 }
 
@@ -257,7 +271,7 @@ void Hex::setLine (Hex::Direction dir, Line* l) {
     l->getMirror()->setName(stringbuffer);
   }
   lines[dir] = l;
-  if (mirror) mirror->setLine(dir, l->getMirror());
+  if (real == this) mirror->setLine(dir, l->getMirror());
 }
 
 void Vertex::createLines () {
@@ -275,7 +289,7 @@ void Vertex::createLines () {
     assert(hex1); 
     Line* line = new Line(this, (*vex), hex1, hex2);
     lines.push_back(line);
-    if (mirror) mirror->lines.push_back(line->getMirror());
+    mirror->lines.push_back(line->getMirror());
     assert(*vex);
     (*vex)->lines.push_back(line);
     if ((*vex)->mirror) (*vex)->mirror->lines.push_back(line->getMirror()); 
@@ -887,26 +901,33 @@ bool Vertex::isLand () const {
 }
 
 Line::Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo)
-  : vex1(one)
+  : Mirrorable<Line>()
+  , vex1(one)
   , vex2(two)
   , hex1(hone)
   , hex2(thwo)
   , castle(0)
 {
-  static bool makeMirror = true; 
-  if (makeMirror) {
-    allLines.insert(this);
-    makeMirror = false; 
-    mirror = new Line(one ? one->getMirror() : 0,
-		      two ? two->getMirror() : 0,
-		      hone ? hone->getMirror() : 0,
-		      thwo ? thwo->getMirror() : 0);
-    makeMirror = true;
+  if (mirror) {
+    if (vex1) mirror->vex1 = vex1->getMirror();
+    if (vex2) mirror->vex2 = vex2->getMirror();
+    if (hex1) mirror->hex1 = hex1->getMirror();
+    if (hex2) mirror->hex2 = hex2->getMirror();
   }
+  allLines.insert(this); 
 }
 
+Line::Line (Line* other)
+  : Mirrorable<Line>(other)
+  , vex1(0)
+  , vex2(0)
+  , hex1(0)
+  , hex2(0)
+  , castle(0)
+{}
+    
 Line::~Line () {
-  if ((getMirror()) && (castle)) delete castle;
+  if (castle) castle->destroyIfReal();
 }
 
 void Vertex::forceRetreat (Castle*& c, Vertex*& v) {
@@ -936,6 +957,8 @@ void Vertex::forceRetreat (Castle*& c, Vertex*& v) {
 }
 
 void Line::addCastle (Castle* dat) {
+  
+  
   castle = dat;
 }
 
@@ -946,6 +969,7 @@ void Line::setMirrorState () {
     mirror->castle = castle->getMirror();
   }
   else {
+    if (mirror->castle) delete mirror->castle->getReal(); 
     mirror->castle = 0; 
   }
 }
@@ -965,21 +989,21 @@ void Hex::setMirrorState () {
 
 void Hex::clear () {
   for (Iterator h = begin(); h != end(); ++h) {
-    delete (*h);
+    (*h)->destroyIfReal();
   }
   allHexes.clear(); 
 }
 
 void Vertex::clear () {
   for (Iterator h = begin(); h != end(); ++h) {
-    delete (*h);
+    (*h)->destroyIfReal();
   }
   allVertices.clear(); 
 }
 
 void Line::clear () {
   for (Iterator h = begin(); h != end(); ++h) {
-    delete (*h);
+    (*h)->destroyIfReal();
   }
   allLines.clear(); 
 }

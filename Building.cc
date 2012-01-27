@@ -2,27 +2,29 @@
 #include "PopUnit.hh"
 #include "Hex.hh"
 #include <algorithm> 
+#include "MilUnit.hh" 
+#include <cassert> 
 
 const int Castle::maxGarrison = 2;
 const int Castle::maxRecruits = 5; 
 
 Castle::Castle (Hex* dat) 
-  : support(dat)
+  : Mirrorable<Castle>()
+  , support(dat)
   , recruited(0)
 {
-  static bool makeMirror = true; 
-  if (makeMirror) {
-    makeMirror = false;
-    mirror = new Castle(dat);
-    makeMirror = true; 
-  }
+
 }
 
+Castle::Castle (Castle* other) 
+  : Mirrorable<Castle>(other)
+  , support(other->support)
+  , recruited(other->recruited)
+{}
+
 Castle::~Castle () {
-  if (getMirror()) {
-    for (std::vector<MilUnit*>::iterator i = garrison.begin(); i != garrison.end(); ++i) {
-      delete (*i); 
-    }
+  for (std::vector<MilUnit*>::iterator i = garrison.begin(); i != garrison.end(); ++i) {
+    (*i)->destroyIfReal();
   }
   garrison.clear(); 
 }
@@ -49,26 +51,22 @@ MilUnit* Castle::recruit () {
     recruited = 0;
     ret = new MilUnit();
     ret->setOwner(getOwner());
-    garrison.push_back(ret); 
+    addContent(this, ret, &Castle::addGarrison);
   }
   return ret; 
 }
 
-void Castle::unRecruit () {
-  recruited--;
-  if (recruited < 0) recruited = 4; 
-}
-
 void Castle::addGarrison (MilUnit* p) {
+  assert(p); 
   garrison.push_back(p);
   p->reinforce();
 }
 
 void Castle::setMirrorState () {
   mirror->setOwner(getOwner()); 
-  mirror->garrison.clear();
   mirror->support = support;
   mirror->recruited = recruited;
+  mirror->garrison.clear();  
   for (std::vector<MilUnit*>::iterator unt = garrison.begin(); unt != garrison.end(); ++unt) {
     (*unt)->setMirrorState(); 
     mirror->garrison.push_back((*unt)->getMirror());

@@ -5,6 +5,7 @@ INPUT(
 ./release\glextensions.o
 ./release\Hex.o
 ./release\Logger.o
+./release\MilUnit.o
 ./release\Mirrorable.o
 ./release\Player.o
 ./release\PopUnit.o

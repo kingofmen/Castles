@@ -20,6 +20,7 @@ private:
 };
 
 class Castle : public Building, public Mirrorable<Castle> {
+  friend class Mirrorable<Castle>; 
 public: 
   Castle (Hex* dat);
   ~Castle (); 
@@ -31,7 +32,6 @@ public:
   void addGarrison (MilUnit* p);
   virtual void setOwner (Player* p);
   MilUnit* recruit ();
-  void unRecruit (); 
   virtual void setMirrorState ();
   int getRecruitState () const {return recruited;} 
   
@@ -39,6 +39,8 @@ public:
   static const int maxRecruits; 
   
 private:
+  Castle (Castle* other);   
+  
   std::vector<MilUnit*> garrison;
   Hex* support;
   int recruited;

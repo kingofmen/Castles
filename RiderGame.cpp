@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <list> 
 #include "PopUnit.hh"
+#include "MilUnit.hh" 
 #include "Hex.hh" 
 #include "Player.hh"
 #include <set>
@@ -164,7 +165,7 @@ WarfareGame* WarfareGame::createGame (std::string filename, Player*& currplayer)
 }
 
 void WarfareGame::endOfTurn () {
-
+  
 }
 
 void WarfareGame::saveGame (std::string fname, Player* currentplayer) {

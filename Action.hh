@@ -33,6 +33,7 @@ extern const DieRoll FourDSix;
 extern const DieRoll ThreeDSix; 
 extern const DieRoll TwoDSix;
 extern const DieRoll OneDSix;
+extern const DieRoll OneDHun; 
 
 struct Action {
 public:
@@ -56,17 +57,13 @@ public:
   Vertex* final;
   Line* begin;
   Line* cease;
+  MilUnit* temporaryUnit;   
   bool print;
   Outcome force;
   Outcome result; 
 
   Hex::Vertices activeRear;
   Hex::Vertices forcedRear; 
-  MilUnit* undoUnit;
-  Castle* undoCastle;
-  Player* undoPlayer;
-  Vertex* undoVertex; 
-  bool unweaken; 
   
 private:
   struct Calculator {
@@ -78,12 +75,13 @@ private:
     bool unmodifiedDisaster; 
   };
   struct ThingsToDo {
-    ThingsToDo (Calculator (Action::*p)(), ActionResult (Action::*e) (Outcome), ActionResult (Action::*c) (), void (Action::*u) (), std::string n);
+    ThingsToDo (Calculator (Action::*p)(), ActionResult (Action::*e) (Outcome), ActionResult (Action::*c) (), std::string n);
     Calculator (Action::*calc) ();
     ActionResult (Action::*exec) (Outcome out);
     ActionResult (Action::*check) ();
-    void (Action::*undo) (); 
-    std::string name; 
+    std::string name;
+
+    bool operator== (const ThingsToDo& dat) {return name == dat.name;} 
   };
 
   Calculator alwaysSucceed ();
@@ -113,21 +111,7 @@ private:
   ActionResult reinforce (Outcome out);
   ActionResult surrender (Outcome out);
   ActionResult recruit (Outcome out);
-  ActionResult repair (Outcome out);
-
-  void undoNoop ();
-  void undoAttack ();
-  void undoGarrison ();
-  void undoMobilise ();
-  void undoBuild ();
-  void undoDevastate ();
-  void undoReinforce ();
-  void undoSurrender (); 
-  void undoRecruit ();
-  void undoRepair ();
-
-
-  
+  ActionResult repair (Outcome out); 
   
 public:
   ThingsToDo todo;

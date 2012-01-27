@@ -119,9 +119,10 @@ public:
   void update (); 			    
   void initialiseColours ();
   void clearGame (); 
-	       
+  void newGame (std::string fname); 
+		   
 public slots:
-  void newGame ();
+  void newGame ();  
   void loadGame ();  
   void saveGame ();
   void endTurn ();

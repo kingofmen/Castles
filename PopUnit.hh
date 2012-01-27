@@ -34,21 +34,4 @@ private:
   double recruited; 
 };
 
-class MilUnit : public Unit, public Mirrorable<MilUnit> {
-public:
-  MilUnit ();
-  ~MilUnit (); 
-
-  void weaken ();
-  void reinforce (); 
-  bool weakened () const {return weak;} 
-  virtual void setMirrorState ();
-  void setRear (Hex::Vertices r) {rear = r;}
-  Hex::Vertices getRear () const {return rear;} 
-  
-private:
-  bool weak;
-  Hex::Vertices rear; 
-}; 
-
 #endif 

@@ -2,19 +2,6 @@
 #include <cmath>
 #include <cassert> 
 
-MilUnit::MilUnit ()
-  : Unit()
-  , weak(false)
-  , rear(Hex::Left)
-{
-  static bool makeMirror = true; 
-  if (makeMirror) {
-    makeMirror = false;
-    mirror = new MilUnit();
-    makeMirror = true; 
-  }
-}
-MilUnit::~MilUnit () {} 
 PopUnit::PopUnit ()
   : Unit()
   , recruited(0)
@@ -65,16 +52,4 @@ double PopUnit::growth (Hex::TerrainType t) {
   return newPeople; 
 }
  
-void MilUnit::weaken () {
-  weak = true;
-}
-
-void MilUnit::reinforce () {
-  weak = false; 
-}
-
-void MilUnit::setMirrorState () {
-  mirror->weak = weak;
-  mirror->setOwner(getOwner()); 
-}
 

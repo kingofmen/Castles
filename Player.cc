@@ -4,7 +4,8 @@
 #include <algorithm>
 #include <cassert> 
 #include "Action.hh"
-#include "PopUnit.hh" 
+#include "PopUnit.hh"
+#include "MilUnit.hh" 
 #include "Logger.hh" 
 #include <queue>
 
@@ -225,11 +226,11 @@ double Player::evaluate (Action act, WarfareGame* dat) {
   }
 
   double ret = 0;
-  act.makeHypothetical();
   for (int i = Action::Disaster; i < Action::NumOutcomes; ++i) {
-    //for (int i = Action::Success; i >= 0; --i) {
     double weight = act.probability(dat, (Action::Outcome) i); 
     if (weight < 0.00001) continue;
+    act.makeHypothetical();
+    
     act.forceOutcome((Action::Outcome) i);
     Action::ActionResult res = act.execute(dat); 
 
@@ -252,12 +253,15 @@ double Player::evaluate (Action act, WarfareGame* dat) {
     Logger::logStream(Logger::Debug) << i << " "
 				     << res << " "
 				     << weight << " " 
-				     << "\n"; 
-
+				     << "\n";
+    
     ret += temp*weight;
-    act.undo(); 
+    act.undo();
   }
-
+  
+  //if (act.todo == Action::Recruit) return -1000; 
+  //if (act.todo == Action::Mobilise) ret += 2;   
+  
   return ret; 
 }
 

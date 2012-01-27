@@ -24,6 +24,7 @@ private:
 };
 
 class Hex : public Mirrorable<Hex>, public Named {
+  friend class Mirrorable<Hex>; 
 public:
   enum TerrainType {Mountain = 0, Hill, Plain, Forest, Ocean, Unknown}; 
   enum Direction {NorthWest = 0, North, NorthEast, SouthEast, South, SouthWest, None};
@@ -81,6 +82,8 @@ public:
   static Vertices oppositeVertex (Vertices dat);
   static void clear (); 
 private:
+  Hex (Hex* other);
+  void initialise (); 
   unsigned int maxPopulation () const; 
 
   std::vector<Line*> lines; 
@@ -97,6 +100,7 @@ private:
 };
 
 class Vertex : public Mirrorable<Vertex>, public Named {
+  friend class Mirrorable<Vertex>; 
   friend class Hex; 
 public:
   Vertex();
@@ -143,6 +147,8 @@ public:
   static void clear (); 
   
 private:
+  Vertex (Vertex* other); 
+  
   double resistance (Player* p, Vertex* n);
   double potential (Player* p);
   void makeFlow (Player* p);
@@ -166,6 +172,7 @@ private:
 };
 
 class Line : public Mirrorable<Line>, public Named {
+  friend class Mirrorable<Line>; 
 public:
   Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo); 
   ~Line (); 
@@ -187,6 +194,8 @@ public:
   static void clear (); 
   
 private:
+  Line (Line* other); 
+  
   Vertex* vex1;
   Vertex* vex2;
   Hex* hex1;

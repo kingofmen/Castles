@@ -5,7 +5,8 @@
 #include "glextensions.h"
 #include <QGLShaderProgram>
 #include <cassert> 
-#include "PopUnit.hh" 
+#include "PopUnit.hh"
+#include "MilUnit.hh" 
 #include "Hex.hh"
 #include "Logger.hh" 
 #include "Object.hh"
@@ -518,6 +519,9 @@ int main (int argc, char** argv) {
   QObject::connect(newGame, SIGNAL(triggered()), endTurnButton, SLOT(show()));
 
   window.show();
+
+  if (argc > 1) window.newGame(argv[1]); 
+  
   return industryApp.exec();  
 }
 
@@ -542,9 +546,12 @@ void WarfareWindow::newGame () {
   QString filename = QFileDialog::getOpenFileName(this, tr("Select file"), QString("./scenarios/"), QString("*.txt"));
   std::string fn(filename.toAscii().data());
   if (fn == "") return;
+  newGame(fn); 
+}
 
+void WarfareWindow::newGame (std::string fname) {
   clearGame(); 
-  currentGame = WarfareGame::createGame(fn, currentPlayer);
+  currentGame = WarfareGame::createGame(fname, currentPlayer);
   initialiseColours();
   runNonHumans();
   update();

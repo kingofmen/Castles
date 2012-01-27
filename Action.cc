@@ -2,30 +2,32 @@
 #include "Player.hh"
 #include "RiderGame.hh"
 #include "Hex.hh"
-#include "PopUnit.hh" 
+#include "PopUnit.hh"
+#include "MilUnit.hh" 
 #include "Logger.hh" 
 #include <cassert> 
+
 
 const DieRoll FiveDSix(5, 6);
 const DieRoll FourDSix(4, 6);
 const DieRoll ThreeDSix(3, 6); 
 const DieRoll TwoDSix(2, 6);
 const DieRoll OneDSix(1, 6);
+const DieRoll OneDHun(1, 100); 
 
 
-
-const Action::ThingsToDo Action::EndTurn(&Action::alwaysSucceed, &Action::noop, &Action::alwaysPossible, &Action::undoNoop, "End turn");
-const Action::ThingsToDo Action::Colonise(&Action::alwaysSucceed, &Action::noop, &Action::alwaysPossible, &Action::undoNoop, "Colonise");
-const Action::ThingsToDo Action::Attack(&Action::calcAttack, &Action::attack, &Action::canAttack, &Action::undoAttack, "Attack");
-const Action::ThingsToDo Action::Mobilise(&Action::calcMobilise, &Action::mobilise, &Action::canMobilise, &Action::undoMobilise, "Mobilise");
-const Action::ThingsToDo Action::BuildFortress(&Action::alwaysSucceed, &Action::build, &Action::canBuild, &Action::undoBuild, "Build");
-const Action::ThingsToDo Action::Devastate(&Action::calcDevastate, &Action::devastate, &Action::canDevastate, &Action::undoDevastate, "Devastate");
-const Action::ThingsToDo Action::Reinforce(&Action::alwaysSucceed, &Action::reinforce, &Action::canReinforce, &Action::undoReinforce, "Reinforce"); 
-const Action::ThingsToDo Action::CallForSurrender(&Action::calcSurrender, &Action::surrender, &Action::canSurrender, &Action::undoSurrender, "Call for surrender");
-const Action::ThingsToDo Action::Recruit(&Action::calcRecruit, &Action::recruit, &Action::canRecruit, &Action::undoRecruit, "Recruit"); 
-const Action::ThingsToDo Action::Repair(&Action::alwaysSucceed, &Action::repair, &Action::canRepair, &Action::undoRepair, "Repair"); 
-const Action::ThingsToDo Action::Nothing(&Action::alwaysSucceed, &Action::noop, &Action::alwaysPossible, &Action::undoNoop, "Nothing");
-const Action::ThingsToDo Action::EnterGarrison(&Action::alwaysSucceed, &Action::garrison, &Action::canEnter, &Action::undoGarrison, "Enter garrison");
+const Action::ThingsToDo Action::EndTurn         (&Action::alwaysSucceed, &Action::noop,      &Action::alwaysPossible, "End turn");
+const Action::ThingsToDo Action::Colonise        (&Action::alwaysSucceed, &Action::noop,      &Action::alwaysPossible, "Colonise");
+const Action::ThingsToDo Action::Attack          (&Action::calcAttack,    &Action::attack,    &Action::canAttack,      "Attack");
+const Action::ThingsToDo Action::Mobilise        (&Action::calcMobilise,  &Action::mobilise,  &Action::canMobilise,    "Mobilise");
+const Action::ThingsToDo Action::BuildFortress   (&Action::alwaysSucceed, &Action::build,     &Action::canBuild,       "Build");
+const Action::ThingsToDo Action::Devastate       (&Action::calcDevastate, &Action::devastate, &Action::canDevastate,   "Devastate");
+const Action::ThingsToDo Action::Reinforce       (&Action::alwaysSucceed, &Action::reinforce, &Action::canReinforce,   "Reinforce"); 
+const Action::ThingsToDo Action::CallForSurrender(&Action::calcSurrender, &Action::surrender, &Action::canSurrender,   "Call for surrender");
+const Action::ThingsToDo Action::Recruit         (&Action::calcRecruit,   &Action::recruit,   &Action::canRecruit,     "Recruit"); 
+const Action::ThingsToDo Action::Repair          (&Action::alwaysSucceed, &Action::repair,    &Action::canRepair,      "Repair"); 
+const Action::ThingsToDo Action::Nothing         (&Action::alwaysSucceed, &Action::noop,      &Action::alwaysPossible, "Nothing");
+const Action::ThingsToDo Action::EnterGarrison   (&Action::alwaysSucceed, &Action::garrison,  &Action::canEnter,       "Enter garrison");
 
 
 Action::Action ()
@@ -37,16 +39,12 @@ Action::Action ()
   , final(0)
   , begin(0)
   , cease(0)
+  , temporaryUnit(0) 
   , print(true)
   , force(NumOutcomes)
   , result(NoChange)
   , activeRear(Hex::NoVertex)
   , forcedRear(Hex::NoVertex)
-  , undoUnit(0)
-  , undoCastle(0)
-  , undoPlayer(0)
-  , undoVertex(0) 
-  , unweaken(false)
   , todo(Nothing)
 {
 }
@@ -186,38 +184,31 @@ void Action::makeHypothetical () {
 }
 
 Action::ActionResult Action::garrison (Outcome out) {
-  undoUnit = start->removeUnit();
-  cease->getCastle()->addGarrison(undoUnit);
-  undoCastle = cease->getCastle();
-  activeRear = undoUnit->getRear(); 
+  MilUnit* unit = start->removeUnit();
+  cease->getCastle()->addGarrison(unit);
+  activeRear = unit->getRear(); 
   return Ok;
 }
 
-void Action::undoGarrison () {
-  if (Success != result) return;
-  start->addUnit(undoUnit);
-  undoCastle->removeUnit(undoUnit);
-  undoUnit->setRear(activeRear); 
-}
-
-
 Action::ActionResult Action::attack (Outcome out) {
-  if (0 < final->numUnits()) { 
+  if (0 < final->numUnits()) {
+    start->getUnit(0)->battleCasualties(final->getUnit(0));
+    final->getUnit(0)->battleCasualties(start->getUnit(0));
     switch (out) {
     case Disaster:
-      start->getUnit(0)->weaken();
-      unweaken = true;
-      undoUnit = start->getUnit(0); 
       return AttackFails;      
     case NoChange:
       return AttackFails;      
     case Success:
-      undoUnit = final->getUnit(0);
-      if (!undoUnit->weakened()) unweaken = true;
-      forcedRear = undoUnit->getRear(); 
-      final->forceRetreat(undoCastle, undoVertex);
-      if (undoVertex) undoUnit->setRear(final->getDirection(undoVertex)); 
-      break; 
+      {
+      MilUnit *unit = final->getUnit(0);
+      forcedRear = unit->getRear();
+      Castle* dummyc = 0;
+      Vertex* dummyv = 0; 
+      final->forceRetreat(dummyc, dummyv); 
+      if (dummyv) unit->setRear(final->getDirection(dummyv)); 
+      break;
+      }
     default: return Fail; 
     }
   }
@@ -233,72 +224,29 @@ Action::ActionResult Action::attack (Outcome out) {
   return Ok; 
 }
 
-void Action::undoAttack () {
-  switch (result) {
-  case NoChange:
-  default:
-    break;
-  case Success:
-    {
-    MilUnit* m = final->removeUnit();
-    assert(m);
-    start->addUnit(m);
-    m->setRear(activeRear); 
-    if (undoUnit) {
-      final->addUnit(undoUnit);
-      undoUnit->setRear(forcedRear); 
-      if (undoCastle) undoCastle->removeUnit(undoUnit);
-      if (undoVertex) undoVertex->removeUnit(); 
-      if (unweaken) undoUnit->reinforce(); 
-    }
-    }
-    break;
-  case Disaster:
-    if (unweaken) undoUnit->reinforce(); 
-    break; 
-  }
-}
-
 Action::ActionResult Action::mobilise (Outcome out) {
   if (Success != out) return AttackFails; 
 
   if (0 < final->numUnits()) {
-    undoUnit = final->getUnit(0);
-    forcedRear = undoUnit->getRear(); 
-    if (!undoUnit->weakened()) unweaken = true; 
-    final->forceRetreat(undoCastle, undoVertex);
-    if (undoVertex) undoUnit->setRear(final->getDirection(undoVertex)); 
+    MilUnit* unit = final->getUnit(0);
+    forcedRear = unit->getRear(); 
+    Castle* dummyc = 0;
+    Vertex* dummyv = 0; 
+    final->forceRetreat(dummyc, dummyv); 
+    if (dummyv) unit->setRear(final->getDirection(dummyv)); 
   }
   final->addUnit(begin->getCastle()->removeGarrison());
   final->getUnit(0)->setRear(final->getDirection(begin->getOther(final))); 
   return Ok; 
 }
-void Action::undoMobilise () {
-  if (Success != result) return; 
-  begin->getCastle()->addGarrison(final->removeUnit());
-  if (undoUnit) {
-    if (undoVertex) undoVertex->removeUnit();
-    if (undoCastle) undoCastle->removeUnit(undoUnit);
-    final->addUnit(undoUnit);
-    undoUnit->setRear(forcedRear); 
-    if (unweaken) undoUnit->reinforce(); 
-  }
-}
-
 
 Action::ActionResult Action::build (Outcome out) {
   if (Success != out) return Fail; 
-  undoCastle = new Castle(source);
-  undoCastle->setOwner(player);
-  undoCastle->addGarrison(start->removeUnit());
-  cease->addCastle(undoCastle); 
+  Castle* castle = new Castle(source);
+  castle->setOwner(player);
+  castle->addGarrison(start->removeUnit());
+  addContent(cease, castle, &Line::addCastle); 
   return Ok;
-}
-void Action::undoBuild () {
-  if (Success != result) return; 
-  start->addUnit(undoUnit);
-  undoCastle->removeUnit(undoUnit); 
-  cease->addCastle(0);
 }
 
 Action::ActionResult Action::devastate (Outcome out) {
@@ -314,44 +262,26 @@ Action::ActionResult Action::devastate (Outcome out) {
   }
   return Fail; 
 }
-void Action::undoDevastate () {
-  switch (result) {
-  case NoChange:
-  default:
-    return;
-  case Disaster:
-    start->getUnit(0)->reinforce();
-    break;
-  case Success:
-    target->repair();
-    break; 
-  }
-}
 
 Action::ActionResult Action::reinforce (Outcome out) {
   if (Success != out) return Fail;
   start->getUnit(0)->reinforce();
   return Ok; 
 }
-void Action::undoReinforce () {
-  if (Success != result) return; 
-  start->getUnit(0)->weaken(); 
-}
-
 
 Action::ActionResult Action::noop (Outcome out) {
   return Ok;
 }
-void Action::undoNoop () {} 
 
 Action::ActionResult Action::surrender (Outcome out) {
   switch (out) {
   case Success:
-    undoCastle = cease->getCastle();
-    undoPlayer = undoCastle->getOwner(); 
-    undoCastle->setOwner(player);
-    undoCastle->getSupport()->setOwner(player);
+    {
+    Castle* castle = cease->getCastle();
+    castle->setOwner(player);
+    castle->getSupport()->setOwner(player);
     return Ok;
+    }
   case Disaster:
     start->getUnit(0)->weaken();
     return AttackFails;
@@ -361,20 +291,6 @@ Action::ActionResult Action::surrender (Outcome out) {
   }
   return Fail;
 }
-void Action::undoSurrender () {
-  switch (result) {
-  case NoChange:
-  default:
-    break;
-  case Disaster:
-    start->getUnit(0)->reinforce();
-    break;
-  case Success:
-    undoCastle->setOwner(undoPlayer);
-    undoCastle->getSupport()->setOwner(undoPlayer); 
-    break; 
-  }
-}
 
 Action::ActionResult Action::recruit (Outcome out) {
   switch (out) {
@@ -382,38 +298,31 @@ Action::ActionResult Action::recruit (Outcome out) {
   case NoChange:
     return AttackFails;
   case Success:
-    undoCastle = begin->getCastle();
-    undoUnit = undoCastle->recruit();
+    temporaryUnit = begin->getCastle()->recruit();
     return Ok;
   default: break;
   }
   return Fail; 
 }
-void Action::undoRecruit () {
-  if (result != Success) return; 
-  if (undoUnit) undoCastle->removeUnit(undoUnit);
-  undoCastle->unRecruit(); 
-}
-
 
 Action::ActionResult Action::repair (Outcome out) {
   if (Success != out) return Fail; 
   target->repair();
   return Ok; 
 }
-void Action::undoRepair () {
-  if (Success != result) return; 
-  target->raid(); 
-}
 
 void Action::undo () {
   if (NoChange == result) return;
-  (this->*(todo.undo))();
-  undoUnit = NULL;
-  undoCastle = NULL;
-  undoVertex = NULL;
-  undoPlayer = NULL;
-  unweaken = false; 
+  print = true;
+  if (source) {source = source->getReal(); source->setMirrorState();}
+  if (target) {target = target->getReal(); target->setMirrorState();}
+  if (start)  {start  = start ->getReal(); start->setMirrorState(); }
+  if (final)  {final  = final ->getReal(); final->setMirrorState(); }
+  if (begin)  {begin  = begin ->getReal(); begin->setMirrorState(); }
+  if (cease)  {cease  = cease ->getReal(); cease->setMirrorState(); }
+ 
+  if (temporaryUnit) delete temporaryUnit;
+  temporaryUnit = 0; 
 }
 
 Action::ActionResult Action::execute (WarfareGame* dat) {
@@ -472,20 +381,25 @@ double Action::probability (WarfareGame* dat, Outcome dis) {
   }
 }
 
-Action::ThingsToDo::ThingsToDo (Action::Calculator (Action::*p)(), ActionResult (Action::*e) (Outcome), ActionResult (Action::*c) (), void (Action::*u) (), std::string n)
+Action::ThingsToDo::ThingsToDo (Action::Calculator (Action::*p)(), ActionResult (Action::*e) (Outcome), ActionResult (Action::*c) (), std::string n)
   : calc(p)
   , exec(e)
   , check(c)
-  , undo(u) 
   , name(n)
 {}
 
 Action::Calculator Action::calcAttack () {
   Calculator ret;
-  if (0 == final->numUnits()) return ret; 
-  ret.die = &OneDSix;
-  ret.success = 5;
-  ret.disaster = 1;
+  if (0 == final->numUnits()) return ret;
+  MilUnit* attacker = start->getUnit(0);
+  MilUnit* defender = final->getUnit(0);
+  ret.mods += attacker->getScoutingModifier(defender);
+  ret.mods += attacker->getSkirmishModifier(defender);
+  ret.mods += attacker->getFightingModifier(defender);
+  
+  ret.die = &OneDHun;
+  ret.success = 70;
+  ret.disaster = 10;
   ret.unmodifiedDisaster = true; 
   return ret; 
 }
