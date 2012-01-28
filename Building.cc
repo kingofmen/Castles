@@ -13,13 +13,14 @@ Castle::Castle (Hex* dat)
   , support(dat)
   , recruited(0)
 {
-
+  mirror->support = support;
+  mirror->recruited = recruited; 
 }
 
 Castle::Castle (Castle* other) 
   : Mirrorable<Castle>(other)
-  , support(other->support)
-  , recruited(other->recruited)
+  , support(0) // Sequence issues - this constructor is called before anything is initialised in real constructor
+  , recruited(0)
 {}
 
 Castle::~Castle () {
@@ -30,7 +31,8 @@ Castle::~Castle () {
 }
 
 void Castle::setOwner (Player* p) {
-  Building::setOwner(p); 
+  Building::setOwner(p);
+  if (isReal()) mirror->setOwner(p); 
   for (std::vector<MilUnit*>::iterator u = garrison.begin(); u != garrison.end(); ++u) {
     (*u)->setOwner(p); 
   }

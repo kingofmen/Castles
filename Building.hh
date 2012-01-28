@@ -11,7 +11,6 @@ class Player;
 class Building {
 public: 
 
-
   virtual void setOwner (Player* p) {owner = p;}
   Player* getOwner () {return owner;} 
 

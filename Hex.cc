@@ -79,7 +79,7 @@ void Hex::initialise () {
   vertices.resize(NoVertex);
   neighbours.resize(None);
   lines.resize(None);
-  sprintf(stringbuffer, "(%i, %i)", pos.first, pos.second);
+  sprintf(stringbuffer, "(%i, %i) %s", pos.first, pos.second, isMirror() ? "(M)" : "");
   setName(stringbuffer);
 }
 
