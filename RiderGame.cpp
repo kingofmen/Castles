@@ -13,12 +13,16 @@
 #include <ctime>
 #include "Parser.hh" 
 #include <fstream> 
+#include "StructUtils.hh" 
+#include "StaticInitialiser.hh" 
+#include "Calendar.hh" 
 
 WarfareGame* WarfareGame::currGame = 0; 
 
 WarfareGame::WarfareGame () {
   // Clear hexes, vertices, etc
 }
+
 WarfareGame::~WarfareGame () {
   Vertex::clear();
   Hex::clear();
@@ -27,43 +31,7 @@ WarfareGame::~WarfareGame () {
   currGame = 0; 
 }
 
-Hex* WarfareGame::getHex (int x, int y) {
-  for (std::vector<Hex*>::iterator i = hexes.begin(); i != hexes.end(); ++i) {
-    if ((*i)->getPos().first != x) continue;
-    if ((*i)->getPos().second != y) continue;
-    return (*i); 
-  }
-  return 0; 
-}
-
-Hex* WarfareGame::findHex (Object* info) {
-  int x = info->safeGetInt("x", -1);
-  int y = info->safeGetInt("y", -1);
-  assert(x >= 0);
-  assert(y >= 0);
-  assert(currGame); 
-  Hex* hex = currGame->getHex(x, y);
-  assert(hex);
-  return hex; 
-}
-
-Line* WarfareGame::findLine (Object* info, Hex* hex) {
-  std::string pos = info->safeGetString("pos", "nowhere");
-  Hex::Direction dir = Hex::getDirection(pos);
-  assert(Hex::None != dir);
-  assert(hex->getLine(dir)); 
-  return hex->getLine(dir); 
-}
-
-Vertex* WarfareGame::findVertex (Object* info, Hex* hex) {
-  std::string pos = info->safeGetString("vtx", "nowhere");
-  Hex::Vertices dir = Hex::getVertex(pos); 
-  assert(Hex::NoVertex != dir);
-  assert(hex->getVertex(dir)); 
-  return hex->getVertex(dir); 
-}
-
-WarfareGame* WarfareGame::createGame (std::string filename, Player*& currplayer) {
+WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
   srand(time(NULL));
   if (currGame) delete currGame; 
   currGame = new WarfareGame();
@@ -74,24 +42,46 @@ WarfareGame* WarfareGame::createGame (std::string filename, Player*& currplayer)
   int xsize = hexgrid->safeGetInt("x", -1);
   int ysize = hexgrid->safeGetInt("y", -1);
   assert(xsize > 0);
-  assert(ysize > 0); 
+  assert(ysize > 0);
+
+  Hex::clear();
+  Vertex::clear();
+  Line::clear(); 
+
+  Object* gInfo = processFile("./common/graphics.txt");
+  assert(gInfo); 
+  StaticInitialiser::initialiseGraphics(gInfo);
+  StaticInitialiser::makeZoneTextures(gInfo); 
+  
   for (int i = 0; i < xsize; ++i) {
     for (int j = 0; j < ysize; ++j) {
-      currGame->hexes.push_back(new Hex(i, j, Hex::Plain)); 
+      Hex::createHex(i, j, Plain); 
     }
   }
 
+  Object* actionInfo = processFile("./common/actions.txt");
+  assert(actionInfo); 
+  StaticInitialiser::createActionProbabilities(actionInfo);
+
+  Object* unitInfo = processFile("./common/units.txt");
+  assert(unitInfo); 
+  StaticInitialiser::buildMilUnitTemplates(unitInfo);
+
+  Object* popInfo = processFile("./common/popInfo.txt");
+  assert(popInfo); 
+  StaticInitialiser::initialiseCivilBuildings(popInfo);
+  
   for (int i = 0; i < xsize; ++i) {
     for (int j = 0; j < ysize; ++j) {
-      Hex* curr = currGame->getHex(i, j);
-      for (int k = Hex::NorthWest; k < Hex::None; ++k) {
-	std::pair<int, int> n = Hex::getNeighbourCoordinates(curr->getPos(), Hex::convertToDirection(k));
-	curr->setNeighbour(Hex::convertToDirection(k), currGame->getHex(n.first, n.second));
+      Hex* curr = Hex::getHex(i, j);
+      for (int k = NorthWest; k < NoDirection; ++k) {
+	pair<int, int> n = Hex::getNeighbourCoordinates(curr->getPos(), Hex::convertToDirection(k));
+	curr->setNeighbour(Hex::convertToDirection(k), Hex::getHex(n.first, n.second));
       }
     }
   }
-  
-  for (std::vector<Hex*>::iterator i = currGame->hexes.begin(); i != currGame->hexes.end(); ++i) {
+
+  for (Hex::Iterator i = Hex::begin(); i != Hex::end(); ++i) { 
     (*i)->createVertices(); 
   }
 
@@ -100,62 +90,22 @@ WarfareGame* WarfareGame::createGame (std::string filename, Player*& currplayer)
   }
 
   objvec players = game->getValue("faction");
-  Player* currp = 0; 
   for (objiter p = players.begin(); p != players.end(); ++p) {
-    bool human = ((*p)->safeGetString("human", "no") == "yes");
-    std::string display = (*p)->safeGetString("displayname"); 
-    std::string name = (*p)->safeGetString("name");
-    assert(display != "");
-    assert(name != "");
-    if (std::string::npos != display.find('"')) {
-      display = display.substr(1+display.find('"'));
-    }
-    if (std::string::npos != display.rfind('"')) {
-      display = display.substr(0, display.rfind('"'));
-    }
-    
-    currp = new Player(human, display, name);
+    StaticInitialiser::createPlayer(*p);
   }
-  
+
+  Object* aiInfo = processFile("./common/ai.txt"); 
+  StaticInitialiser::loadAiConstants(aiInfo);
+  StaticInitialiser::overallInitialisation(game); 
+    
   objvec hexinfos = game->getValue("hexinfo");
   for (objiter hinfo = hexinfos.begin(); hinfo != hexinfos.end(); ++hinfo) {
-    Hex* hex = findHex(*hinfo);
-
-    int dev = (*hinfo)->safeGetInt("devastation");
-    for (int i = 0; i < dev; ++i) hex->raid();
-    
-    Object* cinfo = (*hinfo)->safeGetObject("castle");
-    if (cinfo) {
-      Castle* castle = new Castle(hex);
-      std::string ownername = cinfo->safeGetString("player");
-      Player* owner = Player::findByName(ownername);
-      assert(owner);
-      castle->setOwner(owner);
-      hex->setOwner(owner);
-      int numGarrison = cinfo->safeGetInt("garrison", 0);
-      for (int i = 0; i < numGarrison; ++i) {
-	MilUnit* m = new MilUnit();
-	m->setOwner(owner);
-	castle->addGarrison(m); 
-      }
-      int rec = cinfo->safeGetInt("recruit", 0);
-      for (int i = 0; i < rec; ++i) castle->recruit(); 
-      Line* lin = findLine(cinfo, hex);
-      assert(0 == lin->getCastle()); 
-      lin->addCastle(castle); 
-    }
+    StaticInitialiser::buildHex(*hinfo); 
   }
 
   objvec units = game->getValue("unit");
   for (objiter unit = units.begin(); unit != units.end(); ++unit) {
-    MilUnit* u = new MilUnit();
-    Player* owner = Player::findByName((*unit)->safeGetString("player"));
-    assert(owner);
-    u->setOwner(owner);
-    Hex* hex = findHex(*unit);
-    Vertex* vtx = findVertex(*unit, hex);
-    vtx->addUnit(u);
-    if ((*unit)->safeGetString("weak", "no") == "yes") u->weaken(); 
+    StaticInitialiser::buildMilUnit(*unit);
   }
 
   currplayer = Player::findByName(game->safeGetString("currentplayer"));
@@ -164,90 +114,211 @@ WarfareGame* WarfareGame::createGame (std::string filename, Player*& currplayer)
   return currGame; 
 }
 
+void WarfareGame::findUnits (vector<MilUnit*>& ret, Player* p) {
+  for (MilUnit::Iterator m = MilUnit::begin(); m != MilUnit::end(); ++m) if ((*m)->getOwner() == p) ret.push_back(*m);
+}
+
+void WarfareGame::findCastles (vector<Castle*>& ret, Player* p) {
+  for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) {
+    Castle* curr = (*lin)->getCastle();
+    if (!curr) continue;
+    if (curr->getOwner() != p) continue;
+    ret.push_back(curr);
+  }
+}
+
+struct Route {
+  vector<Geography*> route;
+  double distance;
+  Castle* source;
+  Vertex* target; 
+};
+
+map<Player*, map<Geography*, map<Geography*, Route*> > > routeMap;
+
+void findRoute (Geography* source, Geography* destination, Player* side, double maxRisk) {
+  set<Geography*> open;
+  for (Vertex::Iterator v = Vertex::begin(); v != Vertex::end(); ++v) (*v)->clearGeography();
+  for (Line::Iterator l = Line::begin(); l != Line::end(); ++l) (*l)->clearGeography();
+  
+  open.insert(source);
+  source->distFromStart = 0;
+  source->previous = 0;
+  double inverseRisk = 1.0 / (1 - maxRisk); 
+  while (0 < open.size()) {
+    // Find lowest-cost node in open list
+    Geography* bestOpen = (*(open.begin())); 
+    double lowestEstimate = bestOpen->distFromStart + bestOpen->heuristicDistance(destination); 
+    for (set<Geography*>::iterator g = open.begin(); g != open.end(); ++g) {
+      // Pretend that all estimated traversals are maximally risky. This overestimates the cost
+      // but that's fine for an A* heuristic. 
+      double curr = (*g)->distFromStart + (*g)->heuristicDistance(destination) * inverseRisk; 
+      if (lowestEstimate < curr) continue;
+      bestOpen = (*g);
+      lowestEstimate = curr; 
+    }
+
+    bestOpen->closed = true;
+    open.erase(bestOpen); 
+    vector<Geography*> neibs;
+    bestOpen->getNeighbours(neibs);
+    for (vector<Geography*>::iterator n = neibs.begin(); n != neibs.end(); ++n) {
+      double currRisk = (*n)->traversalRisk(side);
+      if (currRisk > maxRisk) {
+	(*n)->closed = true;
+	continue; 
+      }
+      double currCost = bestOpen->distFromStart + (*n)->traversalCost(side) / (1 - (*n)->traversalRisk(side));  
+      if ((*n) == destination) {
+	// Construct the Route and add it to routeMap;
+	Route* ret = new Route();
+	ret->distance = currCost; 
+	routeMap[side][source][destination] = ret;
+	ret->route.push_back(*n); 
+	Geography* curr = bestOpen; 
+	while (curr) {
+	  ret->route.push_back(curr); 
+	  ret->distance += curr->distFromStart;
+	  curr = curr->previous;
+	}
+	return; 
+      }
+      if (currCost > (*n)->distFromStart) continue;
+
+      (*n)->previous = bestOpen;
+      (*n)->distFromStart = currCost;
+      open.insert(*n); 
+    }
+  }
+}
+
 void WarfareGame::endOfTurn () {
+  LineGraphicsInfo::endTurn(); 
+  
+  // Production phase
+  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) (*hex)->endOfTurn();
+  for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) (*lin)->endOfTurn();
+  for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) (*vex)->endOfTurn();
+
+  // TODO: Clear or refresh the cache (routeMaps) every so often. 
+  
+  // Trade
+  for (Player::Iterator p = Player::begin(); p != Player::end(); ++p) {
+    vector<Route*> routes;
+    vector<Castle*> sources;
+    vector<MilUnit*> sinks;
+    findCastles(sources, (*p));
+    findUnits(sinks, (*p));
+
+    for (vector<Castle*>::iterator c = sources.begin(); c != sources.end(); ++c) {
+      for (vector<MilUnit*>::iterator m = sinks.begin(); m != sinks.end(); ++m) {
+	if (!(*m)->getLocation()) continue; // Indicates garrison unit 
+	if (!routeMap[*p][(*c)->getLocation()][(*m)->getLocation()]) findRoute((*c)->getLocation(), (*m)->getLocation(), (*p), 0.8);
+	routes.push_back(routeMap[*p][(*c)->getLocation()][(*m)->getLocation()]);
+	routes.back()->source = (*c);
+	routes.back()->target = (*m)->getLocation(); 
+      }
+    }
+
+    for (vector<Castle*>::iterator c = sources.begin(); c != sources.end(); ++c) {
+      (*c)->supplyGarrison(); 
+    }
+
+    sort(routes.begin(), routes.end(), deref<Route>(member_lt(&Route::distance)));
+    for (vector<Route*>::iterator r = routes.begin(); r != routes.end(); ++r) {
+      if (!(*r)) continue;
+      double amountWanted = 0;
+      for (Vertex::UnitIterator m = (*r)->target->beginUnits(); m != (*r)->target->endUnits(); ++m) {
+	amountWanted += (*m)->getPrioritisedSuppliesNeeded(); 
+      }
+      if (amountWanted < 1) continue; 
+      double amountSent = (*r)->source->removeSupplies(amountWanted); 
+
+      Geography* previous = 0; 
+      for (vector<Geography*>::reverse_iterator g = (*r)->route.rbegin(); g != (*r)->route.rend(); ++g) {
+	(*g)->traverseSupplies(amountSent, *p, previous);
+	previous = (*g); 
+	//amountSent -= (*g)->traversalCost(*p);
+	//Logger::logStream(DebugSupply) << "Traversed " << (int) (*g) << " at cost " << (*g)->traversalCost(*p) << "\n"; 
+	//double lossChance = (*g)->traversalRisk(*p);
+	//double roll = rand();
+	//roll /= RAND_MAX;
+	//if (roll < lossChance) amountSent *= 0.9; 
+	if (amountSent < 0.05 * amountWanted) break;
+      }
+      if (amountSent < 0.05 * amountWanted) continue;
+
+      for (Vertex::UnitIterator m = (*r)->target->beginUnits(); m != (*r)->target->endUnits(); ++m) {
+	double fraction = (*m)->getPrioritisedSuppliesNeeded();
+	fraction /= amountWanted;
+	/*Logger::logStream(DebugSupply) << "Delivering to unit at "
+				       << (*r)->target->getName() << " : "
+				       << amountSent * fraction
+				       << " from " << (*r)->source->getSupport()->getName()
+				       << "\n"; */
+	(*m)->addSupplies(amountSent * fraction); 
+      }
+    }
+    
+  }
+  
+
+  // Supply consumption, strength calculation
+  for (MilUnit::Iterator mil = MilUnit::begin(); mil != MilUnit::end(); ++mil) (*mil)->endOfTurn(); 
+
+  Calendar::newWeekBegins();
+  Logger::logStream(Logger::Game) << Calendar::toString() << "\n";
+  
+  if (Calendar::Winter == Calendar::getCurrentSeason()) {
+    // Hex buildings do special things in winter. 
+    for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) (*hex)->endOfTurn();
+
+    // So do MilUnits.
+    for (MilUnit::Iterator mil = MilUnit::begin(); mil != MilUnit::end(); ++mil) (*mil)->endOfTurn();
+    
+    Calendar::newYearBegins(); 
+  }
   
 }
 
-void WarfareGame::saveGame (std::string fname, Player* currentplayer) {
-  if (!currGame) return;
+void WarfareGame::unitComparison (string fname) {
+  Object* game = processFile(fname);
+  StaticInitialiser::buildMilUnitTemplates(game->safeGetObject("unittypes"));
 
-  Object* game = new Object("toplevel");
-  Parser::topLevel = game;
+  vector<MilUnit*> units1;
+  vector<MilUnit*> units2;
+  AgeTracker recruits;
+  for (MilUnitTemplate::Iterator t = MilUnitTemplate::begin(); t != MilUnitTemplate::end(); ++t) {
+    MilUnit* u = new MilUnit();
+    recruits.clear();
+    recruits.addPop((*t)->recruit_speed, 18);
+    u->addElement((*t), recruits); 
+    units1.push_back(u);
+    u->setName((*t)->name);
 
-  for (Player::Iterator p = Player::begin(); p != Player::end(); ++p) {
-    Object* faction = new Object("faction");
-    faction->setLeaf("name", (*p)->getName());
-    faction->setLeaf("displayname", std::string("\"") + (*p)->getDisplayName() + "\"");
-    faction->setLeaf("human", (*p)->isHuman() ? "yes" : "no");
-    game->setValue(faction); 
+    u = new MilUnit();
+    u->addElement((*t), recruits);     
+    u->setName((*t)->name);    
+    units2.push_back(u);    
   }
 
-  game->setLeaf("currentplayer", currentplayer->getName()); 
-  
-  std::map<Hex*, Object*> hexmap; 
-  int maxx = -1;
-  int maxy = -1;
-  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
-    maxx = std::max((*hex)->getPos().first, maxx);
-    maxy = std::max((*hex)->getPos().second, maxy);
-    if (0 < (*hex)->getDevastation()) {
-      Object* hinfo = new Object("hexinfo");
-      hinfo->setLeaf("x", (*hex)->getPos().first);
-      hinfo->setLeaf("y", (*hex)->getPos().second);
-      hinfo->setLeaf("devastation", (*hex)->getDevastation());
-      hexmap[*hex] = hinfo; 
+  for (vector<MilUnit*>::iterator unit1 = units1.begin(); unit1 != units1.end(); ++unit1) {
+    for (vector<MilUnit*>::iterator unit2 = units2.begin(); unit2 != units2.end(); ++unit2) {
+
+      (*unit1)->setAggression(0.99);
+      (*unit2)->setAggression(0.25); 
+      
+      Logger::logStream(DebugStartup) << (*unit1)->getName() << " vs "
+				      << (*unit2)->getName() << " : ("
+				      << (*unit1)->effectiveMobility(*unit2) << " "
+				      << (*unit1)->calcStrength((*unit1)->getDecayConstant(), &MilUnitElement::shock) << " "
+				      << (*unit1)->calcStrength((*unit1)->getDecayConstant(), &MilUnitElement::range) << " "	
+				      << (*unit1)->calcBattleCasualties(*unit2) << ") ("
+				      << (*unit2)->effectiveMobility(*unit1) << " "
+				      << (*unit2)->calcStrength((*unit2)->getDecayConstant(), &MilUnitElement::shock) << " "
+				      << (*unit2)->calcStrength((*unit2)->getDecayConstant(), &MilUnitElement::range) << " "		
+				      << (*unit2)->calcBattleCasualties(*unit1) << ")\n"; 
     }
   }
-
-  Object* hexgrid = new Object("hexgrid");
-  hexgrid->setLeaf("x", maxx+1);
-  hexgrid->setLeaf("y", maxy+1);
-  game->setValue(hexgrid); 
-
-  for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) {
-    Castle* curr = (*lin)->getCastle();
-    if (!curr) continue; 
-    Hex* sup = curr->getSupport();
-    Object* hinfo = hexmap[sup];
-    if (!hinfo) {
-      hinfo = new Object("hexinfo");
-      hexmap[sup] = hinfo;
-      hinfo->setLeaf("x", sup->getPos().first);
-      hinfo->setLeaf("y", sup->getPos().second);
-    }
-    Object* castle = new Object("castle");
-    hinfo->setValue(castle);
-    castle->setLeaf("player", curr->getOwner()->getName());
-    castle->setLeaf("pos", Hex::getDirectionName(sup->getDirection(*lin)));
-    castle->setLeaf("garrison", curr->numGarrison());
-    castle->setLeaf("recruit", curr->getRecruitState()); 
-  }
-
-  for (std::map<Hex*, Object*>::iterator hex = hexmap.begin(); hex != hexmap.end(); ++hex) {
-    game->setValue((*hex).second); 
-  }
-  
-  for (Vertex::Iterator vtx = Vertex::begin(); vtx != Vertex::end(); ++vtx) {
-    if (0 == (*vtx)->numUnits()) continue;
-    MilUnit* unit = (*vtx)->getUnit(0); 
-    Object* uinfo = new Object("unit");
-    int counter = 0;
-    Hex* hex = (*vtx)->getHex(counter++);
-    while (!hex) {
-      hex = (*vtx)->getHex(counter++);
-      assert(counter <= 6); 
-    }
-    uinfo->setLeaf("x", hex->getPos().first);
-    uinfo->setLeaf("y", hex->getPos().second);
-    uinfo->setLeaf("player", unit->getOwner()->getName());
-    uinfo->setLeaf("vtx", Hex::getVertexName(hex->getDirection(*vtx)));
-    if (unit->weakened()) uinfo->setLeaf("weak", "yes");
-    game->setValue(uinfo); 
-  }
-
-  std::ofstream writer;
-  writer.open(fname.c_str());
-  writer << *game << "\n";
-  writer.close(); 
   
 }

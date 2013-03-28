@@ -8,37 +8,86 @@
 #include "Logger.hh" 
 #include "Action.hh" 
 #include "Hex.hh"
-#include <QtOpenGL>
+#include "GraphicsInfo.hh" 
 #include <iterator>
 #include <vector>
 #include <algorithm> 
-#include "boost/tuple/tuple.hpp"
 
 class ThreeDSprite; 
-
-template <class T> struct DrawInfo {
-  typename T::Iterator start;
-  typename T::Iterator final; 
-  T* selected; 
-};
 
 class SelectedDrawer : public QLabel {
 public:
   SelectedDrawer (QWidget* p);
-  void setSelected (Hex* s);
-  void setSelected (Line* s);
-  void setSelected (Vertex* s); 
+  void setSelected (const GraphicsInfo* g) {gInfo = g;} 
+  void draw (); 
+  //void setSelected (Hex* s);
+  //void setSelected (Line* s);
+  //void setSelected (Vertex* s); 
   
 private:
-
+  const GraphicsInfo* gInfo; 
 }; 
+
+class UnitInterface : public QLabel {
+  Q_OBJECT
+public:
+  UnitInterface (QWidget* p);
+  void setUnit (MilUnit* m); 
+  void updateUnitInfo (); 
+			   
+public slots:
+  void increasePriority (int direction);
+  
+signals: 
+
+private:
+  QToolButton increasePriorityButton;
+  QToolButton decreasePriorityButton;
+  MilUnit* unit; 
+};
+
+class CastleInterface : public QLabel {
+  Q_OBJECT
+public:
+  CastleInterface (QWidget* p);
+  void setCastle (Castle* dat);
+  void updateCastleInfo (); 
+			   
+public slots:
+  void changeRecruitment (int direction);
+  
+signals: 
+
+private:
+  QToolButton increaseRecruitButton;
+  QToolButton decreaseRecruitButton;
+  Castle* castle; 
+};
+
+class FarmInterface : public QLabel {
+  Q_OBJECT
+public:
+  FarmInterface (QWidget* p);
+  void setFarm (Farmland* dat);
+  void updateFarmInfo (); 
+			   
+public slots:
+  void changeDrillLevel (int direction);
+  
+signals: 
+
+private:
+  QToolButton increaseDrillButton;
+  QToolButton decreaseDrillButton;
+  Farmland* farm; 
+};
 
 class HexDrawer {
 public:
   HexDrawer (QWidget* p);
-  virtual ~HexDrawer () {}
+  virtual ~HexDrawer (); 
 
-  virtual void draw (DrawInfo<Hex>* hexes, DrawInfo<Vertex>* verts, DrawInfo<Line>* lines) = 0; 
+  virtual void draw () = 0; 
   virtual Hex* findHex (double x, double y) = 0;
   virtual Vertex* findVertex (double x, double y) = 0;
   virtual Line* findLine (double x, double y) = 0;
@@ -57,76 +106,88 @@ protected:
   double radial; 
 };
 
+class MapOverlay {
+public:
+  virtual void drawLine (LineGraphicsInfo const* dat) = 0;
+};
+
+class SupplyMode : public MapOverlay {
+public:
+  virtual void drawLine (LineGraphicsInfo const* dat); 
+}; 
+
 class GLDrawer : public HexDrawer, public QGLWidget {
+  friend class StaticInitialiser; 
 public:
   GLDrawer (QWidget* p);
   ~GLDrawer () {}
-  virtual void draw (DrawInfo<Hex>* h, DrawInfo<Vertex>* v, DrawInfo<Line>* l);
+  virtual void draw (); 
   virtual Hex* findHex (double x, double y);
   virtual Vertex* findVertex (double x, double y);
   virtual Line* findLine (double x, double y);
   virtual void loadSprites ();
-  virtual void setTranslate (int x, int y); 
+  virtual void setTranslate (int x, int y);
+  void setViewport (); 
   void assignColour (Player* p); 
-  void clearColours (); 
+  void setOverlayMode (MapOverlay* m) {overlayMode = m;} 
   
 protected:
-  typedef boost::tuple<std::pair<double, double>, std::pair<double, double>, std::pair<double, double> > Triangle; 
-  Triangle vertexTriangle (Vertex* vex) const;
-  static bool intersect (double line1x1, double line1y1, double line1x2, double line1y2,
-			 double line2x1, double line2y1, double line2x2, double line2y2);
   void convertToOGL (double& x, double& y); 
   virtual void paintGL ();
   virtual void initializeGL ();
   virtual void resizeGL ();   
   
 private:
-  std::pair<double, double> hexCenter (int x, int y) const;
-  std::pair<double, double> vertexCenter (Vertex* dat) const;
-  std::pair<double, double> vertexCoords (int x, int y, Hex::Vertices dir) const;
-  void loadTexture (const char* fname, QColor backup, int idx);
-  void loadTexture (int texName, QColor backup, std::string fname);
-  void drawLine (Line* dat);
-  void drawHex (Hex* dat);
-  void drawVertex (Vertex* dat); 
+  int assignTextureIndex (); 
+  int loadTexture (std::string fname, QColor backup);
+  //void loadTexture (int texName, QColor backup, std::string fname);
+  void drawCastle (Castle* castle, LineGraphicsInfo const* dat); 
+  void drawLine (LineGraphicsInfo const* dat);
+  void drawHex (HexGraphicsInfo const* dat);
+  void drawVertex (VertexGraphicsInfo const* dat); 
   ThreeDSprite* makeSprite (Object* info); 
-  
-  DrawInfo<Hex>* hexes;
-  DrawInfo<Vertex>* vexes;
-  DrawInfo<Line>* lines; 
+
   GLuint* textureIDs;
+  int assignedTextures; 
   int* errors;
   int* terrainTextureIndices;
   int* castleTextureIndices;
-  int* knightTextureIndices; 
+  int* knightTextureIndices;
+  int* zoneTextures;  // Zones get their own array because their generation creates new texture names. 
   const int numTextures;
-  std::map<Player*, double*> colourmap;
   std::map<Player*, int> playerToTextureMap; 
   
   ThreeDSprite* cSprite;
   ThreeDSprite* kSprite;
+
+  MapOverlay* overlayMode; 
 }; 
+
 
 
 class WarfareWindow : public QMainWindow {
   Q_OBJECT
-  
+  friend class StaticInitialiser; 
+
 public:
   WarfareWindow (QWidget* parent = 0); 
   ~WarfareWindow ();
 
   QPlainTextEdit* textWindow;
-  void update (); 			    
   void initialiseColours ();
   void clearGame (); 
   void newGame (std::string fname); 
-		   
+  void chooseTask (std::string fname, int task); 
+				  
 public slots:
   void newGame ();  
   void loadGame ();  
   void saveGame ();
   void endTurn ();
   void message (QString m); 
+  void setMapMode (int m); 
+  void update ();
+  void copyHistory (); 
   
 signals:
   
@@ -138,13 +199,19 @@ protected:
   void wheelEvent (QWheelEvent* event); 
 private:
   GLDrawer* hexDrawer;
-  SelectedDrawer* selDrawer; 
+  SelectedDrawer* selDrawer;
+  UnitInterface* unitInterface;
+  CastleInterface* castleInterface;
+  FarmInterface* farmInterface;   
+  SupplyMode supplyMode; 
   
   void humanAction (Action& act); 
   bool turnEnded ();
   void endOfTurn ();
   void runNonHumans (); 
   Player* gameOver (); 
+
+  void selectObject ();
   
   static char* popText (PopUnit* dat); 
   
@@ -156,8 +223,12 @@ private:
   
   int mouseDownX;
   int mouseDownY;
+
+  QToolButton plainMapModeButton;
+  QToolButton supplyMapModeButton;
   
   static std::map<int, Logger*> logs;
+  static WarfareWindow* currWindow; 
 };
 
 #endif

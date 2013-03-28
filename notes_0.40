@@ -1,0 +1,111 @@
+
+Work on supply system
+Fragility: Armies should disband if hard enough beaten, how hard depends on tech
+Transport of supplies
+Recruiting 
+AI must deal with variable-strength units
+
+
+Order of coding:
+-1. Stop passing around the WarfareGame pointer to all the Actions, and generally enforce that iterations-over-all-Hexes are done through the Hex
+class and not otherwise. Passing around unneeded information is confusing. (Done)
+ 0. Make sure everything has an endOfTurn call, in a sensible sequence. Remove all the leftover stuff from 'Warfare', it's going to be confusing. (Done)
+ 1. Make MilUnits sensitive to supplies, which for starters can magically appear at endOfTurn. (Done) 
+ 1a. Hang on, units need to actually be composed of MilUnitTemplate elements. And display accordingly. (Done)
+ 2. Owned Hexes produce supplies. (Done)
+ 2a. A* algorithm for use in the next step. (Done)
+ 3. Transport system. (Done)
+ 3a. Display of supply status. (Done)
+ 3b. Add a whistle: Priorities in MilUnits. (Done)
+ 3c.i Interface: Increase and decrease priority. (Done)
+ 3c.ii Move coordinate-calculating responsibilities to GraphicsInfo classes. (Done) 
+ 3d. Add supply-line display mode. (Done) 
+ 4. Population with aging. (Done)
+ 4a. Population-dependent supply production. (Done)
+ 4b.i New recruiting mechanics. (Done)
+ 4b.ii Recruiting interface: Different kinds of units. Limited numbers. (Done) 
+ 4c. Population and aging from text file. (Done)
+ 4d. Population display in interface. (Done) 
+ 4e. Production numbers from text file. (Done) 
+ 4f.i Put back devastation mechanic so it actually does something. (Done) 
+ 4f.ii Move age-tracking stuff to separate class. (Done) 
+ 4f.iii Implement Militia from farms. (Done)
+ 4g. Add in neutral areas, fix colonisation mechanic. (Done)
+ 4h. Garrison enforcement. (Leave for next version.) 
+ 5. Proper design of Hex/Vertex/Line information display, similar to existing OpenGL refactor. (Done)
+ 5a. Make CastleWindow use GraphicsInfo objects wherever possible. (Done) 
+ 6. Move dice-rolls to be bonuses, not success/fail. (Done) 
+ 6a. Replace Disaster/NoChange/Success with Disaster/Bad/Neutral/Good/VictoGlory. (Done)
+ 6b. Replace modifier calculation with simple die-roll initialise by text file. (Done)
+ 6c. Rewrite Action execution methods so they call Hex/Castle/etc methods with the modifier, rather than do Success/Fail. (Done) 
+ 6d. Rewrite MilUnit::fight, Hex::colonise, Hex::raid, Castle::recruit, Castle::callForSurrender to make use of Action::Outcome information. (Done)
+ 6e. Rewrite MilUnit::fight to decide on victory or defeat, and Hex::colonise, Castle::callForSurrender, and Hex::raid to make use of it. (Done)
+ 6f. Correctly update display if a unit is defeated, to avoid the crash when clicking a smashed unit. (Done)
+ 7. AI to deal with new gameplay. (Done)
+ 7a. New recruitment, dealing with different MilUnit types. (Done) 
+ 7b. Strength evaluation should deal with variable strength. (Done)
+ 7c. Probability of siege success. (Done, except I decided to make it casualties from Neutral attacks.) 
+ 7d. Reconsider strategic value. (Done) 
+ 8. Rebalance. 
+ 8a. Move production to seasonal cycle. (Done)
+ 8b. Fix devastation to depend on cycle. (Done)
+ 8c. Reconsider supply routes. (Leave for econ patch.) 
+ 8d. Militia/production tradeoff. (Done) 
+ 8e. Player drill adjustment. (Done)
+ 9. Prettify the graphics. (Done)
+ 9a.i Project Hex style, with global texture. (Done)
+ 9a.ii Height map. (Done) 
+ 9a.iii Autogenerate texture. (Done)
+ 9b. Move all graphics loading to StaticInitialiser. (Move to interface patch.) 
+ 10. Save function! (Done)
+ 10a. Read and write age structure of units. (Done) 
+ 10b. Read unit supplies. (Done) 
+
+
+AI awareness of drill, production, economic strength. 
+
+Seasonal production:
+ * Spring, summer, fall - skip winter. 
+ * Plow, sow, weed, reap.
+ * Cleared land.
+ 
+Subtasks to remember for production refactor:
+ * Consumption for Farmlands (done) 
+ * Castles should requisition correctly (Done) 
+ * Fix devastation (Done) 
+ * Get field info into Farmland mirror (done) 
+ * StaticInitialiser should set week (done) 
+ * And Farmland fields statuses (done) 
+ * And supply amounts (done) 
+ * Get hardcoded harvest numbers into text (done) 
+ * Balance harvest numbers (done) 
+
+Militia tradeoff:
+ * Drill amount subtracts from available labour and from decay constant
+ * Drill increases supply consumption
+ * Player can support drill 
+
+Requisition design:
+ * How much is owed?
+ * Can be fixed amount, percentage of harvest, or percentage of surplus. 
+
+Procedure for raids:
+ * Decide how strong the average defenders are going to be. Depends on militia
+   tacmob, augmented by local defense organisation. (This is future stuff.) 
+ * It can depend on the tacmob, but for strength non-linear in numbers we have the excellent decay-constant mechanic! 
+ * Binary search in attacker detachment size to find detachment with X% chance
+   of defeating that militia size. 
+ * Create that many detachments. For each, generate an *actual*, not average,
+   militia detachment, have them fight if both sides see an acceptable chance
+   of victory or if the militia get an ambush, devastate if raider victory. 
+ * Run militia casualties back into population. 
+ 
+
+Old TODO, changed my mind:
+ 4. At this point the AI should get involved. 
+ 5. Sensitivity to enemy units.
+ 6. To terrain including roads. 
+ 6a. More AI goes here. 
+ 7. Future: To guerrillas, bandits, local militia. 
+
+Hex production should be a little more advanced than the current magic implementation... But meh, it can wait for the economy. 

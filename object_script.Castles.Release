@@ -1,8 +1,11 @@
 INPUT(
 ./release\Action.o
+./release\AgeTracker.o
 ./release\Building.o
+./release\Calendar.o
 ./release\CastleWindow.o
 ./release\glextensions.o
+./release\GraphicsInfo.o
 ./release\Hex.o
 ./release\Logger.o
 ./release\MilUnit.o
@@ -11,7 +14,9 @@ INPUT(
 ./release\PopUnit.o
 ./release\RiderGame.o
 ./release\RoadButton.o
+./release\StaticInitialiser.o
 ./release\ThreeDSprite.o
+./release\UtilityFunctions.o
 ./release\moc_CastleWindow.o
 ./release\moc_Logger.o
 ./release\moc_RoadButton.o

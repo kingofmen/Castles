@@ -1,0 +1,8 @@
+Problem: When medieval armies meet, one of them will almost certainly
+disband. When black-powder armies meet, they will quite likely part with
+their fighting power intact. The current Action model does not reflect
+this lowering of the stakes.
+
+Solution: Implement a centralising modifier to the die roll, which moves
+you down if the roll is above average, and up otherwise. Make this modifier
+tech-dependent. 

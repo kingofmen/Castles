@@ -4,12 +4,13 @@
 #include <cstdlib> 
 #include <string> 
 #include "Hex.hh" 
+#include "UtilityFunctions.hh" 
 
 class Player; 
-class WarfareGame; 
 class Line; 
 class Vertex;
 class MilUnit;
+class MilUnitTemplate; 
 class Castle; 
 
 enum RollType {Equal = 0, GtEqual, LtEqual, Greater, Less};
@@ -36,14 +37,15 @@ extern const DieRoll OneDSix;
 extern const DieRoll OneDHun; 
 
 struct Action {
+  friend class StaticInitialiser; 
 public:
   enum ActionResult {Ok = 0, Fail, NotAdjacent, NotEnoughPops, AttackFails, WrongPlayer, Impassable, NoBuilding, NotImplemented}; 
-  enum Outcome {Disaster = 0, NoChange, Success, NumOutcomes}; 
+  //enum Outcome {Disaster = 0, NoChange, Success, NumOutcomes};
   
   Action ();
-  ActionResult execute (WarfareGame* dat); 
-  ActionResult checkPossible (WarfareGame* dat) {return (this->*(todo.check))();}
-  double probability (WarfareGame* dat, Outcome dis);
+  ActionResult execute (); 
+  ActionResult checkPossible () {return (this->*(todo.check))();}
+  double probability (Outcome dis);
   void undo (); 
   void makeHypothetical ();
   void forceOutcome (Outcome f) {force = f;} 
@@ -57,26 +59,24 @@ public:
   Vertex* final;
   Line* begin;
   Line* cease;
-  MilUnit* temporaryUnit;   
+  MilUnit* temporaryUnit;
+  const MilUnitTemplate* unitType; 
   bool print;
   Outcome force;
   Outcome result; 
 
-  Hex::Vertices activeRear;
-  Hex::Vertices forcedRear; 
+  Vertices activeRear;
+  Vertices forcedRear; 
   
 private:
   struct Calculator {
     Calculator (); 
     const DieRoll* die;
-    int success;
-    int disaster;
-    int mods;
-    bool unmodifiedDisaster; 
+    int* results;
   };
   struct ThingsToDo {
-    ThingsToDo (Calculator (Action::*p)(), ActionResult (Action::*e) (Outcome), ActionResult (Action::*c) (), std::string n);
-    Calculator (Action::*calc) ();
+    ThingsToDo (Calculator* p, ActionResult (Action::*e) (Outcome), ActionResult (Action::*c) (), std::string n);
+    Calculator* calc; 
     ActionResult (Action::*exec) (Outcome out);
     ActionResult (Action::*check) ();
     std::string name;
@@ -84,13 +84,14 @@ private:
     bool operator== (const ThingsToDo& dat) {return name == dat.name;} 
   };
 
-  Calculator alwaysSucceed ();
-  Calculator calcAttack ();
-  Calculator calcMobilise ();
-  Calculator calcDevastate ();
-  Calculator calcSurrender ();
-  Calculator calcRecruit ();
-
+  static Calculator* attackCalculator;
+  static Calculator* mobiliseCalculator;
+  static Calculator* devastateCalculator;
+  static Calculator* surrenderCalculator;
+  static Calculator* recruitCalculator;
+  static Calculator* colonyCalculator;
+  static Calculator* successCalculator;   
+  
   ActionResult alwaysPossible () {return Ok;} 
   ActionResult canAttack ();
   ActionResult canMobilise ();
@@ -100,7 +101,7 @@ private:
   ActionResult canReinforce ();
   ActionResult canSurrender ();
   ActionResult canRecruit ();
-  ActionResult canRepair ();
+  //ActionResult canRepair ();
 
   ActionResult noop (Outcome out); 
   ActionResult attack (Outcome out);
@@ -111,7 +112,7 @@ private:
   ActionResult reinforce (Outcome out);
   ActionResult surrender (Outcome out);
   ActionResult recruit (Outcome out);
-  ActionResult repair (Outcome out); 
+  //ActionResult repair (Outcome out); 
   
 public:
   ThingsToDo todo;
@@ -124,7 +125,7 @@ public:
   static const ThingsToDo Reinforce;
   static const ThingsToDo CallForSurrender;
   static const ThingsToDo Recruit;
-  static const ThingsToDo Repair;
+  //static const ThingsToDo Repair;
   static const ThingsToDo Nothing; 
   static const ThingsToDo EnterGarrison; 
 };

@@ -21,6 +21,9 @@ template <typename T, typename C> struct dereferrer {
   C cmp;
 };
 
+
+
+
 // syntactic sugar
 template <typename T, typename M> member_lt_type<T,M, std::less<M> > member_lt( M T::*ptr ) {
   return member_lt_type<T,M, std::less<M> >(ptr, std::less<M>() );

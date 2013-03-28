@@ -1,8 +1,11 @@
 INPUT(
 ./debug\Action.o
+./debug\AgeTracker.o
 ./debug\Building.o
+./debug\Calendar.o
 ./debug\CastleWindow.o
 ./debug\glextensions.o
+./debug\GraphicsInfo.o
 ./debug\Hex.o
 ./debug\Logger.o
 ./debug\MilUnit.o
@@ -11,7 +14,9 @@ INPUT(
 ./debug\PopUnit.o
 ./debug\RiderGame.o
 ./debug\RoadButton.o
+./debug\StaticInitialiser.o
 ./debug\ThreeDSprite.o
+./debug\UtilityFunctions.o
 ./debug\moc_CastleWindow.o
 ./debug\moc_Logger.o
 ./debug\moc_RoadButton.o

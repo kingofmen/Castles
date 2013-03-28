@@ -1,0 +1,11 @@
+Notes for economy patch. 
+
+ * Make ContractInfo more general, allowing for any deliveries, not just food to Castles. 
+   - Refactor Farmland::demandSupplies to use this. 
+
+Supply routes:
+ * Castles have transport capacity. 
+ * Speed and capacity.
+ * Make trips to visit forces, possibly getting ambushed.
+ * Multiple trips if necessary.
+ * Foraging.  

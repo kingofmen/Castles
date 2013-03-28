@@ -4,13 +4,22 @@
 #include <algorithm>
 #include <cassert> 
 #include "Action.hh"
+#include "UtilityFunctions.hh" 
 #include "PopUnit.hh"
 #include "MilUnit.hh" 
 #include "Logger.hh" 
 #include <queue>
 
 std::vector<Player*> Player::allPlayers; 
-bool detail = false; 
+bool detailDebug = false;
+
+double Player::influenceDecay      = 0.5;
+double Player::castleWeight        = 1000;
+double Player::casualtyValue       = 100; 
+double Player::distanceModifier    = 1;
+double Player::distancePower       = 1.5; 
+double Player::supplyWeight        = 1000;
+double Player::siegeInfluenceValue = 20;
 
 Player::Player (bool h, std::string d, std::string n)
   : human(h)
@@ -28,6 +37,10 @@ void Player::clear () {
   allPlayers.clear(); 
 }
 
+double Player::calculateUnitStrength (MilUnit* dat, double modifiers) {
+  return dat->calcStrength(dat->getDecayConstant() * modifiers, &MilUnitElement::shock);
+}
+
 double Player::calculateInfluence () {
   for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
     (*vex)->getMirror()->value.influenceMap[this] = 0; 
@@ -39,29 +52,24 @@ double Player::calculateInfluence () {
     if (0 == vex->numUnits()) continue;
     MilUnit* unit = vex->getUnit(0);
     if (this != unit->getOwner()) continue;
-    if (unit->weakened()) continue;
-    vex->value.influenceMap[this] = 5;
+    double str = calculateUnitStrength(unit, 1.0);
+    vex->value.influenceMap[this] = str;
     infVerts.push(vex);
-    influence += 5*vex->value.strategic;
+    influence += str*vex->value.strategic;
+    //Logger::logStream(DebugAI) << "{" << (*v)->getName() << " " << str*vex->value.strategic << " = " << str << "*" << vex->value.strategic << "} "; 
   }
 
   for (Line::Iterator l = Line::begin(); l != Line::end(); ++l) {
     Line* lin = (*l)->getMirror();
     if (0 == lin->getCastle()) continue;
     if (this != lin->getCastle()->getOwner()) continue;
-    double castleInf = -1; 
     int nGar = lin->getCastle()->numGarrison();
-    switch (nGar) {
-    case 0:
-    default:
-      break;
-    case 2: 
-    case 1:
-      castleInf = 4;
-      break;
+    if (0 == nGar) continue;
+    double castleInf = 0;     
+    for (int i = 0; i < nGar; ++i) {
+      castleInf += calculateUnitStrength(lin->getCastle()->getGarrison(i), 1.0 / Castle::getSiegeMod());
     }
 
-    if (0 >= castleInf) continue;
     for (int i = 0; i < 2; ++i) {
       Vertex* vex = lin->getVtx(i);
       if ((0 < vex->numUnits()) && (this != vex->getUnit(0)->getOwner())) continue;
@@ -75,8 +83,8 @@ double Player::calculateInfluence () {
   while (0 < infVerts.size()) {
     Vertex* curr = infVerts.front();
     infVerts.pop();
-    double spread = curr->value.influence-1; 
-    if (0.1 > spread) continue;
+    double spread = curr->value.influence * influenceDecay; 
+    if (10 > spread) continue;
     for (Hex::LineIterator lin = curr->beginLines(); lin != curr->endLines(); ++lin) {
       if (((*lin)->getCastle()) && (this != (*lin)->getCastle()->getOwner())) continue; 
       Vertex* vex = (*lin)->getOther(curr);
@@ -92,128 +100,138 @@ double Player::calculateInfluence () {
   return influence; 
 }
 
-double Player::evaluateGlobalStrength (WarfareGame* dat) {
+double Player::evaluateGlobalStrength () {
   
   double ret = 0; 
-  double influence = calculateInfluence(); 
-  double numUnits = 0; 
+  double influence = calculateInfluence();
+
+  // Military strength - fighting power of units
+  double suppliesUsed = 0;
+  double suppliesNeeded = 0; 
+  double unitStrength = 0;
   for (Vertex::Iterator v = Vertex::begin(); v != Vertex::end(); ++v) {
     Vertex* vex = (*v)->getMirror();
     if (0 == vex->numUnits()) continue;
     MilUnit* unit = vex->getUnit(0);
     if (this == unit->getOwner()) {
-      numUnits += (unit->weakened() ? 0.5 : 1.0); 
-      ret -= pow(vex->value.distanceMap[this], 1.5); 
+      suppliesUsed += unit->getPrioritisedSuppliesNeeded();
+      ret -= distanceModifier*pow(vex->value.distanceMap[this], distancePower);
+      unitStrength += calculateUnitStrength(unit, 1.0); 
     }
   }
 
+  // Economic and geographic strength - castles, population, productive capacity 
   double castlePoints = 0;
-  double numCastles = 0;
+  double suppliesProduced = 0; 
   for (Line::Iterator l = Line::begin(); l != Line::end(); ++l) {
     Line* lin = (*l)->getMirror();
-    if (0 == lin->getCastle()) continue;
-    if (this != lin->getCastle()->getOwner()) continue;
-    castlePoints += lin->value.strategic * 14;
-    numCastles++;
-    /*
-    Logger::logStream(Logger::Debug) << "Strategic value: "
-				     << lin->getName() << " "
-				     << lin->value.strategic
-				     << "\n";
-    */
-    numUnits += lin->getCastle()->numGarrison(); 
-    numUnits += 0.2*lin->getCastle()->getRecruitState(); 
+    Castle* castle = lin->getCastle();
+    if (0 == castle) continue;
+    if (this != castle->getOwner()) continue;
+    castlePoints += lin->value.strategic * castleWeight;
+    
+    int nGar = castle->numGarrison(); 
+    for (int i = 0; i < nGar; ++i) {
+      MilUnit* unit = castle->getGarrison(i);
+      suppliesUsed += unit->getPrioritisedSuppliesNeeded();
+      unitStrength += calculateUnitStrength(unit, 1.0 / Castle::getSiegeMod());
+    }
 
+    Hex* support = castle->getSupport();
+    assert(support);
+    Farmland* farms = support->getFarm();
+    if (!farms) continue;
+    suppliesProduced += farms->production(); 
   }
-
-  if (0 < numCastles) castlePoints /= sqrt(numCastles);
-  
-  if (detail) Logger::logStream(Logger::Debug) << " ("
-					       << influence << " " 
-					       << castlePoints << " "
-					       << (numUnits < numCastles ? - pow(numCastles - numUnits, 1.5) : 0) << " " 
-					       << sqrt(numUnits) << ") "; 
   
   ret += influence;
   ret += castlePoints;
-  ret += sqrt(numUnits); 
-  if (numUnits < numCastles) ret -= pow(numCastles - numUnits, 1.5);
+  ret += unitStrength;
+
+  // Adjust for economic power getting close to limits, or past them
+  ret -= supplyWeight*atan(suppliesNeeded / suppliesProduced); 
+
+  //Logger::logStream(DebugAI) << "[" << unitStrength << " " << influence << " " << castlePoints << "] "; 
   
-  //Logger::logStream(Logger::Debug) << "  Influence: " << influence << "\n"; 
   return ret; 
 }
 
-double Player::evaluateAttackStrength (WarfareGame* dat, Player* att, Player* def) {
+double Player::evaluateAttackStrength (Player* att, Player* def) {
   double ret = 0;
-  att->calculateInfluence(); 
+  double casualties = 0; 
+  att->calculateInfluence();
+
+  // Returns casualties that would be inflicted by att on def
+  // if each unit made all the attacks it can, assuming Neutral rolls;
+  // plus a bonus for having influence close to enemy-held areas. 
+  
+  // Attacks on fortresses and sorties out of them
   for (Line::Iterator l = Line::begin(); l != Line::end(); ++l) {
     Line* lin = (*l)->getMirror(); 
     Castle* curr = lin->getCastle();
     if (!curr) continue;
-    if (def != curr->getOwner()) continue;
+    if (def == curr->getOwner()) {
+      for (int i = 0; i < 2; ++i) {
+	Vertex* vtx = lin->getVtx(i);
+	ret += siegeInfluenceValue*vtx->value.influenceMap[att];
+	
+	MilUnit* unit = vtx->getUnit(0);
+	if (!unit) continue;
+	if (unit->getOwner() != att) continue; 
+	
+	MilUnit* defender = curr->getGarrison(0);
+	if (!defender) continue;
+	casualties += unit->totalSoldiers() * defender->calcBattleCasualties(unit);
+      }
+    }
+    else if ((att == curr->getOwner()) && (0 < curr->numGarrison())) {
+      MilUnit* attacker = curr->removeGarrison(); // Remove also cancels fortification bonus. 
 
-    Action siege;
-    siege.cease = lin; 
-    siege.player = att;
-    siege.todo = Action::CallForSurrender;
-    siege.print = false;
-    
-    for (int i = 0; i < 2; ++i) {
-      Vertex* vtx = lin->getVtx(i);
-      siege.start = vtx; 
-      double siegeProb = siege.probability(dat, Action::Success);
-      Logger::logStream(Logger::Debug) << "[ " << lin->getName() << " " << att->getDisplayName() << " " << siegeProb << " " << vtx->value.influenceMap[att] << " ]"; 
-      ret += 20*siegeProb*vtx->value.influenceMap[att]; 
+      for (int i = 0; i < 2; ++i) {
+	Vertex* vtx = lin->getVtx(i);
+	
+	MilUnit* unit = vtx->getUnit(0);
+	if (!unit) continue;
+	if (unit->getOwner() != def) continue; 
+	casualties += attacker->totalSoldiers() * unit->calcBattleCasualties(attacker); 
+      }
+      curr->addGarrison(attacker); 
     }
   }
+
   
   for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
     Vertex* vtx = (*vex)->getMirror();
     if (0 == vtx->numUnits()) continue;
     MilUnit* mil = vtx->getUnit(0);
     if (att != mil->getOwner()) continue;
-    if (mil->weakened()) continue;
     ret += vtx->value.strategic / vtx->value.distanceMap[def];
-    //if (0 == vtx->value.distanceMap[def]) Logger::logStream(Logger::Debug) << "Problem " << vtx->getName() << "\n"; 
-    for (Hex::LineIterator lin = vtx->beginLines(); lin != vtx->endLines(); ++lin) {
-      Castle* cas = (*lin)->getCastle(); 
-      if ((cas) && (def == cas->getOwner())) {
-	double castleValue = def->evaluateGlobalStrength(dat);
-	(*lin)->addCastle(0);
-	castleValue -= def->evaluateGlobalStrength(dat);
-	(*lin)->addCastle(cas);
-	Action siege;
-	siege.cease = (*lin);
-	siege.player = att;
-	siege.todo = Action::CallForSurrender;
-	siege.print = false;
-	siege.start = vtx; 
-	castleValue *= siege.probability(dat, Action::Success);
-	ret += castleValue; 
-      }
-    }
 
     for (Vertex::NeighbourIterator n = vtx->beginNeighbours(); n != vtx->endNeighbours(); ++n) {
       if (!(*n)) continue;
-      if (0 == (*n)->numUnits()) continue;
-      if (def != (*n)->getUnit(0)->getOwner()) continue;
-      ret += 2;
-      if ((*n)->getUnit(0)->weakened()) ret += 2;
+      MilUnit* defender = (*n)->getUnit(0);
+      if (!defender) continue;
+      if (def != defender->getOwner()) continue;
+      casualties += mil->totalSoldiers() * defender->calcBattleCasualties(mil);
     }
 
     for (Vertex::HexIterator h = vtx->beginHexes(); h != vtx->endHexes(); ++h) {
       if (!(*h)) continue;
       if (def != (*h)->getOwner()) continue;
-      ret += 1; 
+      Farmland* farms = (*h)->getFarm();
+      if (!farms) continue;
+      MilUnit* defenders = farms->raiseMilitia(); 
+      casualties += mil->totalSoldiers() * defenders->calcBattleCasualties(mil);
     }
   } 
-  
+
+  ret += casualtyValue * casualties; 
   return ret;
 }
 
-double Player::evaluate (Action act, WarfareGame* dat) { 
+double Player::evaluate (Action act) { 
   act.player = this; 
-  if (Action::Ok != act.checkPossible(dat)) return -100;
+  if (Action::Ok != act.checkPossible()) return -100;
 
   for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
     (*hex)->setMirrorState(); 
@@ -226,87 +244,92 @@ double Player::evaluate (Action act, WarfareGame* dat) {
   }
 
   double ret = 0;
-  for (int i = Action::Disaster; i < Action::NumOutcomes; ++i) {
-    double weight = act.probability(dat, (Action::Outcome) i); 
+
+  //Logger::logStream(DebugAI) << "Evaluating " << act.describe() << " ";
+  
+  for (int i = Disaster; i < NumOutcomes; ++i) {
+    double weight = act.probability((Outcome) i); 
     if (weight < 0.00001) continue;
     act.makeHypothetical();
     
-    act.forceOutcome((Action::Outcome) i);
-    Action::ActionResult res = act.execute(dat); 
+    act.forceOutcome((Outcome) i);
+    act.execute(); 
+    //Action::ActionResult res = act.execute();
+    double temp = 0; 
+   
 
-    //detail = true;
-    double temp = evaluateGlobalStrength(dat);
-    //detail = false; 
+    //detailDebug = true;
+    temp += evaluateGlobalStrength();
+    //detailDebug = false; 
+
+    //Logger::logStream(DebugAI) << "(" << i << " " << temp << " ";
     
-    Logger::logStream(Logger::Debug) << "Evaluating "
-				     << act.describe() << " "
-				     << temp << " ";
-
     for (Iterator p = begin(); p != end(); ++p) {
       if ((*p) == this) continue;
-      temp -= evaluateAttackStrength(dat, (*p), this);
-      Logger::logStream(Logger::Debug) << temp << " ";
-      temp += evaluateAttackStrength(dat, this, (*p));
-      Logger::logStream(Logger::Debug) << temp << " ";
+      temp -= evaluateAttackStrength((*p), this);
+      //Logger::logStream(DebugAI) << temp << " ";
+      temp += evaluateAttackStrength(this, (*p));
+      //Logger::logStream(DebugAI) << temp << " ";
     }
-
-    Logger::logStream(Logger::Debug) << i << " "
-				     << res << " "
-				     << weight << " " 
-				     << "\n";
+    
+    //Logger::logStream(DebugAI) << res << " " << weight << ") ";
     
     ret += temp*weight;
-    act.undo();
+    act.undo(); // Restore local situation for next loop iteration 
   }
-  
-  //if (act.todo == Action::Recruit) return -1000; 
-  //if (act.todo == Action::Mobilise) ret += 2;   
-  
+
+  //Logger::logStream(DebugAI) << "\n";
+
+  Logger::logStream(DebugAI) << "Points from " << act.describe() << " : " << ret << "\n"; 
   return ret; 
 }
 
-void Player::getAction (WarfareGame* dat) { 
+void recursiveStrategicValue (Vertex* vex, Line* source, double mult, double decay) {
+  // Adds strategic value to those neighbours of vex that aren't
+  // across source, then repeats with those vertices as the source. 
+
+  if (mult < 1) return;
+  assert(decay < 1); 
+  
+  for (Hex::LineIterator l = vex->beginLines(); l != vex->endLines(); ++l) {
+    if ((*l) == source) continue;
+    Vertex* other = (*l)->getOther(vex);
+    other->value.strategic *= mult;
+    recursiveStrategicValue(other, (*l), mult*decay, decay); 
+  }
+}
+
+void Player::getAction () { 
   std::vector<Action> candidates;
   Action best;
-  best.todo = Action::Nothing; 
-  double bestScore = 0; 
-
+  best.todo = Action::Nothing;
+  
+  double maxPopulation = 1; 
   for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
     (*vex)->getMirror()->value.clearFully();
   }
   for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
-    (*hex)->setMirrorState(); 
+    (*hex)->setMirrorState();
+    if ((*hex)->getFarm()) maxPopulation = std::max(maxPopulation, (*hex)->getFarm()->production()); 
   }
   for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
     (*vex)->setMirrorState(); 
   }
   for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) {
-    (*lin)->setMirrorState(); 
+    (*lin)->setMirrorState();
+    (*lin)->getMirror()->value.clearFully(); 
   }
-  
+ 
   std::queue<Vertex*> castleDistances; 
   for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) {
     Line* mir = (*lin)->getMirror();
-    mir->value.strategic = 1; 
+    mir->value.strategic *= 3; 
     if (0 == mir->getCastle()) continue;
     for (int i = 0; i < 2; ++i) {
       Vertex* vex = mir->getVtx(i);
       vex->value.distanceMap[mir->getCastle()->getOwner()] = 1;
-      //Logger::logStream(Logger::Debug) << vex->getName() << "1\n"; 
       castleDistances.push(vex);
-      if ((0 == vex->numUnits()) && (0 < mir->getOther(vex)->numUnits())) vex->value.strategic *= 3; 
-	
-      for (Hex::LineIterator l = vex->beginLines(); l != vex->endLines(); ++l) {
-	if ((*l) == mir) continue;
-	Vertex* ve2 = (*l)->getOther(vex);
-	for (Hex::LineIterator l2 = ve2->beginLines(); l2 != ve2->endLines(); ++l2) {
-	  if ((*l2) == (*l)) continue;
-	  (*l2)->value.strategic *= 3;
-	  for (int j = 0; j < 2; ++j) {
-	    (*l2)->getVtx(j)->value.strategic *= 1.5; 
-	  }
-	}
-      }
+      recursiveStrategicValue(vex, mir, 3, 0.5); 
     }
   }
 
@@ -319,7 +342,7 @@ void Player::getAction (WarfareGame* dat) {
 	if (!(*vex)) continue;
 	bool pushed = false; 
 	int oldVal = (*vex)->value.distanceMap[(*p).first];
-	//Logger::logStream(Logger::Debug) << (*p).first->getName() << " " << curr->getName() << " " << (*vex)->getName() << " " << newVal << " " << oldVal << "\n"; 
+	//Logger::logStream(DebugAI) << (*p).first->getName() << " " << curr->getName() << " " << (*vex)->getName() << " " << newVal << " " << oldVal << "\n"; 
 	if ((0 < oldVal) && (oldVal <= newVal)) continue;
 	(*vex)->value.distanceMap[(*p).first] = newVal;
 	if (!pushed) {
@@ -329,7 +352,20 @@ void Player::getAction (WarfareGame* dat) {
       }
     }
   }
+
+  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
+    Farmland* farm = (*hex)->getFarm();
+    double economicWeight = 0;
+    if (!farm) continue;
+    economicWeight = (1 + farm->production()) / maxPopulation;
+    for (Hex::VtxIterator vex = (*hex)->vexBegin(); vex != (*hex)->vexEnd(); ++vex) {
+      (*vex)->value.strategic *= economicWeight; 
+    }
+  }
+
   
+  double bestScore = evaluate(best); 
+
   for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
     if (0 == (*vex)->numUnits()) continue;
     MilUnit* unit = (*vex)->getUnit(0);
@@ -339,22 +375,10 @@ void Player::getAction (WarfareGame* dat) {
       curr.start = (*vex);
       curr.todo = Action::Attack; 
       curr.final = (*ngb);
-      double currScore = evaluate(curr, dat);
+      double currScore = evaluate(curr);
       if (currScore < bestScore) continue;
       best = curr;
       bestScore = currScore; 
-    }
-
-    if ((*vex)->getUnit(0)->weakened()) {
-      Action curr; 
-      curr.start = (*vex);
-      curr.final = (*vex);
-      curr.todo = Action::Reinforce;
-      double currScore = evaluate(curr, dat);
-      if (currScore >= bestScore) {
-	best = curr;
-	bestScore = currScore;
-      }
     }
 
     for (Hex::LineIterator lin = (*vex)->beginLines(); lin != (*vex)->endLines(); ++lin) {
@@ -369,7 +393,7 @@ void Player::getAction (WarfareGame* dat) {
 	else {
 	  curr.todo = Action::CallForSurrender; 
 	}
-	double currScore = evaluate(curr, dat);
+	double currScore = evaluate(curr);
 	if (currScore < bestScore) continue;
 	best = curr;
 	bestScore = currScore; 
@@ -378,13 +402,13 @@ void Player::getAction (WarfareGame* dat) {
 	// Possible construction.
 	curr.todo = Action::BuildFortress;
 	curr.source = (*lin)->oneHex();
-	double currScore = evaluate(curr, dat);
+	double currScore = evaluate(curr);
 	if (currScore > bestScore) {
 	  best = curr;
 	  bestScore = currScore; 
 	}
 	curr.source = (*lin)->twoHex();
-	currScore = evaluate(curr, dat);
+	currScore = evaluate(curr);
 	if (currScore > bestScore) {
 	  best = curr;
 	  bestScore = currScore; 
@@ -398,7 +422,7 @@ void Player::getAction (WarfareGame* dat) {
       curr.start = (*vex);
       curr.target = (*hex);
       curr.todo = Action::Devastate;
-      double currScore = evaluate(curr, dat);
+      double currScore = evaluate(curr);
       if (currScore < bestScore) continue;
       best = curr;
       bestScore = currScore; 
@@ -406,23 +430,30 @@ void Player::getAction (WarfareGame* dat) {
   }
 
   for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) {
-    if (!(*lin)->getCastle()) continue;
-    if ((*lin)->getCastle()->getOwner() != this) continue;
+    Castle* castle = (*lin)->getCastle();
+    if (!castle) continue;
+    if (castle->getOwner() != this) continue;
     Action curr;
     curr.begin = (*lin);
     curr.todo = Action::Recruit;
     curr.cease = (*lin);
-    double currScore = evaluate(curr, dat);
-    if (currScore > bestScore) {
-      best = curr;
-      bestScore = currScore;
-    }    
+
+    double currScore = 0;
+    for (MilUnitTemplate::Iterator ut = MilUnitTemplate::begin(); ut != MilUnitTemplate::end(); ++ut) {
+      curr.unitType = (*ut);
+      currScore = evaluate(curr);
+      //Logger::logStream(DebugAI) << "Score from " << (*ut)->name << " : " << currScore << "\n"; 
+      if (currScore > bestScore) {
+	best = curr;
+	bestScore = currScore;
+      }
+    }
 
     Action mob1;
     mob1.todo = Action::Mobilise;
     mob1.begin = (*lin);  // Otherwise begin becomes the mirror, and causes problems. 
     mob1.final = (*lin)->oneEnd();
-    currScore = evaluate(mob1, dat);
+    currScore = evaluate(mob1);
     if (currScore > bestScore) {
       best = mob1;
       bestScore = currScore;
@@ -431,28 +462,32 @@ void Player::getAction (WarfareGame* dat) {
     mob2.todo = Action::Mobilise;
     mob2.begin = (*lin);  
     mob2.final = (*lin)->twoEnd();
-    currScore = evaluate(mob2, dat);
+    currScore = evaluate(mob2);
     if (currScore > bestScore) {
       best = mob2;
       bestScore = currScore;
     }
   }
 
+  /*
   for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
     Action curr;
     curr.todo = Action::Repair;
     curr.target = (*hex);
-    double currScore = evaluate(curr, dat);
+    double currScore = evaluate(curr);
     if (currScore > bestScore) {
       best = curr;
       bestScore = currScore;
     }        
   }
+  */
 
   best.print = true;
   best.player = this; 
-  Logger::logStream(Logger::Debug) << "Executing " << best.describe() << " " << bestScore << "\n";
-  best.execute(dat);
+  Logger::logStream(DebugAI) << "Executing " << best.describe() << " " << bestScore << "\n";
+
+  //if (!(best.todo == Action::Devastate)) best.execute();
+  best.execute(); 
   finished(); 
 }
 

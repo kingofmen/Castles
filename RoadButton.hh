@@ -8,19 +8,19 @@ class RoadButton : public QPushButton {
   Q_OBJECT
 
 public:
-  RoadButton (Hex::Vertices s, Hex::Vertices f, QWidget* parent); 
-  RoadButton (Hex::Vertices s, QWidget* parent); 
+  RoadButton (Vertices s, Vertices f, QWidget* parent); 
+  RoadButton (Vertices s, QWidget* parent); 
   
 signals:
-  void buildRoad (Hex::Vertices start, Hex::Vertices final); 
-  void buildCastle (Hex::Vertices dere); 
+  void buildRoad (Vertices start, Vertices final); 
+  void buildCastle (Vertices dere); 
   
 private slots:
   void reEmitClicked (); 
   
 private:
-  Hex::Vertices start;
-  Hex::Vertices final;
+  Vertices start;
+  Vertices final;
 };
 
 #endif

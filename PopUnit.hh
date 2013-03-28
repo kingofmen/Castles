@@ -24,14 +24,9 @@ class PopUnit : public Unit {
 public: 
   PopUnit ();
   ~PopUnit (); 
-
-  double production () const;
-  double recruitsAvailable () const;
-  bool recruit (double number); 
-  double growth (Hex::TerrainType t);
   
 private:
-  double recruited; 
+
 };
 
 #endif 

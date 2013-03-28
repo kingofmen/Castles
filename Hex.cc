@@ -9,6 +9,7 @@
 #include <cassert>
 #include <cstdio>
 #include <algorithm> 
+#include "UtilityFunctions.hh" 
 
 std::set<Vertex*> Vertex::allVertices; 
 std::set<Line*> Line::allLines;
@@ -21,79 +22,95 @@ int abs(int x) {
 
 Vertex::Vertex ()
   : Mirrorable<Vertex>()
-  , supplies(0)
   , groupNum(0)
-  , fortLevel(0)
 {
-  neighbours.resize(Hex::NoVertex);
+  neighbours.resize(NoVertex);
   allVertices.insert(this); 
 }
 
 Vertex::Vertex (Vertex* other)
   : Mirrorable<Vertex>(other)
-  , supplies(other->supplies)
   , groupNum(other->groupNum)
-  , fortLevel(other->fortLevel)
 {
-  neighbours.resize(Hex::NoVertex);
+  neighbours.resize(NoVertex);
 }
 
 Vertex::~Vertex () {
   for (std::vector<MilUnit*>::iterator u = units.begin(); u != units.end(); ++u) {
     (*u)->destroyIfReal();
   }
-  units.clear(); 
+  units.clear();
+  allVertices.erase(this); 
 }
 
+
+void Hex::createHex (int x, int y, TerrainType t) {
+  allHexes.insert(new Hex(x, y, t));
+}
 
 Hex::Hex (int x, int y, TerrainType t)
   : Mirrorable<Hex>()
   , pos(x, y)
-  , popGrowth(0)
   , myType(t)
   , owner(0)
-  , devastation(0)
+  , farms(0)
 {
   initialise();
-  allHexes.insert(this);
 
   mirror->pos.first = x;
   mirror->pos.second = y;
-  mirror->popGrowth = popGrowth;
   mirror->myType = myType;
   mirror->owner = owner;
-  mirror->devastation = devastation; 
-  mirror->initialise(); 
+  mirror->initialise();
+
+  graphicsInfo = new HexGraphicsInfo(this); 
 }
 
 Hex::Hex (Hex* other)
   : Mirrorable<Hex>(other)
   , pos(0, 0) // Mirror constructor gets called before main initialise list is finished!
-  , popGrowth(0)
   , myType(other->myType)
   , owner(0)
-  , devastation(0)
+  , farms(0)
 {}
 
 void Hex::initialise () {
   vertices.resize(NoVertex);
-  neighbours.resize(None);
-  lines.resize(None);
+  neighbours.resize(NoDirection);
+  lines.resize(NoDirection);
   sprintf(stringbuffer, "(%i, %i) %s", pos.first, pos.second, isMirror() ? "(M)" : "");
   setName(stringbuffer);
 }
 
-Hex::~Hex () {}
+Hex::~Hex () {
+  allHexes.erase(this); 
+}
 
-Hex::TerrainType Hex::getType (char typ) {
+Hex* Hex::getHex (int x, int y) {
+  for (Iterator i = begin(); i != end(); ++i) { 
+    if ((*i)->pos.first != x) continue;
+    if ((*i)->pos.second != y) continue;
+    return (*i); 
+  }
+  return 0; 
+}
+
+TerrainType Hex::getType (char typ) {
   switch (typ) {
   case 'o': return Ocean;
   case 'm': return Mountain;
   case 'f': return Forest;
   case 'p': return Plain;
   case 'h': return Hill;
-  default: return Unknown; 
+  default: return NoTerrain; 
   }
+}
+
+int Hex::recruit (Player* forhim, MilUnitTemplate const* const recruitType, MilUnit* target, Outcome out) {
+  if (forhim != getOwner()) return 0;
+  if (!farms) return 0;
+  farms->increaseTradition(recruitType); 
+  return farms->produceRecruits(recruitType, target, out); 
 }
 
 int Hex::numMovesTo (Hex const * const dat) const {
@@ -109,17 +126,17 @@ int Hex::numMovesTo (Hex const * const dat) const {
   return abs(xdist) + std::max(0, abs(ydist) - maxYchange); 
 }
 
-Hex::Direction Hex::getDirection (std::string n) {
+Direction Hex::getDirection (std::string n) {
   if (n == "North") return North;
   if (n == "South") return South;
   if (n == "NorthEast") return NorthEast;
   if (n == "NorthWest") return NorthWest;
   if (n == "SouthEast") return SouthEast;
   if (n == "SouthWest") return SouthWest;
-  return None; 
+  return NoDirection; 
 }
 
-Hex::Vertices Hex::getVertex (std::string n) {
+Vertices Hex::getVertex (std::string n) {
   if (n == "UpLeft") return LeftUp;
   if (n == "UpRight") return RightUp;
   if (n == "Left") return Left;
@@ -137,7 +154,7 @@ std::string Hex::getDirectionName (Direction dat) {
   case South: return std::string("South");
   case SouthWest: return std::string("SouthWest");
   case SouthEast: return std::string("SouthEast");
-  case None:
+  case NoDirection:
   default:
     return std::string("None");
   }
@@ -151,7 +168,7 @@ std::string Hex::getVertexName (Vertices dat) {
   case Right: return std::string("Right");
   case LeftDown: return std::string("DownLeft");
   case RightDown: return std::string("DownRight");
-  case None:
+  case NoDirection:
   default:
     return std::string("None");
   }
@@ -160,7 +177,7 @@ std::string Hex::getVertexName (Vertices dat) {
 std::pair<int, int> Hex::getPos (Direction dat) const {
   std::pair<int, int> ret = getPos(); 
   switch (dat) {
-  case None:
+  case NoDirection:
   default:
     return ret;
   case NorthWest:
@@ -195,13 +212,6 @@ void Hex::setNeighbour (Direction d, Hex* dat) {
   if (real == this) mirror->setNeighbour(d, dat->getMirror()); 
 }
 
-void Vertex::buildRoad (Vertex* target) {
-  if (0 == roads[target]) roads[target] = 1;
-  else roads[target]++;
-
-  target->roads[this] = roads[target]; 
-}
-
 void Hex::createVertices () {
   // LeftUp vertex 
   if ((neighbours[North]) && (neighbours[North]->vertices[LeftDown])) vertices[LeftUp] = neighbours[North]->vertices[LeftDown];
@@ -228,7 +238,10 @@ void Hex::createVertices () {
   else if ((neighbours[NorthEast]) && (neighbours[NorthEast]->vertices[Left])) vertices[RightUp] = neighbours[NorthEast]->vertices[Left];
 
   for (int i = LeftUp; i < NoVertex; ++i) {
-    if (!vertices[i]) vertices[i] = new Vertex();
+    if (!vertices[i]) {
+      vertices[i] = new Vertex();
+      vertices[i]->graphicsInfo = new VertexGraphicsInfo(vertices[i], getGraphicsInfo(), convertToVertex(i)); 
+    }
     vertices[i]->hexes.push_back(this); 
   }
 
@@ -263,7 +276,7 @@ void Hex::createVertices () {
   }
 }
 
-void Hex::setLine (Hex::Direction dir, Line* l) {
+void Hex::setLine (Direction dir, Line* l) {
   if (l->getName() == "") {
     sprintf(stringbuffer, "{%i, %i, %s}", pos.first, pos.second, getDirectionName(dir).c_str()); 
     l->setName(stringbuffer);
@@ -281,12 +294,13 @@ void Vertex::createLines () {
     Hex* hex1 = 0;
     Hex* hex2 = 0;
     for (std::vector<Hex*>::iterator hex = hexes.begin(); hex != hexes.end(); ++hex) {
-      if ((*hex)->getDirection(*vex) == Hex::NoVertex) continue;
+      if ((*hex)->getDirection(*vex) == NoVertex) continue;
       if (hex1) hex2 = (*hex);
       else hex1 = (*hex); 
     }
 
-    assert(hex1); 
+    assert(hex1);
+    
     Line* line = new Line(this, (*vex), hex1, hex2);
     lines.push_back(line);
     mirror->lines.push_back(line->getMirror());
@@ -295,76 +309,76 @@ void Vertex::createLines () {
     if ((*vex)->mirror) (*vex)->mirror->lines.push_back(line->getMirror()); 
 
     switch (hex1->getDirection(this)) {
-    case Hex::Right:
-      if (Hex::RightUp == hex1->getDirection(*vex)) {
-	hex1->setLine(Hex::NorthEast, line);
-	if (hex2) hex2->setLine(Hex::SouthWest, line);
+    case Right:
+      if (RightUp == hex1->getDirection(*vex)) {
+	hex1->setLine(NorthEast, line);
+	if (hex2) hex2->setLine(SouthWest, line);
       }
       else {
-	hex1->setLine(Hex::SouthEast, line);
-	if (hex2) hex2->setLine(Hex::NorthWest, line);
+	hex1->setLine(SouthEast, line);
+	if (hex2) hex2->setLine(NorthWest, line);
       }
       break;
-    case Hex::LeftUp:
-      if (Hex::RightUp == hex1->getDirection(*vex)) {
-	hex1->setLine(Hex::North, line);
-	if (hex2) hex2->setLine(Hex::South, line);
+    case LeftUp:
+      if (RightUp == hex1->getDirection(*vex)) {
+	hex1->setLine(North, line);
+	if (hex2) hex2->setLine(South, line);
       }
       else {
-	hex1->setLine(Hex::NorthWest, line);
-	if (hex2) hex2->setLine(Hex::SouthEast, line);
+	hex1->setLine(NorthWest, line);
+	if (hex2) hex2->setLine(SouthEast, line);
       }
       break;
-    case Hex::RightUp:
-      if (Hex::LeftUp == hex1->getDirection(*vex)) {
-	hex1->setLine(Hex::North, line);
-	if (hex2) hex2->setLine(Hex::South, line);
+    case RightUp:
+      if (LeftUp == hex1->getDirection(*vex)) {
+	hex1->setLine(North, line);
+	if (hex2) hex2->setLine(South, line);
       }
       else {
-	hex1->setLine(Hex::NorthEast, line);
-	if (hex2) hex2->setLine(Hex::SouthWest, line);
+	hex1->setLine(NorthEast, line);
+	if (hex2) hex2->setLine(SouthWest, line);
       }
       break;
-    case Hex::LeftDown:
-      if (Hex::Left == hex1->getDirection(*vex)) {
-	hex1->setLine(Hex::SouthWest, line);
-	if (hex2) hex2->setLine(Hex::NorthEast, line);
+    case LeftDown:
+      if (Left == hex1->getDirection(*vex)) {
+	hex1->setLine(SouthWest, line);
+	if (hex2) hex2->setLine(NorthEast, line);
       }
       else {
-	hex1->setLine(Hex::South, line);
-	if (hex2) hex2->setLine(Hex::North, line);
+	hex1->setLine(South, line);
+	if (hex2) hex2->setLine(North, line);
       }
       break; 
-    case Hex::RightDown:
-      if (Hex::LeftDown == hex1->getDirection(*vex)) {
-	hex1->setLine(Hex::South, line);
-	if (hex2) hex2->setLine(Hex::North, line);
+    case RightDown:
+      if (LeftDown == hex1->getDirection(*vex)) {
+	hex1->setLine(South, line);
+	if (hex2) hex2->setLine(North, line);
       }
       else {
-	hex1->setLine(Hex::SouthEast, line);
-	if (hex2) hex2->setLine(Hex::NorthWest, line);
+	hex1->setLine(SouthEast, line);
+	if (hex2) hex2->setLine(NorthWest, line);
       }
       break;
-    case Hex::Left:
-      if (Hex::LeftUp == hex1->getDirection(*vex)) {
-	hex1->setLine(Hex::NorthWest, line);
-	if (hex2) hex2->setLine(Hex::SouthEast, line);
+    case Left:
+      if (LeftUp == hex1->getDirection(*vex)) {
+	hex1->setLine(NorthWest, line);
+	if (hex2) hex2->setLine(SouthEast, line);
       }
       else {
-	hex1->setLine(Hex::SouthWest, line);
-	if (hex2) hex2->setLine(Hex::NorthEast, line);
+	hex1->setLine(SouthWest, line);
+	if (hex2) hex2->setLine(NorthEast, line);
       }
       break;
-    case Hex::NoVertex:
+    case NoVertex:
     default:
       break; 
     }
   }
 }
 /*
-Line* Hex::getLine (Hex::Direction dir) {
+Line* Hex::getLine (Direction dir) {
   switch (dir) {
-  case None:      return 0;
+  case NoDirection:      return 0;
   default:        return 0;
   case North:        return getVertex(LeftUp)->getLine(getVertex(RightUp));
   case NorthWest:    return getVertex(LeftUp)->getLine(getVertex(Left));
@@ -390,7 +404,7 @@ Hex* Line::otherHex (Hex* dat) {
   return hex1; 
 }
 
-Hex::Direction Hex::oppositeDirection (Hex::Direction dat) {
+Direction Hex::oppositeDirection (Direction dat) {
   switch (dat) {
   case NorthWest: return SouthEast;
   case NorthEast: return SouthWest;
@@ -398,13 +412,13 @@ Hex::Direction Hex::oppositeDirection (Hex::Direction dat) {
   case South: return North;
   case SouthEast: return NorthWest;
   case SouthWest: return NorthEast; 
-  case None: return None; 
-  default: return None; 
+  case NoDirection: return NoDirection; 
+  default: return NoDirection; 
   }
-  return None; 
+  return NoDirection; 
 }
 
-Hex::Vertices Hex::oppositeVertex (Hex::Vertices dat) {
+Vertices Hex::oppositeVertex (Vertices dat) {
   switch (dat) { 
   case LeftUp:    return RightDown;
   case RightUp:   return LeftDown;
@@ -418,7 +432,7 @@ Hex::Vertices Hex::oppositeVertex (Hex::Vertices dat) {
   return NoVertex; 
 }
 
-Hex::Direction Hex::getDirection (Line const * const dat) const {
+Direction Hex::getDirection (Line const * const dat) const {
   switch (getDirection(dat->oneEnd())) {
   case LeftUp:    if (Left == getDirection(dat->twoEnd())) return NorthWest; return North; 
   case RightUp:   if (Right == getDirection(dat->twoEnd())) return NorthEast; return North; 
@@ -426,10 +440,10 @@ Hex::Direction Hex::getDirection (Line const * const dat) const {
   case Right:     if (RightUp == getDirection(dat->twoEnd())) return NorthEast; return SouthEast;
   case RightDown: if (LeftDown == getDirection(dat->twoEnd())) return South; return SouthEast;
   case LeftDown:  if (RightDown == getDirection(dat->twoEnd())) return South; return SouthWest; 
-  case NoVertex: return None; 
-  default: return None; 
+  case NoVertex: return NoDirection; 
+  default: return NoDirection; 
   }
-  return None; 
+  return NoDirection; 
 }
 
 Vertex* Line::getOther (Vertex* vex) {
@@ -465,14 +479,14 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
     pos.first--;
     break;
     
-  case None:
+  case NoDirection:
   default:
     break; 
   }
   return pos; 
 }
 
-Hex::Direction Hex::convertToDirection (int n){
+Direction Hex::convertToDirection (int n){
   switch (n) {
   case NorthWest: return NorthWest;
   case NorthEast: return NorthEast;
@@ -480,52 +494,12 @@ Hex::Direction Hex::convertToDirection (int n){
   case SouthEast: return SouthEast;
   case North: return North;
   case South: return South; 
-  default: return None; 
+  default: return NoDirection; 
   }
 }
 
 void Hex::endOfTurn () {
-
-}
-
-unsigned int Hex::maxPopulation () const {
-  switch (myType) {
-  case Hex::Mountain: return 10;
-  case Hex::Hill:     return 20;
-  case Hex::Plain:    return 40;
-  case Hex::Forest:   return 30;
-  case Hex::Ocean:
-  case Hex::Unknown:
-  default:
-    return 0;
-  }
-}
-
-void Hex::production () {
-  if (!owner) return;
-  double supplies = 0;
-  double prodFactor = 1;
-  switch (myType) {
-  case Hex::Mountain: prodFactor = 0.75; break;
-  case Hex::Hill:     prodFactor = 0.85; break;
-  case Hex::Plain:    prodFactor = 1.00; break;
-  case Hex::Forest:   prodFactor = 0.90; break;
-  case Hex::Ocean:
-  case Hex::Unknown:
-  default:
-    prodFactor = 0; 
-  }
-  
-  for (std::vector<PopUnit*>::iterator p = units.begin(); p != units.end(); ++p) {
-    supplies += (*p)->production() * prodFactor; 
-  }
-  assert(!std::isnan(supplies)); 
-  supplies /= vertices.size(); 
-  assert(!std::isnan(supplies)); 
-  for (std::vector<Vertex*>::iterator vex = vertices.begin(); vex != vertices.end(); ++vex) {
-    //if (!(*vex)->canTakeSupplies(owner)) continue;
-    (*vex)->addSupplies(supplies); 
-  }
+  if (farms) farms->endOfTurn();
 }
 
 std::string Hex::toString () const {
@@ -534,7 +508,7 @@ std::string Hex::toString () const {
   return std::string(buffer); 
 }
 
-Hex::Vertices Hex::convertToVertex (int i) {
+Vertices Hex::convertToVertex (int i) {
   switch (i) {
   case LeftUp: return LeftUp;
   case RightUp: return RightUp;
@@ -553,26 +527,26 @@ Vertex* Hex::getVertex (int i) {
   return vertices[i]; 
 }
 
-Hex::Vertices Hex::getDirection (Vertex const * const ofdis) const {
+Vertices Hex::getDirection (Vertex const * const ofdis) const {
   for (int i = LeftUp; i < NoVertex; ++i) {
     if (vertices[i] == ofdis) return convertToVertex(i); 
   }
   return NoVertex; 
 }
 
-Hex::Direction Hex::getDirection (Hex const * const dat) const {
-  for (int i = NorthWest; i < None; ++i) {
+Direction Hex::getDirection (Hex const * const dat) const {
+  for (int i = NorthWest; i < NoDirection; ++i) {
     if (neighbours[i] == dat) return convertToDirection(i);
   }
-  return None; 
+  return NoDirection; 
 }
 
-Hex::Vertices Vertex::getDirection (Vertex const * const ofdis) const {
-  for (int i = Hex::LeftUp; i < Hex::NoVertex; ++i) {
+Vertices Vertex::getDirection (Vertex const * const ofdis) const {
+  for (int i = LeftUp; i < NoVertex; ++i) {
     if (neighbours[i] == ofdis) return Hex::convertToVertex(i);
   }
   
-  return Hex::NoVertex; 
+  return NoVertex; 
 }
 
 void Hex::setOwner (Player* p) {
@@ -582,277 +556,32 @@ void Hex::setOwner (Player* p) {
   }
 }
 
-MilUnit* Hex::mobilise () {
-  double available = 0; 
-  for (PopIterator p = units.begin(); p != units.end(); ++p) {
-    available += (*p)->recruitsAvailable(); 
-  }
-  if (available < 1000) return 0;
-  for (PopIterator p = units.begin(); p != units.end(); ++p) {
-    (*p)->recruit(1000*(*p)->recruitsAvailable()/available);
-  }
-  MilUnit* ret = new MilUnit();
-  ret->setOwner(getOwner()); 
-  return ret;
-}
-
 void Vertex::addUnit (MilUnit* dat) {
   units.push_back(dat);
-}
-
-double Vertex::supplyNeeded () const {
-  return 0; 
+  dat->setLocation(this); 
 }
 
 void Vertex::endOfTurn () {
 
 }
 
-bool Vertex::canTakeSupplies (Player* p) const {
-  std::set<Player*> owners; 
-  if ((0 < units.size()) && (units[0]->getOwner() == p)) return true; 
-
-  for (std::vector<Hex*>::const_iterator hex = hexes.begin(); hex != hexes.end(); ++hex) {
-    Player* curr = (*hex)->getOwner();
-    if (!curr) continue;
-    if (curr == p) continue;
-    return false; 
-  }
-
-  return true; 
+void Vertex::getNeighbours (vector<Geography*>& ret) {
+  for (Hex::LineIterator l = beginLines(); l != endLines(); ++l) if ((*l) && (!(*l)->closed)) ret.push_back(*l);
 }
 
-double Vertex::resistance (Player* p, Vertex* n) {
-  for (std::vector<Vertex*>::const_iterator vex = neighbours.begin(); vex != neighbours.end(); ++vex) {
-    if (n != (*vex)) continue;
-    double ret = 1000 + (flow[*vex] + tempFlow[*vex])*0.001;
-    bool bridge = false; 
-    if (0 < n->numUnits()) {
-      if (n->getUnit(0)->getOwner() != p) ret *= pow(1 + n->numUnits(), 2);
-      else bridge = true; 
-    }
-    if (!bridge) {
-      int numOwnerHexes = 0;
-      for (std::vector<Hex*>::iterator hex = hexes.begin(); hex != hexes.end(); ++hex) {
-	if (std::find((*vex)->hexes.begin(), (*vex)->hexes.end(), (*hex)) == (*vex)->hexes.end()) continue;
-	if (p != (*hex)->getOwner()) continue;
-	numOwnerHexes++; 
-      }
-
-      switch (numOwnerHexes) {
-      case 2: ret /= 3; break; 
-      case 0: ret *= 1e10; break;
-      case 1: 
-      default:
-	break; 
-      }
-    }
-
-    ret /= (1 + 0.5*roads[n]); 
-    return ret; 
-  }
-  return 1e20; 
+double Geography::heuristicDistance (Geography* other) const {
+  return sqrt(pow(position.first - other->position.first, 2) + pow(position.second - other->position.second, 2));
 }
 
-double Vertex::potential (Player* p) {
-  assert(!std::isnan(supplies));
+Geography::~Geography () {} 
 
-  bool relevant = false;
-  if ((0 < numUnits()) && (getUnit(0)->getOwner() == p)) relevant = true;
-  for (std::vector<Hex*>::iterator hex = hexes.begin(); hex != hexes.end(); ++hex) {
-    if (!(*hex)) continue;
-    if ((*hex)->getOwner() == p) relevant = true; 
-  }
-  if ((0 < numUnits()) && (getUnit(0)->getOwner() != p)) relevant = false;
-  
-  if (!relevant) return 0; 
-  double ret = supplies; 
-  ret -= supplyNeeded(); 
-  for (std::map<Vertex*, double>::iterator f = flow.begin(); f != flow.end(); ++f) {
-    ret -= (*f).second; 
-  }
-  
-  if (std::isnan(ret)) {
-    Logger::logStream(Logger::Debug) << "Potential of vertex "
-				     << toString() << " "
-				     << "is NaN.\n";
-    
-    Logger::logStream(Logger::Debug) << "Supplies: " << supplies << "\n";
-    if ((0 < numUnits()) && (getUnit(0)->getOwner() == p)) Logger::logStream(Logger::Debug) << "Units: " << numUnits() << "\n";
-    for (std::map<Vertex*, double>::iterator f = flow.begin(); f != flow.end(); ++f) {
-      Logger::logStream(Logger::Debug) << "Flow: " << (*f).second << "\n"; 
-    }
-  }
-
-  assert(!std::isnan(ret)); 
-  
-  return ret; 
+double Vertex::traversalCost (Player* side) const {
+  return 1; 
 }
 
-void Vertex::makeFlow (Player* p) {
-  double pot = potential(p);
-  if (pot < 1) return; 
-  double totalInvResistance = 0;
-  double totalFlow = 0;
-  for (std::vector<Vertex*>::iterator vex = neighbours.begin(); vex != neighbours.end(); ++vex) {
-    if (0 == (*vex)) continue;
-    if (groupNum != (*vex)->groupNum) continue;
-    double otherPot = (*vex)->potential(p);
-    if (otherPot > pot) continue; 
-    totalInvResistance += 1/resistance(p, (*vex));
-    assert(!std::isnan(totalInvResistance)); 
-    totalFlow += (pot - otherPot); 
-  }
-  if (totalFlow < 1) return; 
-
-  assert(!std::isnan(totalFlow));
-  
-  for (std::vector<Vertex*>::iterator vex = neighbours.begin(); vex != neighbours.end(); ++vex) {
-    if (0 == (*vex)) continue;
-    if (groupNum != (*vex)->groupNum) continue;
-    double otherPot = (*vex)->potential(p);
-    if (otherPot > pot) continue;       
-    double flo = (pot - otherPot) * (totalFlow > pot ? (pot/totalFlow) : (totalFlow/pot)) / totalInvResistance;
-    flo /= resistance(p, (*vex));
-    assert(!std::isnan(flo)); 
-    tempFlow[*vex] = flo; 
-  }
-}
-
-void Vertex::reconcile () {
-  for (std::vector<Vertex*>::iterator vex = neighbours.begin(); vex != neighbours.end(); ++vex) {
-    if (0 == (*vex)) continue;
-    flow[*vex] += tempFlow[*vex];
-    (*vex)->flow[this] -= tempFlow[*vex]; 
-  }
-  tempFlow.clear(); 
-}
-
-double Vertex::deliverSupplies (Player* p) {
-  double ret = 0; 
-  for (std::vector<Vertex*>::iterator vex = neighbours.begin(); vex != neighbours.end(); ++vex) {
-    if (0 == (*vex)) continue;
-    if (flow[*vex] < 0) continue;
-    double del = std::min(supplies, flow[*vex]);
-    flow[*vex] -= del;
-    double frictionLoss = 0.00025*resistance(p, (*vex))*del;
-    del -= frictionLoss; 
-    assert(!std::isnan(del)); 
-    (*vex)->addSupplies(del);
-    delivery[*vex] += del;
-    ret += del; 
-    if (fabs(del) > 1) Logger::logStream(Logger::Debug) << toString() << " delivered "
-							<< del << " to "
-							<< (*vex)->toString()
-							<< " with friction loss "
-							<< frictionLoss
-							<< "\n"; 
-  }
-  return ret; 
-}
-
-void Vertex::seedGroup (Player* p) {
-  std::vector<Vertex*> recurseOnThese;
-  for (std::vector<Vertex*>::iterator vex = neighbours.begin(); vex != neighbours.end(); ++vex) {
-    if (0 == (*vex)) continue;
-    double res = resistance(p, (*vex));
-    if (res > 5e4) continue;
-    if ((*vex)->groupNum == groupNum) continue; 
-    assert((*vex)->groupNum == -1); 
-    (*vex)->groupNum = groupNum;
-    recurseOnThese.push_back(*vex); 
-  }
-
-  for (std::vector<Vertex*>::iterator vex = recurseOnThese.begin(); vex != recurseOnThese.end(); ++vex) {
-    (*vex)->seedGroup(p); 
-  }
-}
-
-void Vertex::clearForLogistics () {
-  for (Iterator vex = allVertices.begin(); vex != allVertices.end(); ++vex) {
-    (*vex)->delivery.clear();
-    (*vex)->flow.clear();
-    (*vex)->tempFlow.clear();    
-  }
-}
-
-void Vertex::logistics (Player* p) {
-  Logger::logStream(Logger::Debug) << "Entering logistics for "
-				   << p->getName() 
-				   << "\n";
-  for (Iterator vex = allVertices.begin(); vex != allVertices.end(); ++vex) {
-    (*vex)->flow.clear();
-    (*vex)->tempFlow.clear();    
-    (*vex)->groupNum = -1; 
-  }
-
-  int numGroups = 0; 
-  for (Iterator vex = allVertices.begin(); vex != allVertices.end(); ++vex) {
-    if (-1 != (*vex)->groupNum) continue;
-    double pot = (*vex)->potential(p);
-    if (fabs(pot) < 5) continue;
-    (*vex)->groupNum = numGroups++;
-    (*vex)->seedGroup(p); 
-  }
- 
-  static const double tolerance = 100;
-  for (int i = 0; i < numGroups; ++i) {
-    double error = 200;
-    int loopCount = 0;
-
-    while (error > tolerance) {
-      if (loopCount++ > 50) {
-	Logger::logStream(Logger::Debug) << "Force-breaking flow loop\n";
-	break; 
-      }
-      
-      double maxPot = -1e20;
-      double minPot = 1e20;  
-      for (Iterator vex = allVertices.begin(); vex != allVertices.end(); ++vex) {
-	if ((*vex)->groupNum != i) continue; 
-	double pot = (*vex)->potential(p);
-	Logger::logStream(Logger::Debug) << (*vex)->toString() << " potential is " << pot << " " << i << "\n";
-	if (pot > maxPot) maxPot = pot;
-	if (pot < minPot) minPot = pot; 
-      }
-      error = (maxPot - minPot); 
-      Logger::logStream(Logger::Debug) << "Error is " << error << " " << minPot << " " << maxPot << "\n";
-      assert(!std::isnan(error));
-      
-      for (Iterator vex = allVertices.begin(); vex != allVertices.end(); ++vex) {
-	if ((*vex)->groupNum != i) continue; 
-	(*vex)->makeFlow(p); 
-      }
-      
-      for (Iterator vex = allVertices.begin(); vex != allVertices.end(); ++vex) {
-	if ((*vex)->groupNum != i) continue; 
-	(*vex)->reconcile(); 
-      }
-    }
-
-    for (Iterator vex = allVertices.begin(); vex != allVertices.end(); ++vex) {
-      if ((*vex)->groupNum != i) continue; 
-      for (std::map<Vertex*, double>::iterator flo = (*vex)->flow.begin(); flo != (*vex)->flow.end(); ++flo) {
-	if ((*flo).second < 0) continue;
-	double loss = (*vex)->resistance(p, (*flo).first);
-	loss *= pow((*flo).second, 2);
-	loss *= 1e-11;
-	if (loss > 0.5*(*flo).second) loss = 0.5*(*flo).second;
-	(*vex)->flow[(*flo).first] = (*flo).second - loss; 
-      }
-    }
-    
-    error = 1000;
-    loopCount = 0; 
-    while (error > 10) {
-      error = 0;
-      assert(loopCount++ < 100); 
-      for (Iterator vex = allVertices.begin(); vex != allVertices.end(); ++vex) {
-	if ((*vex)->groupNum != i) continue; 
-	error += (*vex)->deliverSupplies(p); 
-      }
-    }
-  }
+double Vertex::traversalRisk (Player* side) const {
+  if ((0 < units.size()) && (units[0]->getOwner() != side)) return 0.99;
+  return 0.01; 
 }
 
 QString Vertex::toString () {
@@ -864,42 +593,16 @@ QString Vertex::toString () {
   return QString("Floating vertex"); 
 }
 
-void Vertex::addSupplies (double s) {
-  assert(!std::isnan(s));
-  supplies += s;
-  assert(!std::isnan(supplies));
-}
-
-double Vertex::getDefenseModifier () const {
-  double ret = 1 + 2*fortLevel;
-  for (std::vector<Hex*>::const_iterator hex = hexes.begin(); hex != hexes.end(); ++hex) {
-    switch ((*hex)->getType()) {
-    case Hex::Mountain: ret *= 1.10; break;
-    case Hex::Hill:     ret *= 1.05; break;
-    case Hex::Plain:    ret *= 1.00; break;
-    case Hex::Forest:   ret *= 1.02; break;
-    case Hex::Ocean:
-    case Hex::Unknown:
-    default:
-      return 1;
-    }
-  }
-  return ret;
-}
-
-void Vertex::buildCastle () {
-  fortLevel++; 
-}
-
 bool Vertex::isLand () const {
   for (std::vector<Hex*>::const_iterator hex = hexes.begin(); hex != hexes.end(); ++hex) {
-    if (Hex::Ocean == (*hex)->getType()) continue;
-    if (Hex::Unknown == (*hex)->getType()) continue;
+    if (Ocean == (*hex)->getType()) continue;
+    if (NoTerrain == (*hex)->getType()) continue;
     return true; 
   }
   return false; 
 }
 
+// Real constructor 
 Line::Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo)
   : Mirrorable<Line>()
   , vex1(one)
@@ -908,15 +611,21 @@ Line::Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo)
   , hex2(thwo)
   , castle(0)
 {
-  if (mirror) {
-    if (vex1) mirror->vex1 = vex1->getMirror();
-    if (vex2) mirror->vex2 = vex2->getMirror();
-    if (hex1) mirror->hex1 = hex1->getMirror();
-    if (hex2) mirror->hex2 = hex2->getMirror();
-  }
-  allLines.insert(this); 
+  assert(vex1);
+  assert(vex2);
+  assert(hex1);
+  mirror->vex1 = vex1->getMirror();
+  mirror->vex2 = vex2->getMirror();
+  mirror->hex1 = hex1->getMirror();
+  if (hex2) mirror->hex2 = hex2->getMirror();
+  position.first = 0.5*(vex1->position.first + vex2->position.first);
+  position.second = 0.5*(vex1->position.second + vex2->position.second);
+
+  allLines.insert(this);
+  graphicsInfo = new LineGraphicsInfo(this, vex1->getDirection(vex2)); 
 }
 
+// Mirror constructor
 Line::Line (Line* other)
   : Mirrorable<Line>(other)
   , vex1(0)
@@ -928,6 +637,8 @@ Line::Line (Line* other)
     
 Line::~Line () {
   if (castle) castle->destroyIfReal();
+  delete graphicsInfo; 
+  allLines.erase(this); 
 }
 
 void Vertex::forceRetreat (Castle*& c, Vertex*& v) {
@@ -935,11 +646,9 @@ void Vertex::forceRetreat (Castle*& c, Vertex*& v) {
   c = NULL;
   v = NULL;
   if (!unit) return; 
-  unit->weaken(); 
   for (std::vector<Line*>::iterator lin = lines.begin(); lin != lines.end(); ++lin) {
     if (!(*lin)->getCastle()) continue;
     if ((*lin)->getCastle()->getOwner() != unit->getOwner()) continue;
-    if ((*lin)->getCastle()->numGarrison() >= Castle::maxGarrison) continue;
     (*lin)->getCastle()->addGarrison(unit);
     c = (*lin)->getCastle(); 
     return; 
@@ -957,8 +666,7 @@ void Vertex::forceRetreat (Castle*& c, Vertex*& v) {
 }
 
 void Line::addCastle (Castle* dat) {
-  
-  
+  if (isReal()) graphicsInfo->addCastle(dat->getSupport()->getGraphicsInfo());
   castle = dat;
 }
 
@@ -984,8 +692,159 @@ void Vertex::setMirrorState () {
 
 void Hex::setMirrorState () {
   mirror->owner = owner;
-  mirror->devastation = devastation; 
+
+  if (farms) {
+    farms->setMirrorState();
+    mirror->farms = farms->Mirrorable<Farmland>::getMirror();
+  }
+  else {
+    if (mirror->farms) delete mirror->farms->Mirrorable<Farmland>::getReal(); 
+    mirror->farms = 0; 
+  }  
 }
+
+bool Hex::colonise (Line* lin, MilUnit* unit, Outcome out) {
+  // Sanity checks 
+  if (!unit) return false;
+  if (getOwner()) return false;
+  if (lin->getCastle()) return false;
+
+  //Logger::logStream(Logger::Debug) << "Trying to colonise " << getName() << " " << farms << " "
+  //<< farms->Mirrorable<Farmland>::getReal() << " " << farms->Mirrorable<Farmland>::getMirror() << " "
+  //<< "\n";
+  
+  bool success = true;
+  if (farms) {
+    MilUnit* defenders = farms->raiseMilitia();
+    if (defenders) {
+      if (isReal()) {
+	Logger::logStream(Logger::Game) << "Subjugation battle with dieroll " << outcomeToString(out) << ":\n"
+					<< unit->getGraphicsInfo()->strengthString("  ")
+					<< "versus\n"
+					<< defenders->getGraphicsInfo()->strengthString("  ");
+      }
+      BattleResult outcome = unit->attack(defenders, out);
+      success = (VictoGlory == outcome.attackerSuccess);
+      farms->demobMilitia();
+      if (isReal()) {
+	battleReport(Logger::logStream(Logger::Game), outcome);
+	/*
+	Logger::logStream(Logger::Game) << "Strengths: "
+					<< outcome.attackerInfo.shock << " " << outcome.attackerInfo.range << " : "
+					<< outcome.attackerInfo.mobRatio   << " : "
+					<< outcome.defenderInfo.shock << " " << outcome.defenderInfo.range << "\n"
+					<< "Efficiencies: "
+					<< outcome.attackerInfo.efficiency << " "
+					<< outcome.attackerInfo.fightingFraction << " "
+					<< outcome.attackerInfo.decayConstant << " : "
+					<< outcome.defenderInfo.efficiency << " "
+					<< outcome.defenderInfo.fightingFraction << " "
+					<< outcome.defenderInfo.decayConstant << "\n";
+	sprintf(strbuffer, "%.1f%% shock, %.1f%% fire", 100*outcome.shockPercent, 100*outcome.rangePercent);
+	Logger::logStream(Logger::Game) << "Fought with: " << strbuffer << "\n"
+					<< "Casualties: " << outcome.attackerInfo.casualties << " / " << outcome.defenderInfo.casualties << "\n"
+					<< "Result: " << (VictoGlory == outcome.attackerSuccess ? "VictoGlory!" : "Failure.") << "\n";
+	*/
+      }
+    }
+  }
+
+  if (!success) return false;
+  
+  Castle* castle = new Castle(this, lin); 
+  castle->setOwner(unit->getOwner());
+  setOwner(unit->getOwner()); 
+  addContent(lin, castle, &Line::addCastle);
+  return true;  
+}
+
+void Hex::raid (MilUnit* raiders, Outcome out) {
+  if (!farms) return;
+  MilUnit* defenders = farms->raiseMilitia();
+  defenders->setExtMod(3.0);
+
+  if (isReal()) Logger::logStream(Logger::Game) << "Raiding " << getName() << " with dieroll " << outcomeToString(out) << "\n"; 
+  
+  double acceptableCasualties = 0.1; // Expected casualties if a detachment is forced to fight.
+  double requiredFraction = 1.0; 
+
+  double upperFract = 0.9999;   
+  raiders->setFightingFraction(upperFract);
+  double currBound = raiders->calcBattleCasualties(defenders);
+  if (currBound > acceptableCasualties) {
+    // Can't be done acceptably.
+    if (isReal()) Logger::logStream(Logger::Game) << "  Defenses too strong.\n";
+    return; 
+  }
+
+  double lowerFract = 0.01;   
+  raiders->setFightingFraction(lowerFract);
+  currBound = raiders->calcBattleCasualties(defenders);
+
+
+  if (currBound < acceptableCasualties) requiredFraction = lowerFract;
+  else {
+    for (int i = 0; i < 25; ++i) {
+      requiredFraction = (upperFract + lowerFract)*0.5;
+      raiders->setFightingFraction(requiredFraction);
+      currBound = raiders->calcBattleCasualties(defenders);
+      if (currBound > acceptableCasualties) lowerFract = requiredFraction;
+      else upperFract = requiredFraction;
+
+      if (upperFract - lowerFract < 0.02) break;
+      if (fabs(currBound - acceptableCasualties) < 0.01) break; 
+    }
+  }
+  
+  raiders->setFightingFraction(requiredFraction);
+  double baseChance = 25;
+  baseChance += defenders->getScoutingModifier(raiders);
+  baseChance *= 0.01; 
+  
+  int caught = (int) floor(baseChance * 0.5 / requiredFraction); // One-half to represent ambush forward and backward. 
+  int successful  = (int) floor((1 - baseChance) / requiredFraction);
+
+  int devastation = caught + successful;
+  
+  if (isReal()) Logger::logStream(Logger::Game) << "  Attacker splits into " << (successful + 2*caught) << " raiding parties.\n"; 
+
+  int totalAttackerCasualties = 0;
+  int totalDefenderCasualties = 0;
+  int totalAttackerWins = 0; 
+
+  if (isReal()) Logger::logStream(Logger::Game) << "  " << 2*caught << " skirmishes:\n"; 
+  for (int i = 0; i < caught; ++i) {
+    BattleResult skirmish = raiders->attack(defenders, out);
+    if (VictoGlory == skirmish.attackerSuccess) {
+      devastation++; // Ambush on the way in - still success if the ambush is beaten
+      totalAttackerWins++;
+    }
+
+    totalAttackerCasualties += skirmish.attackerInfo.casualties;
+    totalDefenderCasualties += skirmish.defenderInfo.casualties;
+    
+    skirmish = raiders->attack(defenders, out); // Ambush on the way back - still burn the farms
+    if (VictoGlory == skirmish.attackerSuccess) totalAttackerWins++;
+    totalAttackerCasualties += skirmish.attackerInfo.casualties;
+    totalDefenderCasualties += skirmish.defenderInfo.casualties;
+    
+  }
+
+  if (isReal()) Logger::logStream(Logger::Game) << "  Raiders win "
+						<<  totalAttackerWins
+						<< ", casualties are "
+						<< totalAttackerCasualties << " vs "
+						<< totalDefenderCasualties << "\n  Devastation: "
+						<< devastation
+						<< "\n"; 
+  
+  
+  defenders->dropExtMod();
+  raiders->setFightingFraction(1.0); 
+  farms->demobMilitia();
+  farms->devastate(devastation); 
+}
+
 
 void Hex::clear () {
   for (Iterator h = begin(); h != end(); ++h) {
@@ -1006,4 +865,53 @@ void Line::clear () {
     (*h)->destroyIfReal();
   }
   allLines.clear(); 
+}
+
+void Line::endOfTurn () {
+  if (!castle) return;
+  castle->endOfTurn(); 
+}
+
+void Line::getNeighbours (vector<Geography*>& ret) {
+  if (!vex1->closed) ret.push_back(vex1);
+  if (!vex2->closed) ret.push_back(vex2);
+}
+
+double Line::traversalCost (Player* side) const { 
+  return 1; 
+}
+
+double Line::traversalRisk (Player* side) const {
+  if ((castle) && (castle->getOwner() != side)) return 0.99;
+  return 0.01; 
+}
+
+
+void Geography::clearGeography () {
+  closed = false;
+  previous = 0;
+  distFromStart = 1e100;
+}
+
+double Geography::traverseSupplies (double& amount, Player* side, Geography* previous) {
+  double loss = traversalCost(side);
+  //Logger::logStream(DebugSupply) << "Traversed " << (int) (*g) << " at cost " << (*g)->traversalCost(*p) << "\n"; 
+  double lossChance = traversalRisk(side);
+  double roll = rand();
+  roll /= RAND_MAX;
+  if (roll < lossChance) loss += amount*0.9;
+  amount -= loss;
+  return loss; 
+}
+
+double Line::traverseSupplies (double& amount, Player* side, Geography* previous) {
+  double flow = amount;
+  double loss = Geography::traverseSupplies(amount, side, previous);
+  if (previous) graphicsInfo->traverseSupplies(flow * (previous == vex1 ? 1 : -1), loss);
+  return loss;
+}
+
+int Hex::getTotalPopulation () const {
+  if (farms) return farms->getTotalPopulation();
+  return 0; 
 }

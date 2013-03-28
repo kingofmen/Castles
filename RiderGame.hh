@@ -12,26 +12,24 @@ class Hex;
 class Vertex;
 class Line; 
 class Object; 
+using namespace std; 
 
 class WarfareGame {
 public:
   ~WarfareGame ();
 
-  Hex* getHex (int x, int y); 
-  //static WarfareGame* createGame (QTextStream& input);
   static WarfareGame* createGame (std::string fname, Player*& currentplayer);
-  static void saveGame (std::string fname, Player* currentplayer);
   
-  typedef std::vector<Hex*>::iterator HexIterator;
-  HexIterator begin() {return hexes.begin();}
-  HexIterator end() {return hexes.end();} 
   void endOfTurn (); 
+  static void unitComparison (string fname); 
   
 private:
   WarfareGame ();
-  std::vector<Hex*> hexes;
   static WarfareGame* currGame;
 
+  void findCastles (vector<Castle*>& ret, Player* p);
+  void findUnits (vector<MilUnit*>& ret, Player* p);
+  
   static Hex* findHex (Object* info);
   static Line* findLine (Object* info, Hex* hex);
   static Vertex* findVertex (Object* info, Hex* hex); 

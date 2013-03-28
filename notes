@@ -1,0 +1,11 @@
+Possible actions:
+
+Mobilise (Line to Vertex) (check)
+Build castle (Hex to Line and Vertex) (check)
+Move (Vertex to Vertex) (check) 
+Devastate (Vertex to Hex) (check) 
+Call for surrender (Vertex to Line) (check) 
+Enter castle (also Vertex to Line) (check) 
+Reinforce (Vertex) (check) 
+Recruit (Line) (check) 
+Repair (Hex) (check) 

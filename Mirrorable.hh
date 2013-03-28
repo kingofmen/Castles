@@ -3,6 +3,7 @@
 
 class Player; 
 #include <map> 
+using namespace std; 
 
 struct AiValue {
   // POD type for holding AI values with meaningful names. 
@@ -12,8 +13,8 @@ struct AiValue {
   {}
   double influence;
   double strategic;
-  std::map<Player*, int> distanceMap; 
-  std::map<Player*, double> influenceMap; 
+  map<Player*, int> distanceMap; 
+  map<Player*, double> influenceMap; 
   
   void clearFully () {
     strategic = 1;
@@ -30,11 +31,13 @@ public:
       mirror = new T(real); 
     }
     else mirror = static_cast<T*>(this);
-  } 
+  }
+
+  // Destruction sequence here is confusing. 
   virtual ~Mirrorable () {if (real == this) delete mirror;}
   virtual void setMirrorState () = 0; 
   T* getMirror () {return mirror;}
-  T* getReal () {return real;} 
+  T* getReal () {return real;}
   void destroyIfReal () {if (isReal()) delete this;}
   AiValue value; 
   bool isMirror () const {return mirror == this;}

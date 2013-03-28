@@ -1,0 +1,9 @@
+
+
+August 26: Refactor to remove old, unused Warfare code
+August 27: Enforce MilUnitTemplate construction, make unit effectiveness sensitive to supplies
+August 30: A* algorithm from sources to sinks of supplies
+August 31: Priority (and interface) for MilUnits
+September 3: Move coordinate calculations to GraphicsInfo classes
+September 4: Add supply-mode map in interface
+September 5: Population with aging; supply production dependent on population.
