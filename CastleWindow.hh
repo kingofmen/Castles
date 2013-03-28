@@ -144,7 +144,8 @@ private:
   void drawCastle (Castle* castle, LineGraphicsInfo const* dat); 
   void drawLine (LineGraphicsInfo const* dat);
   void drawHex (HexGraphicsInfo const* dat);
-  void drawVertex (VertexGraphicsInfo const* dat); 
+  void drawVertex (VertexGraphicsInfo const* dat);
+  void drawZone (int which); 
   ThreeDSprite* makeSprite (Object* info); 
 
   GLuint* textureIDs;

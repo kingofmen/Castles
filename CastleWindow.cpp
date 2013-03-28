@@ -340,54 +340,39 @@ void GLDrawer::drawVertex (VertexGraphicsInfo const* gInfo) {
   glPopMatrix(); 
 }
 
-void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
-  //static const double xTexCoords[8] = {0.50, 1.00, 0.75, 0.25, 0.00, 0.25, 0.75, 1.00};
-  //static const double yTexCoords[8] = {0.50, 0.50, 0.93, 0.93, 0.50, 0.07, 0.07, 0.50};
-  
+void GLDrawer::drawZone (int which) {
   glColor4d(1.0, 1.0, 1.0, 1.0);
-  glBindTexture(GL_TEXTURE_2D, zoneTextures[dat->getZone()]);
-  glBegin(GL_TRIANGLE_FAN);
-  triplet oglCoords = dat->getCoords(NoVertex);
-  pair<double, double> texCoords = dat->getTexCoords(oglCoords, dat->getZone());
-  glTexCoord2d(texCoords.first, texCoords.second);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z());
+  glBindTexture(GL_TEXTURE_2D, zoneTextures[which]);
 
-  oglCoords = dat->getCoords(Right);
-  texCoords = dat->getTexCoords(oglCoords, dat->getZone());
-  glTexCoord2d(texCoords.first, texCoords.second);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z());
+  static const int zoneSize = 512;
+  static const double step = 1.0 / (zoneSize - 1); 
+  
+  glBegin(GL_TRIANGLE_STRIP);
 
-  oglCoords = dat->getCoords(RightUp);
-  texCoords = dat->getTexCoords(oglCoords, dat->getZone());
-  glTexCoord2d(texCoords.first, texCoords.second);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z());
+  glTexCoord2d(0.0, 0.0);
+  glVertex3d(0, 0, heightMaps[which][0][0]);
 
-  oglCoords = dat->getCoords(LeftUp); 
-  texCoords = dat->getTexCoords(oglCoords, dat->getZone());
-  glTexCoord2d(texCoords.first, texCoords.second);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z());
-
-  oglCoords = dat->getCoords(Left); 
-  texCoords = dat->getTexCoords(oglCoords, dat->getZone());
-  glTexCoord2d(texCoords.first, texCoords.second);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z());
-
-  oglCoords = dat->getCoords(LeftDown);
-  texCoords = dat->getTexCoords(oglCoords, dat->getZone());
-  glTexCoord2d(texCoords.first, texCoords.second);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z());
-
-  oglCoords = dat->getCoords(RightDown);
-  texCoords = dat->getTexCoords(oglCoords, dat->getZone());
-  glTexCoord2d(texCoords.first, texCoords.second);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z());
-
-  oglCoords = dat->getCoords(Right); 
-  texCoords = dat->getTexCoords(oglCoords, dat->getZone());
-  glTexCoord2d(texCoords.first, texCoords.second);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z());
+  glTexCoord2d(0.0, step);
+  glVertex3d(0, step, heightMaps[which][0][1]);
+  
+  for (int y = 0; y < zoneSize - 1; ++y) {
+    if (0 == y%2) {
+      for (int triangle = 0; triangle < 2*zoneSize-2; ++triangle) {
+	glTexCoord((triangle/2 + 1) * step, (y + triangle%2)*step);
+	glVertex3d((triangle/2 + 1) * step, (y + triangle%2)*step, heightMap[which][triangle][y]); 
+      }
+    }
+    else {
+      for (int triangle = 2*zoneSize-3; triangle >= 0; --triangle) {
+	glTexCoord((triangle/2 + triangle%2) * step, (y + 1 - triangle%2)*step);
+	glVertex3d((triangle/2 + triangle%2) * step, (y + 1 - triangle%2)*step, heightMap[which][triangle][y]); 	
+      }
+    }
+  }
   glEnd();
+}
 
+void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   glDisable(GL_TEXTURE_2D); 
   glBegin(GL_LINE_LOOP);
   oglCoords = dat->getCoords(Right);
