@@ -78,6 +78,7 @@ public:
   static Vertices oppositeVertex (Vertices dat);
   static void clear ();
   static void createHex (int x, int y, TerrainType t);
+
 private:
   Hex (int x, int y, TerrainType t);
   Hex (Hex* other);

@@ -11,8 +11,8 @@ CC            = gcc
 CXX           = g++
 DEFINES       = -DUNICODE -DQT_LARGEFILE_SUPPORT -DQT_NO_DEBUG -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_THREAD_SUPPORT -DQT_NEEDS_QMAIN -DQT_NO_DYNAMIC_CAST
 CFLAGS        = -O2 -Wall $(DEFINES)
-CXXFLAGS      = -O2 -fno-exceptions -Wall -fno-rtti $(DEFINES)
-INCPATH       = -I"..\..\..\..\Qt\2010.05\qt\include\QtCore" -I"..\..\..\..\Qt\2010.05\qt\include\QtGui" -I"..\..\..\..\Qt\2010.05\qt\include\QtOpenGL" -I"..\..\..\..\Qt\2010.05\qt\include" -I"." -I"..\ParadoxParser" -I"..\boost_1_41_0" -I"..\..\..\..\Qt\2010.05\qt\include\ActiveQt" -I"release" -I"..\..\..\..\Qt\2010.05\qt\mkspecs\default"
+CXXFLAGS      = -O2 -fno-exceptions -Wall $(DEFINES)
+INCPATH       = -I"..\..\..\..\Qt\2010.05\qt\include\QtCore" -I"..\..\..\..\Qt\2010.05\qt\include\QtGui" -I"..\..\..\..\Qt\2010.05\qt\include\QtOpenGL" -I"..\..\..\..\Qt\2010.05\qt\include" -I"." -I"..\ParadoxParser" -I"..\boost_1_54_0" -I"..\..\..\..\Qt\2010.05\qt\include\ActiveQt" -I"release" -I"..\..\..\..\Qt\2010.05\qt\mkspecs\default"
 LINK        =        g++
 LFLAGS        =        -enable-stdcall-fixup -Wl,-enable-auto-import -Wl,-enable-runtime-pseudo-reloc -Wl,-s -Wl,-subsystem,windows
 LIBS        =        -L"c:\Qt\2010.05\qt\lib" -lmingw32 -lqtmain C:\Users\Rolf\Desktop\ParadoxParser\libParser.lib -static-libgcc -lQtOpenGL -lglu32 -lopengl32 -lQtGui -lgdi32 -lcomdlg32 -loleaut32 -limm32 -lwinmm -lwinspool -lmsimg32 -lQtCore -lkernel32 -luser32 -lshell32 -luuid -lole32 -ladvapi32 -lws2_32 
@@ -113,7 +113,7 @@ $(DESTDIR_TARGET):  $(OBJECTS)
 
 
 qmake:  FORCE
-	@$(QMAKE) -after  LIBS+=C:\Users\Rolf\Desktop\ParadoxParser\libParser.lib INCLUDEPATH+=C:\Users\Rolf\Desktop\ParadoxParser INCLUDEPATH+=C:\Users\Rolf\Desktop\boost_1_41_0 LIBS+=-static-libgcc -o Makefile.Release Castles.pro
+	@$(QMAKE) -after  LIBS+=C:\Users\Rolf\Desktop\ParadoxParser\libParser.lib INCLUDEPATH+=C:\Users\Rolf\Desktop\ParadoxParser INCLUDEPATH+=C:\Users\Rolf\Desktop\boost_1_54_0 LIBS+=-static-libgcc -o Makefile.Release Castles.pro
 
 dist:
 	$(ZIP) Castles.zip $(SOURCES) $(DIST) Castles.pro ..\..\..\..\Qt\2010.05\qt\mkspecs\qconfig.pri ..\..\..\..\Qt\2010.05\qt\mkspecs\modules\qt_webkit_version.pri ..\..\..\..\Qt\2010.05\qt\mkspecs\features\qt_functions.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\qt_config.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\exclusive_builds.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\default_pre.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\win32\default_pre.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\release.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\debug_and_release.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\default_post.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\win32\default_post.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\build_pass.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\win32\exceptions_off.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\static.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\warn_on.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\qt.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\win32\opengl.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\win32\thread.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\moc.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\win32\windows.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\win32\stl_off.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\win32\rtti_off.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\resources.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\uic.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\yacc.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\lex.prf ..\..\..\..\Qt\2010.05\qt\mkspecs\features\include_source_dir.prf c:\Qt\2010.05\qt\lib\qtmain.prl c:\Qt\2010.05\qt\lib\QtOpenGL.prl c:\Qt\2010.05\qt\lib\QtGui.prl c:\Qt\2010.05\qt\lib\QtCore.prl  HEADERS RESOURCES IMAGES SOURCES OBJECTIVE_SOURCES FORMS YACCSOURCES YACCSOURCES LEXSOURCES 

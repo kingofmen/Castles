@@ -12,14 +12,16 @@ double LineGraphicsInfo::maxLoss = 1;
 vector<HexGraphicsInfo*> HexGraphicsInfo::allHexGraphics;
 vector<VertexGraphicsInfo*> VertexGraphicsInfo::allVertexGraphics;
 vector<LineGraphicsInfo*> LineGraphicsInfo::allLineGraphics;
+vector<ZoneGraphicsInfo*> ZoneGraphicsInfo::allZoneGraphics; 
 int* GraphicsInfo::heightMap = 0; 
 
 
-const double xIncrement = 1.0; // Distance from center of hex to Right vertex. 
-const double yIncrement = sqrt(pow(xIncrement, 2) - pow(0.5*xIncrement, 2)); // Vertical distance from center to Up vertices. 
-const double xSeparation = 0.8; // Horizontal distance from Right vertex of (0, 0) to UpLeft vertex of (1, 0). 
-const double ySeparation = xSeparation/sqrt(3); // Vertical distance from Right to UpLeft as above. Half the width of a Line.
-const double zSeparation = -0.003; // Height of a single step. 
+const double GraphicsInfo::xIncrement = 1.0; // Distance from center of hex to Right vertex. 
+const double GraphicsInfo::yIncrement = sqrt(pow(xIncrement, 2) - pow(0.5*xIncrement, 2)); // Vertical distance from center to Up vertices. 
+const double GraphicsInfo::xSeparation = 0.8; // Horizontal distance from Right vertex of (0, 0) to UpLeft vertex of (1, 0). 
+const double GraphicsInfo::ySeparation = xSeparation/sqrt(3); // Vertical distance from Right to UpLeft as above. Half the width of a Line.
+const double GraphicsInfo::zSeparation = -0.003; // Height of a single step.
+const double GraphicsInfo::zOffset     = -0.006; // Offset to get lines a little above terrain texture. 
 
 GraphicsInfo::~GraphicsInfo () {}
 HexGraphicsInfo::~HexGraphicsInfo () {}
@@ -28,57 +30,131 @@ VertexGraphicsInfo::~VertexGraphicsInfo () {}
 
 int GraphicsInfo::zoneSide = 4;
 
-struct ZoneInfo {
-  double minX;
-  double minY;
-  double maxX;
-  double maxY;  
-  double invWidth;
-  double invHeight;
+ZoneGraphicsInfo::ZoneGraphicsInfo () 
+  : GraphicsInfo()
+  , minX(10000000)
+  , minY(10000000)
+  , maxX(0)
+  , maxY(0)  
+  , width(0)
+  , height(0)
 
-  void addHex (HexGraphicsInfo* hex);
-  void addLine (LineGraphicsInfo* lin);
-  void addVertex (VertexGraphicsInfo* vex);
-  void recalc (); 
-};
-
-void ZoneInfo::recalc () {
-  invWidth  = 1.0 / (maxX - minX);
-  invHeight = 1.0 / (maxY - minY);
+{
+  allZoneGraphics.push_back(this);
+  heightMap = new double*[zoneSize];
+  for (int i = 0; i < zoneSize; ++i) heightMap[i] = new double[zoneSize];
+  recalc(); 
 }
 
-void ZoneInfo::addHex (HexGraphicsInfo* hex) {
+void ZoneGraphicsInfo::recalc () {
+  width  = maxX - minX;
+  height = maxY - minY;
+  grid.push_back(vector<triplet>()); 
+}
+
+void ZoneGraphicsInfo::gridAdd (triplet coords) {
+  minX = min(minX, coords.x());
+  minY = min(minY, coords.y());
+  maxX = max(maxX, coords.x());
+  maxY = max(maxY, coords.y());
+  grid.back().push_back(coords); 
+}
+
+void ZoneGraphicsInfo::addHex (HexGraphicsInfo* hex) {
   for (int i = 0; i < NoVertex; ++i) {
-    triplet coords = hex->getCoords((Vertices) i);
-    minX = min(minX, coords.x());
-    minY = min(minY, coords.y());
-    maxX = max(maxX, coords.x());
-    maxY = max(maxY, coords.y());
-  }
-  recalc(); 
-}
-void ZoneInfo::addLine (LineGraphicsInfo* lin) {
-  for (int i = 0; i < 4; ++i) {
-    triplet coords = lin->getCorner(i);
-    minX = min(minX, coords.x());
-    minY = min(minY, coords.y());
-    maxX = max(maxX, coords.x());
-    maxY = max(maxY, coords.y());
-  }
-  recalc(); 
-}
-void ZoneInfo::addVertex (VertexGraphicsInfo* vex) {
-  for (int i = 0; i < 3; ++i) {
-    triplet coords = vex->getCorner(i);
-    minX = min(minX, coords.x());
-    minY = min(minY, coords.y());
-    maxX = max(maxX, coords.x());
-    maxY = max(maxY, coords.y());
+    gridAdd(hex->getCoords((Vertices) i));
   }
   recalc(); 
 }
 
-vector<ZoneInfo> zoneInfos; 
+void ZoneGraphicsInfo::addLine (LineGraphicsInfo* lin) {
+  for (int i = 0; i < 4; ++i) {
+    gridAdd(lin->getCorner(i));
+  }
+  recalc(); 
+}
+
+void ZoneGraphicsInfo::addVertex (VertexGraphicsInfo* vex) {
+  for (int i = 0; i < 3; ++i) {
+    gridAdd(vex->getCorner(i));
+  }
+  recalc(); 
+}
+
+int ZoneGraphicsInfo::badLine (triplet one, triplet two) {
+  triplet current;
+  for (int i = 1; i < 100; ++i) {
+    current.x() = 0.01 * (i*two.x() + (100 - i) * one.x());
+    current.y() = 0.01 * (i*two.y() + (100 - i) * one.y());
+    current.z() = 0.01 * (i*two.z() + (100 - i) * one.z());
+
+    // Greater than is correct because larger heights are negative. 
+    if (current.z() - zOffset*0.33 > calcHeight(current.x(), current.y())) return i;
+  }
+
+  return -1;
+}
+
+void ZoneGraphicsInfo::calcGrid () {
+  // Get heights for the grid objects.
+  for (vector<ZoneGraphicsInfo*>::iterator zone = allZoneGraphics.begin(); zone != allZoneGraphics.end(); ++zone) {
+    for (gridIt i = (*zone)->grid.begin(); i != (*zone)->grid.end(); ++i) {
+      // Remove empty end object.
+      if (0 == (*i).size()) {
+	(*zone)->grid.pop_back();
+	break; 
+      }
+
+      vector<triplet> result;
+      for (hexIt t = (*i).begin(); t != (*i).end(); ++t) {
+	(*t).z() = zOffset + (*zone)->calcHeight((*t).x(), (*t).y());
+      }
+
+      (*i).push_back((*i).front());
+      result.push_back((*i).front());
+
+      for (unsigned int trip = 1; trip < (*i).size(); ++trip) {
+	int halves = 0; 
+	loopStart:
+	if (halves++ > 101) {
+	  //Logger::logStream(DebugStartup) << "Reach failure point\n";
+	  break; 
+	}
+	triplet workingPoint = (*i)[trip];
+	bool hadToHalve = false;
+
+	int badPoint = 0;
+	while (-1 < (badPoint = (*zone)->badLine(result.back(), workingPoint))) {
+	  workingPoint.x() = 0.01 * ((100 - badPoint)*result.back().x() + badPoint*workingPoint.x());
+	  workingPoint.y() = 0.01 * ((100 - badPoint)*result.back().y() + badPoint*workingPoint.y());
+	  workingPoint.z() = zOffset + (*zone)->calcHeight(workingPoint.x(), workingPoint.y());
+	  hadToHalve = true;
+	}
+
+	result.push_back(workingPoint);
+	if (hadToHalve) goto loopStart;
+
+      }
+
+      (*i).clear();
+      (*i) = result;
+
+    }
+  }
+}
+
+double ZoneGraphicsInfo::calcHeight (double x, double y) {
+  // Get the height at point (x, y). 
+  x -= minX;
+  y -= minY;
+  x /= width;
+  y /= height;
+  x *= GraphicsInfo::zoneSize;
+  y *= GraphicsInfo::zoneSize;
+  int xval = min((int) floor(x), GraphicsInfo::zoneSize-1); // Deal with roundoff error at edges. 
+  int yval = min((int) floor(y), GraphicsInfo::zoneSize-1);  
+  return heightMap[xval][yval];
+}
 
 int GraphicsInfo::getHeight (int x, int y) {
   return heightMap[y*(2 + 3*zoneSide) + x]; 
@@ -123,14 +199,14 @@ HexGraphicsInfo::HexGraphicsInfo  (Hex* h)
   : GraphicsInfo()
   , terrain(h->getType())
   , myHex(h)
-{
+{ 
   pair<int, int> hpos = h->getPos(); 
   position.x() = (1.5 * xIncrement + xSeparation) * hpos.first;
   position.y() = (yIncrement + ySeparation) * (2*hpos.second + (hpos.first >= 0 ? hpos.first%2 : -hpos.first%2));
   int hexX = hpos.first;
   int hexY = hpos.second;
   getHeightMapCoords(hexX, hexY, NoVertex);
-  position.z() = zSeparation * getHeight(hexX, hexY);
+  position.z() = zOffset + zSeparation * getHeight(hexX, hexY);
 
   // Make room for leftmost and upmost vertices and lines
   position.x()  += xSeparation;
@@ -141,43 +217,40 @@ HexGraphicsInfo::HexGraphicsInfo  (Hex* h)
   cornerRight = position;
   cornerRight.x() += xIncrement;
   hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, Right); 
-  cornerRight.z() = zSeparation * getHeight(hexX, hexY);
+  cornerRight.z() = zOffset + zSeparation * getHeight(hexX, hexY);
 
   cornerLeft = position;
   cornerLeft.x() -= xIncrement;
   hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, Left);
-  cornerLeft.z() = zSeparation * getHeight(hexX, hexY);
+  cornerLeft.z() = zOffset + zSeparation * getHeight(hexX, hexY);
 
   cornerLeftUp = position;
   cornerLeftUp.x() -= 0.5*xIncrement;
   cornerLeftUp.y() -= yIncrement;
   hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, LeftUp);
-  cornerLeftUp.z() = zSeparation * getHeight(hexX, hexY);
+  cornerLeftUp.z() = zOffset + zSeparation * getHeight(hexX, hexY);
   
   cornerRightUp = position;
   cornerRightUp.x() += 0.5*xIncrement;
   cornerRightUp.y() -= yIncrement;
   hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, RightUp);
-  cornerRightUp.z() = zSeparation * getHeight(hexX, hexY);
+  cornerRightUp.z() = zOffset + zSeparation * getHeight(hexX, hexY);
 
   cornerRightDown = position;
   cornerRightDown.x() += 0.5*xIncrement;
   cornerRightDown.y() += yIncrement;
   hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, RightDown);
-  cornerRightDown.z() = zSeparation * getHeight(hexX, hexY);
+  cornerRightDown.z() = zOffset + zSeparation * getHeight(hexX, hexY);
 
   cornerLeftDown = position;
   cornerLeftDown.x() -= 0.5*xIncrement;
   cornerLeftDown.y() += yIncrement;
   hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, LeftDown); 
-  cornerLeftDown.z() = zSeparation * getHeight(hexX, hexY);
+  cornerLeftDown.z() = zOffset + zSeparation * getHeight(hexX, hexY);
 
-  if (0 == zoneInfos.size()) {
-    zoneInfos.push_back(ZoneInfo());
-  }
-  zoneInfos[0].addHex(this); 
-  
-  allHexGraphics.push_back(this); 
+  ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(0);
+  zoneInfo->addHex(this);   
+  allHexGraphics.push_back(this);
 }
 
 void HexGraphicsInfo::describe (QTextStream& str) const {
@@ -242,15 +315,19 @@ triplet HexGraphicsInfo::getCoords (Vertices dir) const {
   }
 }  
 
-pair<double, double> GraphicsInfo::getTexCoords (triplet gameCoords, int zone) {
-  pair<double, double> ret(gameCoords.x(), gameCoords.y());
-  ret.first  -= zoneInfos[zone].minX;
-  ret.second -= zoneInfos[zone].minY;
-  ret.first  *= zoneInfos[zone].invWidth;
-  ret.second *= zoneInfos[zone].invHeight;
-  return ret; 
-}
+void HexGraphicsInfo::getHeights () {
+  for (Iterator h = begin(); h != end(); ++h) {
+    ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(0);
 
+    (*h)->position.z()         = zoneInfo->calcHeight((*h)->position.x(),        (*h)->position.y());
+    (*h)->cornerRight.z()      = zoneInfo->calcHeight((*h)->cornerRight.x(),     (*h)->cornerRight.y());	  
+    (*h)->cornerRightUp.z()    = zoneInfo->calcHeight((*h)->cornerRightUp.x(),   (*h)->cornerRightUp.y());  
+    (*h)->cornerLeftUp.z()     = zoneInfo->calcHeight((*h)->cornerLeftUp.x(),    (*h)->cornerLeftUp.y());   
+    (*h)->cornerLeft.z()       = zoneInfo->calcHeight((*h)->cornerLeft.x(),      (*h)->cornerLeft.y());     
+    (*h)->cornerLeftDown.z()   = zoneInfo->calcHeight((*h)->cornerLeftDown.x(),  (*h)->cornerLeftDown.y()); 
+    (*h)->cornerRightDown.z()  = zoneInfo->calcHeight((*h)->cornerRightDown.x(), (*h)->cornerRightDown.y());
+  }
+}
 
 void LineGraphicsInfo::addCastle (HexGraphicsInfo const* supportInfo) {
   castleX  = position.x();
@@ -369,8 +446,8 @@ LineGraphicsInfo::LineGraphicsInfo (Line* l, Vertices dir)
   normal.normalise();
   
   //Logger::logStream(DebugStartup) << "Line normal " << normal.x() << " " << normal.y() << " " << normal.z() << "\n"; 
-  
-  zoneInfos[0].addLine(this); 
+
+  ZoneGraphicsInfo::getZoneInfo(0)->addLine(this);  
   allLineGraphics.push_back(this);
 }
 
@@ -429,54 +506,54 @@ VertexGraphicsInfo::VertexGraphicsInfo (Vertex* v, HexGraphicsInfo const* hex, V
     corner1.y()  -= ySeparation;
     corner2.y()  += ySeparation;
     // Counter-intuitive, happens because the hex grid is skewed relative to the square grid 
-    corner1.z() = zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -2 : 1)); 
-    corner2.z() = zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -1 : 2)); 
-    corner3.z() = zSeparation * getHeight(hexX, hexY);    
+    corner1.z() = zOffset + zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -2 : 1)); 
+    corner2.z() = zOffset + zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -1 : 2)); 
+    corner3.z() = zOffset + zSeparation * getHeight(hexX, hexY);    
     break;
   case Left:
     corner1.x()  -= xSeparation;
     corner3.x()  -= xSeparation;
     corner1.y()  -= ySeparation;
     corner3.y()  += ySeparation;
-    corner1.z() = zSeparation * getHeight(hexX-1, hexY + (0 == hexPos.first%2 ? -2 : 1));
-    corner2.z() = zSeparation * getHeight(hexX, hexY);
-    corner3.z() = zSeparation * getHeight(hexX-1, hexY + (0 == hexPos.first%2 ? -1 : 2));
+    corner1.z() = zOffset + zSeparation * getHeight(hexX-1, hexY + (0 == hexPos.first%2 ? -2 : 1));
+    corner2.z() = zOffset + zSeparation * getHeight(hexX, hexY);
+    corner3.z() = zOffset + zSeparation * getHeight(hexX-1, hexY + (0 == hexPos.first%2 ? -1 : 2));
     break;
     
   case RightUp:
     corner1.y()  -= 2*ySeparation;
     corner2.x()   += xSeparation; 
     corner2.y()  -= ySeparation;
-    corner1.z() = zSeparation * getHeight(hexX, hexY-1);
-    corner2.z() = zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -2 : 1));
-    corner3.z() = zSeparation * getHeight(hexX, hexY); 
+    corner1.z() = zOffset + zSeparation * getHeight(hexX, hexY-1);
+    corner2.z() = zOffset + zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -2 : 1));
+    corner3.z() = zOffset + zSeparation * getHeight(hexX, hexY); 
     break;
     
   case RightDown:
     corner2.x()   += xSeparation;
     corner2.y()  += ySeparation;
     corner3.y()  += 2*ySeparation;
-    corner1.z() = zSeparation * getHeight(hexX, hexY);
-    corner2.z() = zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -1 : 2)); 
-    corner3.z() = zSeparation * getHeight(hexX, hexY+1);
+    corner1.z() = zOffset + zSeparation * getHeight(hexX, hexY);
+    corner2.z() = zOffset + zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -1 : 2)); 
+    corner3.z() = zOffset + zSeparation * getHeight(hexX, hexY+1);
     break;
     
   case LeftUp:
     corner3.x()   -= xSeparation;
     corner3.y()  -= ySeparation;
     corner1.y()  -= 2*ySeparation;
-    corner1.z() = zSeparation * getHeight(hexX, hexY-1);
-    corner2.z() = zSeparation * getHeight(hexX, hexY);
-    corner3.z() = zSeparation * getHeight(hexX-1, hexY + (0 == hexPos.first%2 ? -2 : 1));
+    corner1.z() = zOffset + zSeparation * getHeight(hexX, hexY-1);
+    corner2.z() = zOffset + zSeparation * getHeight(hexX, hexY);
+    corner3.z() = zOffset + zSeparation * getHeight(hexX-1, hexY + (0 == hexPos.first%2 ? -2 : 1));
     break;
     
   case LeftDown:
     corner2.y()  += 2*ySeparation;
     corner3.x()  -= xSeparation;
     corner3.y()  += ySeparation;
-    corner1.z() = zSeparation * getHeight(hexX, hexY);
-    corner2.z() = zSeparation * getHeight(hexX, hexY+1);
-    corner3.z() = zSeparation * getHeight(hexX-1, hexY + (0 == hexPos.first%2 ? -1 : 2));
+    corner1.z() = zOffset + zSeparation * getHeight(hexX, hexY);
+    corner2.z() = zOffset + zSeparation * getHeight(hexX, hexY+1);
+    corner3.z() = zOffset + zSeparation * getHeight(hexX-1, hexY + (0 == hexPos.first%2 ? -1 : 2));
     break;
 
   default: break; 
@@ -494,7 +571,7 @@ VertexGraphicsInfo::VertexGraphicsInfo (Vertex* v, HexGraphicsInfo const* hex, V
   position.y() *= 0.333;
   position.z() *= 0.333;
 
-  zoneInfos[0].addVertex(this); 
+  ZoneGraphicsInfo::getZoneInfo(0)->addVertex(this);
   allVertexGraphics.push_back(this); 
 }
 

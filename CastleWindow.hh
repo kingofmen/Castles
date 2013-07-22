@@ -154,7 +154,7 @@ private:
   int* terrainTextureIndices;
   int* castleTextureIndices;
   int* knightTextureIndices;
-  int* zoneTextures;  // Zones get their own array because their generation creates new texture names. 
+  int* zoneTextures;  // Zones get their own array because their generation creates new texture names.
   const int numTextures;
   std::map<Player*, int> playerToTextureMap; 
   

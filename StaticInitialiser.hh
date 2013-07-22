@@ -35,7 +35,9 @@ public:
 
   
 private:
+  static void addShadows (QGLFramebufferObject* fbo, int* heightMap, int mapWidth, int texture); 
   static void createCalculator (Object* info, Action::Calculator* ret);
+  static double interpolate (double xfrac, double yfrac, int* heightMap); 
   
   static int defaultUnitPriority;
 }; 

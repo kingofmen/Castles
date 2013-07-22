@@ -93,7 +93,7 @@ Makefile: Castles.pro  ../../../../Qt/2010.05/qt/mkspecs/default/qmake.conf ../.
 		c:/Qt/2010.05/qt/lib/QtOpenGL.prl \
 		c:/Qt/2010.05/qt/lib/QtGui.prl \
 		c:/Qt/2010.05/qt/lib/QtCore.prl
-	$(QMAKE) -after  LIBS+=C:\Users\Rolf\Desktop\ParadoxParser\libParser.lib INCLUDEPATH+=C:\Users\Rolf\Desktop\ParadoxParser INCLUDEPATH+=C:\Users\Rolf\Desktop\boost_1_41_0 LIBS+=-static-libgcc -o Makefile Castles.pro
+	$(QMAKE) -after  LIBS+=C:\Users\Rolf\Desktop\ParadoxParser\libParser.lib INCLUDEPATH+=C:\Users\Rolf\Desktop\ParadoxParser INCLUDEPATH+=C:\Users\Rolf\Desktop\boost_1_54_0 LIBS+=-static-libgcc -o Makefile Castles.pro
 ..\..\..\..\Qt\2010.05\qt\mkspecs\qconfig.pri:
 ..\..\..\..\Qt\2010.05\qt\mkspecs\modules\qt_webkit_version.pri:
 ..\..\..\..\Qt\2010.05\qt\mkspecs\features\qt_functions.prf:
@@ -125,7 +125,7 @@ c:\Qt\2010.05\qt\lib\QtOpenGL.prl:
 c:\Qt\2010.05\qt\lib\QtGui.prl:
 c:\Qt\2010.05\qt\lib\QtCore.prl:
 qmake: qmake_all FORCE
-	@$(QMAKE) -after  LIBS+=C:\Users\Rolf\Desktop\ParadoxParser\libParser.lib INCLUDEPATH+=C:\Users\Rolf\Desktop\ParadoxParser INCLUDEPATH+=C:\Users\Rolf\Desktop\boost_1_41_0 LIBS+=-static-libgcc -o Makefile Castles.pro
+	@$(QMAKE) -after  LIBS+=C:\Users\Rolf\Desktop\ParadoxParser\libParser.lib INCLUDEPATH+=C:\Users\Rolf\Desktop\ParadoxParser INCLUDEPATH+=C:\Users\Rolf\Desktop\boost_1_54_0 LIBS+=-static-libgcc -o Makefile Castles.pro
 
 qmake_all: FORCE
 

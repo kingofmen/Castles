@@ -50,7 +50,7 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
 
   Object* gInfo = processFile("./common/graphics.txt");
   assert(gInfo); 
-  StaticInitialiser::initialiseGraphics(gInfo);
+  StaticInitialiser::initialiseGraphics(gInfo); // Must come before Hex creation so there's a zone to stuff them in. 
   StaticInitialiser::makeZoneTextures(gInfo); 
   
   for (int i = 0; i < xsize; ++i) {
@@ -58,7 +58,7 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
       Hex::createHex(i, j, Plain); 
     }
   }
-
+  
   Object* actionInfo = processFile("./common/actions.txt");
   assert(actionInfo); 
   StaticInitialiser::createActionProbabilities(actionInfo);
@@ -89,6 +89,9 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
     (*vex)->createLines(); 
   }
 
+  HexGraphicsInfo::getHeights(); // Must come after Vertex and Line creation to get right zone width and height. 
+  ZoneGraphicsInfo::calcGrid(); 
+  
   objvec players = game->getValue("faction");
   for (objiter p = players.begin(); p != players.end(); ++p) {
     StaticInitialiser::createPlayer(*p);

@@ -4,12 +4,16 @@
 #include <vector>
 #include <QtOpenGL>
 #include <QTextStream>
-#include "UtilityFunctions.hh" 
+#include "UtilityFunctions.hh"
+#ifndef Q_MOC_RUN // Hackish workaround to avoid BOOST_JOIN parsing issue. 
+#include "boost/geometry/geometry.hpp" 
+#endif 
 
 class MilUnit;
 class Hex;
 class Vertex;
 class Line; 
+class Farmland; 
 
 enum TerrainType {Mountain = 0, Hill, Plain, Forest, Ocean, NoTerrain}; 
 enum Direction {NorthWest = 0, North, NorthEast, SouthEast, South, SouthWest, NoDirection};
@@ -29,13 +33,39 @@ public:
 
   static int getHeight (int x, int y);
   static void getHeightMapCoords (int& hexX, int& hexY, Vertices dir); 
+
+  static const int zoneSize = 512; // Size in pixels (for internal purposes, not on the screen). 
   
 protected:
   triplet position;
-  static int zoneSide;
-  static int* heightMap; 
+  static int zoneSide; // Size in hexes
+  static int* heightMap;
+
+  static const double xIncrement;
+  static const double yIncrement;
+  static const double xSeparation;
+  static const double ySeparation;
+  static const double zSeparation;
+  static const double zOffset; 
+
+  
 private:
 
+};
+
+class FarmGraphicsInfo : public GraphicsInfo {
+public:
+  FarmGraphicsInfo (Farmland* f);
+  ~FarmGraphicsInfo ();
+
+  Farmland* getFarm () {return myFarm;}
+  
+private:
+  void generateShapes ();
+
+  
+  
+  Farmland* myFarm; 
 };
 
 class HexGraphicsInfo : public GraphicsInfo {
@@ -52,7 +82,8 @@ public:
   bool isInside (double x, double y) const;
   static Iterator begin () {return allHexGraphics.begin();}
   static Iterator end   () {return allHexGraphics.end();}
-
+  static void getHeights (); 
+  
 private:
   TerrainType terrain;
   Hex* myHex;
@@ -162,5 +193,44 @@ private:
 
   MilUnit* unit; 
 };
+
+class ZoneGraphicsInfo : public GraphicsInfo {
+  friend class StaticInitialiser; 
+public:
+  ZoneGraphicsInfo (); 
+  ~ZoneGraphicsInfo () {}
+
+  typedef vector<vector<triplet> >::iterator gridIt;
+  typedef vector<triplet>::iterator hexIt; 
+  
+  double minX;
+  double minY;
+  double maxX;
+  double maxY;  
+  double width;
+  double height;
+
+  void addHex (HexGraphicsInfo* hex);
+  void addLine (LineGraphicsInfo* lin);
+  void addVertex (VertexGraphicsInfo* vex);
+  double getHeight (unsigned int x, unsigned int y) {return heightMap[x][y];}
+  double calcHeight (double x, double y);
+  static void calcGrid (); 
+  static ZoneGraphicsInfo* getZoneInfo (unsigned int which) {if (which >= allZoneGraphics.size()) return 0; return allZoneGraphics[which];}
+
+  gridIt gridBegin () {return grid.begin();}
+  gridIt gridEnd   () {return grid.end();}
+
+private:
+  int badLine (triplet one, triplet two);  
+  void gridAdd (triplet coords);  
+  void recalc ();
+  
+  double** heightMap; 
+  vector<vector<triplet> > grid; // Stores points to draw hex grid on terrain. 
+  
+  static vector<ZoneGraphicsInfo*> allZoneGraphics; 
+};
+
 
 #endif

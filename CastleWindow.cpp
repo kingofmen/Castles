@@ -18,6 +18,7 @@ using namespace std;
 const triplet xaxis(1, 0, 0);
 const triplet yaxis(0, 1, 0);
 const triplet zaxis(0, 0, -1); // Positive z is into the screen! 
+const int zoneSize = 512;
 
 WarfareWindow* WarfareWindow::currWindow = 0; 
 
@@ -265,46 +266,17 @@ void GLDrawer::drawCastle (Castle* castle, LineGraphicsInfo const* dat) {
 
 void GLDrawer::drawLine (LineGraphicsInfo const* dat) {
   glColor4d(1.0, 1.0, 1.0, 1.0);
-  glBindTexture(GL_TEXTURE_2D, zoneTextures[dat->getZone()]);
-  glBegin(GL_TRIANGLE_FAN);
-  for (int i = 0; i < 4; ++i) {
-    triplet oglCoords = dat->getCorner(i);
-    pair<double, double> texCoords = dat->getTexCoords(oglCoords, dat->getZone());
-    glTexCoord2d(texCoords.first, texCoords.second);
-    glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z()); 
-  }
-  glEnd(); 
+  glEnable(GL_TEXTURE_2D); 
   
   drawCastle(dat->getLine()->getCastle(), dat);
   if (overlayMode) overlayMode->drawLine(dat); 
 }
 
 void GLDrawer::drawVertex (VertexGraphicsInfo const* gInfo) {
-  Vertex* dat = gInfo->getVertex();
+  Vertex* dat = gInfo->getVertex(); 
   
-  glColor4d(1.0, 1.0, 1.0, 1.0);
-  glBindTexture(GL_TEXTURE_2D, zoneTextures[gInfo->getZone()]);
-  glBegin(GL_TRIANGLES);
-  for (int i = 0; i < 3; ++i) {
-    triplet oglCoords = gInfo->getCorner(i);
-    pair<double, double> texCoords = gInfo->getTexCoords(oglCoords, gInfo->getZone());
-    glTexCoord2d(texCoords.first, texCoords.second);
-    glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z()); 
-  }  
-  glEnd();
-
-  glDisable(GL_TEXTURE_2D); 
-  glBegin(GL_LINE_LOOP);
-  for (int i = 0; i < 3; ++i) {
-    triplet oglCoords = gInfo->getCorner(i);
-    glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z() - 0.01); 
-  }  
-  glEnd();
-  glEnable(GL_TEXTURE_2D); 
-
-  
-  
-  if (0 == dat->numUnits()) return; 
+  if (0 == dat->numUnits()) return;
+  glEnable(GL_TEXTURE_2D);   
   triplet center = gInfo->getPosition();
 
   vector<int> texts;
@@ -342,58 +314,54 @@ void GLDrawer::drawVertex (VertexGraphicsInfo const* gInfo) {
 
 void GLDrawer::drawZone (int which) {
   glColor4d(1.0, 1.0, 1.0, 1.0);
+  glEnable(GL_TEXTURE_2D);  
   glBindTexture(GL_TEXTURE_2D, zoneTextures[which]);
 
-  static const int zoneSize = 512;
-  static const double step = 1.0 / (zoneSize - 1); 
-  
-  glBegin(GL_TRIANGLE_STRIP);
+  ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(which);
 
-  glTexCoord2d(0.0, 0.0);
-  glVertex3d(0, 0, heightMaps[which][0][0]);
-
-  glTexCoord2d(0.0, step);
-  glVertex3d(0, step, heightMaps[which][0][1]);
+  static const double step = 1.0 / zoneSize;
+  glBegin(GL_TRIANGLES);
   
-  for (int y = 0; y < zoneSize - 1; ++y) {
-    if (0 == y%2) {
-      for (int triangle = 0; triangle < 2*zoneSize-2; ++triangle) {
-	glTexCoord((triangle/2 + 1) * step, (y + triangle%2)*step);
-	glVertex3d((triangle/2 + 1) * step, (y + triangle%2)*step, heightMap[which][triangle][y]); 
-      }
-    }
-    else {
-      for (int triangle = 2*zoneSize-3; triangle >= 0; --triangle) {
-	glTexCoord((triangle/2 + triangle%2) * step, (y + 1 - triangle%2)*step);
-	glVertex3d((triangle/2 + triangle%2) * step, (y + 1 - triangle%2)*step, heightMap[which][triangle][y]); 	
-      }
+  for (int x = 0; x < zoneSize - 1; ++x) {  
+    for (int y = 0; y < zoneSize - 1; ++y) {
+      glTexCoord2d(x * step, y * step); 
+      glVertex3d(zoneInfo->minX + x * step * zoneInfo->width, zoneInfo->minY + y * step * zoneInfo->height, zoneInfo->getHeight(x, y));
+
+      glTexCoord2d(x * step, (y+1) * step); 
+      glVertex3d(zoneInfo->minX + x * step * zoneInfo->width, zoneInfo->minY + (y+1) * step * zoneInfo->height, zoneInfo->getHeight(x, (y+1))); 
+      
+      glTexCoord2d((x+1) * step, y * step); 
+      glVertex3d(zoneInfo->minX + (x+1) * step * zoneInfo->width, zoneInfo->minY + y * step * zoneInfo->height, zoneInfo->getHeight((x+1), y));
+
+
+      glTexCoord2d(x * step, (y+1) * step); 
+      glVertex3d(zoneInfo->minX + x * step * zoneInfo->width, zoneInfo->minY + (y+1) * step * zoneInfo->height, zoneInfo->getHeight(x, (y+1))); 
+      
+
+      glTexCoord2d((x+1) * step, (y+1) * step); 
+      glVertex3d(zoneInfo->minX + (x+1) * step * zoneInfo->width, zoneInfo->minY + (y+1) * step * zoneInfo->height, zoneInfo->getHeight((x+1), (y+1)));
+
+      glTexCoord2d((x+1) * step, y * step); 
+      glVertex3d(zoneInfo->minX + (x+1) * step * zoneInfo->width, zoneInfo->minY + y * step * zoneInfo->height, zoneInfo->getHeight((x+1), y));
     }
   }
+
   glEnd();
+
+  glDisable(GL_TEXTURE_2D);
+  for (ZoneGraphicsInfo::gridIt grid = zoneInfo->gridBegin(); grid != zoneInfo->gridEnd(); ++grid) {
+    glBegin(GL_LINE_LOOP);    
+    for (ZoneGraphicsInfo::hexIt hex = (*grid).begin(); hex != (*grid).end(); ++hex) {
+      glVertex3d((*hex).x(), (*hex).y(), (*hex).z()); 
+    }
+    glEnd();    
+  }
+
 }
 
 void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
-  glDisable(GL_TEXTURE_2D); 
-  glBegin(GL_LINE_LOOP);
-  oglCoords = dat->getCoords(Right);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z() - 0.01);
-
-  oglCoords = dat->getCoords(RightUp);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z() - 0.01);
-
-  oglCoords = dat->getCoords(LeftUp); 
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z() - 0.01);
-
-  oglCoords = dat->getCoords(Left); 
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z() - 0.01);
-
-  oglCoords = dat->getCoords(LeftDown);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z() - 0.01);
-
-  oglCoords = dat->getCoords(RightDown);
-  glVertex3d(oglCoords.x(), oglCoords.y(), oglCoords.z() - 0.01);
-  glEnd();
-  glEnable(GL_TEXTURE_2D); 
+  Farmland* farm = dat->getHex()->getFarm();
+  if (!farm) return; 
 }
 
 ThreeDSprite* GLDrawer::makeSprite (Object* info) {
@@ -433,7 +401,6 @@ void GLDrawer::assignColour (Player* p) {
 void SupplyMode::drawLine (LineGraphicsInfo const* lin) {
   double flowRatio = lin->getFlowRatio();
   if (fabs(flowRatio) < 0.02) return;
-
 
   // Draw arrow
   flowRatio *= 0.2; 
@@ -873,6 +840,8 @@ void GLDrawer::paintGL () {
   glVertex3d(-1000,  1000, 0.01);
   glEnd();
 
+  if (LineGraphicsInfo::begin() != LineGraphicsInfo::end()) drawZone(0); 
+  
   glColor4d(1.0, 1.0, 1.0, 1.0);
   for (LineGraphicsInfo::Iterator line = LineGraphicsInfo::begin(); line != LineGraphicsInfo::end(); ++line) {
     drawLine(*line); 

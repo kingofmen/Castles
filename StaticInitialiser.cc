@@ -145,26 +145,30 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   CivilBuilding::femaleSurplusZero = popInfo->safeGetFloat("femaleSurplusZero", CivilBuilding::femaleSurplusZero);    
 }
 
-int heightMapWidth (int zoneSide) {
+inline int heightMapWidth (int zoneSide) {
   return 2 + 3*zoneSide; 
+}
+
+inline int heightMapHeight (int zoneSide) {
+  return 2 + heightMapWidth(zoneSide); // Additional 2 arises from hex/grid skew; check out (rightmost, downmost) RightDown vertex. 
 }
 
 void StaticInitialiser::initialiseGraphics (Object* gInfo) {
   //Logger::logStream(DebugStartup) << "StaticInitialiser::initialiseGraphics\n"; 
 
+  new ZoneGraphicsInfo(); 
   GraphicsInfo::zoneSide = gInfo->safeGetInt("zoneSide", 4);
-  int mapWidth = heightMapWidth(GraphicsInfo::zoneSide); 
-  GraphicsInfo::heightMap = new int[mapWidth*(mapWidth+2)];
+  int mapWidth = heightMapWidth(GraphicsInfo::zoneSide);
+  int mapHeight = heightMapHeight(GraphicsInfo::zoneSide);
+  GraphicsInfo::heightMap = new int[mapWidth*mapHeight];
   
   QImage b("gfx/heightmap.bmp");
   for (int x = 0; x < mapWidth; ++x) {    
-    for (int y = 0; y < mapWidth+2; ++y) { // Additional 2 arises from hex/grid skew; check out (rightmost, downmost) RightDown vertex. 
+    for (int y = 0; y < mapHeight; ++y) { 
       QRgb pix = b.pixel(x, y);
       GraphicsInfo::heightMap[mapWidth*y + x] = qRed(pix);
     }
   }
-
-  //Logger::logStream(DebugStartup) << "Exiting initialiseGraphics\n"; 
 }
 
 Hex* findHex (Object* info) {
@@ -380,42 +384,64 @@ void StaticInitialiser::createPlayer (Object* info) {
   ret->graphicsInfo->colour = qRgb(red, green, blue); 
 }
 
-double interpolate (double xfrac, double yfrac, int* heightMap, int mapWidth) {
+double StaticInitialiser::interpolate (double xfrac, double yfrac, int* heightMap) {
+  static int mapWidth = heightMapWidth(GraphicsInfo::zoneSide);
+  static int mapHeight = heightMapHeight(GraphicsInfo::zoneSide);
+  static double binWidth = 1.0 / mapWidth;
+  static double binHeight = 1.0 / mapHeight; 
+  
   int xbin = (int) floor(xfrac * mapWidth);  
-  int ybin = (int) floor(yfrac * (mapWidth+2));
-  double height = heightMap[ybin*mapWidth + xbin]; 
-  double nextHeight = 0;
-  if (xbin < mapWidth-1) nextHeight = heightMap[ybin*mapWidth + xbin + 1];
-  double binWidth = 1.0 / mapWidth;
+  int ybin = (int) floor(yfrac * mapHeight);
+  int nextXbin = min(xbin+1, mapWidth-1);
+  int nextYbin = min(ybin+1, mapHeight-1); 
+  
+  double height1 = heightMap[ybin*mapWidth + xbin];
+  double height2 = heightMap[ybin*mapWidth + nextXbin];
+  double height3 = heightMap[nextYbin*mapWidth + xbin];
+  double height4 = heightMap[nextYbin*mapWidth + nextXbin];  
+
   xfrac -= binWidth*xbin;     
   xfrac /= binWidth;
-  double ret = (1-xfrac)*height + xfrac*nextHeight;
+  yfrac -= binHeight*ybin;
+  yfrac /= binHeight; 
+
+  double ret = (1-xfrac)*(1-yfrac) * height1;
+  ret       +=    xfrac *(1-yfrac) * height2;
+  ret       += (1-xfrac)*   yfrac  * height3;
+  ret       +=    xfrac *   yfrac  * height4;
+
   return ret; 
 }
 
-void addShadows (QGLFramebufferObject* fbo, int* heightMap, int mapWidth, int texture) {
-  static bool shaded[512];
+void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, int* heightMap, int mapWidth, int texture) {
+  static bool shaded[GraphicsInfo::zoneSize];
   static double lightAngle = tan(30.0 / 180.0 * M_PI); 
-  static double invSize = 2.0 / 512; 
+  static double invSize = 2.0 / GraphicsInfo::zoneSize;
+
+  ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(0); 
   
-  for (int yval = 0; yval < 512; ++yval) {
-    for (int xval = 0; xval < 512; ++xval) {
-      shaded[xval] = false;
+  for (int yval = 0; yval < GraphicsInfo::zoneSize; ++yval) {
+    // First calculate all the point heights. 
+    for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
+      double xHeight = interpolate(((double) xval)/GraphicsInfo::zoneSize, ((double) yval)/GraphicsInfo::zoneSize, heightMap);
+      zoneInfo->heightMap[xval][yval] = xHeight;
+      shaded[xval] = false; 
     }
 
-    // For each point, throw a shadow to the right. 
-    for (int xval = 0; xval < 512; ++xval) {
-      if (shaded[xval]) continue; 
-      double xHeight = interpolate(xval/512.0, yval/512.0, heightMap, mapWidth);
-      for (int cand = xval + 1; cand < 512; ++cand) {
+    // For each point, throw a shadow to the right.     
+    for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
+      double xHeight = zoneInfo->heightMap[xval][yval];
+      for (int cand = xval + 1; cand < GraphicsInfo::zoneSize; ++cand) {
 	if (shaded[cand]) continue;
-	double candHeight = interpolate(cand/512.0, yval/512.0, heightMap, mapWidth);
+	double candHeight = zoneInfo->heightMap[cand][yval];
 	if (cand - xval > (xHeight - candHeight)*lightAngle) continue; // X point does not shade this candidate.
 	shaded[cand] = true;
       }
     }
 
-    for (int xval = 0; xval < 512; ++xval) {
+    // Draw the shadow texture and scale to graphics step. 
+    for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
+      zoneInfo->heightMap[xval][yval] *= GraphicsInfo::zSeparation; 
       if (!shaded[xval]) continue;
       QRectF point(xval*invSize - 1, yval*invSize - 1, invSize, invSize); 
       fbo->drawTexture(point, texture); 
@@ -430,7 +456,7 @@ void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, int
   int repeats = 3;
   
   double xstep = 2;
-  xstep /= (mapWidth-1); // Not calculating bin centers. Last bin edge should be on 512, or 2 in model space.
+  xstep /= (mapWidth-1); // Not calculating bin centers. Last bin edge should be on GraphicsInfo::zoneSize, or 2 in model space.
   double ystep = 2;
   ystep /= (mapWidth+2-1);
 
@@ -467,7 +493,6 @@ void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, int
 }
 
 void StaticInitialiser::makeZoneTextures (Object* ginfo) {
-  //Logger::logStream(DebugStartup) << "Entering makeZoneTextures\n"; 
   GLDrawer* hexDrawer = WarfareWindow::currWindow->hexDrawer;  
 
   //const char* names[NoTerrain] = {"mountain.bmp", "hill.bmp", "gfx\\grass.png", "forest.bmp", "ocean.bmp"};
@@ -479,7 +504,7 @@ void StaticInitialiser::makeZoneTextures (Object* ginfo) {
   // areas that have been drawn to can't be drawn to again, which completely
   // scuppers the intended overlap. 
   format.setInternalTextureFormat(GL_RGBA); 
-  QGLFramebufferObject* fbo = new QGLFramebufferObject(512, 512, format);
+  QGLFramebufferObject* fbo = new QGLFramebufferObject(GraphicsInfo::zoneSize, GraphicsInfo::zoneSize, format);
   fbo->bind();
   glViewport(0, 0, fbo->size().width(), fbo->size().height());
   glEnable(GL_TEXTURE_2D);
