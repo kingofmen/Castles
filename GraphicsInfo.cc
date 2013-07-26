@@ -13,7 +13,7 @@ vector<HexGraphicsInfo*> HexGraphicsInfo::allHexGraphics;
 vector<VertexGraphicsInfo*> VertexGraphicsInfo::allVertexGraphics;
 vector<LineGraphicsInfo*> LineGraphicsInfo::allLineGraphics;
 vector<ZoneGraphicsInfo*> ZoneGraphicsInfo::allZoneGraphics; 
-int* GraphicsInfo::heightMap = 0; 
+double* GraphicsInfo::heightMap = 0; 
 
 
 const double GraphicsInfo::xIncrement = 1.0; // Distance from center of hex to Right vertex. 

@@ -324,16 +324,24 @@ void GLDrawer::drawZone (int which) {
   
   for (int x = 0; x < zoneSize - 1; ++x) {  
     for (int y = 0; y < zoneSize - 1; ++y) {
-      glTexCoord2d(x * step, y * step); 
+      //triplet vec1 = point3;
+      //vec1 -= point2;
+      //triplet vec2 = point1;
+      //vec2 -= point2;
+      //vec1 = vec2.cross(vec1);
+      //vec1.normalise(); 
+      //glNormal3d(vec1.x(), vec1.y(), vec1.z());
+      
+      glTexCoord2d(x * step, y * step);      
       glVertex3d(zoneInfo->minX + x * step * zoneInfo->width, zoneInfo->minY + y * step * zoneInfo->height, zoneInfo->getHeight(x, y));
 
       glTexCoord2d(x * step, (y+1) * step); 
-      glVertex3d(zoneInfo->minX + x * step * zoneInfo->width, zoneInfo->minY + (y+1) * step * zoneInfo->height, zoneInfo->getHeight(x, (y+1))); 
+      glVertex3d(zoneInfo->minX + x * step * zoneInfo->width, zoneInfo->minY + (y+1) * step * zoneInfo->height, zoneInfo->getHeight(x, (y+1)));
       
       glTexCoord2d((x+1) * step, y * step); 
       glVertex3d(zoneInfo->minX + (x+1) * step * zoneInfo->width, zoneInfo->minY + y * step * zoneInfo->height, zoneInfo->getHeight((x+1), y));
 
-
+      //glNormal3d(1, 0, 1);
       glTexCoord2d(x * step, (y+1) * step); 
       glVertex3d(zoneInfo->minX + x * step * zoneInfo->width, zoneInfo->minY + (y+1) * step * zoneInfo->height, zoneInfo->getHeight(x, (y+1))); 
       
@@ -751,6 +759,12 @@ void GLDrawer::setViewport () {
   glClearDepth(1000);
   glClearColor(0.0, 0.0, 0.0, 0.0);
 
+
+  //float lightpos[] = {-1, 0, -0.1, 0 };
+  //glLightfv(GL_LIGHT0, GL_POSITION, lightpos); 
+  //glEnable(GL_LIGHTING);
+  //glEnable(GL_LIGHT0); 
+  
   glEnable(GL_TEXTURE_2D); // NB, anything without a texture will be drawn black - temporarily glDisable this for simple debugging shapes 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);

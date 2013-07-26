@@ -8,9 +8,9 @@ Tasks for the interface patch:
    - Fields (with status)
    - Stockpiles 
    - Better sprites
-   - More fractal heightmap
+   - More fractal heightmap (check) 
      i. Decouple Hex/Line/Vertex from terrain. (check)
-   - Terrain shadows 
+   - Terrain shadows (check) 
  * Labels on buttons
  * Popup tips 
 

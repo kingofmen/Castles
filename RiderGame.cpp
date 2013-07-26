@@ -32,7 +32,8 @@ WarfareGame::~WarfareGame () {
 }
 
 WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
-  srand(time(NULL));
+  //srand(time(NULL));
+  srand(42); 
   if (currGame) delete currGame; 
   currGame = new WarfareGame();
   Object* game = processFile(filename); 

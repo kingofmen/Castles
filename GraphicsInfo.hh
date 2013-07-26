@@ -39,7 +39,7 @@ public:
 protected:
   triplet position;
   static int zoneSide; // Size in hexes
-  static int* heightMap;
+  static double* heightMap;
 
   static const double xIncrement;
   static const double yIncrement;

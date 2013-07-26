@@ -160,7 +160,7 @@ void StaticInitialiser::initialiseGraphics (Object* gInfo) {
   GraphicsInfo::zoneSide = gInfo->safeGetInt("zoneSide", 4);
   int mapWidth = heightMapWidth(GraphicsInfo::zoneSide);
   int mapHeight = heightMapHeight(GraphicsInfo::zoneSide);
-  GraphicsInfo::heightMap = new int[mapWidth*mapHeight];
+  GraphicsInfo::heightMap = new double[mapWidth*mapHeight];
   
   QImage b("gfx/heightmap.bmp");
   for (int x = 0; x < mapWidth; ++x) {    
@@ -384,11 +384,9 @@ void StaticInitialiser::createPlayer (Object* info) {
   ret->graphicsInfo->colour = qRgb(red, green, blue); 
 }
 
-double StaticInitialiser::interpolate (double xfrac, double yfrac, int* heightMap) {
-  static int mapWidth = heightMapWidth(GraphicsInfo::zoneSide);
-  static int mapHeight = heightMapHeight(GraphicsInfo::zoneSide);
-  static double binWidth = 1.0 / mapWidth;
-  static double binHeight = 1.0 / mapHeight; 
+double StaticInitialiser::interpolate (double xfrac, double yfrac, int mapWidth, int mapHeight, double* heightMap) {
+  const double binWidth = 1.0 / mapWidth;
+  const double binHeight = 1.0 / mapHeight; 
   
   int xbin = (int) floor(xfrac * mapWidth);  
   int ybin = (int) floor(yfrac * mapHeight);
@@ -413,18 +411,177 @@ double StaticInitialiser::interpolate (double xfrac, double yfrac, int* heightMa
   return ret; 
 }
 
-void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, int* heightMap, int mapWidth, int texture) {
+void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, int texture) {
   static bool shaded[GraphicsInfo::zoneSize];
   static double lightAngle = tan(30.0 / 180.0 * M_PI); 
   static double invSize = 2.0 / GraphicsInfo::zoneSize;
 
-  ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(0); 
+  ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(0);
+
+  // Seed detailed heightmap using coarse one. 
+  for (int yval = 0; yval < GraphicsInfo::zoneSize; ++yval) {
+    for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
+      zoneInfo->heightMap[xval][yval] = interpolate(((double) xval)/GraphicsInfo::zoneSize,
+						    ((double) yval)/GraphicsInfo::zoneSize,
+						    heightMapWidth(GraphicsInfo::zoneSide),
+						    heightMapHeight(GraphicsInfo::zoneSide),			    
+						    GraphicsInfo::heightMap);
+    }
+  }
+  
+  // Square/diamond fractal
+  vector<QRect> squares;
+  static const int modSize = 129;
+  QRect bigSquare(0, 0, modSize-1, modSize-1); 
+  squares.push_back(bigSquare);
+
+  // From QRect doc for bottom():
+  // Note that for historical reasons this function returns top() + height() - 1; use y() + height() to retrieve the true y-coordinate.
+  // Similarly for right(). Hence ugly +1s that appear below. 
+
+  static double modulate[modSize*modSize];
+  static int touched[modSize][modSize];
+  for (int i = 0; i < modSize; ++i) {
+    for (int j = 0; j < modSize; ++j) {
+      modulate[j*modSize + i] = 0;
+      touched[i][j] = 0;
+    }
+  }
+  
+  static const double midValue = 1500;
+  static const double dimValue = 750; 
+  static const double eConst = 0; 
+  static const double eBias  = 0.5;
+  static const int cutoff = 2;
+  static const double iterPower = 1; 
+
+  int iter = 1; 
+  while (0 < squares.size()) {
+    QRect curr = squares.back();
+    squares.pop_back();
+    if (cutoff > curr.width()) continue;
+    if (cutoff > curr.height()) continue;     
+    QPoint midpoint(curr.left() + curr.width()/2, curr.top() + curr.height()/2); 
+
+    // Set 'diamond' points
+    QPoint north(midpoint.x(), curr.top());
+    double newValue = 0; 
+    newValue += modulate[curr.top()*modSize + curr.left()];
+    newValue += modulate[(curr.top())*modSize + curr.right()+1];
+    newValue += (curr.top() - midpoint.y() >= 0 ? modulate[(curr.top() - midpoint.y())*modSize + midpoint.x()] : 0);
+    newValue += modulate[(midpoint.y())*modSize + midpoint.x()];
+    newValue *= 0.25;
+    
+    double extra = rand();
+    extra /= RAND_MAX;
+    extra -= eBias;    
+    extra *= eConst + (dimValue * curr.width());
+    extra /= GraphicsInfo::zoneSize;
+    extra /= pow(iter, iterPower);    
+    if (0 <= touched[north.x()][north.y()]) {
+      modulate[(north.y())*modSize + north.x()] = newValue + extra;
+      touched[north.x()][north.y()]++;
+    }
+
+    QPoint south(midpoint.x(), curr.bottom()+1);
+    newValue = 0; 
+    newValue += modulate[(curr.bottom()+1)*modSize + curr.left()];
+    newValue += modulate[(curr.bottom()+1)*modSize + curr.right()+1];
+    newValue += modulate[(midpoint.y())*modSize + midpoint.x()];        
+    newValue += (midpoint.y() + curr.height() < modSize ? modulate[(midpoint.y() + curr.height())*modSize + midpoint.x()] : 0);
+    newValue *= 0.25;
+      
+    extra = rand();
+    extra /= RAND_MAX;
+    extra -= eBias;    
+    extra *= eConst + (dimValue * curr.width());
+    extra /= GraphicsInfo::zoneSize;
+    extra /= pow(iter, iterPower);
+    if (0 <= touched[south.x()][south.y()]) {    
+      modulate[(south.y())*modSize + south.x()] = newValue + extra;
+      touched[south.x()][south.y()]++;
+    }
+    
+    QPoint west(curr.left(), midpoint.y());
+    newValue = 0; 
+    newValue += modulate[(curr.top())*modSize + curr.left()];
+    newValue += modulate[(curr.bottom()+1)*modSize + curr.left()];
+    newValue += modulate[(midpoint.y())*modSize + midpoint.x()];        
+    newValue += (midpoint.x() - curr.width() >= 0 ? modulate[(midpoint.y())*modSize + midpoint.x() - curr.width()] : 0);    
+    newValue *= 0.25;
+      
+    extra = rand();
+    extra /= RAND_MAX;
+    extra -= eBias;    
+    extra *= eConst + (dimValue * curr.width());
+    extra /= GraphicsInfo::zoneSize;
+    extra /= pow(iter, iterPower);
+    if (0 <= touched[west.x()][west.y()]) {        
+      modulate[(west.y())*modSize + west.x()] = newValue + extra;
+      touched[west.x()][west.y()]++;
+    }
+
+    QPoint east(curr.right()+1, midpoint.y());
+    newValue = 0; 
+    newValue += modulate[(curr.top())*modSize + curr.right()+1];
+    newValue += modulate[(curr.bottom()+1)*modSize + curr.right()+1];
+    newValue += modulate[(midpoint.y())*modSize + midpoint.x()];            
+    newValue += (midpoint.x() + curr.width() < modSize ? modulate[(midpoint.y())*modSize + midpoint.x() + curr.width()] : 0);        
+    newValue *= 0.25;
+      
+    extra = rand();
+    extra /= RAND_MAX;
+    extra -= eBias;    
+    extra *= eConst + (dimValue * curr.width());
+    extra /= GraphicsInfo::zoneSize;
+    extra /= pow(iter, iterPower);
+    if (0 <= touched[east.x()][east.y()]) {            
+      modulate[(east.y())*modSize + east.x()] = newValue + extra;
+      touched[east.x()][east.y()]++;
+    }
+
+    // Midpoint 
+    newValue = 0; 
+    newValue += modulate[(curr.top())*modSize + curr.left()];
+    newValue += modulate[(curr.bottom()+1)*modSize + curr.left()];
+    newValue += modulate[(curr.top())*modSize + curr.right()+1];
+    newValue += modulate[(curr.bottom()+1)*modSize + curr.right()+1];
+    newValue *= 0.25;
+    
+    extra = rand();
+    extra /= RAND_MAX;
+    extra -= eBias;
+    extra *= eConst + (midValue * curr.width());
+    extra /= GraphicsInfo::zoneSize;
+    extra /= pow(iter, iterPower);
+    if (0 <= touched[midpoint.x()][midpoint.y()]) {                
+      modulate[(midpoint.y())*modSize + midpoint.x()] = newValue + extra;
+      touched[midpoint.x()][midpoint.y()]++;
+    }
+
+    // Generate new squares
+    squares.push_back(QRect(curr.left(), curr.top(), (midpoint.x() - curr.left()), (midpoint.y() - curr.top())));
+    squares.push_back(QRect(curr.left(), midpoint.y(), (midpoint.x() - curr.left()), (curr.bottom()+1 - midpoint.y())));
+    squares.push_back(QRect(midpoint.x(), curr.top(), (curr.right()+1 - midpoint.x()), (midpoint.y() - curr.top())));
+    squares.push_back(QRect(midpoint.x(), midpoint.y(), (curr.right()+1 - midpoint.x()), (curr.bottom()+1 - midpoint.y())));
+    iter++; 
+  }
+
+  
+  for (int yval = 0; yval < GraphicsInfo::zoneSize; ++yval) {
+    for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {  
+      double xfrac = xval;
+      xfrac /= GraphicsInfo::zoneSize;
+      double yfrac = yval;
+      yfrac /= GraphicsInfo::zoneSize;
+      zoneInfo->heightMap[xval][yval] += interpolate(xfrac, yfrac, modSize, modSize, modulate);
+    }
+  }
+
   
   for (int yval = 0; yval < GraphicsInfo::zoneSize; ++yval) {
     // First calculate all the point heights. 
     for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
-      double xHeight = interpolate(((double) xval)/GraphicsInfo::zoneSize, ((double) yval)/GraphicsInfo::zoneSize, heightMap);
-      zoneInfo->heightMap[xval][yval] = xHeight;
       shaded[xval] = false; 
     }
 
@@ -443,13 +600,14 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, int* heightMap, i
     for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
       zoneInfo->heightMap[xval][yval] *= GraphicsInfo::zSeparation; 
       if (!shaded[xval]) continue;
-      QRectF point(xval*invSize - 1, yval*invSize - 1, invSize, invSize); 
+      QRectF point(xval*invSize - 1, yval*invSize - 1, invSize * 1.5, invSize * 1.5);
       fbo->drawTexture(point, texture); 
     }
   }
+  
 }
 
-void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, int* heightMap, int mapWidth, int texture) {
+void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, double* heightMap, int mapWidth, int texture) {
   // Corners of texture are at (-1, -1) and (1, 1) because drawTexture uses model space
   // and the glOrtho call above. 
 
@@ -588,7 +746,7 @@ void StaticInitialiser::makeZoneTextures (Object* ginfo) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, bits);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
-  addShadows(fbo, GraphicsInfo::heightMap, heightMapWidth(GraphicsInfo::zoneSide), shadowTexture);
+  addShadows(fbo, shadowTexture);
 
   fbo->release();
   hexDrawer->setViewport();
