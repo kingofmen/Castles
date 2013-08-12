@@ -60,7 +60,7 @@ public:
   LineIterator linEnd   () {return lines.end();}
   int recruit (Player* forhim, MilUnitTemplate const* const recruitType, MilUnit* target, Outcome out); 
   void setLine (Direction dir, Line* l);
-  void setFarm (Farmland* f) {farms = f;} 
+  void setFarm (Farmland* f);
   virtual void setMirrorState (); 
   
   static Iterator begin () {return allHexes.begin();}

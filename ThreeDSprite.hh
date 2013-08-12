@@ -5,11 +5,13 @@
 #include <fstream>
 #include <vector>
 #include <map> 
+#include "UtilityFunctions.hh" 
+using namespace std; 
 
 class ThreeDSprite {
 public:
-  ThreeDSprite (std::string fname, std::vector<std::string> specials);
-  void draw (std::vector<int>& textures); 
+  ThreeDSprite (string fname, vector<string> specials);
+  void draw (vector<int>& textures); 
   enum SpecialFlags { First = 1,
 		      Second = 2,
 		      Third = 4 };
@@ -28,25 +30,27 @@ private:
     int normal;
   };
   struct Face {
-    std::vector<Index> verts;
+    vector<Index> verts;
   };
   struct Group {
     Group (); 
-    std::vector<Face*> faces;
-    int special; 
+    vector<Face*> faces;
+    int special;
+    string colour; 
   };
   
-  
-  std::vector<Vertex> vertices;
-  std::vector<Vertex> textures;
-  std::vector<Vertex> normals; 
-  std::map<std::string, Group> groups;
+  vector<Vertex> vertices;
+  vector<Vertex> textures;
+  vector<Vertex> normals; 
+  map<string, Group> groups;
+  map<string, triplet> colours; 
   int listIndex;
   int numSpecials; 
   
-  void loadFile (std::string fname);
-  void makeFace (std::ifstream& reader, std::string groupName);
-  void drawFace (Face* face); 
+  void loadFile (string fname);
+  void loadMaterials (string fname);  
+  void makeFace (ifstream& reader, string groupName);
+  void drawFace (Face* face);
 };
 
 #endif

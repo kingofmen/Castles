@@ -13,22 +13,6 @@ class MilUnit;
 class MilUnitTemplate; 
 class Castle; 
 
-enum RollType {Equal = 0, GtEqual, LtEqual, Greater, Less};
-
-struct DieRoll {
-  DieRoll (int d, int f); 
-  
-  double probability (int target, int mods, RollType t) const; 
-  int roll () const;
-  
-private:
-  double baseProb (int target, int mods, RollType t) const; 
-
-  int dice;
-  int faces;
-  DieRoll* next; 
-};
-
 extern const DieRoll FiveDSix; 
 extern const DieRoll FourDSix;
 extern const DieRoll ThreeDSix; 

@@ -650,6 +650,17 @@ void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, dou
   }
 }
 
+void StaticInitialiser::loadTextures () {
+  GLDrawer* drawer = WarfareWindow::currWindow->hexDrawer;
+  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\cleared.png", Qt::darkGray));
+  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\ploughed.png", Qt::black));
+  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\sowed.png", Qt::gray));
+  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\ripe1.png", Qt::darkGreen));
+  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\ripe2.png", Qt::green));
+  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\ripe3.png", Qt::yellow));
+  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\reaped.png", Qt::darkYellow));
+}
+
 void StaticInitialiser::makeZoneTextures (Object* ginfo) {
   GLDrawer* hexDrawer = WarfareWindow::currWindow->hexDrawer;  
 

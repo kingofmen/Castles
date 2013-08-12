@@ -324,14 +324,6 @@ void GLDrawer::drawZone (int which) {
   
   for (int x = 0; x < zoneSize - 1; ++x) {  
     for (int y = 0; y < zoneSize - 1; ++y) {
-      //triplet vec1 = point3;
-      //vec1 -= point2;
-      //triplet vec2 = point1;
-      //vec2 -= point2;
-      //vec1 = vec2.cross(vec1);
-      //vec1.normalise(); 
-      //glNormal3d(vec1.x(), vec1.y(), vec1.z());
-      
       glTexCoord2d(x * step, y * step);      
       glVertex3d(zoneInfo->minX + x * step * zoneInfo->width, zoneInfo->minY + y * step * zoneInfo->height, zoneInfo->getHeight(x, y));
 
@@ -368,8 +360,40 @@ void GLDrawer::drawZone (int which) {
 }
 
 void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
-  Farmland* farm = dat->getHex()->getFarm();
-  if (!farm) return; 
+
+  vector<int> texts; // Dummy, not going to use it
+  glDisable(GL_TEXTURE_2D);    
+  glMatrixMode(GL_MODELVIEW);
+  for (GraphicsInfo::cpit tree = dat->startTrees(); tree != dat->finalTrees(); ++tree) {
+    glPushMatrix();
+    glTranslated((*tree).x(), (*tree).y(), (*tree).z());
+    glScalef(0.5, 0.5, 0.25);     
+    tSprite->draw(texts);
+    glPopMatrix();
+  }
+  glColor4d(1.0, 1.0, 1.0, 1.0); 
+  
+  FarmGraphicsInfo const* farm = dat->getFarm();
+  if (!farm) return;
+
+  glEnable(GL_TEXTURE_2D);      
+  for (FarmGraphicsInfo::cfit field = farm->start(); field != farm->final(); ++field) {
+    glBindTexture(GL_TEXTURE_2D, textureIDs[(*field).getIndex()]); 
+    glBegin(GL_POLYGON);
+    GraphicsInfo::cpit point = (*field).begin(); // Assume square fields for now, and just unroll loop.
+    glTexCoord2d(0, 0);
+    glVertex3d((*point).x(), (*point).y(), (*point).z()); ++point;
+    glTexCoord2d(0, 1);    
+    glVertex3d((*point).x(), (*point).y(), (*point).z()); ++point;
+    glTexCoord2d(1, 1);    
+    glVertex3d((*point).x(), (*point).y(), (*point).z()); ++point;
+    glTexCoord2d(1, 0);    
+    glVertex3d((*point).x(), (*point).y(), (*point).z()); 
+
+
+    glEnd(); 
+  }
+  
 }
 
 ThreeDSprite* GLDrawer::makeSprite (Object* info) {
@@ -385,17 +409,24 @@ ThreeDSprite* GLDrawer::makeSprite (Object* info) {
 }
 
 void GLDrawer::loadSprites () {
-  if ((cSprite) && (kSprite)) return;
+  if ((cSprite) && (kSprite) && tSprite) return;
   if (cSprite) delete cSprite;
   if (kSprite) delete kSprite;
+  if (tSprite) delete tSprite;
   
   Object* ginfo = processFile("gfx/info.txt");
+
   Object* castleInfo = ginfo->safeGetObject("castlesprite");
   assert(castleInfo);
-  cSprite = makeSprite(castleInfo); 
+  cSprite = makeSprite(castleInfo);
+  
   Object* knightinfo = ginfo->safeGetObject("knightsprite");
   assert(knightinfo);
-  kSprite = makeSprite(knightinfo); 
+  kSprite = makeSprite(knightinfo);
+
+  Object* treeinfo = ginfo->safeGetObject("treesprite");
+  assert(treeinfo);
+  tSprite = makeSprite(treeinfo); 
 }
 
 void GLDrawer::assignColour (Player* p) {
@@ -716,15 +747,6 @@ int GLDrawer::loadTexture (std::string fname, QColor backup) {
   
   QImage t = QGLWidget::convertToGLFormat(b);
 
-  /*
-  QRgb pix = t.pixel(0, 0);
-  Logger::logStream(DebugStartup) << "Loading " <<  fname << " : "
-				  << qRed(pix) << " "
-				  << qGreen(pix) << " "
-				  << qBlue(pix) << " "
-				  << qAlpha(pix) << "\n";
-  */
-
   int index = assignTextureIndex(); 
   glBindTexture(GL_TEXTURE_2D, textureIDs[index]); 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -735,24 +757,6 @@ int GLDrawer::loadTexture (std::string fname, QColor backup) {
 
   return index; 
 }
-
-/*
-int GLDrawer::loadTexture (int texName, QColor backup, string fname) {
-  QImage b;
-  if (!b.load(fname.c_str())) {
-    b = QImage(32, 32, QImage::Format_RGB888);
-    b.fill(backup.rgb()); 
-  }
-  
-  QImage t = QGLWidget::convertToGLFormat(b);
-  glBindTexture(GL_TEXTURE_2D, texName); 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, t.width(), t.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, t.bits());
-}
-*/
 
 void GLDrawer::setViewport () {
   glEnable(GL_DEPTH_TEST);

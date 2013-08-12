@@ -5,12 +5,11 @@
 #include <QtOpenGL>
 #include <QTextStream>
 #include "UtilityFunctions.hh"
-#ifndef Q_MOC_RUN // Hackish workaround to avoid BOOST_JOIN parsing issue. 
-#include "boost/geometry/geometry.hpp" 
-#endif 
+#include "Building.hh" 
 
 class MilUnit;
 class Hex;
+class HexGraphicsInfo; 
 class Vertex;
 class Line; 
 class Farmland; 
@@ -19,13 +18,16 @@ enum TerrainType {Mountain = 0, Hill, Plain, Forest, Ocean, NoTerrain};
 enum Direction {NorthWest = 0, North, NorthEast, SouthEast, South, SouthWest, NoDirection};
 enum Vertices {LeftUp = 0, RightUp, Right, RightDown, LeftDown, Left, NoVertex}; 
 
-
 class GraphicsInfo {
   friend class StaticInitialiser; 
 public:
   GraphicsInfo ();
   ~GraphicsInfo ();
 
+  typedef vector<triplet> FieldShape;  
+  typedef FieldShape::const_iterator cpit;
+  typedef FieldShape::iterator pit;      
+  
   triplet getPosition () const {return position;}
   virtual void describe (QTextStream& /*str*/) const {} 
   int getZone () const {return 0;}
@@ -53,19 +55,51 @@ private:
 
 };
 
+
 class FarmGraphicsInfo : public GraphicsInfo {
+  friend class StaticInitialiser;
+  friend class HexGraphicsInfo; 
 public:
   FarmGraphicsInfo (Farmland* f);
   ~FarmGraphicsInfo ();
-
   Farmland* getFarm () {return myFarm;}
-  
-private:
-  void generateShapes ();
+  static void updateFieldStatus (); 
 
+  struct FieldInfo {
+    friend class FarmGraphicsInfo; 
+    FieldInfo (FieldShape s); 
+    int getIndex () const {return textureIndices[status];} 
+    
+    cpit begin () const {return shape.begin();}
+    pit  begin ()       {return shape.begin();}
+    cpit end () const {return shape.end();}
+    pit  end ()       {return shape.end();}
+    
+  private:
+    FieldShape shape;
+    double area;
+    int status;
+  };
+
+  typedef vector<FieldInfo>::const_iterator cfit;
+  typedef vector<FieldInfo>::iterator fit;
+  cfit start () const {return fields.begin();}
+  cfit final () const {return fields.end();} 
+  fit start () {return fields.begin();}
+  fit final () {return fields.end();} 
+
+  typedef vector<FarmGraphicsInfo*>::iterator Iterator;
+  static Iterator begin () {return allFarmInfos.begin();}
+  static Iterator end () {return allFarmInfos.end();}  
   
+private:  
+  double fieldArea ();   
+  void generateShapes (HexGraphicsInfo* dat);
+  vector<FieldInfo> fields;
+  static vector<int> textureIndices; 
   
-  Farmland* myFarm; 
+  Farmland* myFarm;
+  static vector<FarmGraphicsInfo*> allFarmInfos; 
 };
 
 class HexGraphicsInfo : public GraphicsInfo {
@@ -77,14 +111,23 @@ public:
   
   virtual void describe (QTextStream& str) const;  
   triplet getCoords (Vertices v) const;
-  Hex* getHex () const {return myHex;} 
+  FarmGraphicsInfo const* getFarm () const {return farmInfo;} 
+  Hex* getHex () const {return myHex;}
+  FieldShape getPatch (); 
   TerrainType getTerrain () const {return terrain;}
   bool isInside (double x, double y) const;
+  void setFarm (FarmGraphicsInfo* f);
   static Iterator begin () {return allHexGraphics.begin();}
   static Iterator end   () {return allHexGraphics.end();}
   static void getHeights (); 
+
+  cpit startTrees () const {return trees.begin();}
+  cpit finalTrees () const {return trees.end();}
   
 private:
+  void generateShapes ();
+  double patchArea () const;
+  
   TerrainType terrain;
   Hex* myHex;
   triplet cornerRight;
@@ -93,7 +136,11 @@ private:
   triplet cornerLeft;
   triplet cornerLeftUp;
   triplet cornerRightUp;  
-
+  FarmGraphicsInfo* farmInfo; 
+  vector<FieldShape> spritePatches; // Places to put sprites - hand out to subordinates. 
+  FieldShape trees; // Not a polygon.
+  vector<int> treesPerField;
+  
   static vector<HexGraphicsInfo*> allHexGraphics; 
 };
 

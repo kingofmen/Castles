@@ -140,7 +140,6 @@ protected:
 private:
   int assignTextureIndex (); 
   int loadTexture (std::string fname, QColor backup);
-  //void loadTexture (int texName, QColor backup, std::string fname);
   void drawCastle (Castle* castle, LineGraphicsInfo const* dat); 
   void drawLine (LineGraphicsInfo const* dat);
   void drawHex (HexGraphicsInfo const* dat);
@@ -160,6 +159,7 @@ private:
   
   ThreeDSprite* cSprite;
   ThreeDSprite* kSprite;
+  ThreeDSprite* tSprite;  
 
   MapOverlay* overlayMode; 
 }; 

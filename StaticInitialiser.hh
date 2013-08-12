@@ -14,6 +14,8 @@ class AgeTracker;
 class StaticInitialiser {
 public:
 
+  // In effect a namespace, for all those functions that get called once at startup. 
+  
   static void overallInitialisation (Object* info); 
 
   static void      initialiseBuilding (Building* build, Object* info); 
@@ -26,7 +28,8 @@ public:
   static void      buildMilUnitTemplates (Object* info);
   static void      createActionProbabilities (Object* info);
   static void      createPlayer (Object* info);   
-  static void      loadAiConstants (Object* info); 
+  static void      loadAiConstants (Object* info);
+  static void      loadTextures (); 
   static void      makeZoneTextures (Object* gInfo); 
   
   static void      writeGameToFile (string fname);

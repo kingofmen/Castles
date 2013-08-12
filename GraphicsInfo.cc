@@ -14,14 +14,18 @@ vector<VertexGraphicsInfo*> VertexGraphicsInfo::allVertexGraphics;
 vector<LineGraphicsInfo*> LineGraphicsInfo::allLineGraphics;
 vector<ZoneGraphicsInfo*> ZoneGraphicsInfo::allZoneGraphics; 
 double* GraphicsInfo::heightMap = 0; 
+vector<int> FarmGraphicsInfo::textureIndices; 
+vector<FarmGraphicsInfo*> FarmGraphicsInfo::allFarmInfos; 
 
+double area (GraphicsInfo::FieldShape const& field);
+bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2); 
 
 const double GraphicsInfo::xIncrement = 1.0; // Distance from center of hex to Right vertex. 
 const double GraphicsInfo::yIncrement = sqrt(pow(xIncrement, 2) - pow(0.5*xIncrement, 2)); // Vertical distance from center to Up vertices. 
 const double GraphicsInfo::xSeparation = 0.8; // Horizontal distance from Right vertex of (0, 0) to UpLeft vertex of (1, 0). 
 const double GraphicsInfo::ySeparation = xSeparation/sqrt(3); // Vertical distance from Right to UpLeft as above. Half the width of a Line.
 const double GraphicsInfo::zSeparation = -0.003; // Height of a single step.
-const double GraphicsInfo::zOffset     = -0.006; // Offset to get lines a little above terrain texture. 
+const double GraphicsInfo::zOffset     = -0.003; // Offset to get lines a little above terrain texture. 
 
 GraphicsInfo::~GraphicsInfo () {}
 HexGraphicsInfo::~HexGraphicsInfo () {}
@@ -199,6 +203,7 @@ HexGraphicsInfo::HexGraphicsInfo  (Hex* h)
   : GraphicsInfo()
   , terrain(h->getType())
   , myHex(h)
+  , farmInfo(0)
 { 
   pair<int, int> hpos = h->getPos(); 
   position.x() = (1.5 * xIncrement + xSeparation) * hpos.first;
@@ -249,7 +254,7 @@ HexGraphicsInfo::HexGraphicsInfo  (Hex* h)
   cornerLeftDown.z() = zOffset + zSeparation * getHeight(hexX, hexY);
 
   ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(0);
-  zoneInfo->addHex(this);   
+  zoneInfo->addHex(this);
   allHexGraphics.push_back(this);
 }
 
@@ -302,6 +307,119 @@ bool HexGraphicsInfo::isInside (double x, double y) const {
   return true;
 }
 
+void HexGraphicsInfo::generateShapes () {
+  ZoneGraphicsInfo* zone = ZoneGraphicsInfo::getZoneInfo(0); 
+  
+  int attempts = 0; 
+  while (patchArea() < 1) {
+    FieldShape square;
+    square.push_back(triplet(-0.5, -0.5));
+    square.push_back(triplet(-0.5,  0.5));
+    square.push_back(triplet( 0.5,  0.5));
+    square.push_back(triplet( 0.5, -0.5));
+
+    double degree = rand();
+    degree /= RAND_MAX;
+    degree *= 360;
+
+    double move = rand();
+    move /= RAND_MAX;
+    move *= 0.60;
+    move += 0.10;
+    triplet center(move);
+    center.rotatexy(degree);
+    center += position; 
+
+    degree = rand();
+    degree /= RAND_MAX;
+    degree *= 360;
+    
+    FieldShape testField;    
+    for (pit s = square.begin(); s != square.end(); ++s) {
+      move = rand();
+      move /= RAND_MAX;
+      move -= 0.5;
+      move *= 0.1;
+      (*s).x() += move;
+      move = rand();
+      move /= RAND_MAX;
+      move -= 0.5;
+      move *= 0.1;
+      (*s).y() += move;
+      (*s) *= 0.10;
+      (*s) += center; 
+      (*s).rotatexy(degree, center);
+      testField.push_back(*s);       
+    }
+
+    bool overlap = false;
+    if (++attempts < 25) {
+      for (vector<FieldShape>::iterator field = spritePatches.begin(); field != spritePatches.end(); ++field) {
+	if (!overlaps(testField, (*field))) continue;
+	overlap = true;
+	break; 
+      }
+    }
+
+    
+    if (overlap) continue;
+    for (pit pt = testField.begin(); pt != testField.end(); ++pt) {
+      (*pt).z() = zone->calcHeight((*pt).x(), (*pt).y()) + zOffset; 
+    }
+    
+    spritePatches.push_back(testField);
+    attempts = 0; 
+  }
+
+  // Now trees.
+  DieRoll deesix(1, 3);   
+  for (vector<FieldShape>::iterator field = spritePatches.begin(); field != spritePatches.end(); ++field) {
+    // How many to generate?
+    int numTrees = 0;
+    switch (terrain) {
+    default:
+    case Ocean:
+    case Mountain: break;
+    case Forest: numTrees += deesix.roll() - 1;
+    case Hill: numTrees += deesix.roll() - 1;
+    case Plain: numTrees += deesix.roll() - 1;
+      break;
+    }
+    treesPerField.push_back(numTrees); 
+    
+    double minX = min(min((*field)[0].x(), (*field)[1].x()), min((*field)[2].x(), (*field)[3].x()));
+    double maxX = max(max((*field)[0].x(), (*field)[1].x()), max((*field)[2].x(), (*field)[3].x()));
+    double minY = min(min((*field)[0].y(), (*field)[1].y()), min((*field)[2].y(), (*field)[3].y()));
+    double maxY = max(max((*field)[0].y(), (*field)[1].y()), max((*field)[2].y(), (*field)[3].y()));
+    
+    for (int i = 0; i < numTrees; ++i) {
+      triplet position(1e25, 1e25, 0);
+
+      while (!contains((*field), position)) {
+	position.x() = rand(); position.x() /= RAND_MAX;
+	position.x() *= (maxX - minX);
+	position.x() += minX;
+	
+	position.y() = rand(); position.y() /= RAND_MAX;
+	position.y() *= (maxY - minY);
+	position.y() += minY;
+      }
+
+      position.z() = zone->calcHeight(position.x(), position.y());
+      trees.push_back(position);
+    }
+  }
+}
+
+double HexGraphicsInfo::patchArea () const {
+  double ret = 0;
+  for (vector<FieldShape>::const_iterator f = spritePatches.begin(); f != spritePatches.end(); ++f) {
+    ret += area(*f);
+  }
+  return ret;
+}
+
+
 triplet HexGraphicsInfo::getCoords (Vertices dir) const {
   switch (dir) {
   case LeftUp:    return cornerLeftUp;
@@ -327,6 +445,20 @@ void HexGraphicsInfo::getHeights () {
     (*h)->cornerLeftDown.z()   = zoneInfo->calcHeight((*h)->cornerLeftDown.x(),  (*h)->cornerLeftDown.y()); 
     (*h)->cornerRightDown.z()  = zoneInfo->calcHeight((*h)->cornerRightDown.x(), (*h)->cornerRightDown.y());
   }
+}
+
+GraphicsInfo::FieldShape HexGraphicsInfo::getPatch () {
+  FieldShape ret = spritePatches.back();
+  spritePatches.pop_back();
+  for (int i = 0; i < treesPerField.back(); ++i) trees.pop_back();
+  treesPerField.pop_back(); 
+  return ret; 
+}
+
+void HexGraphicsInfo::setFarm (FarmGraphicsInfo* f) {
+  if (0 == spritePatches.size()) generateShapes();
+  farmInfo = f;
+  farmInfo->generateShapes(this); 
 }
 
 void LineGraphicsInfo::addCastle (HexGraphicsInfo const* supportInfo) {
@@ -620,4 +752,137 @@ void MilUnitGraphicsInfo::describe (QTextStream& str) const {
       << "  Shock     : " << unit->calcStrength(unit->getDecayConstant(), &MilUnitElement::shock) << "\n"
       << "  Fire      : " << unit->calcStrength(unit->getDecayConstant(), &MilUnitElement::range) << "\n"
       << "  Skirmish  : " << unit->calcStrength(unit->getDecayConstant(), &MilUnitElement::tacmob) << "\n";  
+}
+
+double area (GraphicsInfo::FieldShape const& field) {
+  double area = 0; 
+  for (unsigned int i = 1; i < field.size(); ++i) {
+    area += field[i-1].x() * field[i].y();
+    area -= field[i-1].y() * field[i].x();
+  }
+
+  area += field.back().x() * field[0].y();
+  area -= field.back().y() * field[0].x();  
+
+  return 0.5*abs(area); // Negative for clockwise polygon, but I don't care about that. 
+}
+
+bool intersect (triplet const& pt1, triplet const& pt2, triplet const& pt3, triplet const& pt4) {
+  // Returns true if the line from pt1 to pt2 intersects that from pt3 to pt4.
+
+  // Quickly check that bounding boxes overlap
+  if (max(pt3.x(), pt4.x()) < min(pt1.x(), pt2.x())) return false;
+  if (max(pt1.x(), pt2.x()) < min(pt3.x(), pt4.x())) return false;
+  if (max(pt3.y(), pt4.y()) < min(pt1.y(), pt2.y())) return false;
+  if (max(pt1.y(), pt2.y()) < min(pt3.y(), pt4.y())) return false;
+  
+  // Check whether parallel
+  double det = (pt1.x() - pt2.x())*(pt3.y() - pt4.y()) - (pt1.y() - pt2.y())*(pt3.x() - pt4.x());
+  if (abs(det) < 1e-6) return false; // Strictly speaking zero, but close enough
+  det = 1.0 / det;
+
+  double xintersect = (pt1.x()*pt2.y() - pt1.y()*pt2.x())*(pt3.x() - pt4.x());
+  xintersect       -= (pt3.x()*pt4.y() - pt3.y()*pt4.x())*(pt1.x() - pt2.x());
+  xintersect       *= det;
+
+  // Check that x is within bounding box
+  if (xintersect < min(min(pt1.x(), pt2.x()), min(pt3.x(), pt4.x()))) return false;
+  if (xintersect > max(max(pt1.x(), pt2.x()), max(pt3.x(), pt4.x()))) return false;  
+    
+  double yintersect = (pt1.x()*pt2.y() - pt1.y()*pt2.x())*(pt3.y() - pt4.y());
+  yintersect       -= (pt3.x()*pt4.y() - pt3.y()*pt4.x())*(pt1.y() - pt2.y());
+  yintersect       *= det;
+  if (yintersect < min(min(pt1.y(), pt2.y()), min(pt3.y(), pt4.y()))) return false;
+  if (yintersect > max(max(pt1.y(), pt2.y()), max(pt3.y(), pt4.y()))) return false;  
+
+  return true; 
+}
+
+bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2) {
+  // Returns true if the polygons overlap. Overlap test is to check 
+  // whether any lines intersect. Notice this is O(n^2), not nice.
+  
+  for (unsigned int pt1 = 1; pt1 < field1.size(); ++pt1) {
+    triplet one = field1[pt1-1];
+    triplet two = field1[pt1];
+
+    for (unsigned int pt2 = 1; pt2 < field2.size(); ++pt2) {
+      triplet thr = field2[pt2-1];
+      triplet fou = field2[pt2];
+      if (!intersect(one, two, thr, fou)) continue;
+      return true;
+    }
+
+    triplet thr = field2[field2.size()-2];
+    triplet fou = field2[field2.size()-1];
+    if (intersect(one, two, thr, fou)) return true;
+  }
+
+  triplet one = field2[field2.size()-2];
+  triplet two = field2[field2.size()-1];
+  for (unsigned int pt2 = 1; pt2 < field2.size(); ++pt2) {
+    triplet thr = field2[pt2-1];
+    triplet fou = field2[pt2];
+    if (!intersect(one, two, thr, fou)) continue;
+    return true;
+  }
+
+  triplet thr = field2[field2.size()-2];
+  triplet fou = field2[field2.size()-1];
+  if (intersect(one, two, thr, fou)) return true;  
+  
+  return false; 
+}
+
+FarmGraphicsInfo::FarmGraphicsInfo (Farmland* f)
+  : myFarm(f)
+{
+  allFarmInfos.push_back(this); 
+}
+
+FarmGraphicsInfo::FieldInfo::FieldInfo (FieldShape f) 
+  : shape(f)
+  , area(-1)
+  , status(Farmland::Clear)
+{}
+
+double FarmGraphicsInfo::fieldArea () {
+  double ret = 0;
+  for (fit f = fields.begin(); f != fields.end(); ++f) {
+    if (0 > (*f).area) (*f).area = area((*f).shape)*5000*1.25;
+    // Multiplying numbers on the assumption that 5000 is about the maximum number of
+    // fields, and there's room for about a unit of graphics
+    // in a Hex. The 1.25 is a fudge factor based on visual feedback.
+    // Increase it to make fields sparser, decrease for denser.     
+    ret += (*f).area;
+  }
+  return ret;
+}
+
+void FarmGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
+  double currentArea = 0;
+  while ((currentArea = fieldArea()) < myFarm->totalFields()) {
+    FieldShape testField = hex->getPatch(); 
+    fields.push_back(FieldInfo(testField));
+  }
+}
+
+void FarmGraphicsInfo::updateFieldStatus () {
+  for (Iterator info = begin(); info != end(); ++info) {
+    double totalFieldArea = 1.0 / (*info)->myFarm->totalFields();
+    double totalGraphArea = 1.0 / (*info)->fieldArea();
+    fit currentField = (*info)->start(); 
+    for (int s = Farmland::Clear; s < Farmland::NumStatus; ++s) {
+      double percentage = (*info)->myFarm->getFieldStatus(s);
+      percentage *= totalFieldArea;
+      double assigned = 0.005; // Ignore less than half a percent.
+      while (assigned < percentage) {
+	assigned += (*currentField).area * totalGraphArea;
+	(*currentField).status = s;
+	++currentField;
+	if (currentField == (*info)->final()) break;
+      }
+      if (currentField == (*info)->final()) break;      
+    }
+  }
 }

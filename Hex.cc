@@ -276,6 +276,11 @@ void Hex::createVertices () {
   }
 }
 
+void Hex::setFarm (Farmland* f) {
+  farms = f;
+  graphicsInfo->setFarm(new FarmGraphicsInfo(f)); 
+} 
+
 void Hex::setLine (Direction dir, Line* l) {
   if (l->getName() == "") {
     sprintf(stringbuffer, "{%i, %i, %s}", pos.first, pos.second, getDirectionName(dir).c_str()); 

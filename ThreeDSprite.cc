@@ -7,16 +7,16 @@ ThreeDSprite::Vertex::Vertex () : x(0), y(0), z(0) {}
 ThreeDSprite::Index::Index () : vertex(-1), texture(-1), normal(-1) {}
 ThreeDSprite::Group::Group () : special(0) {} 
 
-ThreeDSprite::ThreeDSprite (std::string fname, std::vector<std::string> specials) 
+ThreeDSprite::ThreeDSprite (string fname, vector<string> specials) 
   : numSpecials(0)
 {
   loadFile(fname);
   assert(0 < groups.size()); 
 
-  Logger::logStream(Logger::Debug) << "Loaded graphics file " << fname << "\n"; 
+  //Logger::logStream(Logger::Debug) << "Loaded graphics file " << fname << "\n"; 
 
   int counter = 1;
-  for (std::vector<std::string>::iterator spec = specials.begin(); spec != specials.end(); ++spec) {
+  for (vector<string>::iterator spec = specials.begin(); spec != specials.end(); ++spec) {
     /*
     Logger::logStream(Logger::Debug) << "Looking for special '"
 				     << (*spec) << "' "
@@ -29,18 +29,24 @@ ThreeDSprite::ThreeDSprite (std::string fname, std::vector<std::string> specials
   listIndex = glGenLists(1+specials.size());
   assert(0 != listIndex); 
   glNewList(listIndex, GL_COMPILE); 
-  for (std::map<std::string, Group>::iterator g = groups.begin(); g != groups.end(); ++g) {
+  for (map<string, Group>::iterator g = groups.begin(); g != groups.end(); ++g) {
     if (0 != (*g).second.special) continue;
-    for (std::vector<Face*>::iterator face = (*g).second.faces.begin(); face != (*g).second.faces.end(); ++face) {
+    if ((*g).second.colour == "") glColor3d(1.0, 1.0, 1.0);
+    else {
+      triplet col = colours[(*g).second.colour];
+      glColor3d(col.x(), col.y(), col.z()); 
+    }
+    
+    for (vector<Face*>::iterator face = (*g).second.faces.begin(); face != (*g).second.faces.end(); ++face) {
       drawFace(*face);
     }
   }
   glEndList();
 
-  for (std::map<std::string, Group>::iterator g = groups.begin(); g != groups.end(); ++g) {
+  for (map<string, Group>::iterator g = groups.begin(); g != groups.end(); ++g) {
     if (0 == (*g).second.special) continue;
     glNewList(listIndex+(*g).second.special, GL_COMPILE); 
-    for (std::vector<Face*>::iterator face = (*g).second.faces.begin(); face != (*g).second.faces.end(); ++face) {
+    for (vector<Face*>::iterator face = (*g).second.faces.begin(); face != (*g).second.faces.end(); ++face) {
       drawFace(*face);
     }
     glEndList();
@@ -56,7 +62,7 @@ void ThreeDSprite::drawFace (Face* face) {
     assert(false);
     break;
   }
-  for (std::vector<Index>::iterator ind = face->verts.begin(); ind != face->verts.end(); ++ind) {
+  for (vector<Index>::iterator ind = face->verts.begin(); ind != face->verts.end(); ++ind) {
     int tex = (*ind).texture;
     if (-1 != tex) glTexCoord2d(textures[tex].x, textures[tex].y);
     tex = (*ind).vertex;
@@ -65,19 +71,65 @@ void ThreeDSprite::drawFace (Face* face) {
   glEnd(); 
 }
 
-void ThreeDSprite::loadFile (std::string fname) {
-  std::ifstream reader;
-  reader.open(fname.c_str());
-  std::string token;
-  std::string currGroupName("nogroup"); 
+void ThreeDSprite::loadMaterials (string fname) {
+  ifstream reader;
+  reader.open(fname.c_str());  
+  string token;
+  string matname = "Default";
+  Logger::logStream(DebugStartup) << "Reading mtllib " << fname << "\n"; 
   
   while (!reader.eof()) {
-    reader >> std::ws; 
+    reader >> ws; 
     reader >> token;
+    Logger::logStream(DebugStartup) << "Found token " << token << "\n"; 
     if (token.empty()) continue;
-    if ((token[0] == '#') || (token == "o") || (token == "mtllib")) {
+    if (token[0] == '#') {
+      // Ignore comments
       getline(reader, token);
       continue; 
+    }
+    if (token == "newmtl") {
+      reader >> matname;
+      continue;
+    }
+    // Only really care about diffuse colour
+    if (token == "Kd") {
+      triplet colour;
+      double red, green, blue;
+      reader >> red >> green >> blue;
+      colour.x() = red;
+      colour.y() = green;
+      colour.z() = blue; 
+      Logger::logStream(DebugStartup) << "Read colour " << matname << ": "
+				      << colour.x() << " "
+				      << colour.y() << " "
+				      << colour.z() << "\n";
+      colours[matname] = colour; 
+    }
+    getline(reader, token); // Ignore everything else.     
+  }
+  reader.close(); 
+}
+
+void ThreeDSprite::loadFile (string fname) {
+  ifstream reader;
+  reader.open(fname.c_str());
+  string token;
+  string currGroupName("nogroup"); 
+  static const string gfx("gfx\\"); 
+  
+  while (!reader.eof()) {
+    reader >> ws; 
+    reader >> token;
+    if (token.empty()) continue;
+    if ((token[0] == '#') || (token == "o")) {
+      // Ignore comments
+      getline(reader, token);
+      continue; 
+    }
+    if (token == "mtllib") {
+      reader >> token; // Filename
+      loadMaterials(gfx+token);      
     }
     if (token == "v") {
       Vertex vtx;
@@ -101,9 +153,14 @@ void ThreeDSprite::loadFile (std::string fname) {
       continue;
     }
     if (token == "g") {
-      reader >> std::ws; 
+      reader >> ws; 
       getline(reader, token);
       currGroupName = token.substr(0, token.find_last_not_of(' ')+1);
+      continue; 
+    }
+    if (token == "usemtl") {
+      reader >> token;
+      groups[currGroupName].colour = token;
       continue; 
     }
     if (token == "f") {
@@ -114,9 +171,9 @@ void ThreeDSprite::loadFile (std::string fname) {
   reader.close(); 
 }
 
-void ThreeDSprite::makeFace (std::ifstream& reader, std::string groupName) {
-  reader >> std::ws;
-  std::string line;
+void ThreeDSprite::makeFace (ifstream& reader, string groupName) {
+  reader >> ws;
+  string line;
   getline(reader, line); 
   if (line.empty()) return;
  
@@ -144,12 +201,12 @@ void ThreeDSprite::makeFace (std::ifstream& reader, std::string groupName) {
 }
 
 
-void ThreeDSprite::draw (std::vector<int>& textures) {
+void ThreeDSprite::draw (vector<int>& textures) {
   glCallList(listIndex);
   for (int i = 0; i < numSpecials; ++i) {
     if (i >= (int) textures.size()) break; 
     if (-1 == textures[i]) continue;
-    glBindTexture(GL_TEXTURE_2D, textures[i]); 
-    glCallList(listIndex+i+1); 
+    //glBindTexture(GL_TEXTURE_2D, textures[i]); 
+    //glCallList(listIndex+i+1); 
   }
 }

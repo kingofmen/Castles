@@ -460,19 +460,19 @@ void Farmland::workFields () {
   case Calendar::Autumn:
     {
       // In autumn we harvest.
-      int harvest = min(fields[Ripe3], (int) floor(availableLabour * 0.1 + 0.5));
+      int harvest = min(fields[Ripe3], (int) floor(availableLabour / _labourToReap));
       availableLabour -= harvest * _labourToReap;
       supplies += _cropsFrom3 * harvest;
       fields[Ripe3] -= harvest;
       fields[Ended] += harvest;
 
-      harvest = min(fields[Ripe2], (int) floor(availableLabour * 0.1 + 0.5));
+      harvest = min(fields[Ripe2], (int) floor(availableLabour / _labourToReap));
       availableLabour -= harvest * _labourToReap;
       supplies += _cropsFrom2 * harvest;
       fields[Ripe2] -= harvest;
       fields[Ended] += harvest;
 
-      harvest = min(fields[Ripe1], (int) floor(availableLabour * 0.1 + 0.5));
+      harvest = min(fields[Ripe1], (int) floor(availableLabour / _labourToReap));
       availableLabour -= harvest * _labourToReap;
       supplies += _cropsFrom1 * harvest;
       fields[Ripe1] -= harvest;

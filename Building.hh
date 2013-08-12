@@ -150,7 +150,8 @@ private:
 
 class Farmland : public CivilBuilding, public Mirrorable<Farmland> {
   friend class Mirrorable<Farmland>;
-  friend class StaticInitialiser;  
+  friend class StaticInitialiser;
+  friend class FarmGraphicsInfo; 
 public:
   Farmland ();
   ~Farmland ();
@@ -164,7 +165,8 @@ public:
   void workFields (); 
   virtual void setMirrorState ();
   void demandSupplies (ContractInfo* taxes);
-  int getFieldStatus (FieldStatus s) {return fields[s];} 
+  int getFieldStatus (int s) {return fields[s];}   
+  int totalFields () const {return fields[Clear] + fields[Ready] + fields[Sowed] + fields[Ripe1] + fields[Ripe2] + fields[Ripe3] + fields[Ended];}
   
 private:
   Farmland (Farmland* other);
@@ -179,9 +181,6 @@ private:
   static int _cropsFrom3;
   static int _cropsFrom2;
   static int _cropsFrom1; 
-
-
-  
 };
 
 

@@ -92,6 +92,7 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
 
   HexGraphicsInfo::getHeights(); // Must come after Vertex and Line creation to get right zone width and height. 
   ZoneGraphicsInfo::calcGrid(); 
+  StaticInitialiser::loadTextures(); 
   
   objvec players = game->getValue("faction");
   for (objiter p = players.begin(); p != players.end(); ++p) {
@@ -114,6 +115,7 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
 
   currplayer = Player::findByName(game->safeGetString("currentplayer"));
   assert(currplayer); 
+  FarmGraphicsInfo::updateFieldStatus(); 
   
   return currGame; 
 }
@@ -282,7 +284,7 @@ void WarfareGame::endOfTurn () {
     
     Calendar::newYearBegins(); 
   }
-  
+  FarmGraphicsInfo::updateFieldStatus(); 
 }
 
 void WarfareGame::unitComparison (string fname) {

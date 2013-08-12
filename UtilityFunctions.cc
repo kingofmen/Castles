@@ -4,6 +4,8 @@
 #include <algorithm> 
 
 char strbuffer[1000]; 
+const doublet doublet::zero(0, 0);
+const triplet triplet::zero(0, 0, 0); 
 
 double degToRad (double degrees) {
   return degrees * 3.14159265 / 180; 
@@ -38,7 +40,14 @@ void triplet::normalise () {
   (*this) /= this->norm();
 }
 
-
+void triplet::rotatexy (double degrees, const triplet& around) {
+  (*this) -= around;
+  double newx = this->x() * cos(degToRad(degrees)) - this->y() * sin(degToRad(degrees));
+  double newy = this->x() * sin(degToRad(degrees)) + this->y() * cos(degToRad(degrees));
+  this->x() = newx;
+  this->y() = newy; 
+  (*this) += around;
+}
 
 void triplet::operator-= (const triplet& other) {
   this->x() -= other.x();
@@ -59,6 +68,55 @@ void triplet::operator*= (double scale) {
   this->x() *= scale;
   this->y() *= scale;
   this->z() *= scale;
+}
+
+double doublet::dot (const doublet& other) const {
+  double ret = this->x() * other.x();
+  ret       += this->y() * other.y();
+  return ret; 
+}
+
+double doublet::angle (const doublet& other) const {
+  double ret = this->dot(other);
+  ret /= this->norm();
+  ret /= other.norm();
+  return acos(ret); 
+}
+
+void doublet::normalise () {
+  (*this) /= this->norm();
+}
+
+void doublet::operator-= (const doublet& other) {
+  this->x() -= other.x();
+  this->y() -= other.y();
+}
+void doublet::operator+= (const doublet& other) {
+  this->x() += other.x();
+  this->y() += other.y();
+}
+
+//void doublet::operator+= (const triplet& other) {
+//this->x() += other.x();
+//this->y() += other.y();
+//}
+
+void doublet::operator/= (double scale) {
+  this->x() /= scale;
+  this->y() /= scale;
+}
+void doublet::operator*= (double scale) {
+  this->x() *= scale;
+  this->y() *= scale;
+}
+
+void doublet::rotate (double degrees, const doublet& around) {
+  (*this) -= around;
+  double newx = this->x() * cos(degToRad(degrees)) - this->y() * sin(degToRad(degrees));
+  double newy = this->x() * sin(degToRad(degrees)) + this->y() * cos(degToRad(degrees));
+  this->x() = newx;
+  this->y() = newy; 
+  (*this) += around;
 }
 
 int convertFractionToInt (double fraction) {
@@ -135,3 +193,88 @@ string outcomeToString (Outcome out) {
   return "This cannot happen"; 
 }
 
+DieRoll::DieRoll (int d, int f) 
+ : dice(d)
+ , faces(f)
+ , next(0)
+{
+  if (dice > 1) next = new DieRoll(dice-1, f); 
+}
+
+double DieRoll::probability (int target, int mods, RollType t) const {
+  if (1 == dice) return baseProb(target, mods, t); 
+  target -= mods;
+  double ret = 0;
+  for (int i = 1; i <= faces; ++i) {
+    ret += next->probability(target - i, 0, t);
+  }
+  ret /= faces; 
+  return ret; 
+}
+
+int DieRoll::roll () const {
+  int ret = dice; 
+  for (int i = 0; i < dice; ++i) {
+    ret += (rand() % faces);
+  }
+  return ret; 
+}
+
+
+double DieRoll::baseProb (int target, int mods, RollType t) const {
+  // Returns probability of roll <operator> target on one die. 
+  
+  target -= mods; 
+  double numTargets = 1.0; 
+  switch (t) {
+  case Equal:
+    if (target < 1) return 0;
+    if (target > faces) return 0; 
+    return (numTargets / faces);
+    
+  case GtEqual:
+    if (target <= 1) return 1;
+    if (target > faces) return 0;
+    numTargets = 1 + faces - target; 
+    return numTargets/faces; 
+    
+  case LtEqual:
+    if (target >= faces) return 1;
+    if (target <= 0) return 0;
+    numTargets = target; 
+    return numTargets/faces; 
+    
+  case Greater:
+    if (target < 1) return 1;
+    if (target >= faces) return 0;
+    numTargets = faces - target;
+    return numTargets/faces; 
+    
+  case Less:
+    if (target > faces) return 1;
+    if (target < 1) return 0;
+    numTargets = target - 1; 
+    return numTargets/faces; 
+    
+  default: break; 
+  }
+  return 0;
+}
+
+bool contains (vector<triplet> const& polygon, triplet const& point) {
+  triplet outerpoint = point;
+  outerpoint.x() += 2000;
+  outerpoint.y() += 2000;
+
+  int inters = 0;
+  for (unsigned int i = 1; i <= polygon.size(); ++i) {
+    if (intersect(polygon[i-1].x(), polygon[i-1].y(), polygon[i].x(), polygon[i].y(),
+		  point.x(), point.y(), outerpoint.x(), outerpoint.y())) inters++;    
+  }
+
+  if (intersect(polygon.back().x(), polygon.back().y(), polygon[0].x(), polygon[0].y(),
+		point.x(), point.y(), outerpoint.x(), outerpoint.y())) inters++;
+
+  if (0 == inters % 2) return false;
+  return true; 
+}

@@ -4,7 +4,8 @@
 #include <cstdlib> 
 #include <map>
 #include <cmath> 
-#include <string> 
+#include <string>
+#include <vector>
 #include "boost/tuple/tuple.hpp"
 
 using namespace std;
@@ -13,6 +14,21 @@ extern char strbuffer[1000];
 
 double degToRad (double degrees);
 double radToDeg (double radians); 
+
+enum RollType {Equal = 0, GtEqual, LtEqual, Greater, Less};
+
+struct DieRoll {
+  DieRoll (int d, int f);   
+  double probability (int target, int mods, RollType t) const; 
+  int roll () const;
+  
+private:
+  double baseProb (int target, int mods, RollType t) const; 
+
+  int dice;
+  int faces;
+  DieRoll* next; 
+};
 
 class Named {
 public:
@@ -24,11 +40,41 @@ private:
 
 string outcomeToString (Outcome out);
 
+struct doublet : public boost::tuple<double, double> {
+  // Adding a touch of syntactic sugar to the tuple. 
+  
+  doublet (double x, double y) : boost::tuple<double, double>(x, y) {}
+  doublet () : boost::tuple<double, double>(0, 0) {}
+
+  double& x () {return boost::get<0>(*this);}
+  double& y () {return boost::get<1>(*this);}
+
+  double x () const {return boost::get<0>(*this);}
+  double y () const {return boost::get<1>(*this);}
+
+  double  angle (const doublet& other) const;  
+  double  dot   (const doublet& other) const;
+  double  norm  () const {return sqrt(pow(this->x(), 2) + pow(this->y(), 2));}
+  void    normalise ();
+  void    rotate (double degrees, const doublet& around = zero);
+
+  void operator/= (double scale);
+  void operator*= (double scale);  
+  void operator-= (const doublet& other);
+  void operator+= (const doublet& other);
+  //void operator+= (const triplet& other);  
+
+private:
+  static const doublet zero; 
+}; 
+
 struct triplet : public boost::tuple<double, double, double> {
   // Adding a touch of syntactic sugar to the tuple. 
   
   triplet (double x, double y, double z) : boost::tuple<double, double, double>(x, y, z) {}
-  triplet () : boost::tuple<double, double, double>(0, 0, 0) {}
+  triplet (double x, double y)           : boost::tuple<double, double, double>(x, y, 0) {}
+  triplet (double x)                     : boost::tuple<double, double, double>(x, 0, 0) {}    
+  triplet ()                             : boost::tuple<double, double, double>(0, 0, 0) {}
 
   double& x () {return boost::get<0>(*this);}
   double& y () {return boost::get<1>(*this);}
@@ -48,13 +94,19 @@ struct triplet : public boost::tuple<double, double, double> {
   void operator*= (double scale);  
   void operator-= (const triplet& other);
   void operator+= (const triplet& other);
+
+  void rotatexy (double degrees, const triplet& around = zero); // Special for rotating the xy projection.  
+
+private:
+  static const triplet zero; 
 }; 
 
 int convertFractionToInt (double fraction);
 bool intersect (double line1x1, double line1y1, double line1x2, double line1y2,
 		double line2x1, double line2y1, double line2x2, double line2y2); 
 string remQuotes (string tag); 
-  
+bool contains (vector<triplet> const& polygon, triplet const& point); 
+
 template <class T>
 T getKeyByWeight (const map<T, int>& mymap) {
   // What if some of the weights are negative? 
