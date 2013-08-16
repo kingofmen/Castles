@@ -36,6 +36,7 @@ MilUnit::MilUnit (MilUnit* other)
   : Unit()
   , Mirrorable<MilUnit>(other) 
   , rear(other->rear)
+  , graphicsInfo(0)
 {}
 
 MilUnit::~MilUnit () {
@@ -257,7 +258,8 @@ void MilUnit::endOfTurn () {
   if (supplyRatio > 1) supplyRatio = sqrt(supplyRatio);
   if (supplyRatio > 3) supplyRatio = 3;
   supplies -= needed*supplyRatio;
-  recalcElementAttributes(); 
+  recalcElementAttributes();
+  graphicsInfo->updateSprites();   
 }
 
 const double invHalfPi = 0.6366197730950255;
@@ -283,7 +285,6 @@ int MilUnit::takeCasualties (double rate) {
     recalcElementAttributes(); 
   }
 
-  graphicsInfo->updateSprites(); 
   return ret; 
 }
 

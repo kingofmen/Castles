@@ -214,6 +214,7 @@ GLDrawer::GLDrawer (QWidget* p)
   , assignedTextures(0)
   , numTextures(100)
   , cSprite(0)
+  , tSprite(0) 
   , overlayMode(0)
 {
   textureIDs = new GLuint[numTextures];
