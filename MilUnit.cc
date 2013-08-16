@@ -282,6 +282,8 @@ int MilUnit::takeCasualties (double rate) {
     }
     recalcElementAttributes(); 
   }
+
+  graphicsInfo->updateSprites(); 
   return ret; 
 }
 

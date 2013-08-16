@@ -6,6 +6,7 @@
 #include "Player.hh"
 #include "Building.hh" 
 #include "Hex.hh" 
+#include "ThreeDSprite.hh" 
 
 double LineGraphicsInfo::maxFlow = 1;
 double LineGraphicsInfo::maxLoss = 1; 
@@ -16,6 +17,8 @@ vector<ZoneGraphicsInfo*> ZoneGraphicsInfo::allZoneGraphics;
 double* GraphicsInfo::heightMap = 0; 
 vector<int> FarmGraphicsInfo::textureIndices; 
 vector<FarmGraphicsInfo*> FarmGraphicsInfo::allFarmInfos; 
+vector<ThreeDSprite*> MilUnitGraphicsInfo::sprites;
+map<MilUnitTemplate*, int> MilUnitGraphicsInfo::indexMap; 
 
 double area (GraphicsInfo::FieldShape const& field);
 bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2); 
@@ -735,7 +738,7 @@ PlayerGraphicsInfo::~PlayerGraphicsInfo () {}
 string MilUnitGraphicsInfo::strengthString (string indent) const {
   ostringstream buffer;
   for (MilUnitTemplate::Iterator m = MilUnitTemplate::begin(); m != MilUnitTemplate::end(); ++m) {
-    int num = unit->getUnitTypeAmount(*m);
+    int num = myUnit->getUnitTypeAmount(*m);
     if (1 > num) continue;
     buffer << indent << (*m)->name.c_str() << ": " << num << "\n";
   }
@@ -745,13 +748,44 @@ string MilUnitGraphicsInfo::strengthString (string indent) const {
 
 void MilUnitGraphicsInfo::describe (QTextStream& str) const {
   str << "Unit: \n"
-      << "  Owner: " << unit->getOwner()->getDisplayName().c_str() << "\n"
+      << "  Owner: " << myUnit->getOwner()->getDisplayName().c_str() << "\n"
       << strengthString("  ").c_str()
-      << "  Efficiency: " << unit->getSupplyRatio() << "\n"
-      << "  Priority  : " << unit->getPriority() << "\n"
-      << "  Shock     : " << unit->calcStrength(unit->getDecayConstant(), &MilUnitElement::shock) << "\n"
-      << "  Fire      : " << unit->calcStrength(unit->getDecayConstant(), &MilUnitElement::range) << "\n"
-      << "  Skirmish  : " << unit->calcStrength(unit->getDecayConstant(), &MilUnitElement::tacmob) << "\n";  
+      << "  Efficiency: " << myUnit->getSupplyRatio() << "\n"
+      << "  Priority  : " << myUnit->getPriority() << "\n"
+      << "  Shock     : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::shock) << "\n"
+      << "  Fire      : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::range) << "\n"
+      << "  Skirmish  : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::tacmob) << "\n";  
+}
+
+void MilUnitGraphicsInfo::updateSprites () {
+  // Looking for up to three sprites, but a minimum of one.
+  // To get a sprite, a unit type must
+  // a) Be at least one-fourth of the unit strength
+  // b) Be present in more strength than its recruit_speed (waived for the largest unit)
+  // c) Have a sprite. 
+
+  double total = 0;
+  for (MilUnitTemplate::Iterator m = MilUnitTemplate::begin(); m != MilUnitTemplate::end(); ++m) {
+    total += myUnit->getUnitTypeAmount(*m);
+  }
+
+  spriteIndices.clear(); 
+  MilUnitTemplate* bestUnit = 0; 
+  for (map<MilUnitTemplate*, int>::iterator m = indexMap.begin(); m != indexMap.end(); ++m) {
+    MilUnitTemplate* mType = (*m).first; 
+    double curr = myUnit->getUnitTypeAmount(mType); 
+    if (1 > curr) continue;
+    if ((!bestUnit) || (curr > myUnit->getUnitTypeAmount(bestUnit))) bestUnit = mType; 
+    if (curr < mType->recruit_speed) continue;
+    if (curr > 0.75 * total) spriteIndices.push_back((*m).second);
+    if (curr > 0.50 * total) spriteIndices.push_back((*m).second);
+    if (curr > 0.25 * total) spriteIndices.push_back((*m).second);
+  }
+
+  if (0 == spriteIndices.size()) {
+    if ((bestUnit) && (indexMap.find(bestUnit) != indexMap.end())) spriteIndices.push_back(indexMap[bestUnit]);
+    else spriteIndices.push_back((*(indexMap.begin())).second);
+  }
 }
 
 double area (GraphicsInfo::FieldShape const& field) {

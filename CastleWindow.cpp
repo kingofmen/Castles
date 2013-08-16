@@ -214,7 +214,6 @@ GLDrawer::GLDrawer (QWidget* p)
   , assignedTextures(0)
   , numTextures(100)
   , cSprite(0)
-  , kSprite(0)
   , overlayMode(0)
 {
   textureIDs = new GLuint[numTextures];
@@ -274,14 +273,17 @@ void GLDrawer::drawLine (LineGraphicsInfo const* dat) {
 
 void GLDrawer::drawVertex (VertexGraphicsInfo const* gInfo) {
   Vertex* dat = gInfo->getVertex(); 
-  
-  if (0 == dat->numUnits()) return;
+
+  MilUnit* unit = dat->getUnit(0);  
+  if (!unit) return; 
   glEnable(GL_TEXTURE_2D);   
   triplet center = gInfo->getPosition();
 
-  vector<int> texts;
-  texts.push_back(textureIDs[playerToTextureMap[dat->getUnit(0)->getOwner()]]);
-  texts.push_back(textureIDs[playerToTextureMap[dat->getUnit(0)->getOwner()]]); 
+  vector<int> texts;  
+
+  const MilUnitGraphicsInfo* info = unit->getGraphicsInfo(); 
+  texts.push_back(textureIDs[playerToTextureMap[unit->getOwner()]]);
+  texts.push_back(textureIDs[playerToTextureMap[unit->getOwner()]]); 
 
 
   glMatrixMode(GL_MODELVIEW);
@@ -299,16 +301,23 @@ void GLDrawer::drawVertex (VertexGraphicsInfo const* gInfo) {
   case RightUp   : angle = 120; break;
   case LeftUp    : angle =  60; break;
   }
-  
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glTranslated(0, 0.1, 0);
-  glRotated(angle, 0, 0, 1); 
-  kSprite->draw(texts);
-  glRotated(-angle, 0, 0, 1); 
-  glTranslated(0, -0.2, 0);
-  glRotated(angle, 0, 0, 1); 
-  glBindTexture(GL_TEXTURE_2D, 0);
-  kSprite->draw(texts);
+
+  MilUnitGraphicsInfo::spriterator sprite = info->start();
+  if (sprite != info->final()) {
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glTranslated(0, 0.1, 0);
+    glRotated(angle, 0, 0, 1);
+    (*sprite)->draw(texts);
+    ++sprite;
+  }
+  if (sprite != info->final()) {
+    glRotated(-angle, 0, 0, 1); 
+    glTranslated(0, -0.2, 0);
+    glRotated(angle, 0, 0, 1); 
+    glBindTexture(GL_TEXTURE_2D, 0);
+    (*sprite)->draw(texts);
+    ++sprite; 
+  }
   glPopMatrix(); 
 }
 
@@ -409,9 +418,9 @@ ThreeDSprite* GLDrawer::makeSprite (Object* info) {
 }
 
 void GLDrawer::loadSprites () {
-  if ((cSprite) && (kSprite) && tSprite) return;
+  if ((cSprite) && (tSprite)) return;
   if (cSprite) delete cSprite;
-  if (kSprite) delete kSprite;
+  //if (kSprite) delete kSprite;
   if (tSprite) delete tSprite;
   
   Object* ginfo = processFile("gfx/info.txt");
@@ -420,9 +429,9 @@ void GLDrawer::loadSprites () {
   assert(castleInfo);
   cSprite = makeSprite(castleInfo);
   
-  Object* knightinfo = ginfo->safeGetObject("knightsprite");
-  assert(knightinfo);
-  kSprite = makeSprite(knightinfo);
+  //Object* knightinfo = ginfo->safeGetObject("knightsprite");
+  //assert(knightinfo);
+  //kSprite = makeSprite(knightinfo);
 
   Object* treeinfo = ginfo->safeGetObject("treesprite");
   assert(treeinfo);

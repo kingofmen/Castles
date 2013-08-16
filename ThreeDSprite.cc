@@ -206,7 +206,7 @@ void ThreeDSprite::draw (vector<int>& textures) {
   for (int i = 0; i < numSpecials; ++i) {
     if (i >= (int) textures.size()) break; 
     if (-1 == textures[i]) continue;
-    //glBindTexture(GL_TEXTURE_2D, textures[i]); 
-    //glCallList(listIndex+i+1); 
+    glBindTexture(GL_TEXTURE_2D, textures[i]); 
+    glCallList(listIndex+i+1); 
   }
 }

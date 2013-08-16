@@ -158,7 +158,7 @@ private:
   std::map<Player*, int> playerToTextureMap; 
   
   ThreeDSprite* cSprite;
-  ThreeDSprite* kSprite;
+  //ThreeDSprite* kSprite;
   ThreeDSprite* tSprite;  
 
   MapOverlay* overlayMode; 

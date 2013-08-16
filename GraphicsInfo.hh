@@ -5,14 +5,15 @@
 #include <QtOpenGL>
 #include <QTextStream>
 #include "UtilityFunctions.hh"
-#include "Building.hh" 
+#include "Building.hh"
+#include "ThreeDSprite.hh"
 
 class MilUnit;
+class MilUnitTemplate; 
 class Hex;
 class HexGraphicsInfo; 
 class Vertex;
 class Line; 
-class Farmland; 
 
 enum TerrainType {Mountain = 0, Hill, Plain, Forest, Ocean, NoTerrain}; 
 enum Direction {NorthWest = 0, North, NorthEast, SouthEast, South, SouthWest, NoDirection};
@@ -229,18 +230,6 @@ private:
   GLuint flag_texture_id; 
 };
 
-class MilUnitGraphicsInfo : public GraphicsInfo {
-public:
-
-  MilUnitGraphicsInfo (MilUnit* dat) : unit(dat) {}
-  ~MilUnitGraphicsInfo () {}
-  virtual void describe (QTextStream& str) const;
-  string strengthString (string indent) const;  
-private:
-
-  MilUnit* unit; 
-};
-
 class ZoneGraphicsInfo : public GraphicsInfo {
   friend class StaticInitialiser; 
 public:
@@ -279,5 +268,36 @@ private:
   static vector<ZoneGraphicsInfo*> allZoneGraphics; 
 };
 
+
+class MilUnitGraphicsInfo : public GraphicsInfo {
+  friend class StaticInitialiser;
+public:
+  MilUnitGraphicsInfo (MilUnit* dat) : myUnit(dat) {}  
+  ~MilUnitGraphicsInfo ();
+
+  struct spriterator {
+    spriterator (int idx, MilUnitGraphicsInfo const* const b) : index(idx), boss(b) {}
+    ThreeDSprite* operator* () {return sprites[boss->spriteIndices[index]];}
+    void operator++ () {index++;}
+    bool operator!= (const spriterator& other) {return index != other.index;}
+
+  private:
+    int index;
+    MilUnitGraphicsInfo const* const boss; 
+  };
+  
+  spriterator start () const {return spriterator(0, this);}
+  spriterator final () const {return spriterator(spriteIndices.size(), this);}
+
+  virtual void describe (QTextStream& str) const;
+  string strengthString (string indent) const;  
+  void updateSprites (); 
+  
+private:
+  MilUnit* myUnit;
+  vector<int> spriteIndices; 
+  static vector<ThreeDSprite*> sprites;
+  static map<MilUnitTemplate*, int> indexMap; 
+};
 
 #endif

@@ -311,7 +311,8 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
   }
   m->setName(mInfo->safeGetString("name", "\"Unknown Soldiers\"")); 
   m->supplies = mInfo->safeGetFloat("supplies"); 
-  
+
+  m->graphicsInfo->updateSprites(); 
   return m; 
 }
 
@@ -353,17 +354,15 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
     nType->recruit_speed     = (*unit)->safeGetInt("recruit_speed");
     nType->militiaDecay      = (*unit)->safeGetFloat("militiaDecay");
     nType->militiaDrill      = (*unit)->safeGetFloat("militiaDrill");
+   
+    if (nType->militiaDrill > mDrill) nType->militiaDrill = mDrill; 
 
-    if (nType->militiaDrill > mDrill) {
-      /*
-      Logger::logStream(Logger::Warning) << "Warning: Drill amount of unit "
-					 << uname
-					 << " set to more than "
-					 << mDrill
-					 << ", clamping.\n";
-      */ 
-      nType->militiaDrill = mDrill; 
-	
+    Object* spriteInfo = (*unit)->safeGetObject("sprite");
+    if (spriteInfo) {
+      GLDrawer* drawer = WarfareWindow::currWindow->hexDrawer;
+      ThreeDSprite* nSprite = drawer->makeSprite(spriteInfo);
+      MilUnitGraphicsInfo::indexMap[nType] = MilUnitGraphicsInfo::sprites.size();
+      MilUnitGraphicsInfo::sprites.push_back(nSprite);
     }
   }
 }
