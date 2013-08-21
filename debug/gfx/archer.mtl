@@ -1,0 +1,90 @@
+newmtl Default
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 0 0.501961 0
+Ks 0.6 0.6 0.6
+Km 0
+
+newmtl Default_Head
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 0.937255 0.815686 0.811765
+Ks 0.6 0.6 0.6
+Km 0
+
+newmtl Default_Tabard
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 1 1 1
+Ks 0.6 0.6 0.6
+Km 0
+
+newmtl Default_Upper_right_leg
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 0 0.501961 0.501961
+Ks 0.6 0.6 0.6
+Km 0
+
+newmtl Default_Upper_left_leg
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 0 0.501961 0.501961
+Ks 0.6 0.6 0.6
+Km 0
+
+newmtl Default_Lower_right_leg
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 0 0.501961 0.501961
+Ks 0.6 0.6 0.6
+Km 0
+
+newmtl Default_Lower_left_leg
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 0 0.501961 0.501961
+Ks 0.6 0.6 0.6
+Km 0
+
+newmtl Default_Bow
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 0 0 0
+Ks 0.6 0.6 0.6
+Km 0
+
+newmtl Default_Quiver
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 0.501961 0.501961 0.25098
+Ks 0.6 0.6 0.6
+Km 0
+
+newmtl Default_Hair
+d 1
+Ns 1
+Ni 0
+Ka 0 0 0
+Kd 0.25098 0 0
+Ks 0.6 0.6 0.6
+Km 0
+
