@@ -8,7 +8,8 @@
 #include "UtilityFunctions.hh" 
 
 class MilUnit;
-class MilUnitTemplate; 
+class MilUnitTemplate;
+class MilUnitGraphicsInfo;
 class Hex;
 class Line; 
 class Player; 
@@ -82,7 +83,7 @@ private:
   static double siegeModifier; 
 }; 
 
-class MilitiaTradition : public Mirrorable<MilitiaTradition> {
+class MilitiaTradition : public Mirrorable<MilitiaTradition>, public MilStrength {
   friend class StaticInitialiser;
   friend class Mirrorable<MilitiaTradition>;
   friend class CivilBuilding; 
@@ -97,6 +98,7 @@ public:
   int getDrill () {return drillLevel;}
   int getStrength (MilUnitTemplate const* const dat) {return militiaStrength[dat];}
   void increaseDrill (bool up) {drillLevel += up ? 1 : -1;} 
+  virtual int getUnitTypeAmount (MilUnitTemplate const* const ut) const;  // Slightly distinct from 'getStrength' in returning numbers of men, not regiments. 
   
 private:
   MilitiaTradition (MilitiaTradition* other); 
@@ -119,6 +121,7 @@ public:
   int produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll);
   void increaseTradition (MilUnitTemplate const* target = 0) {milTrad->increaseTradition(target);} 
   MilitiaTradition* getMilitia () {return milTrad;} 
+  const MilUnitGraphicsInfo* getMilitiaGraphics () const;
   
   int getMilitiaDrill () {return milTrad ? milTrad->getDrill() : 0;}
   int getMilitiaStrength (MilUnitTemplate const* const dat) {return milTrad ? milTrad->getStrength(dat) : 0;} 

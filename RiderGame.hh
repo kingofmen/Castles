@@ -20,8 +20,9 @@ public:
 
   static WarfareGame* createGame (std::string fname, Player*& currentplayer);
   
-  void endOfTurn (); 
-  static void unitComparison (string fname); 
+  void endOfTurn ();
+  static void unitComparison (string fname);
+  static void updateGreatestMilStrength ();    
   
 private:
   WarfareGame ();

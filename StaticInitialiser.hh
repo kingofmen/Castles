@@ -16,8 +16,8 @@ public:
 
   // In effect a namespace, for all those functions that get called once at startup. 
   
-  static void overallInitialisation (Object* info); 
-
+  static void      overallInitialisation (Object* info); 
+  static void      graphicsInitialisation ();  
   static void      initialiseBuilding (Building* build, Object* info); 
   static void      initialiseCivilBuildings (Object* popInfo);
   static void      initialiseGraphics (Object* gInfo); 

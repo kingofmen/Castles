@@ -36,7 +36,6 @@ Castle::Castle (Hex* dat, Line* lin)
   , recruitType(0) 
 {
   recruitType = *(MilUnitTemplate::begin());
-  Logger::logStream(DebugStartup) << "Castle starts recruiting: " << this << " " << (void*) &recruitType << " " << (void*) recruitType << "\n"; 
   setMirrorState();
 }
 
@@ -80,7 +79,7 @@ void Castle::callForSurrender (MilUnit* siegers, Outcome out) {
 void Castle::endOfTurn () {
   support->getFarm()->demandSupplies(&taxExtraction);
   supplies += taxExtraction.delivered;
-  taxExtraction.delivered = 0; 
+  taxExtraction.delivered = 0;
 }
 
 void Castle::supplyGarrison () {
@@ -166,6 +165,10 @@ CivilBuilding::CivilBuilding ()
 
 CivilBuilding::~CivilBuilding () {}
 
+const MilUnitGraphicsInfo* CivilBuilding::getMilitiaGraphics () const {
+  return milTrad ? milTrad->militia->getGraphicsInfo() : 0;
+}
+
 MilitiaTradition::MilitiaTradition ()
   : Mirrorable<MilitiaTradition>()
 {
@@ -197,6 +200,11 @@ double MilitiaTradition::getRequiredWork () {
     ret += drillLevel * (*i).first->recruit_speed * (*i).first->militiaDrill * (*i).second; 
   }
   return ret; 
+}
+
+int MilitiaTradition::getUnitTypeAmount (MilUnitTemplate const* const ut) const {
+  if (militiaStrength.find(ut) == militiaStrength.end()) return 0; 
+  return ut->recruit_speed * militiaStrength.at(ut); // Use 'at' for const-ness. 
 }
 
 
@@ -232,6 +240,9 @@ void CivilBuilding::endOfTurn () {
   }
 
   milTrad->decayTradition(); 
+
+  MilUnitGraphicsInfo* milGraph = (MilUnitGraphicsInfo*) milTrad->militia->getGraphicsInfo();  
+  if (milGraph) milGraph->updateSprites(milTrad); 
   
   // Simplifying assumptions:
   // No man ever impregnates an older woman

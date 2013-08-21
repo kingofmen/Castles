@@ -58,6 +58,7 @@ void StaticInitialiser::loadAiConstants (Object* info) {
 }
 
 void StaticInitialiser::overallInitialisation (Object* info) {
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
   Object* priorityLevels = info->safeGetObject("priorityLevels");
   vector<double> levels;
   if (priorityLevels) {
@@ -68,7 +69,25 @@ void StaticInitialiser::overallInitialisation (Object* info) {
   MilUnit::setPriorityLevels(levels); 
   defaultUnitPriority = info->safeGetInt("defaultUnitPriority", 4);
 
-  Calendar::setWeek(info->safeGetInt("week", 0));   
+  Calendar::setWeek(info->safeGetInt("week", 0));
+}
+
+void StaticInitialiser::graphicsInitialisation () {
+  for (MilUnit::Iterator m = MilUnit::begin(); m != MilUnit::end(); ++m) {
+    (*m)->graphicsInfo->updateSprites(*m);
+  }
+  for (Hex::Iterator h = Hex::begin(); h != Hex::end(); ++h) {
+    Farmland* f = (*h)->getFarm();
+    if (!f) continue;
+    if (!f->milTrad) continue;
+    if (!f->milTrad->militia) continue;
+    f->milTrad->militia->graphicsInfo->updateSprites(f->milTrad);
+  }
+
+  for (Player::Iterator p = Player::begin(); p != Player::end(); ++p) {
+    WarfareWindow::currWindow->hexDrawer->assignColour(*p); 
+  }
+  WarfareWindow::currWindow->hexDrawer->loadSprites();
 }
 
 void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
@@ -282,7 +301,7 @@ void StaticInitialiser::buildMilitia (CivilBuilding* target, Object* mInfo) {
     if (0 >= amount) continue;
     target->milTrad->militiaStrength[*i] = amount;
   }
-  target->milTrad->drillLevel = mInfo->safeGetInt("drill_level"); 
+  target->milTrad->drillLevel = mInfo->safeGetInt("drill_level");
 }
 
 MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
@@ -312,7 +331,6 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
   m->setName(mInfo->safeGetString("name", "\"Unknown Soldiers\"")); 
   m->supplies = mInfo->safeGetFloat("supplies"); 
 
-  m->graphicsInfo->updateSprites(); 
   return m; 
 }
 

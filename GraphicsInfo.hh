@@ -8,6 +8,7 @@
 #include "Building.hh"
 #include "ThreeDSprite.hh"
 
+class MilStrength; 
 class MilUnit;
 class MilUnitTemplate; 
 class Hex;
@@ -63,7 +64,7 @@ class FarmGraphicsInfo : public GraphicsInfo {
 public:
   FarmGraphicsInfo (Farmland* f);
   ~FarmGraphicsInfo ();
-  Farmland* getFarm () {return myFarm;}
+  Farmland* getFarm () const {return myFarm;}
   static void updateFieldStatus (); 
 
   struct FieldInfo {
@@ -88,15 +89,19 @@ public:
   cfit final () const {return fields.end();} 
   fit start () {return fields.begin();}
   fit final () {return fields.end();} 
-
+  cpit startDrill () const {return drillField.begin();}
+  cpit finalDrill () const {return drillField.end();}
+  
   typedef vector<FarmGraphicsInfo*>::iterator Iterator;
   static Iterator begin () {return allFarmInfos.begin();}
   static Iterator end () {return allFarmInfos.end();}  
+  
   
 private:  
   double fieldArea ();   
   void generateShapes (HexGraphicsInfo* dat);
   vector<FieldInfo> fields;
+  FieldShape drillField; 
   static vector<int> textureIndices; 
   
   Farmland* myFarm;
@@ -114,7 +119,7 @@ public:
   triplet getCoords (Vertices v) const;
   FarmGraphicsInfo const* getFarm () const {return farmInfo;} 
   Hex* getHex () const {return myHex;}
-  FieldShape getPatch (); 
+  FieldShape getPatch (bool large = false); 
   TerrainType getTerrain () const {return terrain;}
   bool isInside (double x, double y) const;
   void setFarm (FarmGraphicsInfo* f);
@@ -137,8 +142,9 @@ private:
   triplet cornerLeft;
   triplet cornerLeftUp;
   triplet cornerRightUp;  
-  FarmGraphicsInfo* farmInfo; 
-  vector<FieldShape> spritePatches; // Places to put sprites - hand out to subordinates. 
+  FarmGraphicsInfo* farmInfo;
+  vector<FieldShape> spritePatches; // Places to put sprites - hand out to subordinates.
+  vector<FieldShape> biggerPatches; // For larger shapes like drill grounds.   
   FieldShape trees; // Not a polygon.
   vector<int> treesPerField;
   
@@ -277,9 +283,10 @@ public:
 
   struct spriterator {
     spriterator (int idx, MilUnitGraphicsInfo const* const b) : index(idx), boss(b) {}
-    ThreeDSprite* operator* () {return sprites[boss->spriteIndices[index]];}
+    ThreeDSprite* operator* () {if ((int) boss->spriteIndices.size() <= index) return sprites[0]; return sprites[boss->spriteIndices[index]];}
     void operator++ () {index++;}
     bool operator!= (const spriterator& other) {return index != other.index;}
+    bool operator== (const spriterator& other) {return index == other.index;}    
 
   private:
     int index;
@@ -291,7 +298,7 @@ public:
 
   virtual void describe (QTextStream& str) const;
   string strengthString (string indent) const;  
-  void updateSprites (); 
+  void updateSprites (MilStrength* dat); 
   
 private:
   MilUnit* myUnit;

@@ -133,4 +133,15 @@ T getKeyByWeight (const map<T, int>& mymap) {
   }
   return (*(mymap.begin())).first;
 }
+
+class MilUnitTemplate; 
+class MilStrength {
+ public:
+  virtual int getUnitTypeAmount (MilUnitTemplate const* const ut) const = 0;
+  int getTotalStrength () const;
+
+  static double greatestStrength; 
+};
+
 #endif 
+

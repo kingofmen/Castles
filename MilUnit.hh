@@ -65,7 +65,7 @@ public:
   AgeTracker* soldiers; 
 };
 
-class MilUnit : public Unit, public Mirrorable<MilUnit>, public Named {
+class MilUnit : public Unit, public Mirrorable<MilUnit>, public Named, public MilStrength {
   friend class Mirrorable<MilUnit>;
   friend class StaticInitialiser;
   friend class MilUnitGraphicsInfo; 
@@ -113,7 +113,7 @@ public:
   double getSupplyRatio () const {return supplyRatio;} 
   double getPrioritisedSuppliesNeeded () const;
   double getPriority () const {return priorityLevels[priority];} 
-  int getUnitTypeAmount (MilUnitTemplate const* ut) const; 
+  virtual int getUnitTypeAmount (MilUnitTemplate const* const ut) const; 
   double efficiency () const {return max(0.1, supplyRatio);} 
 
   void endOfTurn ();

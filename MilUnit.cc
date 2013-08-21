@@ -122,7 +122,7 @@ void MilUnit::transfer (MilUnit* target, double fraction) {
 }
 */
 
-int MilUnit::getUnitTypeAmount (MilUnitTemplate const* ut) const {
+int MilUnit::getUnitTypeAmount (MilUnitTemplate const* const ut) const {
   for (CElmIter i = forces.begin(); i != forces.end(); ++i) {
     if ((*i)->unitType != ut) continue;
     return (*i)->strength();
@@ -259,7 +259,7 @@ void MilUnit::endOfTurn () {
   if (supplyRatio > 3) supplyRatio = 3;
   supplies -= needed*supplyRatio;
   recalcElementAttributes();
-  graphicsInfo->updateSprites();   
+  graphicsInfo->updateSprites(this);   
 }
 
 const double invHalfPi = 0.6366197730950255;

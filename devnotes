@@ -4,13 +4,14 @@ Tasks for the interface patch:
  * Prettify the interface:
    - Trees (check) 
    - Farmhouses
-   - Militia
+   - Militia (check)
    - Fields (with status) (check) 
    - Stockpiles 
-   - Better sprites
+   - Better sprites (check)
    - More fractal heightmap (check) 
      i. Decouple Hex/Line/Vertex from terrain. (check)
    - Terrain shadows (check) 
+   - Castles 
  * Labels on buttons
  * Popup tips 
 

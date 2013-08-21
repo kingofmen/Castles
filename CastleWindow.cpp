@@ -371,7 +371,7 @@ void GLDrawer::drawZone (int which) {
 
 void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
 
-  vector<int> texts; // Dummy, not going to use it
+  vector<int> texts; // Not used for trees. 
   glDisable(GL_TEXTURE_2D);    
   glMatrixMode(GL_MODELVIEW);
   for (GraphicsInfo::cpit tree = dat->startTrees(); tree != dat->finalTrees(); ++tree) {
@@ -382,12 +382,14 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
     glPopMatrix();
   }
   glColor4d(1.0, 1.0, 1.0, 1.0); 
+
   
-  FarmGraphicsInfo const* farm = dat->getFarm();
-  if (!farm) return;
+  FarmGraphicsInfo const* farmInfo = dat->getFarm();
+  if (!farmInfo) return;
+  Farmland* farm = farmInfo->getFarm(); 
 
   glEnable(GL_TEXTURE_2D);      
-  for (FarmGraphicsInfo::cfit field = farm->start(); field != farm->final(); ++field) {
+  for (FarmGraphicsInfo::cfit field = farmInfo->start(); field != farmInfo->final(); ++field) {
     glBindTexture(GL_TEXTURE_2D, textureIDs[(*field).getIndex()]); 
     glBegin(GL_POLYGON);
     GraphicsInfo::cpit point = (*field).begin(); // Assume square fields for now, and just unroll loop.
@@ -399,10 +401,53 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
     glVertex3d((*point).x(), (*point).y(), (*point).z()); ++point;
     glTexCoord2d(1, 0);    
     glVertex3d((*point).x(), (*point).y(), (*point).z()); 
-
-
     glEnd(); 
   }
+
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, 0);  
+  const MilUnitGraphicsInfo* info = farm->getMilitiaGraphics(); 
+  texts.push_back(textureIDs[playerToTextureMap[farm->getOwner()]]);
+  texts.push_back(textureIDs[playerToTextureMap[farm->getOwner()]]); 
+
+  GraphicsInfo::cpit point1 = farmInfo->startDrill();
+  GraphicsInfo::cpit point2 = farmInfo->startDrill(); ++point2;
+  GraphicsInfo::cpit point3 = farmInfo->startDrill(); ++point3; ++point3;
+
+  double xstep = ((*point3).x() - (*point2).x()) / 9;
+  double ystep = ((*point3).y() - (*point2).y()) / 9;
+  double zstep = ((*point3).z() - (*point2).z()) / 9;  
+  
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  /*
+  double angle = 0;
+  switch (dat->getUnit(0)->getRear()) {
+  case Left:
+  case NoVertex:
+  default:
+    break;
+  case Right     : angle = 180; break;
+  case RightDown : angle = 240; break;
+  case LeftDown  : angle = -60; break;
+  case RightUp   : angle = 120; break;
+  case LeftUp    : angle =  60; break;
+  }
+  */
+
+  glTranslated((*point2).x(), (*point2).y(), (*point2).z());  
+  MilUnitGraphicsInfo::spriterator sprite = info->start();
+  for (int file = 0; file < 9; ++file) {
+    glPushMatrix();      
+    glTranslated(xstep*(file+0.5), ystep*(file+0.5), zstep*(file+0.5));
+    glBindTexture(GL_TEXTURE_2D, 0);
+    (*sprite)->draw(texts);
+    ++sprite;
+    glPopMatrix();       
+    if (sprite == info->final()) break;
+  }
+  glPopMatrix(); 
+
   
 }
 
@@ -419,9 +464,9 @@ ThreeDSprite* GLDrawer::makeSprite (Object* info) {
 }
 
 void GLDrawer::loadSprites () {
+  Logger::logStream(DebugStartup) << "Entering loadSprites.\n"; 
   if ((cSprite) && (tSprite)) return;
   if (cSprite) delete cSprite;
-  //if (kSprite) delete kSprite;
   if (tSprite) delete tSprite;
   
   Object* ginfo = processFile("gfx/info.txt");
@@ -430,13 +475,9 @@ void GLDrawer::loadSprites () {
   assert(castleInfo);
   cSprite = makeSprite(castleInfo);
   
-  //Object* knightinfo = ginfo->safeGetObject("knightsprite");
-  //assert(knightinfo);
-  //kSprite = makeSprite(knightinfo);
-
   Object* treeinfo = ginfo->safeGetObject("treesprite");
   assert(treeinfo);
-  tSprite = makeSprite(treeinfo); 
+  tSprite = makeSprite(treeinfo);
 }
 
 void GLDrawer::assignColour (Player* p) {
@@ -842,9 +883,10 @@ void GLDrawer::resizeGL () {
 }
 
 void GLDrawer::paintGL () {
-  //Logger::logStream(Logger::Debug) << "Here\n";
-  //glClearColor(0.0, 1.0, 0.0, 0.0);
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";
+  if (!cSprite) return; 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -1281,10 +1323,6 @@ void WarfareWindow::initialiseColours () {
   hexDrawer->setFixedSize(899, 600);
   hexDrawer->setFixedSize(900, 600);
   selDrawer->setFixedSize(220, 300);
-  for (Player::Iterator p = Player::begin(); p != Player::end(); ++p) {
-    hexDrawer->assignColour(*p); 
-  }
-  hexDrawer->loadSprites(); 
 }
 
 void WarfareWindow::clearGame () {

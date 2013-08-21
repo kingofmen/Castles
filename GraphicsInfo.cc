@@ -7,6 +7,7 @@
 #include "Building.hh" 
 #include "Hex.hh" 
 #include "ThreeDSprite.hh" 
+#include "StructUtils.hh"
 
 double LineGraphicsInfo::maxFlow = 1;
 double LineGraphicsInfo::maxLoss = 1; 
@@ -312,8 +313,14 @@ bool HexGraphicsInfo::isInside (double x, double y) const {
 
 void HexGraphicsInfo::generateShapes () {
   ZoneGraphicsInfo* zone = ZoneGraphicsInfo::getZoneInfo(0); 
+
+  FieldShape drillField;
+  drillField.push_back(cornerRight);
+  drillField.push_back(cornerRightUp);
+  drillField.push_back(cornerRightDown);
+  biggerPatches.push_back(drillField); 
   
-  int attempts = 0; 
+  int attempts = 0;
   while (patchArea() < 1) {
     FieldShape square;
     square.push_back(triplet(-0.5, -0.5));
@@ -356,22 +363,27 @@ void HexGraphicsInfo::generateShapes () {
     }
 
     bool overlap = false;
-    if (++attempts < 25) {
+    if (++attempts < 35) {
+      for (vector<FieldShape>::iterator field = biggerPatches.begin(); field != biggerPatches.end(); ++field) {
+	if (!overlaps(testField, (*field))) continue;
+	overlap = true;
+	break; 
+      }
+      
       for (vector<FieldShape>::iterator field = spritePatches.begin(); field != spritePatches.end(); ++field) {
 	if (!overlaps(testField, (*field))) continue;
 	overlap = true;
 	break; 
       }
     }
-
     
     if (overlap) continue;
     for (pit pt = testField.begin(); pt != testField.end(); ++pt) {
       (*pt).z() = zone->calcHeight((*pt).x(), (*pt).y()) + zOffset; 
     }
-    
+
     spritePatches.push_back(testField);
-    attempts = 0; 
+    attempts = 0;
   }
 
   // Now trees.
@@ -419,6 +431,9 @@ double HexGraphicsInfo::patchArea () const {
   for (vector<FieldShape>::const_iterator f = spritePatches.begin(); f != spritePatches.end(); ++f) {
     ret += area(*f);
   }
+  //for (vector<FieldShape>::const_iterator f = biggerPatches.begin(); f != biggerPatches.end(); ++f) {
+  //ret += area(*f);
+  //}  
   return ret;
 }
 
@@ -450,11 +465,15 @@ void HexGraphicsInfo::getHeights () {
   }
 }
 
-GraphicsInfo::FieldShape HexGraphicsInfo::getPatch () {
-  FieldShape ret = spritePatches.back();
-  spritePatches.pop_back();
-  for (int i = 0; i < treesPerField.back(); ++i) trees.pop_back();
-  treesPerField.pop_back(); 
+GraphicsInfo::FieldShape HexGraphicsInfo::getPatch (bool large) {
+  vector<FieldShape>* target = large ? &biggerPatches : &spritePatches;
+  
+  FieldShape ret = target->back();
+  target->pop_back();
+  if (!large) {
+    for (int i = 0; i < treesPerField.back(); ++i) trees.pop_back();
+    treesPerField.pop_back();
+  }
   return ret; 
 }
 
@@ -757,35 +776,63 @@ void MilUnitGraphicsInfo::describe (QTextStream& str) const {
       << "  Skirmish  : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::tacmob) << "\n";  
 }
 
-void MilUnitGraphicsInfo::updateSprites () {
-  // Looking for up to three sprites, but a minimum of one.
-  // To get a sprite, a unit type must
-  // a) Be at least one-fourth of the unit strength
-  // b) Be present in more strength than its recruit_speed (waived for the largest unit)
-  // c) Have a sprite. 
+struct SortHelper {
+  SortHelper () : unittype(0), strength(0) {}
+  void clear();
+  MilUnitTemplate* unittype;
+  double strength;
+};
 
-  double total = 0;
-  for (MilUnitTemplate::Iterator m = MilUnitTemplate::begin(); m != MilUnitTemplate::end(); ++m) {
-    total += myUnit->getUnitTypeAmount(*m);
-  }
+void SortHelper::clear () {
+  unittype = 0;
+  strength = 0;
+}
 
+void MilUnitGraphicsInfo::updateSprites (MilStrength* dat) {
+  // Looking for up to nine sprites, but a minimum of one.
+  // Number of sprites is given by percentage of the largest military unit in the world.
+  double total = dat->getTotalStrength();
+  int numSprites = (int) floor(9*total / MilStrength::greatestStrength + 0.5); 
+
+  // Until required number is reached: Strongest unit gets a sprite.
+  // Then give sprites to other units in order, skipping those whose
+  // strength is less than M/(N+1), where M is strongest unit's strength
+  // and N is number of sprites of strongest unit. 
+  
   spriteIndices.clear(); 
-  MilUnitTemplate* bestUnit = 0; 
+  static vector<SortHelper*> forces;
+  if (0 == forces.size()) for (int i = 0; i < 9; ++i) forces.push_back(new SortHelper());
+  for (int i = 0; i < 9; ++i) forces[i]->clear(); 
+
+  int types = 0; 
   for (map<MilUnitTemplate*, int>::iterator m = indexMap.begin(); m != indexMap.end(); ++m) {
-    MilUnitTemplate* mType = (*m).first; 
-    double curr = myUnit->getUnitTypeAmount(mType); 
-    if (1 > curr) continue;
-    if ((!bestUnit) || (curr > myUnit->getUnitTypeAmount(bestUnit))) bestUnit = mType; 
-    if (curr < mType->recruit_speed) continue;
-    if (curr > 0.75 * total) spriteIndices.push_back((*m).second);
-    if (curr > 0.50 * total) spriteIndices.push_back((*m).second);
-    if (curr > 0.25 * total) spriteIndices.push_back((*m).second);
+    if (indexMap.find((*m).first) == indexMap.end()) continue; // Disregard spriteless unit types. 
+    forces[types]->unittype = (*m).first;
+    forces[types]->strength = dat->getUnitTypeAmount(forces[types]->unittype);
+    types++; 
+  }
+  // Greater than for descending order! 
+  sort(forces.begin(), forces.end(), deref<SortHelper>(member_gt(&SortHelper::strength)));
+
+  if (0 == types) {
+    // No sprites for these units - use a default
+    spriteIndices.push_back((*(indexMap.begin())).second);
+    return;
   }
 
-  if (0 == spriteIndices.size()) {
-    if ((bestUnit) && (indexMap.find(bestUnit) != indexMap.end())) spriteIndices.push_back(indexMap[bestUnit]);
-    else spriteIndices.push_back((*(indexMap.begin())).second);
+  Logger::logStream(DebugStartup) << "\n\nNew sprite list.\n"; 
+  int firstSprites = 1; // Accounts for +1 in M/(N+1). 
+  while ((int) spriteIndices.size() < numSprites) {
+    spriteIndices.push_back(indexMap[forces[0]->unittype]);
+    firstSprites++;
+    //Logger::logStream(DebugStartup) << "Add sprite " << forces[0]->unittype->name << " from strength " << forces[0]->strength << ".\n";
+    for (int i = 1; i < types; ++i) {
+      if (forces[i]->strength < forces[0]->strength/firstSprites) break; 
+      spriteIndices.push_back(indexMap[forces[i]->unittype]);
+      //Logger::logStream(DebugStartup) << "Add sprite " << forces[i]->unittype->name << " from strength " << forces[i]->strength << ".\n";
+    }
   }
+  
 }
 
 double area (GraphicsInfo::FieldShape const& field) {
@@ -894,6 +941,7 @@ double FarmGraphicsInfo::fieldArea () {
 }
 
 void FarmGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
+  drillField = hex->getPatch(true); 
   double currentArea = 0;
   while ((currentArea = fieldArea()) < myFarm->totalFields()) {
     FieldShape testField = hex->getPatch(); 
@@ -919,4 +967,6 @@ void FarmGraphicsInfo::updateFieldStatus () {
       if (currentField == (*info)->final()) break;      
     }
   }
+
+  
 }

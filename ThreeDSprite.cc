@@ -76,12 +76,10 @@ void ThreeDSprite::loadMaterials (string fname) {
   reader.open(fname.c_str());  
   string token;
   string matname = "Default";
-  Logger::logStream(DebugStartup) << "Reading mtllib " << fname << "\n"; 
   
   while (!reader.eof()) {
     reader >> ws; 
     reader >> token;
-    Logger::logStream(DebugStartup) << "Found token " << token << "\n"; 
     if (token.empty()) continue;
     if (token[0] == '#') {
       // Ignore comments
@@ -100,10 +98,6 @@ void ThreeDSprite::loadMaterials (string fname) {
       colour.x() = red;
       colour.y() = green;
       colour.z() = blue; 
-      Logger::logStream(DebugStartup) << "Read colour " << matname << ": "
-				      << colour.x() << " "
-				      << colour.y() << " "
-				      << colour.z() << "\n";
       colours[matname] = colour; 
     }
     getline(reader, token); // Ignore everything else.     

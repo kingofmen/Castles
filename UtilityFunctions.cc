@@ -1,11 +1,13 @@
 #include "UtilityFunctions.hh"
 //#include <vector>
 #include <cmath>
-#include <algorithm> 
+#include <algorithm>
+#include "MilUnit.hh"
 
 char strbuffer[1000]; 
 const doublet doublet::zero(0, 0);
 const triplet triplet::zero(0, 0, 0); 
+double MilStrength::greatestStrength = 1; 
 
 double degToRad (double degrees) {
   return degrees * 3.14159265 / 180; 
@@ -277,4 +279,12 @@ bool contains (vector<triplet> const& polygon, triplet const& point) {
 
   if (0 == inters % 2) return false;
   return true; 
+}
+
+int MilStrength::getTotalStrength () const {
+  double total = 0;
+  for (MilUnitTemplate::Iterator m = MilUnitTemplate::begin(); m != MilUnitTemplate::end(); ++m) {
+    total += getUnitTypeAmount(*m);
+  }
+  return total;
 }

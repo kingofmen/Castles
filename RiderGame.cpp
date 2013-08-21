@@ -32,6 +32,7 @@ WarfareGame::~WarfareGame () {
 }
 
 WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
   //srand(time(NULL));
   srand(42); 
   if (currGame) delete currGame; 
@@ -90,6 +91,7 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
     (*vex)->createLines(); 
   }
 
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
   HexGraphicsInfo::getHeights(); // Must come after Vertex and Line creation to get right zone width and height. 
   ZoneGraphicsInfo::calcGrid(); 
   StaticInitialiser::loadTextures(); 
@@ -99,6 +101,7 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
     StaticInitialiser::createPlayer(*p);
   }
 
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
   Object* aiInfo = processFile("./common/ai.txt"); 
   StaticInitialiser::loadAiConstants(aiInfo);
   StaticInitialiser::overallInitialisation(game); 
@@ -114,9 +117,12 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
   }
 
   currplayer = Player::findByName(game->safeGetString("currentplayer"));
-  assert(currplayer); 
-  FarmGraphicsInfo::updateFieldStatus(); 
+  assert(currplayer);
+  updateGreatestMilStrength(); // Must happen before graphics init, for unit sprites. 
+  FarmGraphicsInfo::updateFieldStatus();
+  StaticInitialiser::graphicsInitialisation(); 
   
+
   return currGame; 
 }
 
@@ -199,6 +205,7 @@ void findRoute (Geography* source, Geography* destination, Player* side, double 
 }
 
 void WarfareGame::endOfTurn () {
+  updateGreatestMilStrength(); 
   LineGraphicsInfo::endTurn(); 
   
   // Production phase
@@ -327,4 +334,17 @@ void WarfareGame::unitComparison (string fname) {
     }
   }
   
+}
+
+void WarfareGame::updateGreatestMilStrength() {
+  int largest = 0;
+  for (MilUnit::Iterator m = MilUnit::begin(); m != MilUnit::end(); ++m) {
+    largest = max(largest, (*m)->getTotalStrength());
+  }
+  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
+    Farmland* farm = (*hex)->getFarm();
+    if (!farm) continue;
+    largest = max(largest, farm->getMilitia()->getTotalStrength());
+  }
+  MilStrength::greatestStrength = largest; 
 }
