@@ -1,0 +1,4 @@
+*.ps1
+*.o
+*.exe
+moc_*cpp
