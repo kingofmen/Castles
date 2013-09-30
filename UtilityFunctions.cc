@@ -72,6 +72,31 @@ void triplet::operator*= (double scale) {
   this->z() *= scale;
 }
 
+triplet operator- (triplet one, triplet two) {
+  triplet ret = one;
+  ret -= two;
+  return ret;
+}
+
+triplet operator+ (triplet one, triplet two) {
+  triplet ret = one;
+  ret += two;
+  return ret;
+}
+
+triplet operator* (triplet one, double scale) {
+  triplet ret = one;
+  ret *= scale;
+  return ret;
+}
+
+triplet operator/ (triplet one, double scale) {
+  triplet ret = one;
+  ret /= scale;
+  return ret; 
+}
+
+
 double doublet::dot (const doublet& other) const {
   double ret = this->x() * other.x();
   ret       += this->y() * other.y();

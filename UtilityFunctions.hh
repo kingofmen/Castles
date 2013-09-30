@@ -99,7 +99,12 @@ struct triplet : public boost::tuple<double, double, double> {
 
 private:
   static const triplet zero; 
-}; 
+};
+
+triplet operator- (triplet one, triplet two);
+triplet operator+ (triplet one, triplet two);
+triplet operator* (triplet one, double scale);
+triplet operator/ (triplet one, double scale);
 
 int convertFractionToInt (double fraction);
 bool intersect (double line1x1, double line1y1, double line1x2, double line1y2,
