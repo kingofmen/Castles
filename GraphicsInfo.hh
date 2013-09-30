@@ -7,6 +7,7 @@
 #include "UtilityFunctions.hh"
 #include "Building.hh"
 #include "ThreeDSprite.hh"
+#include "Directions.hh" 
 
 class MilStrength; 
 class MilUnit;
@@ -17,8 +18,7 @@ class Vertex;
 class Line; 
 
 enum TerrainType {Mountain = 0, Hill, Plain, Forest, Ocean, NoTerrain}; 
-enum Direction {NorthWest = 0, North, NorthEast, SouthEast, South, SouthWest, NoDirection};
-enum Vertices {LeftUp = 0, RightUp, Right, RightDown, LeftDown, Left, NoVertex}; 
+
 
 class GraphicsInfo {
   friend class StaticInitialiser; 
@@ -89,8 +89,8 @@ public:
   cfit final () const {return fields.end();} 
   fit start () {return fields.begin();}
   fit final () {return fields.end();} 
-  cpit startDrill () const {return drillField.begin();}
-  cpit finalDrill () const {return drillField.end();}
+  cpit startDrill () const {return exercis.begin();}
+  cpit finalDrill () const {return exercis.end();}
   
   typedef vector<FarmGraphicsInfo*>::iterator Iterator;
   static Iterator begin () {return allFarmInfos.begin();}
@@ -101,7 +101,9 @@ private:
   double fieldArea ();   
   void generateShapes (HexGraphicsInfo* dat);
   vector<FieldInfo> fields;
-  FieldShape drillField; 
+  FieldShape exercis;
+  FieldShape village;
+  FieldShape pasture; 
   static vector<int> textureIndices; 
   
   Farmland* myFarm;

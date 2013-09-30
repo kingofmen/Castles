@@ -313,12 +313,45 @@ bool HexGraphicsInfo::isInside (double x, double y) const {
 
 void HexGraphicsInfo::generateShapes () {
   ZoneGraphicsInfo* zone = ZoneGraphicsInfo::getZoneInfo(0); 
+  Vertices villageCorner = convertToVertex(rand()); 
+  
+  FieldShape exercis;
+  FieldShape pasture;
+  FieldShape village;
 
-  FieldShape drillField;
-  drillField.push_back(cornerRight);
-  drillField.push_back(cornerRightUp);
-  drillField.push_back(cornerRightDown);
-  biggerPatches.push_back(drillField); 
+  triplet zer = getCoords(villageCorner-2);
+  triplet one = getCoords(villageCorner-1);  
+  triplet two = getCoords(villageCorner);  
+  triplet thr = getCoords(villageCorner+1);
+  triplet fou = getCoords(villageCorner+2);
+  triplet fiv = getCoords(villageCorner+3);  
+  triplet direction = (fou - thr);
+
+  
+  exercis.push_back(thr);
+  exercis.push_back(thr + direction/3.0);
+  direction = (two - thr);
+  exercis.push_back(exercis.back() + direction*(5.0/6));
+  exercis.push_back(thr + direction*(5.0/6));
+
+  
+  direction = (fiv-zer);
+  pasture.push_back(zer);
+  pasture.push_back(zer + direction/3.0);
+  direction = (one - zer);
+  pasture.push_back(pasture.back() + direction*(5.0/6));
+  pasture.push_back(zer + direction*(5.0/6));
+  
+  village.push_back(two);
+  direction = (fou - two);
+  village.push_back(two + direction/12.0);
+  village.push_back(one + direction/12.0);
+  village.push_back(one); 
+   
+  biggerPatches.push_back(exercis);
+  biggerPatches.push_back(pasture);
+  biggerPatches.push_back(village); 
+  
   
   int attempts = 0;
   while (patchArea() < 1) {
@@ -820,7 +853,7 @@ void MilUnitGraphicsInfo::updateSprites (MilStrength* dat) {
     return;
   }
 
-  Logger::logStream(DebugStartup) << "\n\nNew sprite list.\n"; 
+  //Logger::logStream(DebugStartup) << "\n\nNew sprite list.\n"; 
   int firstSprites = 1; // Accounts for +1 in M/(N+1). 
   while ((int) spriteIndices.size() < numSprites) {
     spriteIndices.push_back(indexMap[forces[0]->unittype]);
@@ -941,7 +974,11 @@ double FarmGraphicsInfo::fieldArea () {
 }
 
 void FarmGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
-  drillField = hex->getPatch(true); 
+  // Reverse order of generation
+  village = hex->getPatch(true);  
+  pasture = hex->getPatch(true);  
+  exercis = hex->getPatch(true);
+
   double currentArea = 0;
   while ((currentArea = fieldArea()) < myFarm->totalFields()) {
     FieldShape testField = hex->getPatch(); 

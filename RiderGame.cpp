@@ -16,6 +16,7 @@
 #include "StructUtils.hh" 
 #include "StaticInitialiser.hh" 
 #include "Calendar.hh" 
+#include "Directions.hh" 
 
 WarfareGame* WarfareGame::currGame = 0; 
 
@@ -77,8 +78,8 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
     for (int j = 0; j < ysize; ++j) {
       Hex* curr = Hex::getHex(i, j);
       for (int k = NorthWest; k < NoDirection; ++k) {
-	pair<int, int> n = Hex::getNeighbourCoordinates(curr->getPos(), Hex::convertToDirection(k));
-	curr->setNeighbour(Hex::convertToDirection(k), Hex::getHex(n.first, n.second));
+	pair<int, int> n = Hex::getNeighbourCoordinates(curr->getPos(), convertToDirection(k));
+	curr->setNeighbour(convertToDirection(k), Hex::getHex(n.first, n.second));
       }
     }
   }

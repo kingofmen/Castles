@@ -7,3 +7,6 @@ treesprite = {
   filename = gfx/pinetree.obj
 }
 
+farmsprite = {
+  filename = gfx/farmhouse.obj 
+}

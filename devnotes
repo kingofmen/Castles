@@ -12,6 +12,7 @@ Tasks for the interface patch:
      i. Decouple Hex/Line/Vertex from terrain. (check)
    - Terrain shadows (check) 
    - Castles 
+ * Reorganise Hex display 
  * Labels on buttons
  * Popup tips 
 

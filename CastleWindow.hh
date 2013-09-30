@@ -159,7 +159,8 @@ private:
   
   ThreeDSprite* cSprite;
   //ThreeDSprite* kSprite;
-  ThreeDSprite* tSprite;  
+  ThreeDSprite* tSprite;
+  ThreeDSprite* farmSprite;  
 
   MapOverlay* overlayMode; 
 }; 

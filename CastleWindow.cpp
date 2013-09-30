@@ -448,6 +448,11 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   }
   glPopMatrix(); 
 
+  //texts.clear(); 
+  //glPushMatrix();
+  //glTranslated(dat->getCoords(NoVertex).x(), dat->getCoords(NoVertex).y(), dat->getCoords(NoVertex).z());
+  //farmSprite->draw(texts);
+  //glPopMatrix(); 
   
 }
 
@@ -464,7 +469,7 @@ ThreeDSprite* GLDrawer::makeSprite (Object* info) {
 }
 
 void GLDrawer::loadSprites () {
-  Logger::logStream(DebugStartup) << "Entering loadSprites.\n"; 
+  //Logger::logStream(DebugStartup) << "Entering loadSprites.\n"; 
   if ((cSprite) && (tSprite)) return;
   if (cSprite) delete cSprite;
   if (tSprite) delete tSprite;
@@ -478,6 +483,10 @@ void GLDrawer::loadSprites () {
   Object* treeinfo = ginfo->safeGetObject("treesprite");
   assert(treeinfo);
   tSprite = makeSprite(treeinfo);
+
+  Object* farminfo = ginfo->safeGetObject("farmsprite");
+  assert(farminfo);  
+  farmSprite = makeSprite(farminfo); 
 }
 
 void GLDrawer::assignColour (Player* p) {
@@ -883,10 +892,8 @@ void GLDrawer::resizeGL () {
 }
 
 void GLDrawer::paintGL () {
-  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";
   if (!cSprite) return; 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();

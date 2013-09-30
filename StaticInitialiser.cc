@@ -12,7 +12,8 @@
 #include <QGLShaderProgram>
 #include "glextensions.h"
 #include <GL/glu.h>
-#include "Calendar.hh" 
+#include "Calendar.hh"
+#include "Directions.hh" 
 #include <fstream>
 
 int StaticInitialiser::defaultUnitPriority = 4; 
@@ -202,7 +203,7 @@ Hex* findHex (Object* info) {
 Line* findLine (Object* info, Hex* hex) {
   string pos = info->safeGetString("pos", "nowhere");
   if (pos == "nowhere") return 0; 
-  Direction dir = Hex::getDirection(pos);
+  Direction dir = getDirection(pos);
   if (NoDirection == dir) return 0;
   assert(hex->getLine(dir)); 
   return hex->getLine(dir); 
@@ -211,7 +212,7 @@ Line* findLine (Object* info, Hex* hex) {
 Vertex* findVertex (Object* info, Hex* hex) {
   string pos = info->safeGetString("vtx", "nowhere");
   if (pos == "nowhere") return 0;   
-  Vertices dir = Hex::getVertex(pos); 
+  Vertices dir = getVertex(pos); 
   if (NoVertex == dir) return 0; 
   assert(hex->getVertex(dir)); 
   return hex->getVertex(dir); 
@@ -862,7 +863,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       hexInfo->setLeaf("player", castle->getOwner()->getName());
       Object* castleObject = new Object("castle");
       hexInfo->setValue(castleObject);
-      castleObject->setLeaf("pos", Hex::getDirectionName((*hex)->getDirection(*lin)));
+      castleObject->setLeaf("pos", getDirectionName((*hex)->getDirection(*lin)));
       castleObject->setLeaf("supplies", castle->supplies);
       castleObject->setLeaf("recruiting", castle->recruitType->name); 
       for (unsigned int i = 0; (int) i < castle->numGarrison(); ++i) {
@@ -918,7 +919,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
     uinfo->setLeaf("x", hex->getPos().first);
     uinfo->setLeaf("y", hex->getPos().second);
     uinfo->setLeaf("player", unit->getOwner()->getName());
-    uinfo->setLeaf("vtx", Hex::getVertexName(hex->getDirection(*vtx)));
+    uinfo->setLeaf("vtx", getVertexName(hex->getDirection(*vtx)));
     writeUnitToObject(unit, uinfo); 
     game->setValue(uinfo);
   }
