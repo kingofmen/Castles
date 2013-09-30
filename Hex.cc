@@ -126,53 +126,6 @@ int Hex::numMovesTo (Hex const * const dat) const {
   return abs(xdist) + std::max(0, abs(ydist) - maxYchange); 
 }
 
-Direction Hex::getDirection (std::string n) {
-  if (n == "North") return North;
-  if (n == "South") return South;
-  if (n == "NorthEast") return NorthEast;
-  if (n == "NorthWest") return NorthWest;
-  if (n == "SouthEast") return SouthEast;
-  if (n == "SouthWest") return SouthWest;
-  return NoDirection; 
-}
-
-Vertices Hex::getVertex (std::string n) {
-  if (n == "UpLeft") return LeftUp;
-  if (n == "UpRight") return RightUp;
-  if (n == "Left") return Left;
-  if (n == "Right") return Right;
-  if (n == "DownLeft") return LeftDown;
-  if (n == "DownRight") return RightDown; 
-  return NoVertex; 
-}
-
-std::string Hex::getDirectionName (Direction dat) {
-  switch (dat) {
-  case NorthWest: return std::string("NorthWest");
-  case NorthEast: return std::string("NorthEast");
-  case North: return std::string("North");
-  case South: return std::string("South");
-  case SouthWest: return std::string("SouthWest");
-  case SouthEast: return std::string("SouthEast");
-  case NoDirection:
-  default:
-    return std::string("None");
-  }
-}
-
-std::string Hex::getVertexName (Vertices dat) {
-  switch (dat) {
-  case LeftUp: return std::string("UpLeft");
-  case RightUp: return std::string("UpRight");
-  case Left: return std::string("Left");
-  case Right: return std::string("Right");
-  case LeftDown: return std::string("DownLeft");
-  case RightDown: return std::string("DownRight");
-  case NoDirection:
-  default:
-    return std::string("None");
-  }
-}
 
 std::pair<int, int> Hex::getPos (Direction dat) const {
   std::pair<int, int> ret = getPos(); 
@@ -409,34 +362,6 @@ Hex* Line::otherHex (Hex* dat) {
   return hex1; 
 }
 
-Direction Hex::oppositeDirection (Direction dat) {
-  switch (dat) {
-  case NorthWest: return SouthEast;
-  case NorthEast: return SouthWest;
-  case North: return South;
-  case South: return North;
-  case SouthEast: return NorthWest;
-  case SouthWest: return NorthEast; 
-  case NoDirection: return NoDirection; 
-  default: return NoDirection; 
-  }
-  return NoDirection; 
-}
-
-Vertices Hex::oppositeVertex (Vertices dat) {
-  switch (dat) { 
-  case LeftUp:    return RightDown;
-  case RightUp:   return LeftDown;
-  case Left:      return Right;
-  case Right:     return Left;
-  case RightDown: return LeftUp;
-  case LeftDown:  return RightUp; 
-  case NoVertex: return NoVertex;
-  default: return NoVertex;
-  }
-  return NoVertex; 
-}
-
 Direction Hex::getDirection (Line const * const dat) const {
   switch (getDirection(dat->oneEnd())) {
   case LeftUp:    if (Left == getDirection(dat->twoEnd())) return NorthWest; return North; 
@@ -491,18 +416,6 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
   return pos; 
 }
 
-Direction Hex::convertToDirection (int n){
-  switch (n) {
-  case NorthWest: return NorthWest;
-  case NorthEast: return NorthEast;
-  case SouthWest: return SouthWest;
-  case SouthEast: return SouthEast;
-  case North: return North;
-  case South: return South; 
-  default: return NoDirection; 
-  }
-}
-
 void Hex::endOfTurn () {
   if (farms) farms->endOfTurn();
 }
@@ -511,20 +424,6 @@ std::string Hex::toString () const {
   static char buffer[1000];
   sprintf(buffer, "(%i, %i)", pos.first, pos.second); 
   return std::string(buffer); 
-}
-
-Vertices Hex::convertToVertex (int i) {
-  switch (i) {
-  case LeftUp: return LeftUp;
-  case RightUp: return RightUp;
-  case Right: return Right;
-  case RightDown: return RightDown;
-  case LeftDown: return LeftDown;
-  case Left: return Left;
-  default:
-  case NoVertex: return NoVertex;
-  }
-  return NoVertex; 
 }
 
 Vertex* Hex::getVertex (int i) {
@@ -548,7 +447,7 @@ Direction Hex::getDirection (Hex const * const dat) const {
 
 Vertices Vertex::getDirection (Vertex const * const ofdis) const {
   for (int i = LeftUp; i < NoVertex; ++i) {
-    if (neighbours[i] == ofdis) return Hex::convertToVertex(i);
+    if (neighbours[i] == ofdis) return convertToVertex(i);
   }
   
   return NoVertex; 
@@ -592,7 +491,7 @@ double Vertex::traversalRisk (Player* side) const {
 QString Vertex::toString () {
   for (std::vector<Hex*>::iterator hex = hexes.begin(); hex != hexes.end(); ++hex) {
     if (!(*hex)) continue;
-    QString ret = QString("Vertex %1 of hex (%2, %3)").arg(Hex::getVertexName((*hex)->getDirection(this)).c_str()).arg((*hex)->getPos().first).arg((*hex)->getPos().second);
+    QString ret = QString("Vertex %1 of hex (%2, %3)").arg(getVertexName((*hex)->getDirection(this)).c_str()).arg((*hex)->getPos().first).arg((*hex)->getPos().second);
     return ret; 
   }
   return QString("Floating vertex"); 

@@ -10,6 +10,7 @@
 #include "Building.hh" 
 #include "GraphicsInfo.hh"
 #include "UtilityFunctions.hh" 
+#include "Directions.hh" 
 
 class PopUnit;
 class MilUnit;
@@ -66,16 +67,8 @@ public:
   static Iterator begin () {return allHexes.begin();}
   static Iterator end () {return allHexes.end();}  
   static TerrainType getType (char t); 
-  static string getDirectionName (Direction dat);
-  static string getVertexName (Vertices dat);
   static pair<int, int> getNeighbourCoordinates (pair<int, int> pos, Direction dere);
-  static Direction getDirection (string n);
-  static Hex* getHex (int x, int y); 
-  static Vertices getVertex (string n);
-  static Direction convertToDirection (int n);
-  static Vertices convertToVertex (int i);
-  static Direction oppositeDirection (Direction dat);
-  static Vertices oppositeVertex (Vertices dat);
+  static Hex* getHex (int x, int y);
   static void clear ();
   static void createHex (int x, int y, TerrainType t);
 

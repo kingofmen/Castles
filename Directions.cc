@@ -2,22 +2,26 @@
 
 
 Direction operator+ (Direction a, int b) {
-  int temp = a+b;
+  int temp = a;
+  temp += b; 
   return convertToDirection(temp); 
 }
 
 Direction operator- (Direction a, int b) {
-  int temp = a-b;
+  int temp = a;
+  temp -= b; 
   return convertToDirection(temp); 
 }
 
 Vertices operator+ (Vertices a, int b) {
-  int temp = a+b;
+  int temp = a;
+  temp += b; 
   return convertToVertex(temp); 
 }
 
 Vertices operator- (Vertices a, int b) {
-  int temp = a-b;
+  int temp = a;
+  temp -= b;   
   return convertToVertex(temp); 
 }
 

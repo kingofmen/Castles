@@ -4,6 +4,7 @@ INPUT(
 ./release\Building.o
 ./release\Calendar.o
 ./release\CastleWindow.o
+./release\Directions.o
 ./release\glextensions.o
 ./release\GraphicsInfo.o
 ./release\Hex.o
