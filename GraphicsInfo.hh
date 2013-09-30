@@ -91,6 +91,10 @@ public:
   fit final () {return fields.end();} 
   cpit startDrill () const {return exercis.begin();}
   cpit finalDrill () const {return exercis.end();}
+  cpit startHouse () const {return village.begin();}
+  cpit finalHouse () const {return village.end();}
+  cpit startSheep () const {return pasture.begin();}
+  cpit finalSheep () const {return pasture.end();}
   
   typedef vector<FarmGraphicsInfo*>::iterator Iterator;
   static Iterator begin () {return allFarmInfos.begin();}

@@ -337,22 +337,60 @@ void HexGraphicsInfo::generateShapes () {
   
   direction = (fiv-zer);
   pasture.push_back(zer);
-  pasture.push_back(zer + direction/3.0);
+  triplet tmp = zer + direction/3.0;
   direction = (one - zer);
-  pasture.push_back(pasture.back() + direction*(5.0/6));
-  pasture.push_back(zer + direction*(5.0/6));
+  pasture.push_back(zer + direction*(5.0/6));  
+  pasture.push_back(tmp + direction*(5.0/6));
+  pasture.push_back(tmp);
   
   village.push_back(two);
   direction = (fou - two);
-  village.push_back(two + direction/12.0);
-  village.push_back(one + direction/12.0);
+  village.push_back(two + direction/6.0);
+  village.push_back(one + direction/6.0);
   village.push_back(one); 
    
   biggerPatches.push_back(exercis);
   biggerPatches.push_back(pasture);
   biggerPatches.push_back(village); 
   
-  
+  triplet updex = two - thr;
+  triplet upsin = one - zer;
+  for (int yfield = 0; yfield < 6; ++yfield) {
+    triplet sin1  = exercis[1];
+    triplet sin2  = exercis[1];    
+    triplet dex1 = tmp;
+    triplet dex2 = tmp;    
+    sin1 += updex * ((0.0 + yfield) / 6);
+    sin2 += updex * ((1.0 + yfield) / 6);    
+    dex1 += upsin * ((0.0 + yfield) / 6);
+    dex2 += upsin * ((1.0 + yfield) / 6);
+
+    int divisions = (yfield > 3 ? 3 : 2);
+    triplet right1 = (dex1 - sin1);
+    triplet right2 = (dex2 - sin2);
+    right1 /= divisions;
+    right2 /= divisions;
+
+    for (int i = 0; i < divisions; ++i) {
+      FieldShape field;          
+      field.push_back(sin1);
+      field.push_back(sin1 + right1);
+      field.push_back(sin2 + right2);
+      field.push_back(sin2);
+
+      sin1 += right1;
+      sin2 += right2;
+
+      for (pit pt = field.begin(); pt != field.end(); ++pt) {
+	(*pt).z() = zone->calcHeight((*pt).x(), (*pt).y()) + zOffset; 
+      }
+      
+      spritePatches.push_back(field);
+    }
+  }
+
+  /*
+    // Old random code
   int attempts = 0;
   while (patchArea() < 1) {
     FieldShape square;
@@ -418,7 +456,11 @@ void HexGraphicsInfo::generateShapes () {
     spritePatches.push_back(testField);
     attempts = 0;
   }
+  */
 
+  
+
+  
   // Now trees.
   DieRoll deesix(1, 3);   
   for (vector<FieldShape>::iterator field = spritePatches.begin(); field != spritePatches.end(); ++field) {

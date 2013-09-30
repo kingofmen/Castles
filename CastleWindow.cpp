@@ -392,7 +392,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   for (FarmGraphicsInfo::cfit field = farmInfo->start(); field != farmInfo->final(); ++field) {
     glBindTexture(GL_TEXTURE_2D, textureIDs[(*field).getIndex()]); 
     glBegin(GL_POLYGON);
-    GraphicsInfo::cpit point = (*field).begin(); // Assume square fields for now, and just unroll loop.
+    GraphicsInfo::cpit point = (*field).begin(); // Assume square fields, and just unroll loop.
     glTexCoord2d(0, 0);
     glVertex3d((*point).x(), (*point).y(), (*point).z()); ++point;
     glTexCoord2d(0, 1);    
@@ -403,7 +403,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
     glVertex3d((*point).x(), (*point).y(), (*point).z()); 
     glEnd(); 
   }
-
+ 
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, 0);  
   const MilUnitGraphicsInfo* info = farm->getMilitiaGraphics(); 
