@@ -2,3 +2,7 @@
 *.o
 *.exe
 moc_*cpp
+*obj
+*mtl
+*jpg
+debug/gfx/*png
