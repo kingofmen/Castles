@@ -3,16 +3,17 @@ Tasks for the interface patch:
  * Graphics loading to StaticInitialiser.
  * Prettify the interface:
    - Trees (check) 
-   - Farmhouses
    - Militia (check)
    - Fields (with status) (check) 
-   - Stockpiles 
    - Better sprites (check)
    - More fractal heightmap (check) 
      i. Decouple Hex/Line/Vertex from terrain. (check)
    - Terrain shadows (check) 
    - Castles 
  * Reorganise Hex display 
+   - Farmhouses (check) 
+   - Stockpiles 
+   - Militia again 
  * Labels on buttons
  * Popup tips 
 

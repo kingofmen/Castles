@@ -83,6 +83,8 @@ public:
     int status;
   };
 
+  int getHouses () const {return 7;} 
+  
   typedef vector<FieldInfo>::const_iterator cfit;
   typedef vector<FieldInfo>::iterator fit;
   cfit start () const {return fields.begin();}

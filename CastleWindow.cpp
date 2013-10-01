@@ -377,7 +377,6 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   for (GraphicsInfo::cpit tree = dat->startTrees(); tree != dat->finalTrees(); ++tree) {
     glPushMatrix();
     glTranslated((*tree).x(), (*tree).y(), (*tree).z());
-    glScalef(0.5, 0.5, 0.25);     
     tSprite->draw(texts);
     glPopMatrix();
   }
@@ -403,22 +402,51 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
     glVertex3d((*point).x(), (*point).y(), (*point).z()); 
     glEnd(); 
   }
- 
+
+  glMatrixMode(GL_MODELVIEW);  
   glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  texts.clear();
+  int numHouses = farmInfo->getHouses();
+  GraphicsInfo::cpit point1 = farmInfo->startHouse();
+  GraphicsInfo::cpit point2 = farmInfo->startHouse(); ++point2;
+  GraphicsInfo::cpit point3 = farmInfo->startHouse(); ++point3; ++point3;
+  double xstep = ((*point3).x() - (*point2).x()) * 0.1;
+  double ystep = ((*point3).y() - (*point2).y()) * 0.1;
+  double zstep = ((*point3).z() - (*point2).z()) * 0.1;
+
+  double tranX = ((*point2).x() - (*point1).x())*0.50;
+  double tranY = ((*point2).y() - (*point1).y())*0.50;
+  double tranZ = ((*point2).z() - (*point1).z())*0.50;
+
+
+  
+  glPushMatrix();  
+  glTranslated((*point1).x() + tranX*0.5, (*point1).y() + tranY*0.5, (*point1).z() + tranZ*0.5);
+  for (int i = 0; i < numHouses; ++i) {
+    glPushMatrix();
+    glTranslated(xstep*(i/2) + tranX*(i%2), ystep*(i/2) + tranY*(i%2), zstep*(i/2) + tranZ*(i%2));
+    glRotated(180*(i%2), 0, 0, 1);    
+    farmSprite->draw(texts); 
+    glPopMatrix(); 
+  }
+  glPopMatrix(); 
+
+
+  const MilUnitGraphicsInfo* info = farm->getMilitiaGraphics();
   glBindTexture(GL_TEXTURE_2D, 0);  
-  const MilUnitGraphicsInfo* info = farm->getMilitiaGraphics(); 
+  texts.clear(); 
   texts.push_back(textureIDs[playerToTextureMap[farm->getOwner()]]);
   texts.push_back(textureIDs[playerToTextureMap[farm->getOwner()]]); 
 
-  GraphicsInfo::cpit point1 = farmInfo->startDrill();
-  GraphicsInfo::cpit point2 = farmInfo->startDrill(); ++point2;
-  GraphicsInfo::cpit point3 = farmInfo->startDrill(); ++point3; ++point3;
+  point1 = farmInfo->startDrill();
+  point2 = farmInfo->startDrill(); ++point2;
+  point3 = farmInfo->startDrill(); ++point3; ++point3;
 
-  double xstep = ((*point3).x() - (*point2).x()) / 9;
-  double ystep = ((*point3).y() - (*point2).y()) / 9;
-  double zstep = ((*point3).z() - (*point2).z()) / 9;  
+  xstep = ((*point3).x() - (*point2).x()) / 9;
+  ystep = ((*point3).y() - (*point2).y()) / 9;
+  zstep = ((*point3).z() - (*point2).z()) / 9;  
   
-  glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   /*
   double angle = 0;
@@ -465,6 +493,7 @@ ThreeDSprite* GLDrawer::makeSprite (Object* info) {
     specs.push_back((*s)->getLeaf()); 
   }
   ThreeDSprite* ret = new ThreeDSprite(castleFile, specs);
+  ret->setScale(info->safeGetFloat("xscale", 1.0), info->safeGetFloat("yscale", 1.0), info->safeGetFloat("zscale", 1.0)); 
   return ret; 
 }
 
@@ -849,18 +878,7 @@ void GLDrawer::initializeGL () {
 
   setViewport(); 
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-  glGenTextures(numTextures, textureIDs);
-  //const char* names[NoTerrain] = {"mountain.bmp", "hill.bmp", "gfx\\grass.png", "forest.bmp", "ocean.bmp"};
-  //QColor colours[NoTerrain] = {Qt::gray, Qt::lightGray, Qt::yellow, Qt::green, Qt::blue};
-  //terrainTextureIndices = new int[NoTerrain];
-  //zoneTextureIndices = new int[1]; 
-  //for (int i = 0; i < NoTerrain; ++i) {
-  //terrainTextureIndices[i] = i;
-  //loadTexture(names[i], colours[i], terrainTextureIndices[i]); 
-  //}
-  //zoneTextureIndices[0] = terrainTextureIndices[2]; 
-
-  
+  glGenTextures(numTextures, textureIDs); 
 
   castleTextureIndices = new int[4];
   castleTextureIndices[0] = loadTexture("gfx\\castle1.png", Qt::red);  
@@ -874,17 +892,6 @@ void GLDrawer::initializeGL () {
   bool isgood = getGLExtensionFunctions().resolve(this->context()); 
   if (!isgood) Logger::logStream(Logger::Debug) << "Some GL functions not found.\n";
   if (!getGLExtensionFunctions().openGL15Supported()) Logger::logStream(Logger::Debug) << "Could not find OpenGL 1.5 support.\n";
-
-  /*
-  GLint maxtex = -1;
-  glGetIntegerv(GL_MAX_TEXTURE_COORDS, &maxtex);
-  Logger::logStream(Logger::Debug) << "Max textures: " << ((int) maxtex) << ".\n";
-  if (!QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_1_5) Logger::logStream(Logger::Debug) << "Format could not find OpenGL 1.5 support.\n";
-  Logger::logStream(Logger::Debug) << "Function pointer: "
-				   << ((int) glActiveTexture) << " "
-				   << ((int) glMultiTexCoord2f) << " "   
-				   << "\n";
-  */
 }
 
 void GLDrawer::resizeGL () {

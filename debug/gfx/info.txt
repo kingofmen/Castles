@@ -5,8 +5,14 @@ castlesprite = {
 }
 treesprite = {
   filename = gfx/pinetree.obj
+  xscale = 0.5
+  yscale = 0.5
+  zscale = 0.25
 }
 
 farmsprite = {
   filename = gfx/farmhouse.obj 
+  xscale = 0.33
+  yscale = 0.33
+  zscale = 0.33
 }

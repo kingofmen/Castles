@@ -9,19 +9,13 @@ ThreeDSprite::Group::Group () : special(0) {}
 
 ThreeDSprite::ThreeDSprite (string fname, vector<string> specials) 
   : numSpecials(0)
+  , scaleFactor(1.0, 1.0, 1.0)
 {
   loadFile(fname);
   assert(0 < groups.size()); 
-
-  //Logger::logStream(Logger::Debug) << "Loaded graphics file " << fname << "\n"; 
-
+  
   int counter = 1;
   for (vector<string>::iterator spec = specials.begin(); spec != specials.end(); ++spec) {
-    /*
-    Logger::logStream(Logger::Debug) << "Looking for special '"
-				     << (*spec) << "' "
-				     << (int) groups[*spec].faces.size() << "\n";
-    */
     assert (0 < groups[*spec].faces.size());
     groups[*spec].special = counter++;
   }
@@ -190,12 +184,12 @@ void ThreeDSprite::makeFace (ifstream& reader, string groupName) {
     nface->verts.push_back(curr); 
   }
 
-  //Logger::logStream(Logger::Debug) << "Added face with " << (int) nface->verts.size() << " vertices to '" << groupName << "'\n"; 
   groups[groupName].faces.push_back(nface); 
 }
 
 
 void ThreeDSprite::draw (vector<int>& textures) {
+  glScaled(scaleFactor.x(), scaleFactor.y(), scaleFactor.z()); 
   glCallList(listIndex);
   for (int i = 0; i < numSpecials; ++i) {
     if (i >= (int) textures.size()) break; 

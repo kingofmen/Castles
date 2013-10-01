@@ -11,7 +11,8 @@ using namespace std;
 class ThreeDSprite {
 public:
   ThreeDSprite (string fname, vector<string> specials);
-  void draw (vector<int>& textures); 
+  void draw (vector<int>& textures);
+  void setScale (double xsc, double ysc, double zsc) {scaleFactor.x() = xsc; scaleFactor.y() = ysc; scaleFactor.z() = zsc;}
   enum SpecialFlags { First = 1,
 		      Second = 2,
 		      Third = 4 };
@@ -51,6 +52,8 @@ private:
   void loadMaterials (string fname);  
   void makeFace (ifstream& reader, string groupName);
   void drawFace (Face* face);
+
+  triplet scaleFactor;
 };
 
 #endif
