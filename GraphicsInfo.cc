@@ -1028,6 +1028,10 @@ void FarmGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
   }
 }
 
+int FarmGraphicsInfo::getHouses () const {
+  return 1 + (int) floor(myFarm->getFractionOfMaxPop() * 19 + 0.5); 
+}
+
 void FarmGraphicsInfo::updateFieldStatus () {
   for (Iterator info = begin(); info != end(); ++info) {
     double totalFieldArea = 1.0 / (*info)->myFarm->totalFields();

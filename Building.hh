@@ -115,7 +115,8 @@ public:
   ~CivilBuilding ();
 
   virtual void endOfTurn ();
-  int getTotalPopulation () const {return males.getTotalPopulation() + women.getTotalPopulation();} 
+  int getTotalPopulation () const {return males.getTotalPopulation() + women.getTotalPopulation();}
+  double getFractionOfMaxPop () const {double ret = getTotalPopulation(); ret /= maxPopulation; return min(1.0, ret);} 
   void demobMilitia (); 
   MilUnit* raiseMilitia (); 
   int produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll);
@@ -125,6 +126,7 @@ public:
   
   int getMilitiaDrill () {return milTrad ? milTrad->getDrill() : 0;}
   int getMilitiaStrength (MilUnitTemplate const* const dat) {return milTrad ? milTrad->getStrength(dat) : 0;} 
+  void updateMaxPop () const {maxPopulation = max(maxPopulation, getTotalPopulation());} 
   
 protected:
   AgeTracker males;
@@ -145,6 +147,7 @@ protected:
 private:
   double adjustedMortality (int age, bool male) const;   
 
+  static int maxPopulation; 
   static vector<double> baseMaleMortality;
   static vector<double> baseFemaleMortality;
   static vector<double> pairChance;

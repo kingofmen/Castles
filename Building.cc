@@ -7,13 +7,14 @@
 #include <cassert> 
 #include "Calendar.hh" 
 
+int CivilBuilding::maxPopulation = 1; 
 vector<double> CivilBuilding::baseMaleMortality(AgeTracker::maxAge);
 vector<double> CivilBuilding::baseFemaleMortality(AgeTracker::maxAge);
 vector<double> CivilBuilding::pairChance(AgeTracker::maxAge);
 vector<double> CivilBuilding::fertility(AgeTracker::maxAge);
 vector<double> CivilBuilding::products(AgeTracker::maxAge);
 vector<double> CivilBuilding::consume(AgeTracker::maxAge);
-vector<double> CivilBuilding::recruitChance(AgeTracker::maxAge); 
+vector<double> CivilBuilding::recruitChance(AgeTracker::maxAge);
 double CivilBuilding::femaleProduction = 0.5;
 double CivilBuilding::femaleConsumption = 0.90;
 double CivilBuilding::femaleSurplusEffect = -2.0;
@@ -223,7 +224,6 @@ double CivilBuilding::adjustedMortality (int age, bool male) const {
   return baseFemaleMortality[age]*foodMortalityModifier;
 }
 
-
 void CivilBuilding::endOfTurn () {
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter != currSeason) return;
@@ -264,7 +264,9 @@ void CivilBuilding::endOfTurn () {
   }
 
   males.addPop((int) floor(0.5 * popIncrease + 0.5), 0);
-  women.addPop((int) floor(0.5 * popIncrease + 0.5), 0); 
+  women.addPop((int) floor(0.5 * popIncrease + 0.5), 0);
+
+  updateMaxPop(); 
 }
 
 void CivilBuilding::demobMilitia () {

@@ -280,7 +280,8 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Farmland* ret = new Farmland();
   readAgeTrackerFromObject(ret->males, males);
   readAgeTrackerFromObject(ret->women, females);
-
+  ret->updateMaxPop(); 
+  
   buildMilitia(ret, fInfo->safeGetObject("militiaUnits")); 
 
   ret->fields[Farmland::Clear] = fInfo->safeGetInt("clear", 0);

@@ -83,7 +83,7 @@ public:
     int status;
   };
 
-  int getHouses () const {return 7;} 
+  int getHouses () const;
   
   typedef vector<FieldInfo>::const_iterator cfit;
   typedef vector<FieldInfo>::iterator fit;
