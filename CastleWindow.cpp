@@ -211,13 +211,10 @@ void SelectedDrawer::draw () {
 GLDrawer::GLDrawer (QWidget* p)
   : HexDrawer(p)
   , QGLWidget(p)
-  , assignedTextures(0)
-  , numTextures(100)
   , cSprite(0)
   , tSprite(0) 
   , overlayMode(0)
 {
-  textureIDs = new GLuint[numTextures];
   errors = new int[100];
 }
 
@@ -225,6 +222,7 @@ void GLDrawer::setTranslate (int x, int y) {
   translateX -= zoomLevel*(x*cos(radial) + y*sin(radial));
   translateY -= zoomLevel*(y*cos(radial) - x*sin(radial)); 
 }
+
 
 void GLDrawer::drawCastle (Castle* castle, LineGraphicsInfo const* dat) {
   if (!castle) return;
@@ -236,7 +234,7 @@ void GLDrawer::drawCastle (Castle* castle, LineGraphicsInfo const* dat) {
 
   vector<int> texts;
   for (int i = 0; i < castle->numGarrison(); ++i) {
-    texts.push_back(textureIDs[playerToTextureMap[castle->getOwner()]]); 
+    texts.push_back(playerToTextureMap[castle->getOwner()]); 
   }
 
   glMatrixMode(GL_MODELVIEW);
@@ -251,7 +249,7 @@ void GLDrawer::drawCastle (Castle* castle, LineGraphicsInfo const* dat) {
   angle = dat->getAngle();  
   glRotated(angle, 0, 0, 1);
    
-  glBindTexture(GL_TEXTURE_2D, textureIDs[castleTextureIndices[3]]); 
+  //glBindTexture(GL_TEXTURE_2D, textureIDs[castleTextureIndices[3]]); 
   cSprite->draw(texts);
   glPopMatrix();
   //glDisable(GL_TEXTURE_2D);
@@ -283,8 +281,8 @@ void GLDrawer::drawVertex (VertexGraphicsInfo const* gInfo) {
   vector<int> texts;  
 
   const MilUnitGraphicsInfo* info = unit->getGraphicsInfo(); 
-  texts.push_back(textureIDs[playerToTextureMap[unit->getOwner()]]);
-  texts.push_back(textureIDs[playerToTextureMap[unit->getOwner()]]); 
+  texts.push_back(playerToTextureMap[unit->getOwner()]);
+  texts.push_back(playerToTextureMap[unit->getOwner()]); 
 
 
   glMatrixMode(GL_MODELVIEW);
@@ -389,7 +387,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
 
   glEnable(GL_TEXTURE_2D);      
   for (FarmGraphicsInfo::cfit field = farmInfo->start(); field != farmInfo->final(); ++field) {
-    glBindTexture(GL_TEXTURE_2D, textureIDs[(*field).getIndex()]); 
+    glBindTexture(GL_TEXTURE_2D, (*field).getIndex()); 
     glBegin(GL_POLYGON);
     GraphicsInfo::cpit point = (*field).begin(); // Assume square fields, and just unroll loop.
     glTexCoord2d(0, 0);
@@ -436,8 +434,8 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   const MilUnitGraphicsInfo* info = farm->getMilitiaGraphics();
   glBindTexture(GL_TEXTURE_2D, 0);  
   texts.clear(); 
-  texts.push_back(textureIDs[playerToTextureMap[farm->getOwner()]]);
-  texts.push_back(textureIDs[playerToTextureMap[farm->getOwner()]]); 
+  texts.push_back(playerToTextureMap[farm->getOwner()]);
+  texts.push_back(playerToTextureMap[farm->getOwner()]); 
 
   point1 = farmInfo->startDrill();
   point2 = farmInfo->startDrill(); ++point2;
@@ -516,14 +514,6 @@ void GLDrawer::loadSprites () {
   Object* farminfo = ginfo->safeGetObject("farmsprite");
   assert(farminfo);  
   farmSprite = makeSprite(farminfo); 
-}
-
-void GLDrawer::assignColour (Player* p) {
-  string pName = "gfx/" + p->getName() + ".png";
-  GLuint texid; 
-  glGenTextures(1, &texid);
-  texid = loadTexture(pName, Qt::red); 
-  playerToTextureMap[p] = texid; 
 }
 
 void SupplyMode::drawLine (LineGraphicsInfo const* lin) {
@@ -821,32 +811,6 @@ void GLDrawer::draw () {
   paintGL(); 
 }
 
-int GLDrawer::assignTextureIndex () {
-  int ret = assignedTextures;
-  assignedTextures++;
-  return ret; 
-}
-
-int GLDrawer::loadTexture (std::string fname, QColor backup) {
-  QImage b;
-  if (!b.load(fname.c_str())) {
-    b = QImage(32, 32, QImage::Format_RGB888);
-    b.fill(backup.rgb()); 
-  }
-  
-  QImage t = QGLWidget::convertToGLFormat(b);
-
-  int index = assignTextureIndex(); 
-  glBindTexture(GL_TEXTURE_2D, textureIDs[index]); 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, t.width(), t.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, t.bits());
-
-  return index; 
-}
-
 void GLDrawer::setViewport () {
   glEnable(GL_DEPTH_TEST);
   glClearDepth(1000);
@@ -875,19 +839,8 @@ void GLDrawer::setViewport () {
 
 void GLDrawer::initializeGL () {
   // This is called before any StaticInitialiser code. 
-
   setViewport(); 
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-  glGenTextures(numTextures, textureIDs); 
-
-  castleTextureIndices = new int[4];
-  castleTextureIndices[0] = loadTexture("gfx\\castle1.png", Qt::red);  
-  castleTextureIndices[1] = loadTexture("gfx\\flag1.png", Qt::red);
-  castleTextureIndices[2] = loadTexture("gfx\\flag2.png", Qt::red);
-  castleTextureIndices[3] = loadTexture("gfx\\flagstone3.png", Qt::red); 
-  
-  knightTextureIndices = new int[1];
-  knightTextureIndices[0] = loadTexture("gfx\\kni1.png", Qt::red); 
   
   bool isgood = getGLExtensionFunctions().resolve(this->context()); 
   if (!isgood) Logger::logStream(Logger::Debug) << "Some GL functions not found.\n";

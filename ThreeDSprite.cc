@@ -3,9 +3,13 @@
 #include <QtOpenGL>
 #include "Logger.hh" 
 
+map<string, GLuint> ThreeDSprite::textureIndices; 
+ThreeDSprite::Material* ThreeDSprite::defaultMaterial = new Material(); 
+
 ThreeDSprite::Vertex::Vertex () : x(0), y(0), z(0) {}
 ThreeDSprite::Index::Index () : vertex(-1), texture(-1), normal(-1) {}
-ThreeDSprite::Group::Group () : special(0) {} 
+ThreeDSprite::Group::Group () : special(0), material(defaultMaterial) {}
+ThreeDSprite::Material::Material () : colour(1.0, 1.0, 1.0), textureIndex(0) {} 
 
 ThreeDSprite::ThreeDSprite (string fname, vector<string> specials) 
   : numSpecials(0)
@@ -25,12 +29,8 @@ ThreeDSprite::ThreeDSprite (string fname, vector<string> specials)
   glNewList(listIndex, GL_COMPILE); 
   for (map<string, Group>::iterator g = groups.begin(); g != groups.end(); ++g) {
     if (0 != (*g).second.special) continue;
-    if ((*g).second.colour == "") glColor3d(1.0, 1.0, 1.0);
-    else {
-      triplet col = colours[(*g).second.colour];
-      glColor3d(col.x(), col.y(), col.z()); 
-    }
-    
+    glColor3d((*g).second.material->colour.x(), (*g).second.material->colour.y(), (*g).second.material->colour.z()); 
+    glBindTexture(GL_TEXTURE_2D, (*g).second.material->textureIndex);
     for (vector<Face*>::iterator face = (*g).second.faces.begin(); face != (*g).second.faces.end(); ++face) {
       drawFace(*face);
     }
@@ -45,6 +45,17 @@ ThreeDSprite::ThreeDSprite (string fname, vector<string> specials)
     }
     glEndList();
     numSpecials++; 
+  }
+}
+
+void ThreeDSprite::draw (vector<int>& textures) {
+  glScaled(scaleFactor.x(), scaleFactor.y(), scaleFactor.z()); 
+  glCallList(listIndex);
+  for (int i = 0; i < numSpecials; ++i) {
+    if (i >= (int) textures.size()) break; 
+    if (-1 == textures[i]) continue;
+    glBindTexture(GL_TEXTURE_2D, textures[i]); 
+    glCallList(listIndex+i+1); 
   }
 }
 
@@ -82,17 +93,21 @@ void ThreeDSprite::loadMaterials (string fname) {
     }
     if (token == "newmtl") {
       reader >> matname;
+      materials[matname] = new Material(); 
       continue;
     }
     // Only really care about diffuse colour
     if (token == "Kd") {
-      triplet colour;
       double red, green, blue;
       reader >> red >> green >> blue;
-      colour.x() = red;
-      colour.y() = green;
-      colour.z() = blue; 
-      colours[matname] = colour; 
+      materials[matname]->colour.x() = red;
+      materials[matname]->colour.y() = green;
+      materials[matname]->colour.z() = blue;    
+    }
+    // Well, and textures.
+    else if (token == "map_Kd") {
+      reader >> token;
+      materials[matname]->textureIndex = getTextureIndex(token); 
     }
     getline(reader, token); // Ignore everything else.     
   }
@@ -148,7 +163,8 @@ void ThreeDSprite::loadFile (string fname) {
     }
     if (token == "usemtl") {
       reader >> token;
-      groups[currGroupName].colour = token;
+      assert(materials[token]); 
+      groups[currGroupName].material = materials[token];
       continue; 
     }
     if (token == "f") {
@@ -157,6 +173,16 @@ void ThreeDSprite::loadFile (string fname) {
     }
   }
   reader.close(); 
+}
+
+GLuint ThreeDSprite::getTextureIndex (string fname) {
+  if (textureIndices.find(fname) != textureIndices.end()) return textureIndices[fname];
+
+  GLuint newTexture;
+  glGenTextures(1, &newTexture);
+  textureIndices[fname] = newTexture;
+  loadTexture(fname, Qt::red, newTexture); 
+  return newTexture; 
 }
 
 void ThreeDSprite::makeFace (ifstream& reader, string groupName) {
@@ -188,13 +214,3 @@ void ThreeDSprite::makeFace (ifstream& reader, string groupName) {
 }
 
 
-void ThreeDSprite::draw (vector<int>& textures) {
-  glScaled(scaleFactor.x(), scaleFactor.y(), scaleFactor.z()); 
-  glCallList(listIndex);
-  for (int i = 0; i < numSpecials; ++i) {
-    if (i >= (int) textures.size()) break; 
-    if (-1 == textures[i]) continue;
-    glBindTexture(GL_TEXTURE_2D, textures[i]); 
-    glCallList(listIndex+i+1); 
-  }
-}

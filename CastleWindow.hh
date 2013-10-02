@@ -14,6 +14,7 @@
 #include <algorithm> 
 
 class ThreeDSprite; 
+using namespace std;
 
 class SelectedDrawer : public QLabel {
 public:
@@ -138,8 +139,6 @@ protected:
   virtual void resizeGL ();   
   
 private:
-  int assignTextureIndex (); 
-  int loadTexture (std::string fname, QColor backup);
   void drawCastle (Castle* castle, LineGraphicsInfo const* dat); 
   void drawLine (LineGraphicsInfo const* dat);
   void drawHex (HexGraphicsInfo const* dat);
@@ -147,18 +146,12 @@ private:
   void drawZone (int which); 
   ThreeDSprite* makeSprite (Object* info); 
 
-  GLuint* textureIDs;
-  int assignedTextures; 
   int* errors;
-  int* terrainTextureIndices;
-  int* castleTextureIndices;
-  int* knightTextureIndices;
-  int* zoneTextures;  // Zones get their own array because their generation creates new texture names.
-  const int numTextures;
-  std::map<Player*, int> playerToTextureMap; 
+  GLuint* terrainTextureIndices;
+  GLuint* zoneTextures;  // Zones get their own array because their generation creates new texture names.
+  map<Player*, GLuint> playerToTextureMap; 
   
   ThreeDSprite* cSprite;
-  //ThreeDSprite* kSprite;
   ThreeDSprite* tSprite;
   ThreeDSprite* farmSprite;  
 
@@ -178,8 +171,8 @@ public:
   QPlainTextEdit* textWindow;
   void initialiseColours ();
   void clearGame (); 
-  void newGame (std::string fname); 
-  void chooseTask (std::string fname, int task); 
+  void newGame (string fname); 
+  void chooseTask (string fname, int task); 
 				  
 public slots:
   void newGame ();  
@@ -229,7 +222,7 @@ private:
   QToolButton plainMapModeButton;
   QToolButton supplyMapModeButton;
   
-  static std::map<int, Logger*> logs;
+  static map<int, Logger*> logs;
   static WarfareWindow* currWindow; 
 };
 

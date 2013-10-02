@@ -73,6 +73,27 @@ void StaticInitialiser::overallInitialisation (Object* info) {
   Calendar::setWeek(info->safeGetInt("week", 0));
 }
 
+GLuint loadTexture (string fname, QColor backup, GLuint index) {
+  QImage b;
+  if (!b.load(fname.c_str())) {
+    b = QImage(32, 32, QImage::Format_RGB888);
+    b.fill(backup.rgb());
+    Logger::logStream(DebugStartup) << "Failed to load " << fname << "\n"; 
+  }
+  
+  QImage t = QGLWidget::convertToGLFormat(b);
+  if (0 == index) glGenTextures(1, &index); 
+  
+  glBindTexture(GL_TEXTURE_2D, index); 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, t.width(), t.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, t.bits());
+
+  return index;
+}
+
 void StaticInitialiser::graphicsInitialisation () {
   for (MilUnit::Iterator m = MilUnit::begin(); m != MilUnit::end(); ++m) {
     (*m)->graphicsInfo->updateSprites(*m);
@@ -86,7 +107,11 @@ void StaticInitialiser::graphicsInitialisation () {
   }
 
   for (Player::Iterator p = Player::begin(); p != Player::end(); ++p) {
-    WarfareWindow::currWindow->hexDrawer->assignColour(*p); 
+    string pName = "gfx/" + (*p)->getName() + ".png";
+    GLuint texid; 
+    glGenTextures(1, &texid);
+    texid = loadTexture(pName, Qt::red, texid); 
+    WarfareWindow::currWindow->hexDrawer->playerToTextureMap[*p] = texid; 
   }
   WarfareWindow::currWindow->hexDrawer->loadSprites();
 }
@@ -430,7 +455,7 @@ double StaticInitialiser::interpolate (double xfrac, double yfrac, int mapWidth,
   return ret; 
 }
 
-void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, int texture) {
+void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
   static bool shaded[GraphicsInfo::zoneSize];
   static double lightAngle = tan(30.0 / 180.0 * M_PI); 
   static double invSize = 2.0 / GraphicsInfo::zoneSize;
@@ -626,7 +651,7 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, int texture) {
   
 }
 
-void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, double* heightMap, int mapWidth, int texture) {
+void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, double* heightMap, int mapWidth, GLuint texture) {
   // Corners of texture are at (-1, -1) and (1, 1) because drawTexture uses model space
   // and the glOrtho call above. 
 
@@ -670,14 +695,13 @@ void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, dou
 }
 
 void StaticInitialiser::loadTextures () {
-  GLDrawer* drawer = WarfareWindow::currWindow->hexDrawer;
-  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\cleared.png", Qt::darkGray));
-  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\ploughed.png", Qt::black));
-  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\sowed.png", Qt::gray));
-  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\ripe1.png", Qt::darkGreen));
-  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\ripe2.png", Qt::green));
-  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\ripe3.png", Qt::yellow));
-  FarmGraphicsInfo::textureIndices.push_back(drawer->loadTexture("gfx\\reaped.png", Qt::darkYellow));
+  FarmGraphicsInfo::textureIndices.push_back(loadTexture("gfx\\cleared.png", Qt::darkGray));
+  FarmGraphicsInfo::textureIndices.push_back(loadTexture("gfx\\ploughed.png", Qt::black));
+  FarmGraphicsInfo::textureIndices.push_back(loadTexture("gfx\\sowed.png", Qt::gray));
+  FarmGraphicsInfo::textureIndices.push_back(loadTexture("gfx\\ripe1.png", Qt::darkGreen));
+  FarmGraphicsInfo::textureIndices.push_back(loadTexture("gfx\\ripe2.png", Qt::green));
+  FarmGraphicsInfo::textureIndices.push_back(loadTexture("gfx\\ripe3.png", Qt::yellow));
+  FarmGraphicsInfo::textureIndices.push_back(loadTexture("gfx\\reaped.png", Qt::darkYellow));
 }
 
 void StaticInitialiser::makeZoneTextures (Object* ginfo) {
@@ -752,17 +776,18 @@ void StaticInitialiser::makeZoneTextures (Object* ginfo) {
   assert(terrainTextures);
   objvec terrains = terrainTextures->getValue("height");
   assert(terrains.size());
-  hexDrawer->terrainTextureIndices = new int[terrains.size()];
-  hexDrawer->zoneTextures = new int[1];
+  hexDrawer->terrainTextureIndices = new GLuint[terrains.size()];
+  hexDrawer->zoneTextures = new GLuint[1];
   for (unsigned int i = 0; i < terrains.size(); ++i) {
-    hexDrawer->terrainTextureIndices[i] = hexDrawer->loadTexture(remQuotes(terrains[i]->safeGetString("file")), Qt::blue);
+    hexDrawer->terrainTextureIndices[i] = loadTexture(remQuotes(terrains[i]->safeGetString("file")), Qt::blue);
     int minHeight = terrains[i]->safeGetInt("minimum");
     int maxHeight = terrains[i]->safeGetInt("maximum");    
-    createTexture(fbo, minHeight, maxHeight, GraphicsInfo::heightMap, heightMapWidth(GraphicsInfo::zoneSide), hexDrawer->textureIDs[hexDrawer->terrainTextureIndices[i]]);     
+    createTexture(fbo, minHeight, maxHeight, GraphicsInfo::heightMap, heightMapWidth(GraphicsInfo::zoneSide), hexDrawer->terrainTextureIndices[i]);   
   }
 
 
-  int shadowTexture = hexDrawer->assignTextureIndex();
+  GLuint shadowTexture = 0;
+  glGenTextures(1, &shadowTexture); 
   // 2x2 matrix of half-transparent black. 
   uchar bits[16] = {0};
   bits[3] = bits[7] = bits[11] = bits[15] = 128;

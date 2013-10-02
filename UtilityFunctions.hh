@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include "boost/tuple/tuple.hpp"
+#include <QtOpenGL>
 
 using namespace std;
 enum Outcome {Disaster = 0, Bad, Neutral, Good, VictoGlory, NumOutcomes}; 
@@ -14,6 +15,7 @@ extern char strbuffer[1000];
 
 double degToRad (double degrees);
 double radToDeg (double radians); 
+GLuint loadTexture (string fname, QColor backup, GLuint index = 0);  // Implemented in StaticInitialiser. 
 
 enum RollType {Equal = 0, GtEqual, LtEqual, Greater, Less};
 

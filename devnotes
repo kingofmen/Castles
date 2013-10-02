@@ -1,6 +1,8 @@
 Tasks for the interface patch: 
 
  * Graphics loading to StaticInitialiser.
+   - Texture loading (check)
+   - makeSprite method 
  * Prettify the interface:
    - Trees (check) 
    - Militia (check)
@@ -10,10 +12,12 @@ Tasks for the interface patch:
      i. Decouple Hex/Line/Vertex from terrain. (check)
    - Terrain shadows (check) 
    - Castles 
+   - Textures 
  * Reorganise Hex display 
    - Farmhouses (check) 
    - Stockpiles 
    - Militia again 
+ * Texture support (check)
  * Labels on buttons
  * Popup tips 
 

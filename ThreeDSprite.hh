@@ -4,8 +4,9 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include <map> 
-#include "UtilityFunctions.hh" 
+#include <map>
+#include <QtOpenGL>
+#include "UtilityFunctions.hh"
 using namespace std; 
 
 class ThreeDSprite {
@@ -13,11 +14,6 @@ public:
   ThreeDSprite (string fname, vector<string> specials);
   void draw (vector<int>& textures);
   void setScale (double xsc, double ysc, double zsc) {scaleFactor.x() = xsc; scaleFactor.y() = ysc; scaleFactor.z() = zsc;}
-  enum SpecialFlags { First = 1,
-		      Second = 2,
-		      Third = 4 };
-  enum CastleFlags { OneFlag = 1,
-		     TwoFlags = 3 }; 
   
 private:
   struct Vertex {
@@ -33,18 +29,23 @@ private:
   struct Face {
     vector<Index> verts;
   };
+  struct Material {
+    Material ();
+    triplet colour;
+    GLuint textureIndex;
+  };
   struct Group {
     Group (); 
     vector<Face*> faces;
     int special;
-    string colour; 
+    Material* material; 
   };
   
   vector<Vertex> vertices;
   vector<Vertex> textures;
   vector<Vertex> normals; 
   map<string, Group> groups;
-  map<string, triplet> colours; 
+  map<string, Material*> materials; 
   int listIndex;
   int numSpecials; 
   
@@ -54,6 +55,10 @@ private:
   void drawFace (Face* face);
 
   triplet scaleFactor;
+
+  static GLuint getTextureIndex (string fname);
+  static map<string, GLuint> textureIndices;
+  static Material* defaultMaterial; 
 };
 
 #endif
