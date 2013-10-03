@@ -233,9 +233,7 @@ void GLDrawer::drawCastle (Castle* castle, LineGraphicsInfo const* dat) {
   dat->getCastlePosition(castleX, castleY, castleZ);
 
   vector<int> texts;
-  for (int i = 0; i < castle->numGarrison(); ++i) {
-    texts.push_back(playerToTextureMap[castle->getOwner()]); 
-  }
+  texts.push_back(playerToTextureMap[castle->getOwner()]); 
 
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();

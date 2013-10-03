@@ -1,7 +1,9 @@
 castlesprite = {
-  filename = gfx/simplecastle.obj
-  separate = "Flag1"
-  separate = "Flag2" 
+  filename = gfx/tower.obj
+  separate = Flag
+  xscale = 3
+  yscale = 3
+  zscale = 1
 }
 treesprite = {
   filename = gfx/pinetree.obj

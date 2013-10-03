@@ -39,7 +39,8 @@ ThreeDSprite::ThreeDSprite (string fname, vector<string> specials)
 
   for (map<string, Group>::iterator g = groups.begin(); g != groups.end(); ++g) {
     if (0 == (*g).second.special) continue;
-    glNewList(listIndex+(*g).second.special, GL_COMPILE); 
+    glNewList(listIndex+(*g).second.special, GL_COMPILE);
+    glColor3d(1.0, 1.0, 1.0); 
     for (vector<Face*>::iterator face = (*g).second.faces.begin(); face != (*g).second.faces.end(); ++face) {
       drawFace(*face);
     }
