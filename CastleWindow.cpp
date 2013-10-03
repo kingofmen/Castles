@@ -181,7 +181,7 @@ void FarmInterface::setFarm (Farmland* m) {
 void HexDrawer::azimate (double amount) {
   azimuth += amount;
   if (azimuth < 0) azimuth = 0;
-  if (azimuth > 1.0471) azimuth = 1.0471; // 60 degrees. 
+  if (azimuth > 1.59) azimuth = 1.59; // 90 degrees.
 }
 
 void HexDrawer::zoom (int delta) {
@@ -1195,11 +1195,11 @@ void WarfareWindow::keyReleaseEvent (QKeyEvent* event) {
     break;
 
   case Qt::Key_Left:
-    hexDrawer->rotate(-0.01);
+    hexDrawer->rotate(-0.02);
     break;
 
   case Qt::Key_Right:
-    hexDrawer->rotate(0.01);
+    hexDrawer->rotate(0.02);
     break; 
 
   case Qt::Key_Plus:

@@ -82,7 +82,7 @@ GLuint loadTexture (string fname, QColor backup, GLuint index) {
   }
   
   QImage t = QGLWidget::convertToGLFormat(b);
-  if (0 == index) glGenTextures(1, &index); 
+  if (0 == index) glGenTextures(1, &index); // 0 is default, indicating "make me a new one". 
   
   glBindTexture(GL_TEXTURE_2D, index); 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
