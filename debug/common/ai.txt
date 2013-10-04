@@ -1,0 +1,7 @@
+influenceDecay = 0.5
+castleWeight = 1000
+casualtyValue = 100 
+distanceModifier = 1.0
+distancePower = 1.5
+supplyWeight = 1000 
+siegeInfluenceValue = 20 

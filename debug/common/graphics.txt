@@ -1,0 +1,20 @@
+
+zoneSide = 4 
+terrainTextures = {
+  height = {
+    minimum = 40
+    maximum = 129
+    file = ".\gfx\terrain\grass.png"
+  }
+  height = {
+    minimum = 130
+    maximum = 200 
+    file = ".\gfx\terrain\mountain.png"
+  }
+  height = {
+    minimum = 201
+    maximum = 2000 
+    file = ".\gfx\terrain\snow.png"
+  }
+}
+

@@ -1,0 +1,67 @@
+defaultDecayConstant = 1000  
+drillEffects = { 1.0 0.75 0.55 0.40 0.30 0.25 }
+
+unit = {
+  name = pikemen
+  base_shock = 14
+  base_range = 0
+  base_defense = 20
+  base_tacmob = 4  
+  supplyConsumption = 5 
+  recruit_speed = 100
+  militiaDecay = 0.1
+  militiaDrill = 0.05
+  sprite = {
+    filename = gfx/pikeman.obj
+    separate = "Tabard"
+    separate = "Banner" 
+    position = {x=0 y= 0.1}
+    position = {x=0 y= 0.0}
+    position = {x=0 y=-0.1} 
+  }
+}
+unit = {
+  name = militia
+  base_shock = 3
+  base_range = 1
+  base_defense = 1 
+  base_tacmob = 3   
+  supplyConsumption = 4 
+  recruit_speed = 300
+  militiaDecay = 0.01
+  militiaDrill = 0.02
+  sprite = {
+    filename = gfx/militia.obj
+  }
+}
+unit = {
+  name = knights
+  base_shock = 10
+  base_range = 0
+  base_defense = 66 
+  base_tacmob = 10   
+  supplyConsumption = 25
+  recruit_speed = 30
+  militiaDecay = 0.5
+  militiaDrill = 0.15
+  sprite = {
+    filename = gfx/simpleknight.obj
+    separate = "Tabard"
+    separate = "Banner" 
+  }
+}
+unit = {
+  name = archers
+  base_shock = 3
+  base_range = 12
+  base_defense = 10
+  base_tacmob = 6    
+  supplyConsumption = 5
+  recruit_speed = 50
+  militiaDecay = 0.2
+  militiaDrill = 0.066
+  sprite = {
+    filename = gfx/archer.obj
+    separate = "Tabard"
+  }
+}

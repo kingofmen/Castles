@@ -1,0 +1,33 @@
+attack = {
+  dice = 2
+  faces = 10
+  VictoGlory = 18
+  Good = 15
+  Neutral = 10
+  Bad = 5
+  Disaster = 2 
+}
+colonise = {
+  dice = 2
+  faces = 10
+  VictoGlory = 19
+  Good = 16
+  Neutral = 10
+  Bad = 5
+  Disaster = 2 
+}
+mobilise = {
+}
+raid = {
+  dice = 2
+  faces = 10
+  VictoGlory = 16
+  Good = 12
+  Neutral = 8
+  Bad = 5
+  Disaster = 2 
+}
+surrender = {
+}
+recruit = {
+}
