@@ -282,6 +282,10 @@ private:
   static vector<ZoneGraphicsInfo*> allZoneGraphics; 
 };
 
+struct MilUnitSprite {
+  ThreeDSprite* soldier;     // Figure for one man - will be drawn several times. 
+  vector<doublet> positions; // Positions to draw the soldiers, relative to a central point. 
+};
 
 class MilUnitGraphicsInfo : public GraphicsInfo {
   friend class StaticInitialiser;
@@ -291,7 +295,7 @@ public:
 
   struct spriterator {
     spriterator (int idx, MilUnitGraphicsInfo const* const b) : index(idx), boss(b) {}
-    ThreeDSprite* operator* () {if ((int) boss->spriteIndices.size() <= index) return sprites[0]; return sprites[boss->spriteIndices[index]];}
+    MilUnitSprite* operator* () {if ((int) boss->spriteIndices.size() <= index) return sprites[0]; return sprites[boss->spriteIndices[index]];}
     void operator++ () {index++;}
     bool operator!= (const spriterator& other) {return index != other.index;}
     bool operator== (const spriterator& other) {return index == other.index;}    
@@ -311,7 +315,7 @@ public:
 private:
   MilUnit* myUnit;
   vector<int> spriteIndices; 
-  static vector<ThreeDSprite*> sprites;
+  static vector<MilUnitSprite*> sprites;
   static map<MilUnitTemplate*, int> indexMap; 
 };
 

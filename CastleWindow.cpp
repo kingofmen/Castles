@@ -27,7 +27,7 @@ HexDrawer::HexDrawer (QWidget* p)
   , translateX(0)
   , translateY(0)
   , zoomLevel(4)
-  , azimuth(0)
+  , azimuth(0.52) // 30 degrees
   , radial(0)
 {}
 
@@ -268,6 +268,55 @@ void GLDrawer::drawLine (LineGraphicsInfo const* dat) {
   if (overlayMode) overlayMode->drawLine(dat); 
 }
 
+void GLDrawer::drawMilSprite (const MilUnitGraphicsInfo* info, vector<int>& texts, double angle) {
+  int counter = -1; 
+  for (MilUnitGraphicsInfo::spriterator sprite = info->start(); sprite != info->final(); ++sprite) {
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glPushMatrix();
+    glTranslated(0, counter * 0.1, 0);
+    counter += 2;
+    for (vector<doublet>::iterator p = (*sprite)->positions.begin(); p != (*sprite)->positions.end(); ++p) {
+      glPushMatrix();
+      glTranslated((*p).x(), (*p).y(), 0); 
+      glRotated(angle, 0, 0, 1);
+      (*sprite)->soldier->draw(texts);
+      glPopMatrix();           
+    }
+    glPopMatrix(); 
+  }
+}
+
+void GLDrawer::drawMilUnit (MilUnit* unit, triplet center, double angle) {
+  vector<int> texts;  
+  texts.push_back(playerToTextureMap[unit->getOwner()]);
+  texts.push_back(playerToTextureMap[unit->getOwner()]); 
+
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glTranslated(center.x(), center.y(), center.z()); 
+
+  glPushMatrix();
+  glTranslated(0, 0, -0.6);
+  glRotated(-radToDeg(radial), 0, 0, 1);
+  glBindTexture(GL_TEXTURE_2D, texts[0]);
+  double flagSize = 0.2*zoomLevel; 
+  glBegin(GL_QUADS);
+  glVertex3d(0, 0, 0);
+  glTexCoord2d(0, 0);
+  glVertex3d(flagSize, 0, 0);
+  glTexCoord2d(1, 0);
+  glVertex3d(flagSize, 0, flagSize);
+  glTexCoord2d(1, 1);
+  glVertex3d(0, 0, flagSize);
+  glTexCoord2d(0, 1);
+  glEnd(); 
+  glPopMatrix(); 
+
+  drawMilSprite(unit->getGraphicsInfo(), texts, angle); 
+  glPopMatrix(); 
+}
+  
+
 void GLDrawer::drawVertex (VertexGraphicsInfo const* gInfo) {
   Vertex* dat = gInfo->getVertex(); 
 
@@ -276,16 +325,6 @@ void GLDrawer::drawVertex (VertexGraphicsInfo const* gInfo) {
   glEnable(GL_TEXTURE_2D);   
   triplet center = gInfo->getPosition();
 
-  vector<int> texts;  
-
-  const MilUnitGraphicsInfo* info = unit->getGraphicsInfo(); 
-  texts.push_back(playerToTextureMap[unit->getOwner()]);
-  texts.push_back(playerToTextureMap[unit->getOwner()]); 
-
-
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glTranslated(center.x(), center.y(), center.z()); 
   double angle = 0;
   switch (dat->getUnit(0)->getRear()) {
   case Left:
@@ -299,23 +338,7 @@ void GLDrawer::drawVertex (VertexGraphicsInfo const* gInfo) {
   case LeftUp    : angle =  60; break;
   }
 
-  MilUnitGraphicsInfo::spriterator sprite = info->start();
-  if (sprite != info->final()) {
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glTranslated(0, 0.1, 0);
-    glRotated(angle, 0, 0, 1);
-    (*sprite)->draw(texts);
-    ++sprite;
-  }
-  if (sprite != info->final()) {
-    glRotated(-angle, 0, 0, 1); 
-    glTranslated(0, -0.2, 0);
-    glRotated(angle, 0, 0, 1); 
-    glBindTexture(GL_TEXTURE_2D, 0);
-    (*sprite)->draw(texts);
-    ++sprite; 
-  }
-  glPopMatrix(); 
+  drawMilUnit(unit, center, angle);   
 }
 
 void GLDrawer::drawZone (int which) {
@@ -465,7 +488,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
     glPushMatrix();      
     glTranslated(xstep*(file+0.5), ystep*(file+0.5), zstep*(file+0.5));
     glBindTexture(GL_TEXTURE_2D, 0);
-    (*sprite)->draw(texts);
+    (*sprite)->soldier->draw(texts);
     ++sprite;
     glPopMatrix();       
     if (sprite == info->final()) break;

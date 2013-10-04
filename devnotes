@@ -11,12 +11,16 @@ Tasks for the interface patch:
    - More fractal heightmap (check) 
      i. Decouple Hex/Line/Vertex from terrain. (check)
    - Terrain shadows (check) 
-   - Castles 
+   - Castles (check)
    - Textures 
  * Reorganise Hex display 
    - Farmhouses (check) 
    - Stockpiles 
    - Militia again 
+ * Multiple soldiers
+   - Support (check)
+   - Army formation
+   - Content 
  * Texture support (check)
  * Labels on buttons
  * Popup tips 

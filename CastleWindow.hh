@@ -102,7 +102,7 @@ protected:
   QWidget* parent; 
   int translateX;
   int translateY;
-  int zoomLevel;
+  int zoomLevel;  // Distance of viewer from scene. Lower number is closer zoom. 
   double azimuth;
   double radial; 
 };
@@ -142,6 +142,8 @@ private:
   void drawCastle (Castle* castle, LineGraphicsInfo const* dat); 
   void drawLine (LineGraphicsInfo const* dat);
   void drawHex (HexGraphicsInfo const* dat);
+  void drawMilSprite (const MilUnitGraphicsInfo* info, vector<int>& texts, double angle);  
+  void drawMilUnit (MilUnit* unit, triplet center, double angle); 
   void drawVertex (VertexGraphicsInfo const* dat);
   void drawZone (int which); 
   ThreeDSprite* makeSprite (Object* info); 

@@ -18,7 +18,7 @@ vector<ZoneGraphicsInfo*> ZoneGraphicsInfo::allZoneGraphics;
 double* GraphicsInfo::heightMap = 0; 
 vector<int> FarmGraphicsInfo::textureIndices; 
 vector<FarmGraphicsInfo*> FarmGraphicsInfo::allFarmInfos; 
-vector<ThreeDSprite*> MilUnitGraphicsInfo::sprites;
+vector<MilUnitSprite*> MilUnitGraphicsInfo::sprites;
 map<MilUnitTemplate*, int> MilUnitGraphicsInfo::indexMap; 
 
 double area (GraphicsInfo::FieldShape const& field);
