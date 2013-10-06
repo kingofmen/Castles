@@ -13,11 +13,13 @@ unit = {
   militiaDrill = 0.05
   sprite = {
     filename = gfx/pikeman.obj
-    separate = "Tabard"
-    separate = "Banner" 
-    position = {x=0 y= 0.1}
-    position = {x=0 y= 0.0}
-    position = {x=0 y=-0.1} 
+    separate = Default_Tabard
+    xscale = 0.75
+    yscale = 0.75
+    zscale = 0.75
+    position = {x=0 y= 0.04}
+    position = {x=0 y= 0.00}
+    position = {x=0 y=-0.04} 
   }
 }
 unit = {
@@ -32,6 +34,13 @@ unit = {
   militiaDrill = 0.02
   sprite = {
     filename = gfx/militia.obj
+    xscale = 0.75
+    yscale = 0.75
+    zscale = 0.75
+    position = {x= 0.03 y= 0.03}
+    position = {x= 0.03 y=-0.03}
+    position = {x=-0.03 y= 0.03} 
+    position = {x=-0.03 y=-0.03} 
   }
 }
 unit = {
@@ -46,8 +55,11 @@ unit = {
   militiaDrill = 0.15
   sprite = {
     filename = gfx/simpleknight.obj
-    separate = "Tabard"
-    separate = "Banner" 
+    separate = Default_Tabard
+    xscale = 0.75
+    yscale = 0.75
+    zscale = 0.75
+    position = {x=0 y= 0.0}
   }
 }
 unit = {
@@ -63,5 +75,11 @@ unit = {
   sprite = {
     filename = gfx/archer.obj
     separate = "Tabard"
+    xscale = 0.75
+    yscale = 0.75
+    zscale = 0.75
+    position = {x= 0.03 y= 0.00}
+    position = {x=-0.03 y=-0.03}
+    position = {x=-0.03 y= 0.03} 
   }
 }
