@@ -17,6 +17,7 @@
 #include <fstream>
 
 int StaticInitialiser::defaultUnitPriority = 4; 
+ThreeDSprite* makeSprite (Object* info); 
 
 void StaticInitialiser::createCalculator (Object* info, Action::Calculator* ret) {
   assert(info);
@@ -102,6 +103,7 @@ void StaticInitialiser::graphicsInitialisation () {
   for (Hex::Iterator h = Hex::begin(); h != Hex::end(); ++h) {
     Farmland* f = (*h)->getFarm();
     if (!f) continue;
+    //f->graphicsInfo->updateSprites();
     if (!f->milTrad) continue;
     if (!f->milTrad->militia) continue;
     f->milTrad->militia->graphicsInfo->updateSprites(f->milTrad);
@@ -114,7 +116,7 @@ void StaticInitialiser::graphicsInitialisation () {
     texid = loadTexture(pName, Qt::red, texid); 
     WarfareWindow::currWindow->hexDrawer->playerToTextureMap[*p] = texid; 
   }
-  WarfareWindow::currWindow->hexDrawer->loadSprites();
+  loadSprites();
 }
 
 void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
@@ -314,6 +316,20 @@ void StaticInitialiser::buildHex (Object* hInfo) {
   }  
 }
 
+ThreeDSprite* makeSprite (Object* info) {
+  string castleFile = info->safeGetString("filename", "nosuchbeast");
+  assert(castleFile != "nosuchbeast");
+  vector<string> specs;
+  objvec svec = info->getValue("separate");
+  for (objiter s = svec.begin(); s != svec.end(); ++s) {
+    specs.push_back((*s)->getLeaf()); 
+  }
+  ThreeDSprite* ret = new ThreeDSprite(castleFile, specs);
+  ret->setScale(info->safeGetFloat("xscale", 1.0), info->safeGetFloat("yscale", 1.0), info->safeGetFloat("zscale", 1.0)); 
+  return ret; 
+}
+
+
 void readAgeTrackerFromObject (AgeTracker& age, Object* obj) {
   if (!obj) return; 
   for (int i = 0; i < AgeTracker::maxAge; ++i) {
@@ -430,7 +446,7 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
     Object* spriteInfo = (*unit)->safeGetObject("sprite");
     if (spriteInfo) {
       GLDrawer* drawer = WarfareWindow::currWindow->hexDrawer;
-      ThreeDSprite* nSprite = drawer->makeSprite(spriteInfo);
+      ThreeDSprite* nSprite = makeSprite(spriteInfo);
       MilUnitGraphicsInfo::indexMap[nType] = MilUnitGraphicsInfo::sprites.size();
       MilUnitSprite* mSprite = new MilUnitSprite();
       mSprite->soldier = nSprite;
@@ -726,6 +742,26 @@ void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, dou
       }
     }
   }
+}
+
+void StaticInitialiser::loadSprites () {
+  if (WarfareWindow::currWindow->hexDrawer->cSprite) delete WarfareWindow::currWindow->hexDrawer->cSprite;
+  if (WarfareWindow::currWindow->hexDrawer->tSprite) delete WarfareWindow::currWindow->hexDrawer->tSprite;
+  if (WarfareWindow::currWindow->hexDrawer->farmSprite) delete WarfareWindow::currWindow->hexDrawer->farmSprite;  
+  
+  Object* ginfo = processFile("gfx/info.txt");
+
+  Object* castleInfo = ginfo->safeGetObject("castlesprite");
+  assert(castleInfo);
+  WarfareWindow::currWindow->hexDrawer->cSprite = makeSprite(castleInfo);
+  
+  Object* treeinfo = ginfo->safeGetObject("treesprite");
+  assert(treeinfo);
+  WarfareWindow::currWindow->hexDrawer->tSprite = makeSprite(treeinfo);
+
+  Object* farminfo = ginfo->safeGetObject("farmsprite");
+  assert(farminfo);  
+  WarfareWindow::currWindow->hexDrawer->farmSprite = makeSprite(farminfo); 
 }
 
 void StaticInitialiser::loadTextures () {

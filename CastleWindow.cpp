@@ -212,7 +212,8 @@ GLDrawer::GLDrawer (QWidget* p)
   : HexDrawer(p)
   , QGLWidget(p)
   , cSprite(0)
-  , tSprite(0) 
+  , tSprite(0)
+  , farmSprite(0)
   , overlayMode(0)
 {
   errors = new int[100];
@@ -472,41 +473,6 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   drawMilSprite(info, texts, angle);
   glPopMatrix();
 
-
-}
-
-ThreeDSprite* GLDrawer::makeSprite (Object* info) {
-  string castleFile = info->safeGetString("filename", "nosuchbeast");
-  assert(castleFile != "nosuchbeast");
-  vector<string> specs;
-  objvec svec = info->getValue("separate");
-  for (objiter s = svec.begin(); s != svec.end(); ++s) {
-    specs.push_back((*s)->getLeaf()); 
-  }
-  ThreeDSprite* ret = new ThreeDSprite(castleFile, specs);
-  ret->setScale(info->safeGetFloat("xscale", 1.0), info->safeGetFloat("yscale", 1.0), info->safeGetFloat("zscale", 1.0)); 
-  return ret; 
-}
-
-void GLDrawer::loadSprites () {
-  //Logger::logStream(DebugStartup) << "Entering loadSprites.\n"; 
-  if ((cSprite) && (tSprite)) return;
-  if (cSprite) delete cSprite;
-  if (tSprite) delete tSprite;
-  
-  Object* ginfo = processFile("gfx/info.txt");
-
-  Object* castleInfo = ginfo->safeGetObject("castlesprite");
-  assert(castleInfo);
-  cSprite = makeSprite(castleInfo);
-  
-  Object* treeinfo = ginfo->safeGetObject("treesprite");
-  assert(treeinfo);
-  tSprite = makeSprite(treeinfo);
-
-  Object* farminfo = ginfo->safeGetObject("farmsprite");
-  assert(farminfo);  
-  farmSprite = makeSprite(farminfo); 
 }
 
 void SupplyMode::drawLine (LineGraphicsInfo const* lin) {

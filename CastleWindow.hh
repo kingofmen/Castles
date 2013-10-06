@@ -92,7 +92,6 @@ public:
   virtual Hex* findHex (double x, double y) = 0;
   virtual Vertex* findVertex (double x, double y) = 0;
   virtual Line* findLine (double x, double y) = 0;
-  virtual void loadSprites () = 0; 
   virtual void setTranslate (int x, int y) {translateX = x; translateY = y;}
   void zoom (int delta);
   void rotate (double amount) {radial += amount;} 
@@ -126,7 +125,6 @@ public:
   virtual Hex* findHex (double x, double y);
   virtual Vertex* findVertex (double x, double y);
   virtual Line* findLine (double x, double y);
-  virtual void loadSprites ();
   virtual void setTranslate (int x, int y);
   void setViewport (); 
   void assignColour (Player* p); 

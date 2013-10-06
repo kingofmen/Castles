@@ -29,7 +29,8 @@ public:
   static void      createActionProbabilities (Object* info);
   static void      createPlayer (Object* info);   
   static void      loadAiConstants (Object* info);
-  static void      loadTextures (); 
+  static void      loadSprites (); 
+  static void      loadTextures ();
   static void      makeZoneTextures (Object* gInfo); 
   
   static void      writeGameToFile (string fname);
