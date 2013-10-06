@@ -269,15 +269,14 @@ void GLDrawer::drawLine (LineGraphicsInfo const* dat) {
   if (overlayMode) overlayMode->drawLine(dat); 
 }
 
-void GLDrawer::drawMilSprite (const MilUnitGraphicsInfo* info, vector<int>& texts, double angle) {
-  for (MilUnitGraphicsInfo::spriterator sprite = info->start(); sprite != info->final(); ++sprite) {
+void GLDrawer::drawSprites (const SpriteContainer* info, vector<int>& texts, double angle) {
+  for (SpriteContainer::spriterator sprite = info->start(); sprite != info->final(); ++sprite) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glPushMatrix();
     glRotated(angle, 0, 0, 1);          
     glTranslated(sprite.getFormation().x(), sprite.getFormation().y(), 0); 
     for (vector<doublet>::iterator p = (*sprite)->positions.begin(); p != (*sprite)->positions.end(); ++p) {
       glPushMatrix();
-      //glRotated(angle, 0, 0, 1);      
       glTranslated((*p).x(), (*p).y(), 0); 
       (*sprite)->soldier->draw(texts);
       glPopMatrix();           
@@ -311,7 +310,7 @@ void GLDrawer::drawMilUnit (MilUnit* unit, triplet center, double angle) {
   glEnd(); 
   glPopMatrix(); 
 
-  drawMilSprite(unit->getGraphicsInfo(), texts, angle); 
+  drawSprites(unit->getGraphicsInfo(), texts, angle); 
   glPopMatrix(); 
 }
   
@@ -470,9 +469,31 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
 
   glPushMatrix();
   glTranslated(center.x(), center.y(), center.z());
-  drawMilSprite(info, texts, angle);
+  drawSprites(info, texts, angle);
   glPopMatrix();
 
+  /*
+  glBindTexture(GL_TEXTURE_2D, 0);  
+  texts.clear(); 
+
+  point1 = farmInfo->startSheep();
+  point2 = farmInfo->startSheep(); ++point2;
+  point3 = farmInfo->startSheep(); ++point3; ++point3;
+
+  triplet center = (*point1);
+  triplet pointer = (*point3) - (*point2);
+  center += pointer*0.6;  
+  //int sigDeltaY = (fabs(pointer.y()) > 0.00001 ? (pointer.y() > 0 ? 1 : -1) : 0); 
+  double angle = 0;
+  //if (pointer.x() < 0) angle = -90 - 60*sigDeltaY; 
+  //else angle = 90 + 60*sigDeltaY;  
+
+  glPushMatrix();
+  glTranslated(center.x(), center.y(), center.z());
+    
+  //drawSprites(info, texts, angle);
+  glPopMatrix();     
+  */
 }
 
 void SupplyMode::drawLine (LineGraphicsInfo const* lin) {

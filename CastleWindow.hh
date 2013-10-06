@@ -140,7 +140,7 @@ private:
   void drawCastle (Castle* castle, LineGraphicsInfo const* dat); 
   void drawLine (LineGraphicsInfo const* dat);
   void drawHex (HexGraphicsInfo const* dat);
-  void drawMilSprite (const MilUnitGraphicsInfo* info, vector<int>& texts, double angle);  
+  void drawSprites (const SpriteContainer* info, vector<int>& texts, double angle);  
   void drawMilUnit (MilUnit* unit, triplet center, double angle); 
   void drawVertex (VertexGraphicsInfo const* dat);
   void drawZone (int which); 

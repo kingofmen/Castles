@@ -288,37 +288,43 @@ struct MilUnitSprite {
   vector<doublet> positions; // Positions to draw the soldiers, relative to a central point.
 };
 
-class MilUnitGraphicsInfo : public GraphicsInfo {
+class SpriteContainer {
+public:
+
+  struct spriterator {
+    spriterator (int idx, SpriteContainer const* const b) : index(idx), boss(b) {}
+    MilUnitSprite* operator* () {if ((int) boss->spriteIndices.size() <= index) return sprites[0]; return sprites[boss->spriteIndices[index]];}
+    doublet getFormation () const {return boss->formation[index];}
+    void operator++ () {index++;}
+    bool operator!= (const spriterator& other) const {return index != other.index;}
+    bool operator== (const spriterator& other) const {return index == other.index;}    
+    
+  private:
+    int index;
+    SpriteContainer const* const boss; 
+  };
+
+  spriterator start () const {return spriterator(0, this);}
+  spriterator final () const {return spriterator(spriteIndices.size(), this);}
+  
+protected: 
+  vector<int> spriteIndices;
+  vector<doublet> formation;
+  static vector<MilUnitSprite*> sprites;    
+}; 
+
+class MilUnitGraphicsInfo : public GraphicsInfo, public SpriteContainer {
   friend class StaticInitialiser;
 public:
   MilUnitGraphicsInfo (MilUnit* dat) : myUnit(dat) {}  
   ~MilUnitGraphicsInfo ();
-
-  struct spriterator {
-    spriterator (int idx, MilUnitGraphicsInfo const* const b) : index(idx), boss(b) {}
-    MilUnitSprite* operator* () {if ((int) boss->spriteIndices.size() <= index) return sprites[0]; return sprites[boss->spriteIndices[index]];}
-    doublet getFormation () const {return boss->formation[index];}
-    void operator++ () {index++;}
-    bool operator!= (const spriterator& other) {return index != other.index;}
-    bool operator== (const spriterator& other) {return index == other.index;}    
-
-  private:
-    int index;
-    MilUnitGraphicsInfo const* const boss; 
-  };
   
-  spriterator start () const {return spriterator(0, this);}
-  spriterator final () const {return spriterator(spriteIndices.size(), this);}
-
   virtual void describe (QTextStream& str) const;
   string strengthString (string indent) const;  
   void updateSprites (MilStrength* dat); 
   
 private:
   MilUnit* myUnit;
-  vector<int> spriteIndices;
-  vector<doublet> formation; 
-  static vector<MilUnitSprite*> sprites;
   static map<MilUnitTemplate*, int> indexMap;
   static vector<vector<doublet> > allFormations; 
 };

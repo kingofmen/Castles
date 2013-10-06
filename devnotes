@@ -2,7 +2,7 @@ Tasks for the interface patch:
 
  * Graphics loading to StaticInitialiser.
    - Texture loading (check)
-   - makeSprite method 
+   - makeSprite method (check)
  * Prettify the interface:
    - Trees (check) 
    - Militia (check)
@@ -16,7 +16,7 @@ Tasks for the interface patch:
  * Reorganise Hex display 
    - Farmhouses (check) 
    - Stockpiles 
-   - Militia again 
+   - Militia again (check)
  * Multiple soldiers (check) 
    - Support (check)
    - Army formation (check) 

@@ -447,7 +447,7 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
     if (spriteInfo) {
       GLDrawer* drawer = WarfareWindow::currWindow->hexDrawer;
       ThreeDSprite* nSprite = makeSprite(spriteInfo);
-      MilUnitGraphicsInfo::indexMap[nType] = MilUnitGraphicsInfo::sprites.size();
+      MilUnitGraphicsInfo::indexMap[nType] = SpriteContainer::sprites.size();
       MilUnitSprite* mSprite = new MilUnitSprite();
       mSprite->soldier = nSprite;
       objvec positions = spriteInfo->getValue("position");
@@ -457,7 +457,7 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
 	  mSprite->positions.push_back(doublet((*p)->safeGetFloat("x"), (*p)->safeGetFloat("y"))); 
 	}
       }
-      MilUnitGraphicsInfo::sprites.push_back(mSprite);
+      SpriteContainer::sprites.push_back(mSprite);
     }
   }
 }
