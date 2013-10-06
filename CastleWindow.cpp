@@ -269,27 +269,25 @@ void GLDrawer::drawLine (LineGraphicsInfo const* dat) {
 }
 
 void GLDrawer::drawMilSprite (const MilUnitGraphicsInfo* info, vector<int>& texts, double angle) {
-  int counter = -1; 
   for (MilUnitGraphicsInfo::spriterator sprite = info->start(); sprite != info->final(); ++sprite) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glPushMatrix();
-    glTranslated(0, counter * 0.1, 0);
-    counter += 2;
+    glRotated(angle, 0, 0, 1);          
+    glTranslated(sprite.getFormation().x(), sprite.getFormation().y(), 0); 
     for (vector<doublet>::iterator p = (*sprite)->positions.begin(); p != (*sprite)->positions.end(); ++p) {
       glPushMatrix();
+      //glRotated(angle, 0, 0, 1);      
       glTranslated((*p).x(), (*p).y(), 0); 
-      glRotated(angle, 0, 0, 1);
       (*sprite)->soldier->draw(texts);
       glPopMatrix();           
     }
-    glPopMatrix(); 
+    glPopMatrix();
   }
 }
 
 void GLDrawer::drawMilUnit (MilUnit* unit, triplet center, double angle) {
   vector<int> texts;  
   texts.push_back(playerToTextureMap[unit->getOwner()]);
-  texts.push_back(playerToTextureMap[unit->getOwner()]); 
 
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
@@ -438,8 +436,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   double tranY = ((*point2).y() - (*point1).y())*0.50;
   double tranZ = ((*point2).z() - (*point1).z())*0.50;
 
-
-  
+  // Two rows of farmhouses.
   glPushMatrix();  
   glTranslated((*point1).x() + tranX*0.5, (*point1).y() + tranY*0.5, (*point1).z() + tranZ*0.5);
   for (int i = 0; i < numHouses; ++i) {
@@ -456,51 +453,26 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   glBindTexture(GL_TEXTURE_2D, 0);  
   texts.clear(); 
   texts.push_back(playerToTextureMap[farm->getOwner()]);
-  texts.push_back(playerToTextureMap[farm->getOwner()]); 
 
   point1 = farmInfo->startDrill();
   point2 = farmInfo->startDrill(); ++point2;
   point3 = farmInfo->startDrill(); ++point3; ++point3;
 
-  xstep = ((*point3).x() - (*point2).x()) / 9;
-  ystep = ((*point3).y() - (*point2).y()) / 9;
-  zstep = ((*point3).z() - (*point2).z()) / 9;  
-  
-  glPushMatrix();
-  /*
+  triplet center = (*point1);
+  triplet pointer = (*point3) - (*point2);
+  center += pointer*0.6;  
+  int sigDeltaY = (fabs(pointer.y()) > 0.00001 ? (pointer.y() > 0 ? 1 : -1) : 0); 
   double angle = 0;
-  switch (dat->getUnit(0)->getRear()) {
-  case Left:
-  case NoVertex:
-  default:
-    break;
-  case Right     : angle = 180; break;
-  case RightDown : angle = 240; break;
-  case LeftDown  : angle = -60; break;
-  case RightUp   : angle = 120; break;
-  case LeftUp    : angle =  60; break;
-  }
-  */
+  // I don't fully understand why this code works; the adds are somewhat empirical. 
+  if (pointer.x() < 0) angle = -90 - 60*sigDeltaY; 
+  else angle = 90 + 60*sigDeltaY;  
 
-  glTranslated((*point2).x(), (*point2).y(), (*point2).z());  
-  MilUnitGraphicsInfo::spriterator sprite = info->start();
-  for (int file = 0; file < 9; ++file) {
-    glPushMatrix();      
-    glTranslated(xstep*(file+0.5), ystep*(file+0.5), zstep*(file+0.5));
-    glBindTexture(GL_TEXTURE_2D, 0);
-    (*sprite)->soldier->draw(texts);
-    ++sprite;
-    glPopMatrix();       
-    if (sprite == info->final()) break;
-  }
-  glPopMatrix(); 
+  glPushMatrix();
+  glTranslated(center.x(), center.y(), center.z());
+  drawMilSprite(info, texts, angle);
+  glPopMatrix();
 
-  //texts.clear(); 
-  //glPushMatrix();
-  //glTranslated(dat->getCoords(NoVertex).x(), dat->getCoords(NoVertex).y(), dat->getCoords(NoVertex).z());
-  //farmSprite->draw(texts);
-  //glPopMatrix(); 
-  
+
 }
 
 ThreeDSprite* GLDrawer::makeSprite (Object* info) {

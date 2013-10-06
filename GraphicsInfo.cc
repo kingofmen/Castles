@@ -19,7 +19,8 @@ double* GraphicsInfo::heightMap = 0;
 vector<int> FarmGraphicsInfo::textureIndices; 
 vector<FarmGraphicsInfo*> FarmGraphicsInfo::allFarmInfos; 
 vector<MilUnitSprite*> MilUnitGraphicsInfo::sprites;
-map<MilUnitTemplate*, int> MilUnitGraphicsInfo::indexMap; 
+map<MilUnitTemplate*, int> MilUnitGraphicsInfo::indexMap;
+vector<vector<doublet> > MilUnitGraphicsInfo::allFormations; 
 
 double area (GraphicsInfo::FieldShape const& field);
 bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2); 
@@ -874,7 +875,8 @@ void MilUnitGraphicsInfo::updateSprites (MilStrength* dat) {
   // strength is less than M/(N+1), where M is strongest unit's strength
   // and N is number of sprites of strongest unit. 
   
-  spriteIndices.clear(); 
+  spriteIndices.clear();
+  formation.clear(); 
   static vector<SortHelper*> forces;
   if (0 == forces.size()) for (int i = 0; i < 9; ++i) forces.push_back(new SortHelper());
   for (int i = 0; i < 9; ++i) forces[i]->clear(); 
@@ -892,20 +894,22 @@ void MilUnitGraphicsInfo::updateSprites (MilStrength* dat) {
   if (0 == types) {
     // No sprites for these units - use a default
     spriteIndices.push_back((*(indexMap.begin())).second);
+    formation.push_back(doublet(0, 0)); 
     return;
   }
 
-  //Logger::logStream(DebugStartup) << "\n\nNew sprite list.\n"; 
   int firstSprites = 1; // Accounts for +1 in M/(N+1). 
   while ((int) spriteIndices.size() < numSprites) {
     spriteIndices.push_back(indexMap[forces[0]->unittype]);
     firstSprites++;
-    //Logger::logStream(DebugStartup) << "Add sprite " << forces[0]->unittype->name << " from strength " << forces[0]->strength << ".\n";
     for (int i = 1; i < types; ++i) {
-      if (forces[i]->strength < forces[0]->strength/firstSprites) break; 
+      if (forces[i]->strength < forces[0]->strength/firstSprites) break;
       spriteIndices.push_back(indexMap[forces[i]->unittype]);
-      //Logger::logStream(DebugStartup) << "Add sprite " << forces[i]->unittype->name << " from strength " << forces[i]->strength << ".\n";
     }
+  }
+
+  for (unsigned int i = 0; i < spriteIndices.size(); ++i) {
+    formation.push_back(allFormations[spriteIndices.size()][i]);
   }
   
 }

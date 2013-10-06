@@ -98,6 +98,7 @@ void StaticInitialiser::graphicsInitialisation () {
   for (MilUnit::Iterator m = MilUnit::begin(); m != MilUnit::end(); ++m) {
     (*m)->graphicsInfo->updateSprites(*m);
   }
+
   for (Hex::Iterator h = Hex::begin(); h != Hex::end(); ++h) {
     Farmland* f = (*h)->getFarm();
     if (!f) continue;
@@ -212,6 +213,30 @@ void StaticInitialiser::initialiseGraphics (Object* gInfo) {
     for (int y = 0; y < mapHeight; ++y) { 
       QRgb pix = b.pixel(x, y);
       GraphicsInfo::heightMap[mapWidth*y + x] = qRed(pix);
+    }
+  }
+
+  Object* unitFormations = gInfo->getNeededObject("unitformations");
+  MilUnitGraphicsInfo::allFormations.resize(unitFormations->safeGetInt("maxSprites", 9)+1);  
+  for (unsigned int i = 1; i < MilUnitGraphicsInfo::allFormations.size(); ++i) {
+    sprintf(strbuffer, "%i", i);
+    Object* formation = unitFormations->safeGetObject(strbuffer);
+    if (!formation) {
+      for (unsigned int j = 0; j < i; ++j) {
+	MilUnitGraphicsInfo::allFormations[i].push_back(doublet(0 - ((j+1)/2)*0.1, 0 + (((j+1)/2)*0.1)*(-1 + 2*(j%2)))); 
+      }
+    }
+    else {
+      objvec positions = formation->getValue("position");
+      for (unsigned int j = 0; j < i; ++j) {
+	if (j >= positions.size()) {
+	  MilUnitGraphicsInfo::allFormations[i].push_back(doublet(0 - ((j+1)/2)*0.1, 0 + (((j+1)/2)*0.1)*(-1 + 2*(j%2))));
+	}
+	else {
+	  MilUnitGraphicsInfo::allFormations[i].push_back(doublet(positions[j]->safeGetFloat("x", 0 - ((j+1)/2)*0.1),
+								  positions[j]->safeGetFloat("y", 0 + (((j+1)/2)*0.1)*(-1 + 2*(j%2))))); 
+	}
+      }      
     }
   }
 }

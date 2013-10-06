@@ -98,6 +98,7 @@ public:
   cpit startSheep () const {return pasture.begin();}
   cpit finalSheep () const {return pasture.end();}
   
+  
   typedef vector<FarmGraphicsInfo*>::iterator Iterator;
   static Iterator begin () {return allFarmInfos.begin();}
   static Iterator end () {return allFarmInfos.end();}  
@@ -284,7 +285,7 @@ private:
 
 struct MilUnitSprite {
   ThreeDSprite* soldier;     // Figure for one man - will be drawn several times. 
-  vector<doublet> positions; // Positions to draw the soldiers, relative to a central point. 
+  vector<doublet> positions; // Positions to draw the soldiers, relative to a central point.
 };
 
 class MilUnitGraphicsInfo : public GraphicsInfo {
@@ -296,6 +297,7 @@ public:
   struct spriterator {
     spriterator (int idx, MilUnitGraphicsInfo const* const b) : index(idx), boss(b) {}
     MilUnitSprite* operator* () {if ((int) boss->spriteIndices.size() <= index) return sprites[0]; return sprites[boss->spriteIndices[index]];}
+    doublet getFormation () const {return boss->formation[index];}
     void operator++ () {index++;}
     bool operator!= (const spriterator& other) {return index != other.index;}
     bool operator== (const spriterator& other) {return index == other.index;}    
@@ -314,9 +316,11 @@ public:
   
 private:
   MilUnit* myUnit;
-  vector<int> spriteIndices; 
+  vector<int> spriteIndices;
+  vector<doublet> formation; 
   static vector<MilUnitSprite*> sprites;
-  static map<MilUnitTemplate*, int> indexMap; 
+  static map<MilUnitTemplate*, int> indexMap;
+  static vector<vector<doublet> > allFormations; 
 };
 
 #endif

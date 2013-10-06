@@ -7,9 +7,9 @@ castlesprite = {
 }
 treesprite = {
   filename = gfx/pinetree.obj
-  xscale = 0.5
-  yscale = 0.5
-  zscale = 0.25
+  xscale = 0.66
+  yscale = 0.66
+  zscale = 0.33
 }
 
 farmsprite = {
