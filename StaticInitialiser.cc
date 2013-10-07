@@ -445,7 +445,6 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
 
     Object* spriteInfo = (*unit)->safeGetObject("sprite");
     if (spriteInfo) {
-      GLDrawer* drawer = WarfareWindow::currWindow->hexDrawer;
       ThreeDSprite* nSprite = makeSprite(spriteInfo);
       MilUnitGraphicsInfo::indexMap[nType] = SpriteContainer::sprites.size();
       MilUnitSprite* mSprite = new MilUnitSprite();
@@ -751,17 +750,45 @@ void StaticInitialiser::loadSprites () {
   
   Object* ginfo = processFile("gfx/info.txt");
 
-  Object* castleInfo = ginfo->safeGetObject("castlesprite");
-  assert(castleInfo);
-  WarfareWindow::currWindow->hexDrawer->cSprite = makeSprite(castleInfo);
+  Object* spriteInfo = ginfo->safeGetObject("castlesprite");
+  assert(spriteInfo);
+  WarfareWindow::currWindow->hexDrawer->cSprite = makeSprite(spriteInfo);
   
-  Object* treeinfo = ginfo->safeGetObject("treesprite");
-  assert(treeinfo);
-  WarfareWindow::currWindow->hexDrawer->tSprite = makeSprite(treeinfo);
+  spriteInfo = ginfo->safeGetObject("treesprite");
+  assert(spriteInfo);
+  WarfareWindow::currWindow->hexDrawer->tSprite = makeSprite(spriteInfo);
 
-  Object* farminfo = ginfo->safeGetObject("farmsprite");
-  assert(farminfo);  
-  WarfareWindow::currWindow->hexDrawer->farmSprite = makeSprite(farminfo); 
+  spriteInfo = ginfo->safeGetObject("farmsprite");
+  assert(spriteInfo);  
+  WarfareWindow::currWindow->hexDrawer->farmSprite = makeSprite(spriteInfo);
+
+  spriteInfo = ginfo->safeGetObject("supplysprite");
+  assert(spriteInfo);
+  FarmGraphicsInfo::supplySpriteIndex = SpriteContainer::sprites.size();
+  ThreeDSprite* cow = makeSprite(spriteInfo);
+  MilUnitSprite* mSprite = new MilUnitSprite();
+  mSprite->soldier = cow; 
+  mSprite->positions.push_back(doublet(0, 0));
+  SpriteContainer::sprites.push_back(mSprite);
+  Object* pos = ginfo->getNeededObject("cowPositions");
+  objvec cows = pos->getValue("position");
+  FarmGraphicsInfo::maxCows = pos->safeGetInt("maxCows", 15);
+  double maxSupplies = FarmGraphicsInfo::maxCows;
+  for (FarmGraphicsInfo::Iterator f = FarmGraphicsInfo::begin(); f != FarmGraphicsInfo::end(); ++f) {
+    maxSupplies = max(maxSupplies, (*f)->myFarm->getAvailableSupplies());
+  }
+  double tolerance = pos->safeGetFloat("cowTolerance", 1.5);
+  FarmGraphicsInfo::suppliesPerCow = (int) floor(maxSupplies*tolerance/FarmGraphicsInfo::maxCows); 
+  
+  for (int i = 0; i < FarmGraphicsInfo::maxCows; ++i) {
+    if (i >= (int) cows.size()) {
+      FarmGraphicsInfo::cowPositions.push_back(doublet((i%3)*0.1, (i/3)*0.1));
+    }
+    else {
+      FarmGraphicsInfo::cowPositions.push_back(doublet(cows[i]->safeGetFloat("x", (i%3)*0.1),
+						       cows[i]->safeGetFloat("y", (i/3)*0.1)));
+    }
+  }
 }
 
 void StaticInitialiser::loadTextures () {

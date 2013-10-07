@@ -18,3 +18,34 @@ farmsprite = {
   yscale = 0.33
   zscale = 0.33
 }
+
+supplysprite = {
+  filename = gfx/cow.obj 
+#  xscale = 0.66
+#  yscale = 0.66
+#  zscale = 0.66
+}
+
+cowPositions = {
+  maxCows = 15
+  cowTolerance =1.5 
+
+  position = { x = 0.00 y = 0.00 }
+  position = { x = 0.15 y = 0.00 }
+  position = { x = 0.00 y = 0.15 }
+  position = { x = 0.15 y = 0.15 }
+  position = { x = 0.07 y = 0.07 }
+
+  position = { x = 0.05 y = 0.30 }
+  position = { x = 0.20 y = 0.30 }
+  position = { x = 0.05 y = 0.45 }
+  position = { x = 0.20 y = 0.45 }
+  position = { x = 0.12 y = 0.37 }
+
+  position = { x = 0.00 y = 0.60 }
+  position = { x = 0.15 y = 0.60 }
+  position = { x = 0.00 y = 0.75 }
+  position = { x = 0.15 y = 0.75 }
+  position = { x = 0.07 y = 0.67 }
+
+}

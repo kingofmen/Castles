@@ -472,7 +472,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   drawSprites(info, texts, angle);
   glPopMatrix();
 
-  /*
+  
   glBindTexture(GL_TEXTURE_2D, 0);  
   texts.clear(); 
 
@@ -480,20 +480,18 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   point2 = farmInfo->startSheep(); ++point2;
   point3 = farmInfo->startSheep(); ++point3; ++point3;
 
-  triplet center = (*point1);
-  triplet pointer = (*point3) - (*point2);
-  center += pointer*0.6;  
-  //int sigDeltaY = (fabs(pointer.y()) > 0.00001 ? (pointer.y() > 0 ? 1 : -1) : 0); 
-  double angle = 0;
-  //if (pointer.x() < 0) angle = -90 - 60*sigDeltaY; 
-  //else angle = 90 + 60*sigDeltaY;  
+  center = (*point1);
+  pointer = (*point2) - (*point3);
+  sigDeltaY = (fabs(pointer.y()) > 0.00001 ? (pointer.y() > 0 ? 1 : -1) : 0); 
+  angle = 0;
+  if (pointer.x() > 0) angle = 90 + 60*sigDeltaY; 
+  else angle = -90 - 60*sigDeltaY;  
 
   glPushMatrix();
   glTranslated(center.x(), center.y(), center.z());
     
-  //drawSprites(info, texts, angle);
+  drawSprites(farmInfo, texts, angle);
   glPopMatrix();     
-  */
 }
 
 void SupplyMode::drawLine (LineGraphicsInfo const* lin) {

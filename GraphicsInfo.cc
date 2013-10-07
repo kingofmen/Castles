@@ -21,6 +21,10 @@ vector<FarmGraphicsInfo*> FarmGraphicsInfo::allFarmInfos;
 vector<MilUnitSprite*> SpriteContainer::sprites;
 map<MilUnitTemplate*, int> MilUnitGraphicsInfo::indexMap;
 vector<vector<doublet> > MilUnitGraphicsInfo::allFormations; 
+unsigned int FarmGraphicsInfo::supplySpriteIndex = 0;
+int FarmGraphicsInfo::maxCows = 15;
+int FarmGraphicsInfo::suppliesPerCow = 60000;
+vector<doublet> FarmGraphicsInfo::cowPositions;
 
 double area (GraphicsInfo::FieldShape const& field);
 bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2); 
@@ -337,12 +341,12 @@ void HexGraphicsInfo::generateShapes () {
 
   
   direction = (fiv-zer);
-  pasture.push_back(zer);
   triplet tmp = zer + direction/3.0;
+  pasture.push_back(tmp);
+  pasture.push_back(zer);  
   direction = (one - zer);
   pasture.push_back(zer + direction*(5.0/6));  
   pasture.push_back(tmp + direction*(5.0/6));
-  pasture.push_back(tmp);
   
   village.push_back(two);
   direction = (fou - two);
@@ -1038,6 +1042,7 @@ int FarmGraphicsInfo::getHouses () const {
 
 void FarmGraphicsInfo::updateFieldStatus () {
   for (Iterator info = begin(); info != end(); ++info) {
+    // Status of fields. 
     double totalFieldArea = 1.0 / (*info)->myFarm->totalFields();
     double totalGraphArea = 1.0 / (*info)->fieldArea();
     fit currentField = (*info)->start(); 
@@ -1053,7 +1058,14 @@ void FarmGraphicsInfo::updateFieldStatus () {
       }
       if (currentField == (*info)->final()) break;      
     }
-  }
 
-  
+    // Supplies.
+    (*info)->spriteIndices.clear();
+    (*info)->formation.clear();
+    int numCows = min(maxCows, (int) floor((*info)->myFarm->getAvailableSupplies() / suppliesPerCow)); 
+    for (int i = 0; i < numCows; ++i) {
+      (*info)->spriteIndices.push_back(supplySpriteIndex);
+      (*info)->formation.push_back(cowPositions[i]);
+    }
+  }
 }

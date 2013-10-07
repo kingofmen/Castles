@@ -120,9 +120,8 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
   currplayer = Player::findByName(game->safeGetString("currentplayer"));
   assert(currplayer);
   updateGreatestMilStrength(); // Must happen before graphics init, for unit sprites. 
-  FarmGraphicsInfo::updateFieldStatus();
   StaticInitialiser::graphicsInitialisation(); 
-  
+  FarmGraphicsInfo::updateFieldStatus(); // Must happen after graphics init for supply sprite.   
 
   return currGame; 
 }
