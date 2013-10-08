@@ -50,12 +50,12 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
   Hex::clear();
   Vertex::clear();
   Line::clear(); 
-
+  
   Object* gInfo = processFile("./common/graphics.txt");
   assert(gInfo); 
   StaticInitialiser::initialiseGraphics(gInfo); // Must come before Hex creation so there's a zone to stuff them in. 
   StaticInitialiser::makeZoneTextures(gInfo); 
-  
+ 
   for (int i = 0; i < xsize; ++i) {
     for (int j = 0; j < ysize; ++j) {
       Hex::createHex(i, j, Plain); 
@@ -70,6 +70,12 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
   assert(unitInfo); 
   StaticInitialiser::buildMilUnitTemplates(unitInfo);
 
+  // Must come after buildMilUnits so templates can check for icons. 
+  Object* guiInfo = processFile("./common/gui.txt");
+  if (!guiInfo) guiInfo = new Object("guiInfo");
+  StaticInitialiser::setUItexts(guiInfo); 
+
+  
   Object* popInfo = processFile("./common/popInfo.txt");
   assert(popInfo); 
   StaticInitialiser::initialiseCivilBuildings(popInfo);

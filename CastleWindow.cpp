@@ -19,6 +19,8 @@ const triplet xaxis(1, 0, 0);
 const triplet yaxis(0, 1, 0);
 const triplet zaxis(0, 0, -1); // Positive z is into the screen! 
 const int zoneSize = 512;
+const int buttonSize = 32; 
+map<MilUnitTemplate const* const, QIcon> CastleInterface::icons;
 
 WarfareWindow* WarfareWindow::currWindow = 0; 
 
@@ -47,7 +49,8 @@ UnitInterface::UnitInterface (QWidget*p)
   static QSignalMapper signalMapper; 
   setFixedSize(220, 90);
   increasePriorityButton.move(180, 60);
-  increasePriorityButton.resize(20, 20);
+  increasePriorityButton.resize(buttonSize, buttonSize);
+  increasePriorityButton.setIconSize(QSize(buttonSize, buttonSize));  
   increasePriorityButton.setArrowType(Qt::UpArrow);
   signalMapper.setMapping(&increasePriorityButton, 1);
   connect(&increasePriorityButton, SIGNAL(clicked()), &signalMapper, SLOT(map()));
@@ -55,9 +58,10 @@ UnitInterface::UnitInterface (QWidget*p)
   increasePriorityButton.show();
   
   decreasePriorityButton.move(5, 60);
-  decreasePriorityButton.resize(20, 20);
-  decreasePriorityButton.setArrowType(Qt::DownArrow);
+  decreasePriorityButton.resize(buttonSize, buttonSize);
+  decreasePriorityButton.setIconSize(QSize(buttonSize, buttonSize));    
   signalMapper.setMapping(&decreasePriorityButton, -1);
+  decreasePriorityButton.setArrowType(Qt::DownArrow);
   connect(&decreasePriorityButton, SIGNAL(clicked()), &signalMapper, SLOT(map()));
   connect(&decreasePriorityButton, SIGNAL(clicked()), p, SLOT(update()));    
   decreasePriorityButton.show();
@@ -85,7 +89,8 @@ CastleInterface::CastleInterface (QWidget*p)
   static QSignalMapper signalMapper; 
   setFixedSize(220, 90);
   increaseRecruitButton.move(180, 60);
-  increaseRecruitButton.resize(20, 20);
+  increaseRecruitButton.resize(buttonSize, buttonSize);
+  increaseRecruitButton.setIconSize(QSize(buttonSize, buttonSize));    
   increaseRecruitButton.setArrowType(Qt::RightArrow);
   signalMapper.setMapping(&increaseRecruitButton, 1);
   connect(&increaseRecruitButton, SIGNAL(clicked()), &signalMapper, SLOT(map()));
@@ -93,7 +98,8 @@ CastleInterface::CastleInterface (QWidget*p)
   increaseRecruitButton.show();
   
   decreaseRecruitButton.move(5, 60);
-  decreaseRecruitButton.resize(20, 20);
+  decreaseRecruitButton.resize(buttonSize, buttonSize);
+  decreaseRecruitButton.setIconSize(QSize(buttonSize, buttonSize));    
   decreaseRecruitButton.setArrowType(Qt::LeftArrow);
   signalMapper.setMapping(&decreaseRecruitButton, -1);
   connect(&decreaseRecruitButton, SIGNAL(clicked()), &signalMapper, SLOT(map()));
@@ -121,11 +127,37 @@ void CastleInterface::changeRecruitment (int direction) {
     if (MilUnitTemplate::begin() == final) final = MilUnitTemplate::end();
     --final; 
   }
-  castle->setRecruitType(*final);   
+  
+  castle->setRecruitType(*final);
+  setCastle(castle); // Also sets icons. 
 }
 
 void CastleInterface::setCastle (Castle* m) {
   castle = m;
+
+  const MilUnitTemplate* curr = castle->getRecruitType();
+  MilUnitTemplate::Iterator final = MilUnitTemplate::begin();
+  for (; final != MilUnitTemplate::end(); ++final) {
+    if (curr == (*final)) break; 
+  }
+
+  MilUnitTemplate::Iterator next = final; ++next;
+  if (next == MilUnitTemplate::end()) next = MilUnitTemplate::begin();
+  MilUnitTemplate::Iterator prev = final; 
+  if (final == MilUnitTemplate::begin()) prev = MilUnitTemplate::end();
+  --prev;
+
+  
+  if (icons.find(*prev) == icons.end()) decreaseRecruitButton.setArrowType(Qt::LeftArrow);
+  else {
+    decreaseRecruitButton.setArrowType(Qt::NoArrow);    
+    decreaseRecruitButton.setIcon(icons[*prev]);
+  }
+  if (icons.find(*next) == icons.end()) increaseRecruitButton.setArrowType(Qt::RightArrow);
+  else {
+    increaseRecruitButton.setArrowType(Qt::NoArrow);
+    increaseRecruitButton.setIcon(icons[*next]);
+  }
 }
 
 FarmInterface::FarmInterface (QWidget*p)
@@ -137,7 +169,8 @@ FarmInterface::FarmInterface (QWidget*p)
   static QSignalMapper signalMapper; 
   setFixedSize(220, 90);
   increaseDrillButton.move(180, 60);
-  increaseDrillButton.resize(20, 20);
+  increaseDrillButton.resize(buttonSize, buttonSize);
+  increaseDrillButton.setIconSize(QSize(buttonSize, buttonSize));    
   increaseDrillButton.setArrowType(Qt::RightArrow);
   signalMapper.setMapping(&increaseDrillButton, 1);
   connect(&increaseDrillButton, SIGNAL(clicked()), &signalMapper, SLOT(map()));
@@ -145,7 +178,8 @@ FarmInterface::FarmInterface (QWidget*p)
   increaseDrillButton.show();
   
   decreaseDrillButton.move(5, 60);
-  decreaseDrillButton.resize(20, 20);
+  decreaseDrillButton.resize(buttonSize, buttonSize);
+  decreaseDrillButton.setIconSize(QSize(buttonSize, buttonSize));    
   decreaseDrillButton.setArrowType(Qt::LeftArrow);
   signalMapper.setMapping(&decreaseDrillButton, -1);
   connect(&decreaseDrillButton, SIGNAL(clicked()), &signalMapper, SLOT(map()));
@@ -706,15 +740,17 @@ WarfareWindow::WarfareWindow (QWidget* parent)
   farmInterface->move(15, 300); 
   
   static QSignalMapper signalMapper; 
-  supplyMapModeButton.move(270, 640);
-  supplyMapModeButton.resize(20, 20);
+  supplyMapModeButton.move(272, 635);
+  supplyMapModeButton.resize(buttonSize, buttonSize);
+  supplyMapModeButton.setIconSize(QSize(buttonSize, buttonSize));    
   supplyMapModeButton.setText("S");
   signalMapper.setMapping(&supplyMapModeButton, 1);
   connect(&supplyMapModeButton, SIGNAL(clicked()), &signalMapper, SLOT(map()));
   supplyMapModeButton.show();
 
-  plainMapModeButton.move(240, 640);
-  plainMapModeButton.resize(20, 20);
+  plainMapModeButton.move(240, 635);
+  plainMapModeButton.resize(buttonSize, buttonSize);
+  plainMapModeButton.setIconSize(QSize(buttonSize, buttonSize));    
   plainMapModeButton.setText("P");
   signalMapper.setMapping(&plainMapModeButton, 0);
   connect(&plainMapModeButton, SIGNAL(clicked()), &signalMapper, SLOT(map()));

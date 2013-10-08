@@ -31,6 +31,7 @@ private:
 
 class UnitInterface : public QLabel {
   Q_OBJECT
+  friend class StaticInitialiser; 
 public:
   UnitInterface (QWidget* p);
   void setUnit (MilUnit* m); 
@@ -49,6 +50,7 @@ private:
 
 class CastleInterface : public QLabel {
   Q_OBJECT
+  friend class StaticInitialiser; 
 public:
   CastleInterface (QWidget* p);
   void setCastle (Castle* dat);
@@ -62,11 +64,14 @@ signals:
 private:
   QToolButton increaseRecruitButton;
   QToolButton decreaseRecruitButton;
-  Castle* castle; 
+  Castle* castle;
+
+  static map<MilUnitTemplate const* const, QIcon> icons; 
 };
 
 class FarmInterface : public QLabel {
   Q_OBJECT
+  friend class StaticInitialiser; 
 public:
   FarmInterface (QWidget* p);
   void setFarm (Farmland* dat);

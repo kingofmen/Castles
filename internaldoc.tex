@@ -8,6 +8,12 @@
 \begin{document}
 
 
+\section{Hex display}
+
+\subsection{Militia}
+
+\subsection{Village}
+
 \subsection{Cows}
 
 Supplies available to a Hex are depicted as cows. The maximum number
@@ -20,7 +26,15 @@ at start, $t$ is the \texttt{cowTolerance} parameter of the
 \texttt{cowPositions} object, and $M_c$ is the \texttt{maxCows}
 parameter. 
 
+\subsection{Buttons}
 
+There are buttons for map modes, supply priority (field units,
+garrisons in castles), recruit types (castles), and drill level
+(hexes). Their size is given by \texttt{buttonSize} in
+\texttt{CastleWindow.cpp}. Their position is set when they are
+created, to hardcoded values. Their icons are set by
+\texttt{setUItexts} in \texttt{StaticInitialiser}, which gets the
+information from \texttt{gui.txt} - this also supplies the tooltips.
 
 
 \end{document}

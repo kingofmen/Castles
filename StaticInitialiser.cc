@@ -909,6 +909,57 @@ void StaticInitialiser::makeZoneTextures (Object* ginfo) {
   //Logger::logStream(DebugStartup) << "Exiting makeZoneTextures" << QThread::currentThreadId() << "\n"; 
 }
 
+void StaticInitialiser::setUItexts (Object* tInfo) {
+  static const string badString("UNKNOWN STRING WANTED");
+  Object* icons = tInfo->getNeededObject("icons");
+  
+  WarfareWindow::currWindow->plainMapModeButton.setToolTip(remQuotes(tInfo->safeGetString("plainMapMode", badString)).c_str());
+  string iconfile = icons->safeGetString("plain", badString);
+  if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) WarfareWindow::currWindow->plainMapModeButton.setIcon(QIcon(iconfile.c_str()));
+
+  WarfareWindow::currWindow->supplyMapModeButton.setToolTip(remQuotes(tInfo->safeGetString("supplyMapMode", badString)).c_str());
+  iconfile = icons->safeGetString("supply", badString);
+  if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) WarfareWindow::currWindow->supplyMapModeButton.setIcon(QIcon(iconfile.c_str()));  
+
+  WarfareWindow::currWindow->unitInterface->increasePriorityButton.setToolTip(remQuotes(tInfo->safeGetString("incPrior", badString)).c_str());
+  iconfile = icons->safeGetString("incPriority", badString);
+  if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) {
+    WarfareWindow::currWindow->unitInterface->increasePriorityButton.setArrowType(Qt::NoArrow);
+    WarfareWindow::currWindow->unitInterface->increasePriorityButton.setIcon(QIcon(iconfile.c_str()));
+  }
+  WarfareWindow::currWindow->unitInterface->decreasePriorityButton.setToolTip(remQuotes(tInfo->safeGetString("decPrior", badString)).c_str());
+  iconfile = icons->safeGetString("decPriority", badString);
+  if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) {
+    WarfareWindow::currWindow->unitInterface->decreasePriorityButton.setArrowType(Qt::NoArrow);
+    WarfareWindow::currWindow->unitInterface->decreasePriorityButton.setIcon(QIcon(iconfile.c_str()));
+  }
+ 
+  WarfareWindow::currWindow->castleInterface->increaseRecruitButton.setToolTip(remQuotes(tInfo->safeGetString("incRecruit", badString)).c_str());
+  WarfareWindow::currWindow->castleInterface->decreaseRecruitButton.setToolTip(remQuotes(tInfo->safeGetString("decRecruit", badString)).c_str());
+  for (MilUnitTemplate::Iterator unit = MilUnitTemplate::begin(); unit != MilUnitTemplate::end(); ++unit) {
+    iconfile = icons->safeGetString((*unit)->name, badString);
+    Logger::logStream(DebugStartup) << "Setting icon " << iconfile << "\n"; 
+    if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) CastleInterface::icons[*unit] = QIcon(iconfile.c_str()); 
+  }
+
+  
+  WarfareWindow::currWindow->farmInterface->increaseDrillButton.setToolTip(remQuotes(tInfo->safeGetString("incDrill", badString)).c_str());
+  iconfile = icons->safeGetString("incDrill", badString);
+  if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) {
+    WarfareWindow::currWindow->farmInterface->increaseDrillButton.setArrowType(Qt::NoArrow);
+    WarfareWindow::currWindow->farmInterface->increaseDrillButton.setIcon(QIcon(iconfile.c_str()));
+  }  
+  WarfareWindow::currWindow->farmInterface->decreaseDrillButton.setToolTip(remQuotes(tInfo->safeGetString("decDrill", badString)).c_str());
+  iconfile = icons->safeGetString("decDrill", badString);
+  if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) {
+    WarfareWindow::currWindow->farmInterface->decreaseDrillButton.setArrowType(Qt::NoArrow);
+    WarfareWindow::currWindow->farmInterface->decreaseDrillButton.setIcon(QIcon(iconfile.c_str()));
+  }
+  
+
+  
+}
+
 void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
   obj->setLeaf("name", unit->getName());
   obj->setLeaf("player", unit->getOwner()->getName());   

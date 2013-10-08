@@ -1,0 +1,24 @@
+plainMapMode = "Plain"
+supplyMapMode = "Supply flow"
+incPrior = "Increase supply priority"
+decPrior = "Decrease supply priority"
+incRecruit = "Next unit type"
+decRecruit = "Previous unit type"
+incDrill = "Increase drill level"
+decDrill = "Decrease drill level"
+
+icons = {
+  plain = ./gfx/icons/plainicon.png
+  supply = ./gfx/icons/supplyicon.png
+
+  pikemen = ./gfx/icons/pikeman.jpg
+  knights = ./gfx/icons/knight.png
+  archers = ./gfx/icons/archer.jpg
+  militia = ./gfx/icons/militia.png
+
+  incPriority = ./gfx/icons/morecows.png
+  decPriority = ./gfx/icons/fewercows.png
+
+  incDrill = ./gfx/icons/moredrill.png
+  decDrill = ./gfx/icons/lessdrill.png
+}
