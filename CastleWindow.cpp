@@ -225,7 +225,7 @@ void HexDrawer::zoom (int delta) {
   }
   else {
     zoomLevel *= 2;
-    if (zoomLevel > 64) zoomLevel = 64; 
+    if (zoomLevel > 32) zoomLevel = 32; 
   }
 }
 
@@ -871,7 +871,10 @@ void GLDrawer::paintGL () {
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glFrustum(-0.75*zoomLevel, 0.75*zoomLevel, -0.5*zoomLevel, 0.5*zoomLevel, 0.25*zoomLevel, 2*zoomLevel);
+  // I'm sitting about three units from the screen, and the viewport is about 1.5-ish units wide.
+  // So the near clipping plane ought to be the same distance in zoomLevel units as its width. But
+  // actually this seems to work well, so I won't fiddle with it. 
+  glFrustum(-0.125*zoomLevel, 0.125*zoomLevel, -0.0833*zoomLevel, 0.0833*zoomLevel, 0.25*zoomLevel, 2*zoomLevel);
   glMatrixMode(GL_MODELVIEW); 
   glLoadIdentity();
 
