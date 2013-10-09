@@ -328,19 +328,19 @@ void GLDrawer::drawMilUnit (MilUnit* unit, triplet center, double angle) {
   glTranslated(center.x(), center.y(), center.z()); 
 
   glPushMatrix();
-  glTranslated(0, 0, -0.6);
+  glTranslated(0, 0, -0.7);
   glRotated(-radToDeg(radial), 0, 0, 1);
   glBindTexture(GL_TEXTURE_2D, texts[0]);
-  double flagSize = 0.2*zoomLevel; 
+  double flagSize = 0.1*sqrt(zoomLevel); 
   glBegin(GL_QUADS);
+  glTexCoord2d(0, 0);  
   glVertex3d(0, 0, 0);
-  glTexCoord2d(0, 0);
+  glTexCoord2d(1, 0);  
   glVertex3d(flagSize, 0, 0);
-  glTexCoord2d(1, 0);
-  glVertex3d(flagSize, 0, flagSize);
-  glTexCoord2d(1, 1);
-  glVertex3d(0, 0, flagSize);
-  glTexCoord2d(0, 1);
+  glTexCoord2d(1, 1);  
+  glVertex3d(flagSize, 0, -flagSize);
+  glTexCoord2d(0, 1);  
+  glVertex3d(0, 0, -flagSize);
   glEnd(); 
   glPopMatrix(); 
 

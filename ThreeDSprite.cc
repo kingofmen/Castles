@@ -191,7 +191,8 @@ void ThreeDSprite::makeFace (ifstream& reader, string groupName) {
   string line;
   getline(reader, line); 
   if (line.empty()) return;
- 
+
+  // Face in format x/y/z, where x is vertex index, y is texture vertex index, and z is normal index. 
   boost::char_separator<char> space(" ");
   boost::char_separator<char> slash("/", "", boost::keep_empty_tokens);
   boost::tokenizer<boost::char_separator<char> > vertices(line, space);
