@@ -112,21 +112,12 @@ public:
     int status;
   };
 
-  int getHouses () const;
-  
   typedef vector<FieldInfo>::const_iterator cfit;
   typedef vector<FieldInfo>::iterator fit;
   cfit start () const {return fields.begin();}
-  cfit final () const {return fields.end();} 
+  cfit final () const {return fields.end();}
   fit start () {return fields.begin();}
-  fit final () {return fields.end();} 
-  cpit startDrill () const {return exercis.begin();}
-  cpit finalDrill () const {return exercis.end();}
-  cpit startHouse () const {return village.begin();}
-  cpit finalHouse () const {return village.end();}
-  cpit startSheep () const {return pasture.begin();}
-  cpit finalSheep () const {return pasture.end();}
-  
+  fit final () {return fields.end();}
   
   typedef vector<FarmGraphicsInfo*>::iterator Iterator;
   static Iterator begin () {return allFarmInfos.begin();}
@@ -136,18 +127,48 @@ private:
   double fieldArea ();   
   void generateShapes (HexGraphicsInfo* dat);
   vector<FieldInfo> fields;
-  FieldShape exercis;
-  FieldShape village;
-  FieldShape pasture; 
   static vector<int> textureIndices; 
   
   Farmland* myFarm;
   static vector<FarmGraphicsInfo*> allFarmInfos;
+};
+
+class VillageGraphicsInfo : public GraphicsInfo, public SpriteContainer {
+  friend class StaticInitialiser;
+  friend class HexGraphicsInfo; 
+public:
+  VillageGraphicsInfo (Village* f);
+  ~VillageGraphicsInfo ();
+  Village* getVillage () const {return myVillage;}
+  int getHouses () const;
+  static void updateVillageStatus (); 
+  
+  cpit startDrill () const {return exercis.begin();}
+  cpit finalDrill () const {return exercis.end();}
+  cpit startHouse () const {return village.begin();}
+  cpit finalHouse () const {return village.end();}
+  cpit startSheep () const {return pasture.begin();}
+  cpit finalSheep () const {return pasture.end();}
+  
+  typedef vector<VillageGraphicsInfo*>::iterator Iterator;
+  static Iterator begin () {return allVillageInfos.begin();}
+  static Iterator end () {return allVillageInfos.end();}   
+  
+private:  
+  double fieldArea ();   
+  void generateShapes (HexGraphicsInfo* dat);
+  FieldShape exercis;
+  FieldShape village;
+  FieldShape pasture; 
+  
+  Village* myVillage;
+  static vector<VillageGraphicsInfo*> allVillageInfos;
   static unsigned int supplySpriteIndex;
   static int maxCows;
   static int suppliesPerCow; 
   static vector<doublet> cowPositions;
 };
+
 
 class HexGraphicsInfo : public GraphicsInfo {
 public:
@@ -158,12 +179,14 @@ public:
   
   virtual void describe (QTextStream& str) const;  
   triplet getCoords (Vertices v) const;
-  FarmGraphicsInfo const* getFarm () const {return farmInfo;} 
+  FarmGraphicsInfo const* getFarmInfo () const {return farmInfo;}
+  VillageGraphicsInfo const* getVillageInfo () const {return villageInfo;}
   Hex* getHex () const {return myHex;}
   FieldShape getPatch (bool large = false); 
   TerrainType getTerrain () const {return terrain;}
   bool isInside (double x, double y) const;
   void setFarm (FarmGraphicsInfo* f);
+  void setVillage (VillageGraphicsInfo* f);  
   static Iterator begin () {return allHexGraphics.begin();}
   static Iterator end   () {return allHexGraphics.end();}
   static void getHeights (); 
@@ -184,6 +207,7 @@ private:
   triplet cornerLeftUp;
   triplet cornerRightUp;  
   FarmGraphicsInfo* farmInfo;
+  VillageGraphicsInfo* villageInfo;
   vector<FieldShape> spritePatches; // Places to put sprites - hand out to subordinates.
   vector<FieldShape> biggerPatches; // For larger shapes like drill grounds.   
   FieldShape trees; // Not a polygon.

@@ -139,9 +139,9 @@ double Player::evaluateGlobalStrength () {
 
     Hex* support = castle->getSupport();
     assert(support);
-    Farmland* farms = support->getFarm();
-    if (!farms) continue;
-    suppliesProduced += farms->production(); 
+    Village* village = support->getVillage();
+    if (!village) continue;
+    suppliesProduced += village->production(); 
   }
   
   ret += influence;
@@ -218,9 +218,9 @@ double Player::evaluateAttackStrength (Player* att, Player* def) {
     for (Vertex::HexIterator h = vtx->beginHexes(); h != vtx->endHexes(); ++h) {
       if (!(*h)) continue;
       if (def != (*h)->getOwner()) continue;
-      Farmland* farms = (*h)->getFarm();
-      if (!farms) continue;
-      MilUnit* defenders = farms->raiseMilitia(); 
+      Village* village = (*h)->getVillage();
+      if (!village) continue;
+      MilUnit* defenders = village->raiseMilitia(); 
       casualties += mil->totalSoldiers() * defenders->calcBattleCasualties(mil);
     }
   } 
@@ -310,7 +310,7 @@ void Player::getAction () {
   }
   for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
     (*hex)->setMirrorState();
-    if ((*hex)->getFarm()) maxPopulation = std::max(maxPopulation, (*hex)->getFarm()->production()); 
+    if ((*hex)->getVillage()) maxPopulation = std::max(maxPopulation, (*hex)->getVillage()->production()); 
   }
   for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
     (*vex)->setMirrorState(); 
@@ -354,10 +354,10 @@ void Player::getAction () {
   }
 
   for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
-    Farmland* farm = (*hex)->getFarm();
+    Village* village = (*hex)->getVillage();
     double economicWeight = 0;
-    if (!farm) continue;
-    economicWeight = (1 + farm->production()) / maxPopulation;
+    if (!village) continue;
+    economicWeight = (1 + village->production()) / maxPopulation;
     for (Hex::VtxIterator vex = (*hex)->vexBegin(); vex != (*hex)->vexEnd(); ++vex) {
       (*vex)->value.strategic *= economicWeight; 
     }

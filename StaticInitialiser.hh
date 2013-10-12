@@ -3,7 +3,7 @@
 
 class Object; 
 class Farmland;
-class CivilBuilding; 
+class Village; 
 class MilUnit;
 class MilUnitTemplate; 
 class GLDrawer; 
@@ -23,9 +23,10 @@ public:
   static void      initialiseGraphics (Object* gInfo); 
   static Farmland* buildFarm (Object* fInfo);
   static void      buildHex (Object* hInfo);
-  static void      buildMilitia (CivilBuilding* target, Object* mInfo);  
+  static void      buildMilitia (Village* target, Object* mInfo);  
   static MilUnit*  buildMilUnit (Object* mInfo);
   static void      buildMilUnitTemplates (Object* info);
+  static Village*  buildVillage (Object* fInfo);
   static void      createActionProbabilities (Object* info);
   static void      createPlayer (Object* info);   
   static void      loadAiConstants (Object* info);

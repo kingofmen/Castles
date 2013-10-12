@@ -53,7 +53,8 @@ public:
   Direction getDirection (Hex const * const dat) const;
   Direction getDirection (Line const * const dat) const;
   Farmland* getFarm () {return farms;} 
-  int getTotalPopulation () const; 
+  int getTotalPopulation () const;
+  Village* getVillage () {return village;} 
   string toString () const;
   VtxIterator vexBegin () {return vertices.begin();}
   VtxIterator vexEnd   () {return vertices.end();} 
@@ -62,6 +63,7 @@ public:
   int recruit (Player* forhim, MilUnitTemplate const* const recruitType, MilUnit* target, Outcome out); 
   void setLine (Direction dir, Line* l);
   void setFarm (Farmland* f);
+  void setVillage (Village* v); 
   virtual void setMirrorState (); 
   
   static Iterator begin () {return allHexes.begin();}
@@ -85,7 +87,8 @@ private:
   TerrainType myType;
   Player* owner;
   HexGraphicsInfo* graphicsInfo; 
-  Farmland* farms; 
+  Farmland* farms;
+  Village* village; 
   int arableLand; 
   
   

@@ -160,11 +160,11 @@ void CastleInterface::setCastle (Castle* m) {
   }
 }
 
-FarmInterface::FarmInterface (QWidget*p)
+VillageInterface::VillageInterface (QWidget*p)
   : QLabel(p)
   , increaseDrillButton(this)
   , decreaseDrillButton(this)
-  , farm(0)
+  , village(0)
 {
   static QSignalMapper signalMapper; 
   setFixedSize(220, 90);
@@ -191,9 +191,9 @@ FarmInterface::FarmInterface (QWidget*p)
   hide(); 
 }
 
-void FarmInterface::changeDrillLevel (int direction) {
-  if (!farm) return;
-  MilitiaTradition* militia = farm->getMilitia();
+void VillageInterface::changeDrillLevel (int direction) {
+  if (!village) return;
+  MilitiaTradition* militia = village->getMilitia();
   if (!militia) return;
   int curr = militia->getDrill(); 
 
@@ -206,11 +206,6 @@ void FarmInterface::changeDrillLevel (int direction) {
     if (curr >= 0) militia->increaseDrill(false);
   }
 }
-
-void FarmInterface::setFarm (Farmland* m) {
-  farm = m;
-}
-
 
 void HexDrawer::azimate (double amount) {
   azimuth += amount;
@@ -434,9 +429,11 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   glColor4d(1.0, 1.0, 1.0, 1.0); 
 
   
-  FarmGraphicsInfo const* farmInfo = dat->getFarm();
+  FarmGraphicsInfo const* farmInfo = dat->getFarmInfo();
   if (!farmInfo) return;
-  Farmland* farm = farmInfo->getFarm(); 
+  //Farmland* farm = farmInfo->getFarm();
+  VillageGraphicsInfo const* villageInfo = dat->getVillageInfo(); 
+  Village* village = villageInfo->getVillage(); 
 
   glEnable(GL_TEXTURE_2D);      
   for (FarmGraphicsInfo::cfit field = farmInfo->start(); field != farmInfo->final(); ++field) {
@@ -458,10 +455,10 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, 0);
   texts.clear();
-  int numHouses = farmInfo->getHouses();
-  GraphicsInfo::cpit point1 = farmInfo->startHouse();
-  GraphicsInfo::cpit point2 = farmInfo->startHouse(); ++point2;
-  GraphicsInfo::cpit point3 = farmInfo->startHouse(); ++point3; ++point3;
+  int numHouses = villageInfo->getHouses();
+  GraphicsInfo::cpit point1 = villageInfo->startHouse();
+  GraphicsInfo::cpit point2 = villageInfo->startHouse(); ++point2;
+  GraphicsInfo::cpit point3 = villageInfo->startHouse(); ++point3; ++point3;
   double xstep = ((*point3).x() - (*point2).x()) * 0.1;
   double ystep = ((*point3).y() - (*point2).y()) * 0.1;
   double zstep = ((*point3).z() - (*point2).z()) * 0.1;
@@ -482,15 +479,14 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   }
   glPopMatrix(); 
 
-
-  const MilUnitGraphicsInfo* info = farm->getMilitiaGraphics();
+  const MilUnitGraphicsInfo* info = village->getMilitiaGraphics();
   glBindTexture(GL_TEXTURE_2D, 0);  
   texts.clear(); 
-  texts.push_back(playerToTextureMap[farm->getOwner()]);
+  texts.push_back(playerToTextureMap[village->getOwner()]);
 
-  point1 = farmInfo->startDrill();
-  point2 = farmInfo->startDrill(); ++point2;
-  point3 = farmInfo->startDrill(); ++point3; ++point3;
+  point1 = villageInfo->startDrill();
+  point2 = villageInfo->startDrill(); ++point2;
+  point3 = villageInfo->startDrill(); ++point3; ++point3;
 
   triplet center = (*point1);
   triplet pointer = (*point3) - (*point2);
@@ -505,14 +501,14 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   glTranslated(center.x(), center.y(), center.z());
   drawSprites(info, texts, angle);
   glPopMatrix();
-
+  
   
   glBindTexture(GL_TEXTURE_2D, 0);  
   texts.clear(); 
 
-  point1 = farmInfo->startSheep();
-  point2 = farmInfo->startSheep(); ++point2;
-  point3 = farmInfo->startSheep(); ++point3; ++point3;
+  point1 = villageInfo->startSheep();
+  point2 = villageInfo->startSheep(); ++point2;
+  point3 = villageInfo->startSheep(); ++point3; ++point3;
 
   center = (*point1);
   pointer = (*point2) - (*point3);
@@ -524,7 +520,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   glPushMatrix();
   glTranslated(center.x(), center.y(), center.z());
     
-  drawSprites(farmInfo, texts, angle);
+  drawSprites(villageInfo, texts, angle);
   glPopMatrix();     
 }
 
@@ -736,8 +732,8 @@ WarfareWindow::WarfareWindow (QWidget* parent)
   castleInterface = new CastleInterface(this);
   castleInterface->move(15, 300); 
 
-  farmInterface = new FarmInterface(this);
-  farmInterface->move(15, 300); 
+  villageInterface = new VillageInterface(this);
+  villageInterface->move(15, 300); 
   
   static QSignalMapper signalMapper; 
   supplyMapModeButton.move(272, 635);
@@ -932,10 +928,10 @@ void WarfareWindow::wheelEvent (QWheelEvent* event) {
 void WarfareWindow::selectObject () {
   if (selectedHex) {
     selDrawer->setSelected(selectedHex->getGraphicsInfo());
-    farmInterface->setFarm(selectedHex->getFarm());
-    farmInterface->show(); 
+    villageInterface->setVillage(selectedHex->getVillage());
+    villageInterface->show(); 
   }
-  else farmInterface->hide();
+  else villageInterface->hide();
 
   if (selectedVertex) {
     selDrawer->setSelected(selectedVertex->getGraphicsInfo());

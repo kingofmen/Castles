@@ -86,7 +86,7 @@ private:
 class MilitiaTradition : public Mirrorable<MilitiaTradition>, public MilStrength {
   friend class StaticInitialiser;
   friend class Mirrorable<MilitiaTradition>;
-  friend class CivilBuilding; 
+  friend class Village; 
 public:
   MilitiaTradition ();
   ~MilitiaTradition ();  
@@ -108,18 +108,23 @@ private:
   int drillLevel;
 };
 
-class CivilBuilding : public Building { 
+class Village : public Building, public Mirrorable<Village> { 
   friend class StaticInitialiser;
+  friend class Mirrorable<Village>;  
 public:
-  CivilBuilding ();
-  ~CivilBuilding ();
+  Village ();
+  ~Village ();
 
   virtual void endOfTurn ();
   int getTotalPopulation () const {return males.getTotalPopulation() + women.getTotalPopulation();}
-  double getFractionOfMaxPop () const {double ret = getTotalPopulation(); ret /= maxPopulation; return min(1.0, ret);} 
+  double getFractionOfMaxPop () const {double ret = getTotalPopulation(); ret /= maxPopulation; return min(1.0, ret);}
+  double consumption () const;
+  void demandSupplies (ContractInfo* taxes);
   void demobMilitia (); 
-  MilUnit* raiseMilitia (); 
+  MilUnit* raiseMilitia ();
+  double production () const;  
   int produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll);
+  virtual void setMirrorState ();  
   void increaseTradition (MilUnitTemplate const* target = 0) {milTrad->increaseTradition(target);} 
   MilitiaTradition* getMilitia () {return milTrad;} 
   const MilUnitGraphicsInfo* getMilitiaGraphics () const;
@@ -133,7 +138,6 @@ protected:
   AgeTracker women; 
   MilitiaTradition* milTrad;
   double foodMortalityModifier; 
-  //int turnsSincePopAdjust;   
   
   static vector<double> products;
   static vector<double> consume;
@@ -145,8 +149,11 @@ protected:
   
   
 private:
+  Village (Village* other); 
+  
   double adjustedMortality (int age, bool male) const;   
-
+  void eatFood (); 
+  
   static int maxPopulation; 
   static vector<double> baseMaleMortality;
   static vector<double> baseFemaleMortality;
@@ -154,7 +161,7 @@ private:
   static vector<double> fertility;
 };
 
-class Farmland : public CivilBuilding, public Mirrorable<Farmland> {
+class Farmland : public Building, public Mirrorable<Farmland> {
   friend class Mirrorable<Farmland>;
   friend class StaticInitialiser;
   friend class FarmGraphicsInfo; 
@@ -164,19 +171,15 @@ public:
 
   enum FieldStatus {Clear = 0, Ready, Sowed, Ripe1, Ripe2, Ripe3, Ended, NumStatus}; 
   
-  double consumption () const;
   void devastate (int devastation);
   virtual void endOfTurn ();  
-  double production () const;
   void workFields (); 
   virtual void setMirrorState ();
-  void demandSupplies (ContractInfo* taxes);
   int getFieldStatus (int s) {return fields[s];}   
   int totalFields () const {return fields[Clear] + fields[Ready] + fields[Sowed] + fields[Ripe1] + fields[Ripe2] + fields[Ripe3] + fields[Ended];}
   
 private:
   Farmland (Farmland* other);
-  void eatFood (); 
   int fields[NumStatus]; 
   
   static int _labourToSow;

@@ -7,18 +7,18 @@
 #include <cassert> 
 #include "Calendar.hh" 
 
-int CivilBuilding::maxPopulation = 1; 
-vector<double> CivilBuilding::baseMaleMortality(AgeTracker::maxAge);
-vector<double> CivilBuilding::baseFemaleMortality(AgeTracker::maxAge);
-vector<double> CivilBuilding::pairChance(AgeTracker::maxAge);
-vector<double> CivilBuilding::fertility(AgeTracker::maxAge);
-vector<double> CivilBuilding::products(AgeTracker::maxAge);
-vector<double> CivilBuilding::consume(AgeTracker::maxAge);
-vector<double> CivilBuilding::recruitChance(AgeTracker::maxAge);
-double CivilBuilding::femaleProduction = 0.5;
-double CivilBuilding::femaleConsumption = 0.90;
-double CivilBuilding::femaleSurplusEffect = -2.0;
-double CivilBuilding::femaleSurplusZero = 1.0;
+int Village::maxPopulation = 1; 
+vector<double> Village::baseMaleMortality(AgeTracker::maxAge);
+vector<double> Village::baseFemaleMortality(AgeTracker::maxAge);
+vector<double> Village::pairChance(AgeTracker::maxAge);
+vector<double> Village::fertility(AgeTracker::maxAge);
+vector<double> Village::products(AgeTracker::maxAge);
+vector<double> Village::consume(AgeTracker::maxAge);
+vector<double> Village::recruitChance(AgeTracker::maxAge);
+double Village::femaleProduction = 0.5;
+double Village::femaleConsumption = 0.90;
+double Village::femaleSurplusEffect = -2.0;
+double Village::femaleSurplusZero = 1.0;
 double Castle::siegeModifier = 10; 
 
 int Farmland::_labourToSow    = 1;
@@ -78,7 +78,7 @@ void Castle::callForSurrender (MilUnit* siegers, Outcome out) {
 }
 
 void Castle::endOfTurn () {
-  support->getFarm()->demandSupplies(&taxExtraction);
+  support->getVillage()->demandSupplies(&taxExtraction);
   supplies += taxExtraction.delivered;
   taxExtraction.delivered = 0;
 }
@@ -157,16 +157,22 @@ void Castle::setMirrorState () {
   }
 }
 
-CivilBuilding::CivilBuilding ()
+Village::Village ()
   : Building()
+  , Mirrorable<Village>()
   , milTrad(0)
   , foodMortalityModifier(1)
 {
+  milTrad = new MilitiaTradition();
 }
 
-CivilBuilding::~CivilBuilding () {}
+Village::Village (Village* other)
+  : Mirrorable<Village>(other) 
+{}
 
-const MilUnitGraphicsInfo* CivilBuilding::getMilitiaGraphics () const {
+Village::~Village () {}
+
+const MilUnitGraphicsInfo* Village::getMilitiaGraphics () const {
   return milTrad ? milTrad->militia->getGraphicsInfo() : 0;
 }
 
@@ -219,12 +225,13 @@ void MilitiaTradition::setMirrorState () {
 }
 
 
-double CivilBuilding::adjustedMortality (int age, bool male) const {
+double Village::adjustedMortality (int age, bool male) const {
   if (male) return baseMaleMortality[age]*foodMortalityModifier;
   return baseFemaleMortality[age]*foodMortalityModifier;
 }
 
-void CivilBuilding::endOfTurn () {
+void Village::endOfTurn () {
+  eatFood();  
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter != currSeason) return;
 
@@ -269,12 +276,12 @@ void CivilBuilding::endOfTurn () {
   updateMaxPop(); 
 }
 
-void CivilBuilding::demobMilitia () {
+void Village::demobMilitia () {
   if (!milTrad) return;
   milTrad->militia->demobilise(males); 
 }
 
-MilUnit* CivilBuilding::raiseMilitia () {
+MilUnit* Village::raiseMilitia () {
   for (map<MilUnitTemplate const* const, int>::iterator i = milTrad->militiaStrength.begin(); i != milTrad->militiaStrength.end(); ++i) {
     for (int j = 0; j < (*i).second; ++j) {
       produceRecruits((*i).first, milTrad->militia, Neutral); 
@@ -291,10 +298,9 @@ MilUnit* CivilBuilding::raiseMilitia () {
 }
 
 Farmland::Farmland () 
-  : CivilBuilding()
+  : Building()
   , Mirrorable<Farmland>()
 {
-  milTrad = new MilitiaTradition();
   for (int i = 0; i < NumStatus; ++i) fields[i] = 0; 
 }
 
@@ -304,17 +310,22 @@ Farmland::Farmland (Farmland* other)
   : Mirrorable<Farmland>(other) 
 {}
 
-void Farmland::setMirrorState () {
+void Village::setMirrorState () {
   women.setMirrorState();
   males.setMirrorState();
   milTrad->setMirrorState();
   mirror->milTrad = milTrad->getMirror();
   mirror->foodMortalityModifier = foodMortalityModifier; 
   mirror->setOwner(getOwner());
+}
+
+void Farmland::setMirrorState () {
+  mirror->setOwner(getOwner());
   for (int i = 0; i < NumStatus; ++i) mirror->fields[i] = fields[i];
 }
 
-double Farmland::production () const {
+
+double Village::production () const {
   double ret = 0;
   for (int i = 0; i < AgeTracker::maxAge; ++i) {
     ret += (males.getPop(i) + femaleProduction*women.getPop(i)) * products[i]; 
@@ -324,7 +335,7 @@ double Farmland::production () const {
   return ret;
 }
 
-double Farmland::consumption () const {
+double Village::consumption () const {
   double ret = 0;
   for (int i = 0; i < AgeTracker::maxAge; ++i) {
     ret += consume[i]*(males.getPop(i) + femaleConsumption*women.getPop(i));
@@ -341,7 +352,7 @@ void Farmland::devastate (int devastation) {
   }
 }
 
-void Farmland::demandSupplies (ContractInfo* taxes) {
+void Village::demandSupplies (ContractInfo* taxes) {
   double amount = 0;
   double needed = consumption() * Calendar::turnsToAutumn(); 
   switch (taxes->delivery) {
@@ -373,12 +384,10 @@ void Farmland::demandSupplies (ContractInfo* taxes) {
 }
 
 void Farmland::endOfTurn () {
-  CivilBuilding::endOfTurn();
   workFields();
-  eatFood();
 }
 
-void Farmland::eatFood () {
+void Village::eatFood () {
   double needed = consumption();
   double available = supplies;
   available /= Calendar::turnsToAutumn();
@@ -391,7 +400,7 @@ void Farmland::eatFood () {
 void Farmland::workFields () {  
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   int total = getAssignedLand(); 
-  double availableLabour = production(); 
+  double availableLabour = 1000; //production(); 
   
   switch (currSeason) {
   default:
@@ -498,7 +507,7 @@ void Farmland::workFields () {
 
 
 
-int CivilBuilding::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll) {
+int Village::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll) {
   double luckModifier = 1.0;
   switch (dieroll) {
   case VictoGlory: luckModifier = 1.50; break;

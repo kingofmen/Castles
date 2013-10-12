@@ -101,9 +101,8 @@ void StaticInitialiser::graphicsInitialisation () {
   }
 
   for (Hex::Iterator h = Hex::begin(); h != Hex::end(); ++h) {
-    Farmland* f = (*h)->getFarm();
+    Village* f = (*h)->getVillage();
     if (!f) continue;
-    //f->graphicsInfo->updateSprites();
     if (!f->milTrad) continue;
     if (!f->milTrad->militia) continue;
     f->milTrad->militia->graphicsInfo->updateSprites(f->milTrad);
@@ -159,38 +158,38 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   double lastRecr = atof(recr->getToken(0).c_str());  
   for (int i = 0; i < AgeTracker::maxAge; ++i) {
     double curr = (femMort->numTokens() > i ? atof(femMort->getToken(i).c_str()) : lastFmort);
-    CivilBuilding::baseFemaleMortality[i] = curr;
+    Village::baseFemaleMortality[i] = curr;
     lastFmort = curr;
 
     curr = (malMort->numTokens() > i ? atof(malMort->getToken(i).c_str()) : lastMmort);
-    CivilBuilding::baseMaleMortality[i] = curr;
+    Village::baseMaleMortality[i] = curr;
     lastMmort = curr;
 
     curr = (pair->numTokens() > i ? atof(pair->getToken(i).c_str()) : lastPair);
-    CivilBuilding::pairChance[i] = curr;
+    Village::pairChance[i] = curr;
     lastPair = curr;
 
     curr = (femf->numTokens() > i ? atof(femf->getToken(i).c_str()) : lastPreg);
-    CivilBuilding::fertility[i] = curr;
+    Village::fertility[i] = curr;
     lastPreg = curr;
 
     curr = (prod->numTokens() > i ? atof(prod->getToken(i).c_str()) : lastProd);
-    CivilBuilding::products[i] = curr;
+    Village::products[i] = curr;
     lastProd = curr;
 
     curr = (cons->numTokens() > i ? atof(cons->getToken(i).c_str()) : lastCons);
-    CivilBuilding::consume[i] = curr;
+    Village::consume[i] = curr;
     lastCons = curr;
 
     curr = (recr->numTokens() > i ? atof(recr->getToken(i).c_str()) : lastRecr);
-    CivilBuilding::recruitChance[i] = curr;
+    Village::recruitChance[i] = curr;
     lastRecr = curr;
   }
 
-  CivilBuilding::femaleProduction = popInfo->safeGetFloat("femaleProduction", CivilBuilding::femaleProduction);
-  CivilBuilding::femaleConsumption = popInfo->safeGetFloat("femaleConsumption", CivilBuilding::femaleConsumption);
-  CivilBuilding::femaleSurplusEffect = popInfo->safeGetFloat("femaleSurplusEffect", CivilBuilding::femaleSurplusEffect);
-  CivilBuilding::femaleSurplusZero = popInfo->safeGetFloat("femaleSurplusZero", CivilBuilding::femaleSurplusZero);    
+  Village::femaleProduction = popInfo->safeGetFloat("femaleProduction", Village::femaleProduction);
+  Village::femaleConsumption = popInfo->safeGetFloat("femaleConsumption", Village::femaleConsumption);
+  Village::femaleSurplusEffect = popInfo->safeGetFloat("femaleSurplusEffect", Village::femaleSurplusEffect);
+  Village::femaleSurplusZero = popInfo->safeGetFloat("femaleSurplusZero", Village::femaleSurplusZero);    
 }
 
 inline int heightMapWidth (int zoneSide) {
@@ -313,7 +312,14 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     initialiseBuilding(farms, fInfo); 
     if (owner) farms->setOwner(owner);
     hex->setFarm(farms); 
-  }  
+  }
+  fInfo = hInfo->safeGetObject("village");
+  if (fInfo) {
+    Village* village = StaticInitialiser::buildVillage(fInfo);
+    initialiseBuilding(village, fInfo); 
+    if (owner) village->setOwner(owner);
+    hex->setVillage(village); 
+  }    
 }
 
 ThreeDSprite* makeSprite (Object* info) {
@@ -340,15 +346,7 @@ void readAgeTrackerFromObject (AgeTracker& age, Object* obj) {
 }
 
 Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
-  Object* males = fInfo->safeGetObject("males");
-  Object* females = fInfo->safeGetObject("females");
-
   Farmland* ret = new Farmland();
-  readAgeTrackerFromObject(ret->males, males);
-  readAgeTrackerFromObject(ret->women, females);
-  ret->updateMaxPop(); 
-  
-  buildMilitia(ret, fInfo->safeGetObject("militiaUnits")); 
 
   ret->fields[Farmland::Clear] = fInfo->safeGetInt("clear", 0);
   ret->fields[Farmland::Ready] = fInfo->safeGetInt("ready", 0);
@@ -361,7 +359,7 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   return ret;
 }
 
-void StaticInitialiser::buildMilitia (CivilBuilding* target, Object* mInfo) {
+void StaticInitialiser::buildMilitia (Village* target, Object* mInfo) {
   if (0 == mInfo) return;
   for (MilUnitTemplate::Iterator i = MilUnitTemplate::begin(); i != MilUnitTemplate::end(); ++i) {
     assert(*i);     
@@ -459,6 +457,18 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
       SpriteContainer::sprites.push_back(mSprite);
     }
   }
+}
+
+Village* StaticInitialiser::buildVillage (Object* fInfo) {
+  Village* ret = new Village(); 
+  Object* males = fInfo->safeGetObject("males");
+  Object* females = fInfo->safeGetObject("females"); 
+  readAgeTrackerFromObject(ret->males, males);
+  readAgeTrackerFromObject(ret->women, females);
+  ret->updateMaxPop(); 
+  
+  buildMilitia(ret, fInfo->safeGetObject("militiaUnits"));
+  return ret; 
 }
 
 void StaticInitialiser::createPlayer (Object* info) {
@@ -764,7 +774,7 @@ void StaticInitialiser::loadSprites () {
 
   spriteInfo = ginfo->safeGetObject("supplysprite");
   assert(spriteInfo);
-  FarmGraphicsInfo::supplySpriteIndex = SpriteContainer::sprites.size();
+  VillageGraphicsInfo::supplySpriteIndex = SpriteContainer::sprites.size();
   ThreeDSprite* cow = makeSprite(spriteInfo);
   MilUnitSprite* mSprite = new MilUnitSprite();
   mSprite->soldier = cow; 
@@ -772,21 +782,21 @@ void StaticInitialiser::loadSprites () {
   SpriteContainer::sprites.push_back(mSprite);
   Object* pos = ginfo->getNeededObject("cowPositions");
   objvec cows = pos->getValue("position");
-  FarmGraphicsInfo::maxCows = pos->safeGetInt("maxCows", 15);
-  double maxSupplies = FarmGraphicsInfo::maxCows;
-  for (FarmGraphicsInfo::Iterator f = FarmGraphicsInfo::begin(); f != FarmGraphicsInfo::end(); ++f) {
-    maxSupplies = max(maxSupplies, (*f)->myFarm->getAvailableSupplies());
+  VillageGraphicsInfo::maxCows = pos->safeGetInt("maxCows", 15);
+  double maxSupplies = VillageGraphicsInfo::maxCows;
+  for (VillageGraphicsInfo::Iterator f = VillageGraphicsInfo::begin(); f != VillageGraphicsInfo::end(); ++f) {
+    maxSupplies = max(maxSupplies, (*f)->myVillage->getAvailableSupplies());
   }
   double tolerance = pos->safeGetFloat("cowTolerance", 1.5);
-  FarmGraphicsInfo::suppliesPerCow = (int) floor(maxSupplies*tolerance/FarmGraphicsInfo::maxCows); 
+  VillageGraphicsInfo::suppliesPerCow = (int) floor(maxSupplies*tolerance/VillageGraphicsInfo::maxCows); 
   
-  for (int i = 0; i < FarmGraphicsInfo::maxCows; ++i) {
+  for (int i = 0; i < VillageGraphicsInfo::maxCows; ++i) {
     if (i >= (int) cows.size()) {
-      FarmGraphicsInfo::cowPositions.push_back(doublet((i%3)*0.1, (i/3)*0.1));
+      VillageGraphicsInfo::cowPositions.push_back(doublet((i%3)*0.1, (i/3)*0.1));
     }
     else {
-      FarmGraphicsInfo::cowPositions.push_back(doublet(cows[i]->safeGetFloat("x", (i%3)*0.1),
-						       cows[i]->safeGetFloat("y", (i/3)*0.1)));
+      VillageGraphicsInfo::cowPositions.push_back(doublet(cows[i]->safeGetFloat("x", (i%3)*0.1),
+							  cows[i]->safeGetFloat("y", (i/3)*0.1)));
     }
   }
 }
@@ -943,17 +953,17 @@ void StaticInitialiser::setUItexts (Object* tInfo) {
   }
 
   
-  WarfareWindow::currWindow->farmInterface->increaseDrillButton.setToolTip(remQuotes(tInfo->safeGetString("incDrill", badString)).c_str());
+  WarfareWindow::currWindow->villageInterface->increaseDrillButton.setToolTip(remQuotes(tInfo->safeGetString("incDrill", badString)).c_str());
   iconfile = icons->safeGetString("incDrill", badString);
   if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) {
-    WarfareWindow::currWindow->farmInterface->increaseDrillButton.setArrowType(Qt::NoArrow);
-    WarfareWindow::currWindow->farmInterface->increaseDrillButton.setIcon(QIcon(iconfile.c_str()));
+    WarfareWindow::currWindow->villageInterface->increaseDrillButton.setArrowType(Qt::NoArrow);
+    WarfareWindow::currWindow->villageInterface->increaseDrillButton.setIcon(QIcon(iconfile.c_str()));
   }  
-  WarfareWindow::currWindow->farmInterface->decreaseDrillButton.setToolTip(remQuotes(tInfo->safeGetString("decDrill", badString)).c_str());
+  WarfareWindow::currWindow->villageInterface->decreaseDrillButton.setToolTip(remQuotes(tInfo->safeGetString("decDrill", badString)).c_str());
   iconfile = icons->safeGetString("decDrill", badString);
   if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) {
-    WarfareWindow::currWindow->farmInterface->decreaseDrillButton.setArrowType(Qt::NoArrow);
-    WarfareWindow::currWindow->farmInterface->decreaseDrillButton.setIcon(QIcon(iconfile.c_str()));
+    WarfareWindow::currWindow->villageInterface->decreaseDrillButton.setArrowType(Qt::NoArrow);
+    WarfareWindow::currWindow->villageInterface->decreaseDrillButton.setIcon(QIcon(iconfile.c_str()));
   }
   
 
@@ -1056,27 +1066,34 @@ void StaticInitialiser::writeGameToFile (string fname) {
       }
     }
 
+    Village* village = (*hex)->getVillage();
+    if (village) {
+      Object* villageInfo = new Object("village");
+      hexInfo->setValue(villageInfo);
+      Object* males = new Object("males");
+      writeAgeInfoToObject(village->males, males);
+      villageInfo->setValue(males);
+
+      males = new Object("females");      
+      writeAgeInfoToObject(village->women, males);
+      villageInfo->setValue(males);
+
+      villageInfo->setLeaf("supplies", village->supplies);
+    }
+    
     Farmland* farm = (*hex)->getFarm();
     if (farm) {
       Object* farmInfo = new Object("farmland");
       hexInfo->setValue(farmInfo);
-      Object* males = new Object("males");
-      writeAgeInfoToObject(farm->males, males);
-      farmInfo->setValue(males);
-
-      males = new Object("females");      
-      writeAgeInfoToObject(farm->women, males);
-      farmInfo->setValue(males);
       
-      farmInfo->setLeaf("supplies", farm->supplies);
       farmInfo->setLeaf("clear", farm->getFieldStatus(Farmland::Clear));
       farmInfo->setLeaf("ready", farm->getFieldStatus(Farmland::Ready));
       farmInfo->setLeaf("sowed", farm->getFieldStatus(Farmland::Sowed));
       farmInfo->setLeaf("ripe1", farm->getFieldStatus(Farmland::Ripe1));
       farmInfo->setLeaf("ripe2", farm->getFieldStatus(Farmland::Ripe2));
       farmInfo->setLeaf("ripe3", farm->getFieldStatus(Farmland::Ripe3));
-      farmInfo->setLeaf("ended", farm->getFieldStatus(Farmland::Ended));      
-      
+      farmInfo->setLeaf("ended", farm->getFieldStatus(Farmland::Ended));
+      farmInfo->setLeaf("supplies", farm->supplies);
     }
   }
 

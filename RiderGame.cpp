@@ -127,7 +127,8 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
   assert(currplayer);
   updateGreatestMilStrength(); // Must happen before graphics init, for unit sprites. 
   StaticInitialiser::graphicsInitialisation(); 
-  FarmGraphicsInfo::updateFieldStatus(); // Must happen after graphics init for supply sprite.   
+  FarmGraphicsInfo::updateFieldStatus(); 
+  VillageGraphicsInfo::updateVillageStatus(); // Must happen after graphics init for supply sprite.   
 
   return currGame; 
 }
@@ -297,7 +298,8 @@ void WarfareGame::endOfTurn () {
     
     Calendar::newYearBegins(); 
   }
-  FarmGraphicsInfo::updateFieldStatus(); 
+  FarmGraphicsInfo::updateFieldStatus();
+  VillageGraphicsInfo::updateVillageStatus();
 }
 
 void WarfareGame::unitComparison (string fname) {
@@ -348,9 +350,9 @@ void WarfareGame::updateGreatestMilStrength() {
     largest = max(largest, (*m)->getTotalStrength());
   }
   for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
-    Farmland* farm = (*hex)->getFarm();
-    if (!farm) continue;
-    largest = max(largest, farm->getMilitia()->getTotalStrength());
+    Village* village = (*hex)->getVillage();
+    if (!village) continue;
+    largest = max(largest, village->getMilitia()->getTotalStrength());
   }
   MilStrength::greatestStrength = largest; 
 }

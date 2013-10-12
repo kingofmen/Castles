@@ -108,9 +108,9 @@ TerrainType Hex::getType (char typ) {
 
 int Hex::recruit (Player* forhim, MilUnitTemplate const* const recruitType, MilUnit* target, Outcome out) {
   if (forhim != getOwner()) return 0;
-  if (!farms) return 0;
-  farms->increaseTradition(recruitType); 
-  return farms->produceRecruits(recruitType, target, out); 
+  if (!village) return 0;
+  village->increaseTradition(recruitType); 
+  return village->produceRecruits(recruitType, target, out); 
 }
 
 int Hex::numMovesTo (Hex const * const dat) const {
@@ -232,6 +232,11 @@ void Hex::createVertices () {
 void Hex::setFarm (Farmland* f) {
   farms = f;
   graphicsInfo->setFarm(new FarmGraphicsInfo(f)); 
+} 
+
+void Hex::setVillage (Village* f) {
+  village = f;
+  graphicsInfo->setVillage(new VillageGraphicsInfo(f)); 
 } 
 
 void Hex::setLine (Direction dir, Line* l) {
@@ -417,6 +422,7 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
 }
 
 void Hex::endOfTurn () {
+  if (village) village->endOfTurn(); 
   if (farms) farms->endOfTurn();
 }
 
@@ -604,7 +610,15 @@ void Hex::setMirrorState () {
   else {
     if (mirror->farms) delete mirror->farms->Mirrorable<Farmland>::getReal(); 
     mirror->farms = 0; 
-  }  
+  }
+  if (village) {
+    village->setMirrorState();
+    mirror->village = village->Mirrorable<Village>::getMirror();
+  }
+  else {
+    if (mirror->village) delete mirror->village->Mirrorable<Village>::getReal(); 
+    mirror->village = 0; 
+  }    
 }
 
 bool Hex::colonise (Line* lin, MilUnit* unit, Outcome out) {
@@ -612,14 +626,10 @@ bool Hex::colonise (Line* lin, MilUnit* unit, Outcome out) {
   if (!unit) return false;
   if (getOwner()) return false;
   if (lin->getCastle()) return false;
-
-  //Logger::logStream(Logger::Debug) << "Trying to colonise " << getName() << " " << farms << " "
-  //<< farms->Mirrorable<Farmland>::getReal() << " " << farms->Mirrorable<Farmland>::getMirror() << " "
-  //<< "\n";
   
   bool success = true;
-  if (farms) {
-    MilUnit* defenders = farms->raiseMilitia();
+  if (village) {
+    MilUnit* defenders = village->raiseMilitia();
     if (defenders) {
       if (isReal()) {
 	Logger::logStream(Logger::Game) << "Subjugation battle with dieroll " << outcomeToString(out) << ":\n"
@@ -629,7 +639,7 @@ bool Hex::colonise (Line* lin, MilUnit* unit, Outcome out) {
       }
       BattleResult outcome = unit->attack(defenders, out);
       success = (VictoGlory == outcome.attackerSuccess);
-      farms->demobMilitia();
+      village->demobMilitia();
       if (isReal()) {
 	battleReport(Logger::logStream(Logger::Game), outcome);
 	/*
@@ -663,8 +673,8 @@ bool Hex::colonise (Line* lin, MilUnit* unit, Outcome out) {
 }
 
 void Hex::raid (MilUnit* raiders, Outcome out) {
-  if (!farms) return;
-  MilUnit* defenders = farms->raiseMilitia();
+  if (!village) return;
+  MilUnit* defenders = village->raiseMilitia();
   defenders->setExtMod(3.0);
 
   if (isReal()) Logger::logStream(Logger::Game) << "Raiding " << getName() << " with dieroll " << outcomeToString(out) << "\n"; 
@@ -745,7 +755,7 @@ void Hex::raid (MilUnit* raiders, Outcome out) {
   
   defenders->dropExtMod();
   raiders->setFightingFraction(1.0); 
-  farms->demobMilitia();
+  village->demobMilitia();
   farms->devastate(devastation); 
 }
 
@@ -816,6 +826,6 @@ double Line::traverseSupplies (double& amount, Player* side, Geography* previous
 }
 
 int Hex::getTotalPopulation () const {
-  if (farms) return farms->getTotalPopulation();
+  if (village) return village->getTotalPopulation();
   return 0; 
 }

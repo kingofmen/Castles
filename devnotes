@@ -1,29 +1,29 @@
-Tasks for the interface patch: 
+Suggestions from forums:
 
- * Graphics loading to StaticInitialiser. (check) 
-   - Texture loading (check)
-   - makeSprite method (check)
- * Prettify the interface: (check)
-   - Trees (check) 
-   - Militia (check)
-   - Fields (with status) (check) 
-   - Better sprites (check)
-   - More fractal heightmap (check) 
-     i. Decouple Hex/Line/Vertex from terrain. (check)
-   - Terrain shadows (check) 
-   - Castles (check)
-   - Textures (check) 
- * Reorganise Hex display (check) 
-   - Farmhouses (check) 
-   - Stockpiles (check)
-   - Militia again (check)
- * Multiple soldiers (check) 
-   - Support (check)
-   - Army formation (check) 
-   - Content (check) 
- * Texture support (check)
- * Labels on buttons (check) 
- * Bigger buttons (check)
- * Popup tips (check) 
+ * Perspective (check)
+ * Make terrain flat colours
+ * Two rows for villages is boring
+ * Fog - darker pixels in the distance
+ * Sprites light on top, dark below
+ * Darker background, ie terrain
+ * Check CK colour scheme
+ * Political map mode 
+ * Finer-grained texture
 
+Next gameplay iteration (thoughts, not all to be implemented):
 
+ * Militia raids
+   - Punitive expedition
+   - Tribute
+   - Self-castling
+ * Supply line interference
+ * Raid/tribute/battle mapmode 
+ * Three-resource economy
+   - Mine, forest, farm
+   - Text setup
+   - Contracts
+   - Markets
+   - Trade
+ * Sieges
+ * Command points
+ 

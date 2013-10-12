@@ -69,12 +69,12 @@ private:
   static map<MilUnitTemplate const* const, QIcon> icons; 
 };
 
-class FarmInterface : public QLabel {
+class VillageInterface : public QLabel {
   Q_OBJECT
   friend class StaticInitialiser; 
 public:
-  FarmInterface (QWidget* p);
-  void setFarm (Farmland* dat);
+  VillageInterface (QWidget* p);
+  void setVillage (Village* dat) {village = dat;}
   void updateFarmInfo (); 
 			   
 public slots:
@@ -85,7 +85,7 @@ signals:
 private:
   QToolButton increaseDrillButton;
   QToolButton decreaseDrillButton;
-  Farmland* farm; 
+  Village* village; 
 };
 
 class HexDrawer {
@@ -202,7 +202,7 @@ private:
   SelectedDrawer* selDrawer;
   UnitInterface* unitInterface;
   CastleInterface* castleInterface;
-  FarmInterface* farmInterface;   
+  VillageInterface* villageInterface;   
   SupplyMode supplyMode; 
   
   void humanAction (Action& act); 

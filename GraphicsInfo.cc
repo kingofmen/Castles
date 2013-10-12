@@ -17,14 +17,15 @@ vector<LineGraphicsInfo*> LineGraphicsInfo::allLineGraphics;
 vector<ZoneGraphicsInfo*> ZoneGraphicsInfo::allZoneGraphics; 
 double* GraphicsInfo::heightMap = 0; 
 vector<int> FarmGraphicsInfo::textureIndices; 
-vector<FarmGraphicsInfo*> FarmGraphicsInfo::allFarmInfos; 
+vector<FarmGraphicsInfo*> FarmGraphicsInfo::allFarmInfos;
+vector<VillageGraphicsInfo*> VillageGraphicsInfo::allVillageInfos; 
 vector<MilUnitSprite*> SpriteContainer::sprites;
 map<MilUnitTemplate*, int> MilUnitGraphicsInfo::indexMap;
 vector<vector<doublet> > MilUnitGraphicsInfo::allFormations; 
-unsigned int FarmGraphicsInfo::supplySpriteIndex = 0;
-int FarmGraphicsInfo::maxCows = 15;
-int FarmGraphicsInfo::suppliesPerCow = 60000;
-vector<doublet> FarmGraphicsInfo::cowPositions;
+unsigned int VillageGraphicsInfo::supplySpriteIndex = 0;
+int VillageGraphicsInfo::maxCows = 15;
+int VillageGraphicsInfo::suppliesPerCow = 60000;
+vector<doublet> VillageGraphicsInfo::cowPositions;
 
 double area (GraphicsInfo::FieldShape const& field);
 bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2); 
@@ -271,29 +272,34 @@ void HexGraphicsInfo::describe (QTextStream& str) const {
   str << "Hex " << myHex->getName().c_str() << "\n"
       << "  Owner      : " << (myHex->getOwner() ? myHex->getOwner()->getDisplayName().c_str() : "None") << "\n";
   Farmland* farm = myHex->getFarm();
-  if (farm) {
+  Village* village = myHex->getVillage();  
+  if (village) {
     //str << "Devastation   : " << myHex->getDevastation() << "\n"
-    str << "  Population  : " << farm->getTotalPopulation() << "\n"
-	<< "  Labour      : " << farm->production() << "\n"
-	<< "  Consumption : " << farm->consumption() << "\n"
-	<< "  Supplies    : " << farm->getAvailableSupplies() << "\n"
-	<< "  Field status:\n"
+    str << "  Population  : " << village->getTotalPopulation() << "\n"
+	<< "  Labour      : " << village->production() << "\n"
+	<< "  Consumption : " << village->consumption() << "\n"
+	<< "  Supplies    : " << village->getAvailableSupplies() << "\n";
+  }
+  if (farm) {
+    str << "  Field status:\n"
 	<< "    Cleared : " << farm->getFieldStatus(Farmland::Clear) << "\n"
 	<< "    Ploughed: " << farm->getFieldStatus(Farmland::Ready) << "\n"
 	<< "    Sowed   : " << farm->getFieldStatus(Farmland::Sowed) << "\n"
 	<< "    Sparse  : " << farm->getFieldStatus(Farmland::Ripe1) << "\n"
 	<< "    Ripe    : " << farm->getFieldStatus(Farmland::Ripe2) << "\n"
 	<< "    Abundant: " << farm->getFieldStatus(Farmland::Ripe3) << "\n"
-	<< "    Fallow  : " << farm->getFieldStatus(Farmland::Ended) << "\n"
-	<< "  Militia:";
+	<< "    Fallow  : " << farm->getFieldStatus(Farmland::Ended) << "\n";
+  }
+  if (village) {
+    str << "  Militia:";
     int totalStrength = 0;
     for (MilUnitTemplate::Iterator m = MilUnitTemplate::begin(); m != MilUnitTemplate::end(); ++m) {
-      int curr = farm->getMilitiaStrength(*m);
+      int curr = village->getMilitiaStrength(*m);
       if (0 < curr) str << "\n    " << (*m)->name.c_str() << ": " << curr;
       totalStrength += curr;
     }
     if (0 == totalStrength) str << " None\n";
-    else str << "\n    Drill level: " << farm->getMilitiaDrill() << "\n";
+    else str << "\n    Drill level: " << village->getMilitiaDrill() << "\n";
   }
 }
 
@@ -394,78 +400,6 @@ void HexGraphicsInfo::generateShapes () {
     }
   }
 
-  /*
-    // Old random code
-  int attempts = 0;
-  while (patchArea() < 1) {
-    FieldShape square;
-    square.push_back(triplet(-0.5, -0.5));
-    square.push_back(triplet(-0.5,  0.5));
-    square.push_back(triplet( 0.5,  0.5));
-    square.push_back(triplet( 0.5, -0.5));
-
-    double degree = rand();
-    degree /= RAND_MAX;
-    degree *= 360;
-
-    double move = rand();
-    move /= RAND_MAX;
-    move *= 0.60;
-    move += 0.10;
-    triplet center(move);
-    center.rotatexy(degree);
-    center += position; 
-
-    degree = rand();
-    degree /= RAND_MAX;
-    degree *= 360;
-    
-    FieldShape testField;    
-    for (pit s = square.begin(); s != square.end(); ++s) {
-      move = rand();
-      move /= RAND_MAX;
-      move -= 0.5;
-      move *= 0.1;
-      (*s).x() += move;
-      move = rand();
-      move /= RAND_MAX;
-      move -= 0.5;
-      move *= 0.1;
-      (*s).y() += move;
-      (*s) *= 0.10;
-      (*s) += center; 
-      (*s).rotatexy(degree, center);
-      testField.push_back(*s);       
-    }
-
-    bool overlap = false;
-    if (++attempts < 35) {
-      for (vector<FieldShape>::iterator field = biggerPatches.begin(); field != biggerPatches.end(); ++field) {
-	if (!overlaps(testField, (*field))) continue;
-	overlap = true;
-	break; 
-      }
-      
-      for (vector<FieldShape>::iterator field = spritePatches.begin(); field != spritePatches.end(); ++field) {
-	if (!overlaps(testField, (*field))) continue;
-	overlap = true;
-	break; 
-      }
-    }
-    
-    if (overlap) continue;
-    for (pit pt = testField.begin(); pt != testField.end(); ++pt) {
-      (*pt).z() = zone->calcHeight((*pt).x(), (*pt).y()) + zOffset; 
-    }
-
-    spritePatches.push_back(testField);
-    attempts = 0;
-  }
-  */
-
-  
-
-  
   // Now trees.
   DieRoll deesix(1, 3);   
   for (vector<FieldShape>::iterator field = spritePatches.begin(); field != spritePatches.end(); ++field) {
@@ -561,6 +495,12 @@ void HexGraphicsInfo::setFarm (FarmGraphicsInfo* f) {
   if (0 == spritePatches.size()) generateShapes();
   farmInfo = f;
   farmInfo->generateShapes(this); 
+}
+
+void HexGraphicsInfo::setVillage (VillageGraphicsInfo* f) {
+  if (0 == biggerPatches.size()) generateShapes();
+  villageInfo = f;
+  villageInfo->generateShapes(this); 
 }
 
 void LineGraphicsInfo::addCastle (HexGraphicsInfo const* supportInfo) {
@@ -1024,11 +964,6 @@ double FarmGraphicsInfo::fieldArea () {
 }
 
 void FarmGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
-  // Reverse order of generation
-  village = hex->getPatch(true);  
-  pasture = hex->getPatch(true);  
-  exercis = hex->getPatch(true);
-
   double currentArea = 0;
   while ((currentArea = fieldArea()) < myFarm->totalFields()) {
     FieldShape testField = hex->getPatch(); 
@@ -1036,8 +971,16 @@ void FarmGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
   }
 }
 
-int FarmGraphicsInfo::getHouses () const {
-  return 1 + (int) floor(myFarm->getFractionOfMaxPop() * 19 + 0.5); 
+void VillageGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
+  // Reverse order of generation
+  village = hex->getPatch(true);  
+  pasture = hex->getPatch(true);  
+  exercis = hex->getPatch(true);
+}
+
+
+int VillageGraphicsInfo::getHouses () const {
+  return 1 + (int) floor(myVillage->getFractionOfMaxPop() * 19 + 0.5); 
 }
 
 void FarmGraphicsInfo::updateFieldStatus () {
@@ -1058,11 +1001,21 @@ void FarmGraphicsInfo::updateFieldStatus () {
       }
       if (currentField == (*info)->final()) break;      
     }
+  }
+}
 
+VillageGraphicsInfo::VillageGraphicsInfo (Village* f)
+  : myVillage(f)
+{
+  allVillageInfos.push_back(this); 
+}
+
+void VillageGraphicsInfo::updateVillageStatus () {
+  for (Iterator info = begin(); info != end(); ++info) {
     // Supplies.
     (*info)->spriteIndices.clear();
     (*info)->formation.clear();
-    int numCows = min(maxCows, (int) floor((*info)->myFarm->getAvailableSupplies() / suppliesPerCow)); 
+    int numCows = min(maxCows, (int) floor((*info)->myVillage->getAvailableSupplies() / suppliesPerCow)); 
     for (int i = 0; i < numCows; ++i) {
       (*info)->spriteIndices.push_back(supplySpriteIndex);
       (*info)->formation.push_back(cowPositions[i]);
