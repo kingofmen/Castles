@@ -19,11 +19,48 @@ Next gameplay iteration (thoughts, not all to be implemented):
  * Supply line interference
  * Raid/tribute/battle mapmode 
  * Three-resource economy
+   - EconActor class
+     1. Id from save (check)
+     2. Goods from save (check) 
+     3. Write to save 
+     4. Make mirrorable 
    - Mine, forest, farm
-   - Text setup
-   - Contracts
+     1. Split Pop and Farm info (check)
+   - Ownership
+     0. Split into tenths (check) 
+     1. Implement from save (check) 
+     2. Write to save
+     3. Change upon conquest
+     4. Move labour around 
+   - Contracts and feudal dues
+     1. Implement from save
+     2. Write to save
+     3. Impose upon conquest
+     4. Renegotiate
    - Markets
    - Trade
  * Sieges
  * Command points
  
+Thoughts:
+ Who owns the land? King, local noble, farmers? 
+ Farmers will work their own land, but must be paid or forced to work others'. 
+ Same for other production - need a framework. 
+ Econ sequence:
+  Village produces labour
+  Deliver forced labour to overlords (feudal dues) 
+  Deliver contract labour in exchange for goods
+  Farmlands (and others) decide how much labour they need
+  Owners set supply/demand curves for labour
+  Hold market
+  Run production
+  Deliver goods to owners
+  Money/goods taxation
+  Consume/invest  
+  Renegotiate contracts and dues
+
+ It is necessary to create this "already in motion". 
+ Is it steady-state? Balancing needed.
+ Player should be able to interact with this! Set bids, offers, investment. Taxation!
+ 
+

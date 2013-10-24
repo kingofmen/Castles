@@ -7,7 +7,8 @@ class Village;
 class MilUnit;
 class MilUnitTemplate; 
 class GLDrawer; 
-class AgeTracker; 
+class AgeTracker;
+class EconActor; 
 
 #include "Action.hh" 
 
@@ -20,7 +21,9 @@ public:
   static void      graphicsInitialisation ();  
   static void      initialiseBuilding (Building* build, Object* info); 
   static void      initialiseCivilBuildings (Object* popInfo);
-  static void      initialiseGraphics (Object* gInfo); 
+  static void      initialiseEcon (EconActor* econ, Object* info); 
+  static void      initialiseGoods (Object* gInfo); 
+  static void      initialiseGraphics (Object* gInfo);
   static Farmland* buildFarm (Object* fInfo);
   static void      buildHex (Object* hInfo);
   static void      buildMilitia (Village* target, Object* mInfo);  

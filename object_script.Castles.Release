@@ -5,6 +5,7 @@ INPUT(
 ./release\Calendar.o
 ./release\CastleWindow.o
 ./release\Directions.o
+./release\EconActor.o
 ./release\glextensions.o
 ./release\GraphicsInfo.o
 ./release\Hex.o

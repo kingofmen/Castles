@@ -231,7 +231,10 @@ double Village::adjustedMortality (int age, bool male) const {
 }
 
 void Village::endOfTurn () {
-  eatFood();  
+  eatFood();
+  deliverGoods(EconActor::Labor, production()); 
+  
+  
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter != currSeason) return;
 
@@ -301,7 +304,11 @@ Farmland::Farmland ()
   : Building()
   , Mirrorable<Farmland>()
 {
-  for (int i = 0; i < NumStatus; ++i) fields[i] = 0; 
+  for (int i = 0; i < NumStatus; ++i) {
+    for (int j = 0; j <= numOwners; ++j) {
+      fields[j][i] = 0; 
+    }
+  }
 }
 
 Farmland::~Farmland () {}
@@ -309,6 +316,7 @@ Farmland::~Farmland () {}
 Farmland::Farmland (Farmland* other)
   : Mirrorable<Farmland>(other) 
 {}
+
 
 void Village::setMirrorState () {
   women.setMirrorState();
@@ -321,9 +329,12 @@ void Village::setMirrorState () {
 
 void Farmland::setMirrorState () {
   mirror->setOwner(getOwner());
-  for (int i = 0; i < NumStatus; ++i) mirror->fields[i] = fields[i];
+  for (int i = 0; i < NumStatus; ++i) {
+    for (int j = 0; j <= numOwners; ++j) {
+      mirror->fields[j][i] = fields[j][i];
+    }
+  }
 }
-
 
 double Village::production () const {
   double ret = 0;
@@ -345,9 +356,10 @@ double Village::consumption () const {
 
 void Farmland::devastate (int devastation) {
   while (devastation > 0) {
-    if      (fields[Ripe3] > 0) {fields[Ripe3]--; fields[Ripe2]++;}
-    else if (fields[Ripe2] > 0) {fields[Ripe2]--; fields[Ripe1]++;}
-    else if (fields[Ripe1] > 0) {fields[Ripe1]--; fields[Ready]++;}
+    int target = rand() % numOwners;
+    if      (fields[target][Ripe3] > 0) {fields[target][Ripe3]--; fields[target][Ripe2]++;}
+    else if (fields[target][Ripe2] > 0) {fields[target][Ripe2]--; fields[target][Ripe1]++;}
+    else if (fields[target][Ripe1] > 0) {fields[target][Ripe1]--; fields[target][Ready]++;}
     devastation--;
   }
 }
@@ -397,48 +409,61 @@ void Village::eatFood () {
   foodMortalityModifier = 1.0 / std::max(0.1, fraction); 
 }
 
+void Farmland::setDefaultOwner (EconActor* o) {
+  if (!o) return;
+  for (int i = 0; i < numOwners; ++i) {
+    if (EconActor::getById(owners[i])) continue;
+    owners[i] = o->getId(); 
+  }
+}
+
 void Farmland::workFields () {  
   Calendar::Season currSeason = Calendar::getCurrentSeason();
-  int total = getAssignedLand(); 
-  double availableLabour = 1000; //production(); 
+  int total = getAssignedLand();
+  unsigned int foodIdx = EconActor::getIndex("food"); 
+  double availableLabour = 0;
   
   switch (currSeason) {
   default:
   case Calendar::Winter:
     // Cleanup.
-
     // Used land becomes 'clear' for next year.
-    fields[Ended] += fields[Ripe3];
-    fields[Ended] += fields[Ripe2];
-    fields[Ended] += fields[Ripe1];
-    fields[Ended] += fields[Sowed];
-    fields[Ended] += fields[Ready];
-    fields[Ripe3] = fields[Ripe2] = fields[Ripe1] = fields[Sowed] = fields[Ready] = 0;
+    for (int i = 0; i < numOwners; ++i) {
+      fields[i][Ended] += fields[i][Ripe3];
+      fields[i][Ended] += fields[i][Ripe2];
+      fields[i][Ended] += fields[i][Ripe1];
+      fields[i][Ended] += fields[i][Sowed];
+      fields[i][Ended] += fields[i][Ready];
+      fields[i][Ripe3] = fields[i][Ripe2] = fields[i][Ripe1] = fields[i][Sowed] = fields[i][Ready] = 0;
 
-    // Fallow acreage grows over.
-    fields[Clear] = fields[Ended];
-    fields[Ended] = 0; 
-
+      // Fallow acreage grows over.
+      fields[i][Clear] = fields[i][Ended];
+      fields[i][Ended] = 0; 
+    }
+      
     break; 
 
   case Calendar::Spring:
     // In spring we clear new fields, plow and sow existing ones.
-    while (true) {
-      if ((availableLabour >= _labourToSow) && (fields[Ready] > 0)) {
-	fields[Ready]--;
-	fields[Sowed]++;
-	availableLabour -= _labourToSow;
+    for (int i = 0; i < numOwners; ++i) {
+      availableLabour = labour[i]; 
+      while (true) {
+	if ((availableLabour >= _labourToSow) && (fields[i][Ready] > 0)) {
+	  fields[i][Ready]--;
+	  fields[i][Sowed]++;
+	  availableLabour -= _labourToSow;
+	}
+	else if ((availableLabour >= _labourToPlow) && (fields[i][Clear] > 0)) {
+	  fields[i][Clear]--;
+	  fields[i][Ready]++;
+	  availableLabour -= _labourToPlow;
+	}
+	else if ((availableLabour >= _labourToClear) && (total - fields[i][Clear] - fields[i][Ready] - fields[i][Sowed] - fields[i][Ripe1] - fields[i][Ripe2] - fields[i][Ripe3] - fields[i][Ended] > 0)) {
+	  fields[i][Clear]++;
+	  availableLabour -= _labourToClear;
+	}
+	else break; 
       }
-      else if ((availableLabour >= _labourToPlow) && (fields[Clear] > 0)) {
-	fields[Clear]--;
-	fields[Ready]++;
-	availableLabour -= _labourToPlow;
-      }
-      else if ((availableLabour >= _labourToClear) && (total - fields[Clear] - fields[Ready] - fields[Sowed] - fields[Ripe1] - fields[Ripe2] - fields[Ripe3] - fields[Ended] > 0)) {
-	fields[Clear]++;
-	availableLabour -= _labourToClear;
-      }
-      else break; 
     }
     
     break;
@@ -447,64 +472,86 @@ void Farmland::workFields () {
     // In summer the crops ripen and we fight the weeds.
     // If there isn't enough labour to tend the crops, they
     // degrade; if the weather is bad they don't advance.
-    {
+    for (int i = 0; i < numOwners; ++i) {
+      availableLabour = labour[i]; 
       double weatherModifier = 1; // TODO: Insert weather-getting code here
-      int untendedRipe1 = fields[Ripe1]; fields[Ripe1] = 0;
-      int untendedRipe2 = fields[Ripe2]; fields[Ripe2] = 0;
-      int untendedRipe3 = fields[Ripe3]; fields[Ripe3] = 0;
+      int untendedRipe1 = fields[i][Ripe1]; fields[i][Ripe1] = 0;
+      int untendedRipe2 = fields[i][Ripe2]; fields[i][Ripe2] = 0;
+      int untendedRipe3 = fields[i][Ripe3]; fields[i][Ripe3] = 0;
       while (availableLabour >= _labourToWeed * weatherModifier) {
 	availableLabour -= _labourToWeed * weatherModifier;	
-	if (fields[Sowed] > 0) {
-	  fields[Sowed]--;
-	  fields[Ripe1]++;
+	if (fields[i][Sowed] > 0) {
+	  fields[i][Sowed]--;
+	  fields[i][Ripe1]++;
 	}
 	else if (untendedRipe1 > 0) {
 	  untendedRipe1--;
-	  fields[Ripe2]++;
+	  fields[i][Ripe2]++;
 	}
 	else if (untendedRipe2 > 0) {
 	  untendedRipe2--;
-	  fields[Ripe3]++;
+	  fields[i][Ripe3]++;
 	}
 	else if (untendedRipe3 > 0) {
 	  untendedRipe3--;
-	  fields[Ripe3]++;
+	  fields[i][Ripe3]++;
 	}
 	else break; 
       }
-      fields[Sowed] += untendedRipe1;
-      fields[Ripe1] += untendedRipe2;
-      fields[Ripe2] += untendedRipe3;            
+      fields[i][Sowed] += untendedRipe1;
+      fields[i][Ripe1] += untendedRipe2;
+      fields[i][Ripe2] += untendedRipe3;            
     }
     
     break;
 
   case Calendar::Autumn:
-    {
+    for (int i = 0; i < numOwners; ++i) {
       // In autumn we harvest.
-      int harvest = min(fields[Ripe3], (int) floor(availableLabour / _labourToReap));
+      availableLabour = labour[i]; 
+      int harvest = min(fields[i][Ripe3], (int) floor(availableLabour / _labourToReap));
       availableLabour -= harvest * _labourToReap;
-      supplies += _cropsFrom3 * harvest;
-      fields[Ripe3] -= harvest;
-      fields[Ended] += harvest;
+      EconActor::getById(owners[i])->deliverGoods(foodIdx, _cropsFrom3 * harvest); 
+      fields[i][Ripe3] -= harvest;
+      fields[i][Ended] += harvest;
 
-      harvest = min(fields[Ripe2], (int) floor(availableLabour / _labourToReap));
+      harvest = min(fields[i][Ripe2], (int) floor(availableLabour / _labourToReap));
       availableLabour -= harvest * _labourToReap;
-      supplies += _cropsFrom2 * harvest;
-      fields[Ripe2] -= harvest;
-      fields[Ended] += harvest;
+      EconActor::getById(owners[i])->deliverGoods(foodIdx, _cropsFrom2 * harvest); 
+      fields[i][Ripe2] -= harvest;
+      fields[i][Ended] += harvest;
 
-      harvest = min(fields[Ripe1], (int) floor(availableLabour / _labourToReap));
+      harvest = min(fields[i][Ripe1], (int) floor(availableLabour / _labourToReap));
       availableLabour -= harvest * _labourToReap;
-      supplies += _cropsFrom1 * harvest;
-      fields[Ripe1] -= harvest;
-      fields[Ended] += harvest;      
+      EconActor::getById(owners[i])->deliverGoods(foodIdx, _cropsFrom1 * harvest); 
+      fields[i][Ripe1] -= harvest;
+      fields[i][Ended] += harvest;      
     }
     
     break; 
-  }  
+  }
+  countTotals(); 
 }
 
+void Farmland::countTotals () {
+  fields[numOwners][Clear] = fields[0][Clear];
+  fields[numOwners][Ready] = fields[0][Ready];
+  fields[numOwners][Sowed] = fields[0][Sowed];
+  fields[numOwners][Ripe1] = fields[0][Ripe1];
+  fields[numOwners][Ripe2] = fields[0][Ripe2];
+  fields[numOwners][Ripe3] = fields[0][Ripe3];
+  fields[numOwners][Ended] = fields[0][Ended];
+  
+  for (int i = 1; i < numOwners; ++i) {
+    fields[numOwners][Clear] += fields[i][Clear];
+    fields[numOwners][Ready] += fields[i][Ready];
+    fields[numOwners][Sowed] += fields[i][Sowed];
+    fields[numOwners][Ripe1] += fields[i][Ripe1];
+    fields[numOwners][Ripe2] += fields[i][Ripe2];
+    fields[numOwners][Ripe3] += fields[i][Ripe3];
+    fields[numOwners][Ended] += fields[i][Ended];
+  }
+}
 
 
 int Village::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll) {

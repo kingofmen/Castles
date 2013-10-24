@@ -5,6 +5,7 @@ INPUT(
 ./debug\Calendar.o
 ./debug\CastleWindow.o
 ./debug\Directions.o
+./debug\EconActor.o
 ./debug\glextensions.o
 ./debug\GraphicsInfo.o
 ./debug\Hex.o

@@ -231,6 +231,7 @@ void Hex::createVertices () {
 
 void Hex::setFarm (Farmland* f) {
   farms = f;
+  f->setDefaultOwner(village); 
   graphicsInfo->setFarm(new FarmGraphicsInfo(f)); 
 } 
 
@@ -422,7 +423,9 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
 }
 
 void Hex::endOfTurn () {
-  if (village) village->endOfTurn(); 
+  if (village) village->endOfTurn();
+  //deliverContracts();
+  holdMarket(); 
   if (farms) farms->endOfTurn();
 }
 
@@ -449,6 +452,17 @@ Direction Hex::getDirection (Hex const * const dat) const {
     if (neighbours[i] == dat) return convertToDirection(i);
   }
   return NoDirection; 
+}
+
+void Hex::holdMarket () {
+
+
+  //village->decideBids();
+  //castle->decideBids();
+  //owner->decideBids(); 
+
+  
+  
 }
 
 Vertices Vertex::getDirection (Vertex const * const ofdis) const {

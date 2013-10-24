@@ -3,7 +3,8 @@
 #include "Player.hh" 
 #include "Building.hh"
 #include "MilUnit.hh" 
-#include "Action.hh" 
+#include "Action.hh"
+#include "EconActor.hh" 
 #include "UtilityFunctions.hh" 
 #include "GraphicsInfo.hh" 
 #include <QGLFramebufferObject>
@@ -192,12 +193,32 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Village::femaleSurplusZero = popInfo->safeGetFloat("femaleSurplusZero", Village::femaleSurplusZero);    
 }
 
+void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
+  int id = info->safeGetInt("id", -1);
+  if (0 > id) id = EconActor::allActors.size();
+  if (id >= (int) EconActor::allActors.size()) EconActor::allActors.resize(id+1);
+  assert(!EconActor::allActors[id]);
+  econ->id = id;
+  for (unsigned int i = 0; i < EconActor::numGoods; ++i) {
+    econ->goods[i] = info->safeGetFloat(EconActor::goodNames[i]);
+  }
+  EconActor::allActors[id] = econ;
+  
+}
+
 inline int heightMapWidth (int zoneSide) {
   return 2 + 3*zoneSide; 
 }
 
 inline int heightMapHeight (int zoneSide) {
   return 2 + heightMapWidth(zoneSide); // Additional 2 arises from hex/grid skew; check out (rightmost, downmost) RightDown vertex. 
+}
+
+void StaticInitialiser::initialiseGoods (Object* gInfo) {
+  EconActor::goodNames.push_back("money");
+  EconActor::goodNames.push_back("labour");
+  for (int i = 0; i < gInfo->numTokens(); ++i) EconActor::goodNames.push_back(gInfo->getToken(i)); 
+  EconActor::numGoods = EconActor::goodNames.size(); 
 }
 
 void StaticInitialiser::initialiseGraphics (Object* gInfo) {
@@ -304,22 +325,23 @@ void StaticInitialiser::buildHex (Object* hInfo) {
       m->setOwner(owner);
       castle->addGarrison(m);
     }
-    lin->addCastle(castle); 
+    lin->addCastle(castle);
+    initialiseEcon(castle, cinfo); 
   }
-  Object* fInfo = hInfo->safeGetObject("farmland");
+  Object* fInfo = hInfo->safeGetObject("village");
+  if (fInfo) {
+    Village* village = StaticInitialiser::buildVillage(fInfo);
+    initialiseBuilding(village, fInfo); 
+    if (owner) village->setOwner(owner);
+    hex->setVillage(village); 
+  }      
+  fInfo = hInfo->safeGetObject("farmland");
   if (fInfo) {
     Farmland* farms = StaticInitialiser::buildFarm(fInfo);
     initialiseBuilding(farms, fInfo); 
     if (owner) farms->setOwner(owner);
     hex->setFarm(farms); 
   }
-  fInfo = hInfo->safeGetObject("village");
-  if (fInfo) {
-    Village* village = StaticInitialiser::buildVillage(fInfo);
-    initialiseBuilding(village, fInfo); 
-    if (owner) village->setOwner(owner);
-    hex->setVillage(village); 
-  }    
 }
 
 ThreeDSprite* makeSprite (Object* info) {
@@ -341,20 +363,32 @@ void readAgeTrackerFromObject (AgeTracker& age, Object* obj) {
   for (int i = 0; i < AgeTracker::maxAge; ++i) {
     if (i >= obj->numTokens()) continue;
     age.addPop(obj->tokenAsInt(i), i);
-    
   }
 }
 
 Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Farmland* ret = new Farmland();
 
-  ret->fields[Farmland::Clear] = fInfo->safeGetInt("clear", 0);
-  ret->fields[Farmland::Ready] = fInfo->safeGetInt("ready", 0);
-  ret->fields[Farmland::Sowed] = fInfo->safeGetInt("sowed", 0);
-  ret->fields[Farmland::Ripe1] = fInfo->safeGetInt("ripe1", 0);
-  ret->fields[Farmland::Ripe2] = fInfo->safeGetInt("ripe2", 0);
-  ret->fields[Farmland::Ripe3] = fInfo->safeGetInt("ripe3", 0);
-  ret->fields[Farmland::Ended] = fInfo->safeGetInt("ended", 0);
+  Object* clear = fInfo->safeGetObject("clear");
+  Object* ready = fInfo->safeGetObject("ready");
+  Object* sowed = fInfo->safeGetObject("sowed");
+  Object* ripe1 = fInfo->safeGetObject("ripe1");
+  Object* ripe2 = fInfo->safeGetObject("ripe2");
+  Object* ripe3 = fInfo->safeGetObject("ripe3");
+  Object* ended = fInfo->safeGetObject("ended");
+  Object* owner = fInfo->safeGetObject("owner");  
+  
+  for (int i = 0; i < Farmland::numOwners; ++i) {
+    ret->fields[i][Farmland::Clear] = clear ? (clear->numTokens() >= i ? clear->tokenAsInt(i) : 0) : 0;
+    ret->fields[i][Farmland::Ready] = ready ? (ready->numTokens() >= i ? ready->tokenAsInt(i) : 0) : 0;
+    ret->fields[i][Farmland::Sowed] = sowed ? (sowed->numTokens() >= i ? sowed->tokenAsInt(i) : 0) : 0;
+    ret->fields[i][Farmland::Ripe1] = ripe1 ? (ripe1->numTokens() >= i ? ripe1->tokenAsInt(i) : 0) : 0;
+    ret->fields[i][Farmland::Ripe2] = ripe2 ? (ripe2->numTokens() >= i ? ripe2->tokenAsInt(i) : 0) : 0;
+    ret->fields[i][Farmland::Ripe3] = ripe3 ? (ripe3->numTokens() >= i ? ripe3->tokenAsInt(i) : 0) : 0;
+    ret->fields[i][Farmland::Ended] = ended ? (ended->numTokens() >= i ? ended->tokenAsInt(i) : 0) : 0;
+    ret->owners[i]                  = owner ? (owner->numTokens() >= i ? owner->tokenAsInt(i) : -1) : -1;    
+  }
+  ret->countTotals();
   
   return ret;
 }
@@ -397,6 +431,7 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
   m->setName(mInfo->safeGetString("name", "\"Unknown Soldiers\"")); 
   m->supplies = mInfo->safeGetFloat("supplies"); 
 
+  initialiseEcon(m, mInfo); 
   return m; 
 }
 
@@ -468,6 +503,7 @@ Village* StaticInitialiser::buildVillage (Object* fInfo) {
   ret->updateMaxPop(); 
   
   buildMilitia(ret, fInfo->safeGetObject("militiaUnits"));
+  initialiseEcon(ret, fInfo);
   return ret; 
 }
 
@@ -479,6 +515,7 @@ void StaticInitialiser::createPlayer (Object* info) {
   string name = info->safeGetString("name", strbuffer);
   string display = remQuotes(info->safeGetString("displayname", name));
   Player* ret = new Player(human, display, name);
+  initialiseEcon(ret, info); 
   ret->graphicsInfo = new PlayerGraphicsInfo();
 
   int red = info->safeGetInt("red");

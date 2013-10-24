@@ -54,7 +54,7 @@ public:
   Direction getDirection (Line const * const dat) const;
   Farmland* getFarm () {return farms;} 
   int getTotalPopulation () const;
-  Village* getVillage () {return village;} 
+  Village* getVillage () {return village;}
   string toString () const;
   VtxIterator vexBegin () {return vertices.begin();}
   VtxIterator vexEnd   () {return vertices.end();} 
@@ -78,7 +78,8 @@ private:
   Hex (int x, int y, TerrainType t);
   Hex (Hex* other);
   void initialise (); 
-
+  void holdMarket ();
+  
   vector<Line*> lines; 
   vector<Vertex*> vertices;
   vector<Hex*> neighbours;

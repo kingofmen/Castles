@@ -39,7 +39,9 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
   if (currGame) delete currGame; 
   currGame = new WarfareGame();
   Object* game = processFile(filename); 
-  assert(game); 
+  assert(game);
+  Object* goods = game->safeGetObject("goods"); // Must come before any EconActors are created. 
+  StaticInitialiser::initialiseGoods(goods);
   Object* hexgrid = game->safeGetObject("hexgrid");
   assert(hexgrid);
   int xsize = hexgrid->safeGetInt("x", -1);

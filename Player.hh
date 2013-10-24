@@ -2,13 +2,14 @@
 #define PLAYER_HH
 
 #include <string>
-#include <vector> 
+#include <vector>
+#include "EconActor.hh" 
 class WarfareGame;
 class Action; 
 class MilUnit; 
 class PlayerGraphicsInfo; 
 
-class Player {
+class Player : public EconActor {
   friend class StaticInitialiser; 
 public:
   Player (bool h, std::string d, std::string n);

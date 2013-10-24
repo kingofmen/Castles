@@ -36,5 +36,35 @@ created, to hardcoded values. Their icons are set by
 \texttt{setUItexts} in \texttt{StaticInitialiser}, which gets the
 information from \texttt{gui.txt} - this also supplies the tooltips.
 
+\section{Production}
+
+Each hex has a Village containing the population and militia; a
+Farmland containing its fields; a Forest which may produce wood; and a
+Mine which may produce iron. 
+
+Each turn, the Hex economy runs thus:
+\begin{itemize}
+\item The village produces labour from its population.
+\item Producers calculate their raw needs.
+\item Contracts are executed.
+\item Owners decide what to deliver from their reserves,
+and set their bids and offers for surpluses and needs.
+\item Hold a market using the bids and offers.
+\item Production.
+\item Produced goods are delivered to owners.
+\item Taxation.
+\item Consumption, including investment.
+\item Contract renegotiation.
+\end{itemize}
+
+\subsection{Labour production}
+
+The village produces labour in proportion to its population, weighted
+for age and sex. The production of each age bracket is set in
+\texttt{common/popInfo.txt}, in the \texttt{production} field. Females
+are weighted by the \texttt{femaleProduction} field - male production
+is taken as 1. Militia drill subtracts from this amount by the drill
+level, multiplied by the number of soldiers in each unit, multiplied
+by the \texttt{militiaDrill} field of the unit type definition. 
 
 \end{document}

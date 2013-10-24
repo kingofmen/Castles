@@ -6,6 +6,7 @@
 #include "Logger.hh" 
 #include "AgeTracker.hh" 
 #include "UtilityFunctions.hh" 
+#include "EconActor.hh"
 
 class MilUnit;
 class MilUnitTemplate;
@@ -44,7 +45,7 @@ private:
   int assignedLand; 
 };
 
-class Castle : public Building, public Mirrorable<Castle> {
+class Castle : public Building, public EconActor, public Mirrorable<Castle> {
   friend class Mirrorable<Castle>;
   friend class StaticInitialiser; 
 public: 
@@ -108,7 +109,7 @@ private:
   int drillLevel;
 };
 
-class Village : public Building, public Mirrorable<Village> { 
+class Village : public Building, public EconActor, public Mirrorable<Village> { 
   friend class StaticInitialiser;
   friend class Mirrorable<Village>;  
 public:
@@ -173,14 +174,27 @@ public:
   
   void devastate (int devastation);
   virtual void endOfTurn ();  
-  void workFields (); 
+  void workFields ();
+  void setDefaultOwner (EconActor* o); 
   virtual void setMirrorState ();
-  int getFieldStatus (int s) {return fields[s];}   
-  int totalFields () const {return fields[Clear] + fields[Ready] + fields[Sowed] + fields[Ripe1] + fields[Ripe2] + fields[Ripe3] + fields[Ended];}
+  int getFieldStatus (int s) {return fields[numOwners][s];}   
+  int totalFields () const {return
+      fields[numOwners][Clear] +
+      fields[numOwners][Ready] +
+      fields[numOwners][Sowed] +
+      fields[numOwners][Ripe1] +
+      fields[numOwners][Ripe2] +
+      fields[numOwners][Ripe3] +
+      fields[numOwners][Ended];}
+
+  static const int numOwners = 10; 
   
 private:
   Farmland (Farmland* other);
-  int fields[NumStatus]; 
+  void countTotals (); 
+  int fields[numOwners+1][NumStatus]; // Last is total
+  int owners[numOwners];
+  int labour[numOwners]; 
   
   static int _labourToSow;
   static int _labourToPlow;

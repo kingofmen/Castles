@@ -1,12 +1,14 @@
 #ifndef MILUNIT_HH
 #define MILUNIT_HH
 
+#include <vector>
+#include <stack> 
 #include "PopUnit.hh"
-#include <vector> 
 #include "Logger.hh" 
 #include "AgeTracker.hh"
-#include "UtilityFunctions.hh" 
-#include <stack> 
+#include "UtilityFunctions.hh"
+#include "EconActor.hh" 
+
 
 class Vertex; 
 struct BattleResult; 
@@ -65,7 +67,7 @@ public:
   AgeTracker* soldiers; 
 };
 
-class MilUnit : public Unit, public Mirrorable<MilUnit>, public Named, public MilStrength {
+class MilUnit : public Unit, public EconActor, public Mirrorable<MilUnit>, public Named, public MilStrength {
   friend class Mirrorable<MilUnit>;
   friend class StaticInitialiser;
   friend class MilUnitGraphicsInfo; 
