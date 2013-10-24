@@ -263,6 +263,12 @@ void StaticInitialiser::initialiseGraphics (Object* gInfo) {
   }
 }
 
+void StaticInitialiser::initialiseMarket (Market* market, Object* pInfo) {
+  for (unsigned int i = 1; i < EconActor::numGoods; ++i) {
+    market->prices[i] = pInfo->safeGetFloat(EconActor::goodNames[i], 1);
+  }
+}
+
 Hex* findHex (Object* info) {
   int x = info->safeGetInt("x", -1);
   if (0 > x) return 0;
@@ -342,6 +348,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     if (owner) farms->setOwner(owner);
     hex->setFarm(farms); 
   }
+  initialiseMarket(hex, hInfo->getNeededObject("prices")); 
 }
 
 ThreeDSprite* makeSprite (Object* info) {

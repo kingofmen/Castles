@@ -48,6 +48,8 @@ void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
     sort(buys.begin(), buys.end(), member_gt(&Bid::price));
     sort(sell.begin(), sell.end(), member_lt(&Bid::price));
 
+    
+    
   }
 }
 

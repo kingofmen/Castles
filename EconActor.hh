@@ -12,6 +12,7 @@ struct Bid {
 };
 
 class Market {
+  friend class StaticInitialiser; 
 public:
   Market ();
   ~Market ();

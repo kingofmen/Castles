@@ -39,6 +39,8 @@ Next gameplay iteration (thoughts, not all to be implemented):
      4. Renegotiate
    - Farmland input/output cleanup 
    - Markets
+     1. Create class (check)
+     2. Read prices from save 
    - Trade
  * Sieges
  * Command points
