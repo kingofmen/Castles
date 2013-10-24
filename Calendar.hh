@@ -11,6 +11,7 @@ namespace Calendar {
 
   void setWeek (int w);
   int turnsToAutumn ();
+  int turnsToNextSeason (); 
   std::string toString ();
   int currentWeek (); 
 };

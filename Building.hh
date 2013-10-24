@@ -13,7 +13,8 @@ class MilUnitTemplate;
 class MilUnitGraphicsInfo;
 class Hex;
 class Line; 
-class Player; 
+class Player;
+class Farmland; 
 
 struct ContractInfo {
   ContractInfo () : amount(0), delivery(Fixed) {}
@@ -123,8 +124,8 @@ public:
   void demandSupplies (ContractInfo* taxes);
   void demobMilitia (); 
   MilUnit* raiseMilitia ();
-  double production () const;  
   int produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll);
+  double production () const;    
   virtual void setMirrorState ();  
   void increaseTradition (MilUnitTemplate const* target = 0) {milTrad->increaseTradition(target);} 
   MilitiaTradition* getMilitia () {return milTrad;} 
@@ -133,12 +134,14 @@ public:
   int getMilitiaDrill () {return milTrad ? milTrad->getDrill() : 0;}
   int getMilitiaStrength (MilUnitTemplate const* const dat) {return milTrad ? milTrad->getStrength(dat) : 0;} 
   void updateMaxPop () const {maxPopulation = max(maxPopulation, getTotalPopulation());} 
+  void setFarm (Farmland* f) {farm = f;} 
   
 protected:
   AgeTracker males;
   AgeTracker women; 
   MilitiaTradition* milTrad;
   double foodMortalityModifier; 
+  Farmland* farm; 
   
   static vector<double> products;
   static vector<double> consume;
@@ -153,7 +156,7 @@ private:
   Village (Village* other); 
   
   double adjustedMortality (int age, bool male) const;   
-  void eatFood (); 
+  void eatFood ();
   
   static int maxPopulation; 
   static vector<double> baseMaleMortality;
@@ -177,7 +180,8 @@ public:
   void workFields ();
   void setDefaultOwner (EconActor* o); 
   virtual void setMirrorState ();
-  int getFieldStatus (int s) {return fields[numOwners][s];}   
+  int getFieldStatus (int s) {return fields[numOwners][s];}
+  double getNeededLabour (int ownerId) const; 
   int totalFields () const {return
       fields[numOwners][Clear] +
       fields[numOwners][Ready] +

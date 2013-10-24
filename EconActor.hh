@@ -20,12 +20,14 @@ public:
   static unsigned int getIndex (string name); 
   static const unsigned int Money;
   static const unsigned int Labor; 
+
+protected:
+  double* goods;
+  static int numGoods;
+  static vector<string> goodNames;
   
 private:
   int id;
-  double* goods;
-  static int numGoods;
-  static vector<string> goodNames; 
   static vector<EconActor*> allActors; 
 };
 

@@ -232,8 +232,8 @@ double Village::adjustedMortality (int age, bool male) const {
 
 void Village::endOfTurn () {
   eatFood();
-  deliverGoods(EconActor::Labor, production()); 
-  
+  deliverGoods(EconActor::Labor, production());
+  double needed = farm->getNeededLabour(getId());   
   
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter != currSeason) return;
@@ -397,6 +397,44 @@ void Village::demandSupplies (ContractInfo* taxes) {
 
 void Farmland::endOfTurn () {
   workFields();
+}
+
+double Farmland::getNeededLabour (int ownerId) const {
+  // Returns the amount of labour needed to tend the
+  // fields owned by ownerId, on the assumption that
+  // the necessary labour will be spread over the remaining
+  // turns in the season. 
+
+  Calendar::Season currSeason = Calendar::getCurrentSeason();
+  if (Calendar::Winter == currSeason) return 0;
+  
+  double ret = 0;
+  for (int i = 0; i < numOwners; ++i) {
+    if (owners[i] != ownerId) continue;
+
+    switch (currSeason) {
+    default:
+    case Calendar::Spring:
+      // In spring we clear new fields, plow and sow existing ones.
+      // Fields move from Clear to Ready to Sowed.
+      ret += fields[i][Ready] * _labourToSow;
+      ret += fields[i][Clear] * (_labourToPlow + _labourToSow); 
+    break;
+
+    case Calendar::Summer:
+      // All weeding work is equal. 
+      ret += (fields[i][Ready] + fields[i][Ripe1] + fields[i][Ripe2] + fields[i][Ripe3]) * _labourToWeed;
+      break;
+      
+    case Calendar::Autumn:
+      // All reaping is equal. 
+      ret += (fields[i][Ripe1] + fields[i][Ripe2] + fields[i][Ripe3]) * _labourToReap;
+      break; 
+    }
+  }
+
+  ret /= Calendar::turnsToNextSeason();
+  return ret; 
 }
 
 void Village::eatFood () {

@@ -231,12 +231,19 @@ void Hex::createVertices () {
 
 void Hex::setFarm (Farmland* f) {
   farms = f;
-  f->setDefaultOwner(village); 
+  if (village) {
+    farms->setDefaultOwner(village);
+    village->setFarm(farms);
+  }
   graphicsInfo->setFarm(new FarmGraphicsInfo(f)); 
 } 
 
 void Hex::setVillage (Village* f) {
   village = f;
+  if (farms) {
+    village->setFarm(farms);
+    farms->setDefaultOwner(village); 
+  }
   graphicsInfo->setVillage(new VillageGraphicsInfo(f)); 
 } 
 
