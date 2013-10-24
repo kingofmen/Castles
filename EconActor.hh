@@ -5,8 +5,26 @@
 #include <string> 
 using namespace std; 
 
+struct Bid {
+  unsigned int good;
+  double amount;
+  double price; 
+};
+
+class Market {
+public:
+  Market ();
+  ~Market ();
+
+  void findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell); 
+  
+protected:
+  vector<double> prices; 
+};
+
 class EconActor {
   friend class StaticInitialiser; 
+  friend class Market; 
   
 public: 
   EconActor ();
@@ -15,7 +33,7 @@ public:
   int getId () const {return id;} 
   void deliverGoods (unsigned int good, double amount) {goods[good] += amount;} 
   
-  //virtual void getBids (vector<pair<double, double> >& wantToBuy, ) {} 
+  virtual void getBids (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell); 
   static EconActor* getById (int id);
   static unsigned int getIndex (string name); 
   static const unsigned int Money;
@@ -23,7 +41,8 @@ public:
 
 protected:
   double* goods;
-  static int numGoods;
+  double* needs;
+  static unsigned int numGoods;
   static vector<string> goodNames;
   
 private:

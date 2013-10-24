@@ -462,12 +462,12 @@ Direction Hex::getDirection (Hex const * const dat) const {
 }
 
 void Hex::holdMarket () {
-
-
-  //village->decideBids();
-  //castle->decideBids();
-  //owner->decideBids(); 
-
+  vector<Bid> wantBuy;
+  vector<Bid> wantSell; 
+  village->getBids(prices, wantBuy, wantSell);
+  //castle->getBids(prices, wantBuy, wantSell);
+  //owner->getBids(prices, wantBuy, wantSell);
+  findPrices(wantBuy, wantSell);
   
   
 }

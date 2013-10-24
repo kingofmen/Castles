@@ -11,6 +11,7 @@
 #include "GraphicsInfo.hh"
 #include "UtilityFunctions.hh" 
 #include "Directions.hh" 
+#include "EconActor.hh" 
 
 class PopUnit;
 class MilUnit;
@@ -20,7 +21,7 @@ class Vertex;
 class Line;
 
 
-class Hex : public Mirrorable<Hex>, public Named {
+class Hex : public Mirrorable<Hex>, public Market, public Named {
   friend class Mirrorable<Hex>;
   friend class StaticInitialiser; 
 public: 

@@ -233,8 +233,8 @@ double Village::adjustedMortality (int age, bool male) const {
 void Village::endOfTurn () {
   eatFood();
   deliverGoods(EconActor::Labor, production());
-  double needed = farm->getNeededLabour(getId());   
-  
+  needs[EconActor::Labor] = farm->getNeededLabour(getId()); 
+
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter != currSeason) return;
 
