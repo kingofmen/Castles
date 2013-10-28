@@ -59,7 +59,7 @@ void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
     unsigned int sellIndex = 0; 
     unsigned int buysIndex = 0;
     while (true) {
-      prices[currGood]  = (sell[sellIndex].price * sell[sellIndex].amount) + (buys[buysIndex].price * buy[buysIndex].amount);
+      prices[currGood]  = (sell[sellIndex].price * sell[sellIndex].amount) + (buys[buysIndex].price * buys[buysIndex].amount);
       prices[currGood] /= (buys[buysIndex].amount + sell[sellIndex].amount);
       if (buys[buysIndex].amount - accBuys > sell[sellIndex].amount - accSell) {
 	accBuys += sell[sellIndex].amount - accSell;
@@ -73,7 +73,60 @@ void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
       }
       if (sellIndex >= sell.size()) break;
       if (buysIndex >= buys.size()) break;
-      if (sell[sellIndex].price > buys[buysIndex]) break;
+      if (sell[sellIndex].price > buys[buysIndex].price) break;
+    }
+  }
+}
+
+void Market::trade (const vector<Bid>& wantToBuy, const vector<Bid>& wantToSell) {
+  for (unsigned int currGood = 1; currGood < EconActor::numGoods; ++currGood) {
+    vector<Bid> buys;
+    vector<Bid> sell;
+    for (vector<Bid>::const_iterator g = wantToBuy.begin(); g != wantToBuy.end(); ++g) {
+      if ((*g).good != currGood) continue;
+      buys.push_back(*g);
+    }
+    for (vector<Bid>::const_iterator g = wantToSell.begin(); g != wantToSell.end(); ++g) {
+      if ((*g).good != currGood) continue;
+      sell.push_back(*g);
+    }
+
+    if (0 == buys.size() * sell.size()) continue; 
+    
+    sort(buys.begin(), buys.end(), member_gt(&Bid::price));
+    sort(sell.begin(), sell.end(), member_lt(&Bid::price));
+
+    double accBuys = 0;
+    double accSell = 0;
+    unsigned int sellIndex = 0; 
+    unsigned int buysIndex = 0;
+    while (true) {
+      if (prices[currGood] > buys[buysIndex].price) break;
+      if (prices[currGood] < sell[sellIndex].price) break;
+      
+      if (buys[buysIndex].amount - accBuys > sell[sellIndex].amount - accSell) {
+	double currAmount = sell[sellIndex].amount - accSell;
+	buys[buysIndex].actor->deliverGoods(currGood,  currAmount);
+	sell[sellIndex].actor->deliverGoods(currGood, -currAmount);
+	buys[buysIndex].actor->deliverGoods(EconActor::Money,    -currAmount*prices[currGood]);
+	sell[sellIndex].actor->deliverGoods(EconActor::Money,     currAmount*prices[currGood]);	
+	accBuys += sell[sellIndex].amount - accSell;
+	accSell = 0;
+	sellIndex++; 
+      }
+      else {
+	double currAmount = buys[buysIndex].amount - accSell;
+	buys[buysIndex].actor->deliverGoods(currGood,  currAmount);
+	sell[sellIndex].actor->deliverGoods(currGood, -currAmount);
+	buys[buysIndex].actor->deliverGoods(EconActor::Money,    -currAmount*prices[currGood]);
+	sell[sellIndex].actor->deliverGoods(EconActor::Money,     currAmount*prices[currGood]);	
+	accSell += buys[buysIndex].amount - accBuys;
+	accBuys = 0;
+	buysIndex++; 
+      }
+
+      if (sellIndex >= sell.size()) break;
+      if (buysIndex >= buys.size()) break;
     }
   }
 }
@@ -85,7 +138,8 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
     double accumulated = 0; 
     for (unsigned int j = 0; j < needs[i].size(); ++i) {
       Bid currBid;
-      currBid.good = i;      
+      currBid.good = i;
+      currBid.actor = this; 
       if (accumulated + needs[i][j].margin < goods[i]) {
 	// Sell if the price is high enough
 	currBid.amount = needs[i][j].margin;
@@ -107,7 +161,6 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
 	currBid.amount = needs[i][j].margin; 
 	currBid.price = needs[i][j].utility * unitUtilityPrice; 
 	wantToBuy.push_back(currBid); 
-	
       }
       accumulated += needs[i][j].margin;
     }

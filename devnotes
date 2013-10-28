@@ -44,8 +44,9 @@ Next gameplay iteration (thoughts, not all to be implemented):
      3. Need some sort of notation for indifference or utility. (check)
      4. Now need to calculate utilities! 
      5. Find supply-demand intersection. (check) 
-     6. Execute trades. 
+     6. Execute trades. (check) 
      7. Short-term debt. 
+     8. Display prices on GUI. 
    - Trade
  * Sieges
  * Command points

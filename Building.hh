@@ -181,7 +181,8 @@ public:
   void setDefaultOwner (EconActor* o); 
   virtual void setMirrorState ();
   int getFieldStatus (int s) {return fields[numOwners][s];}
-  double getNeededLabour (int ownerId) const; 
+  double getNeededLabour (int ownerId) const;
+  void deliverLabour (int ownerId, double amount) {labour[ownerId] += amount;}
   int totalFields () const {return
       fields[numOwners][Clear] +
       fields[numOwners][Ready] +

@@ -233,7 +233,12 @@ double Village::adjustedMortality (int age, bool male) const {
 void Village::endOfTurn () {
   eatFood();
   deliverGoods(EconActor::Labor, production());
-  needs[EconActor::Labor].push_back(Utility(100, farm->getNeededLabour(getId()))); 
+
+  needs[EconActor::Labor].clear(); 
+  double labourForFarm = farm->getNeededLabour(getId());
+  needs[EconActor::Labor].push_back(Utility(100, 0.5*labourForFarm));
+  needs[EconActor::Labor].push_back(Utility(66,  0.5*labourForFarm));
+  needs[EconActor::Labor].push_back(Utility(33,  0.5*labourForFarm)); 				    
 
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter != currSeason) return;
@@ -579,6 +584,7 @@ void Farmland::countTotals () {
   fields[numOwners][Ripe2] = fields[0][Ripe2];
   fields[numOwners][Ripe3] = fields[0][Ripe3];
   fields[numOwners][Ended] = fields[0][Ended];
+  labour[0] = 0; 
   
   for (int i = 1; i < numOwners; ++i) {
     fields[numOwners][Clear] += fields[i][Clear];
@@ -588,6 +594,7 @@ void Farmland::countTotals () {
     fields[numOwners][Ripe2] += fields[i][Ripe2];
     fields[numOwners][Ripe3] += fields[i][Ripe3];
     fields[numOwners][Ended] += fields[i][Ended];
+    labour[i] = 0;
   }
 }
 

@@ -431,7 +431,6 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
 
 void Hex::endOfTurn () {
   if (village) village->endOfTurn();
-  //deliverContracts();
   holdMarket(); 
   if (farms) farms->endOfTurn();
 }
@@ -468,7 +467,7 @@ void Hex::holdMarket () {
   //castle->getBids(prices, wantBuy, wantSell);
   //owner->getBids(prices, wantBuy, wantSell);
   findPrices(wantBuy, wantSell);
-  
+  trade(wantBuy, wantSell); 
   
 }
 

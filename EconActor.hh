@@ -4,8 +4,11 @@
 #include <vector>
 #include <string> 
 using namespace std; 
+class EconActor; 
+
 
 struct Bid {
+  EconActor* actor; 
   unsigned int good;
   double amount;
   double price; 
@@ -24,6 +27,7 @@ public:
   ~Market ();
 
   void findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell); 
+  void trade      (const vector<Bid>& wantToBuy, const vector<Bid>& wantToSell);
   
 protected:
   vector<double> prices; 
@@ -37,12 +41,14 @@ public:
   EconActor ();
   ~EconActor ();
 
-  int getId () const {return id;} 
-  void deliverGoods (unsigned int good, double amount) {goods[good] += amount;} 
+  void         deliverGoods   (unsigned int good, double amount) {goods[good] += amount;}
+  virtual void getBids        (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell);
+  int          getId          () const {return id;}   
   
-  virtual void getBids (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell); 
+
   static EconActor* getById (int id);
-  static unsigned int getIndex (string name); 
+  static unsigned int getIndex (string name);
+
   static const unsigned int Money;
   static const unsigned int Labor; 
 
