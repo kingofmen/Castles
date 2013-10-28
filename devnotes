@@ -40,7 +40,12 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Farmland input/output cleanup 
    - Markets
      1. Create class (check)
-     2. Read prices from save 
+     2. Read prices from save (check) 
+     3. Need some sort of notation for indifference or utility. (check)
+     4. Now need to calculate utilities! 
+     5. Find supply-demand intersection. (check) 
+     6. Execute trades. 
+     7. Short-term debt. 
    - Trade
  * Sieges
  * Command points

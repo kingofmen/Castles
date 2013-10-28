@@ -11,6 +11,12 @@ struct Bid {
   double price; 
 };
 
+struct Utility {
+  Utility (double u, double m) : utility(u), margin(m) {} 
+  double utility; // Per unit of goods
+  double margin;  // Max amount at which we get this utility
+};
+
 class Market {
   friend class StaticInitialiser; 
 public:
@@ -42,7 +48,7 @@ public:
 
 protected:
   double* goods;
-  double* needs;
+  vector<vector<Utility> > needs; 
   static unsigned int numGoods;
   static vector<string> goodNames;
   

@@ -13,17 +13,15 @@ EconActor::EconActor ()
   : id(-1)
 {
   goods = new double[numGoods];
-  needs = new double[numGoods];
   for (unsigned int i = 0; i < numGoods; ++i) {
     goods[i] = 0;
-    needs[i] = 0;
   }
+  needs.resize(numGoods); 
 }
 
 EconActor::~EconActor () {
   allActors[id] = 0;
   delete[] goods;
-  delete[] needs; 
 }
 
 Market::Market () {
@@ -45,26 +43,73 @@ void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
       sell.push_back(*g);
     }
 
+    if (0 == buys.size() * sell.size()) continue; 
+    
     sort(buys.begin(), buys.end(), member_gt(&Bid::price));
     sort(sell.begin(), sell.end(), member_lt(&Bid::price));
 
-    
-    
+    // Can we do business at all? 
+    if (buys[0].price < sell[0].price) {
+      prices[currGood] = sell[0].price;
+      continue; 
+    }
+
+    double accBuys = 0;
+    double accSell = 0;
+    unsigned int sellIndex = 0; 
+    unsigned int buysIndex = 0;
+    while (true) {
+      prices[currGood]  = (sell[sellIndex].price * sell[sellIndex].amount) + (buys[buysIndex].price * buy[buysIndex].amount);
+      prices[currGood] /= (buys[buysIndex].amount + sell[sellIndex].amount);
+      if (buys[buysIndex].amount - accBuys > sell[sellIndex].amount - accSell) {
+	accBuys += sell[sellIndex].amount - accSell;
+	accSell = 0;
+	buysIndex++; 
+      }
+      else {
+	accSell += buys[buysIndex].amount - accBuys;
+	accBuys = 0;
+	sellIndex++; 
+      }
+      if (sellIndex >= sell.size()) break;
+      if (buysIndex >= buys.size()) break;
+      if (sell[sellIndex].price > buys[buysIndex]) break;
+    }
   }
 }
 
 void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
+  double unitUtilityPrice = 1; 
+  
   for (unsigned int i = 1; i < numGoods; ++i) {
-    Bid currBid;
-    currBid.good = i;
-    currBid.price = prices[i];
-    if (goods[i] > needs[i]) {
-      currBid.amount = (goods[i] - needs[i]);
-      wantToSell.push_back(currBid);
-    }
-    else {
-      currBid.amount = (needs[i] - goods[i]);
-      wantToBuy.push_back(currBid);
+    double accumulated = 0; 
+    for (unsigned int j = 0; j < needs[i].size(); ++i) {
+      Bid currBid;
+      currBid.good = i;      
+      if (accumulated + needs[i][j].margin < goods[i]) {
+	// Sell if the price is high enough
+	currBid.amount = needs[i][j].margin;
+	currBid.price  = needs[i][j].utility * unitUtilityPrice * 1.1;
+	wantToSell.push_back(currBid);
+      }
+      else if ((accumulated < goods[i]) && (accumulated + needs[i][j].margin > goods[i])) {
+	// Buy and sell
+	currBid.amount = accumulated + needs[i][j].margin - goods[i]; 
+	currBid.price = needs[i][j].utility * unitUtilityPrice; 
+	wantToBuy.push_back(currBid); 
+
+	currBid.amount = goods[i] - accumulated;
+	currBid.price  = needs[i][j].utility * unitUtilityPrice * 1.1;
+	wantToSell.push_back(currBid);
+      }
+      else {
+	// Buy
+	currBid.amount = needs[i][j].margin; 
+	currBid.price = needs[i][j].utility * unitUtilityPrice; 
+	wantToBuy.push_back(currBid); 
+	
+      }
+      accumulated += needs[i][j].margin;
     }
   }
 }
