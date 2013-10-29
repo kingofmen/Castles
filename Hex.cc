@@ -431,8 +431,11 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
 
 void Hex::endOfTurn () {
   if (village) village->endOfTurn();
-  holdMarket(); 
-  if (farms) farms->endOfTurn();
+  holdMarket();
+  if (farms) {
+    if (village) farms->deliverLabour(village->getId(), village->labourForFarm()); 
+    farms->endOfTurn();
+  }
 }
 
 std::string Hex::toString () const {

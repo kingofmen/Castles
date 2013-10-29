@@ -28,11 +28,11 @@ struct ContractInfo {
 class Building {
   friend class StaticInitialiser; 
 public: 
-  Building () {}
+  Building () : owner(0) {}
   ~Building () {}
   
   virtual void endOfTurn () = 0; 
-  virtual void setOwner (Player* p) {owner = p;}
+  virtual void setOwner (Player* p); // {owner = p;}
   Player* getOwner () {return owner;} 
   int getAssignedLand () const {return assignedLand;}
   void assignLand (int amount) {assignedLand += amount; if (0 > assignedLand) assignedLand = 0;}
@@ -117,19 +117,21 @@ public:
   Village ();
   ~Village ();
 
-  virtual void endOfTurn ();
-  int getTotalPopulation () const {return males.getTotalPopulation() + women.getTotalPopulation();}
-  double getFractionOfMaxPop () const {double ret = getTotalPopulation(); ret /= maxPopulation; return min(1.0, ret);}
+
   double consumption () const;
   void demandSupplies (ContractInfo* taxes);
-  void demobMilitia (); 
+  void demobMilitia ();
+  virtual void endOfTurn ();  
+  double getFractionOfMaxPop () const {double ret = getTotalPopulation(); ret /= maxPopulation; return min(1.0, ret);}
+  MilitiaTradition* getMilitia () {return milTrad;} 
+  const MilUnitGraphicsInfo* getMilitiaGraphics () const; 
+  int getTotalPopulation () const {return males.getTotalPopulation() + women.getTotalPopulation();}
+  double labourForFarm (); 
   MilUnit* raiseMilitia ();
   int produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll);
   double production () const;    
   virtual void setMirrorState ();  
   void increaseTradition (MilUnitTemplate const* target = 0) {milTrad->increaseTradition(target);} 
-  MilitiaTradition* getMilitia () {return milTrad;} 
-  const MilUnitGraphicsInfo* getMilitiaGraphics () const;
   
   int getMilitiaDrill () {return milTrad ? milTrad->getDrill() : 0;}
   int getMilitiaStrength (MilUnitTemplate const* const dat) {return milTrad ? milTrad->getStrength(dat) : 0;} 
@@ -182,7 +184,7 @@ public:
   virtual void setMirrorState ();
   int getFieldStatus (int s) {return fields[numOwners][s];}
   double getNeededLabour (int ownerId) const;
-  void deliverLabour (int ownerId, double amount) {labour[ownerId] += amount;}
+  void deliverLabour (int ownerId, double amount);
   int totalFields () const {return
       fields[numOwners][Clear] +
       fields[numOwners][Ready] +

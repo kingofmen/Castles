@@ -135,10 +135,14 @@ void Castle::recruit (Outcome out) {
   }
 }
 
+void Building::setOwner (Player* p) {
+  owner = p;
+}
+
 void Castle::setOwner (Player* p) {
   Building::setOwner(p);
   if (isReal()) mirror->setOwner(p); 
-  for (std::vector<MilUnit*>::iterator u = garrison.begin(); u != garrison.end(); ++u) {
+  for (vector<MilUnit*>::iterator u = garrison.begin(); u != garrison.end(); ++u) {
     (*u)->setOwner(p); 
   }
 }
@@ -284,6 +288,14 @@ void Village::endOfTurn () {
   updateMaxPop(); 
 }
 
+
+double Village::labourForFarm () {
+  double ret = goods[EconActor::Labor];
+  goods[EconActor::Labor] -= ret;
+  return ret; 
+}
+ 
+
 void Village::demobMilitia () {
   if (!milTrad) return;
   milTrad->militia->demobilise(males); 
@@ -333,7 +345,7 @@ void Village::setMirrorState () {
 }
 
 void Farmland::setMirrorState () {
-  mirror->setOwner(getOwner());
+  mirror->setOwner(getOwner());  
   for (int i = 0; i < NumStatus; ++i) {
     for (int j = 0; j <= numOwners; ++j) {
       mirror->fields[j][i] = fields[j][i];
@@ -402,6 +414,20 @@ void Village::demandSupplies (ContractInfo* taxes) {
 
 void Farmland::endOfTurn () {
   workFields();
+}
+
+void Farmland::deliverLabour (int ownerId, double amount) {
+  unsigned int divs = 0; 
+  for (int i = 1; i < numOwners; ++i) {
+    if (ownerId == owners[i]) ++divs;
+  }
+
+  if (0 == divs) return;
+  amount /= divs; 
+  for (int i = 1; i < numOwners; ++i) {
+    if (ownerId != owners[i]) continue;
+    labour[i] += amount;
+  }
 }
 
 double Farmland::getNeededLabour (int ownerId) const {
