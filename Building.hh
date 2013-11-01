@@ -139,6 +139,8 @@ public:
   void setFarm (Farmland* f) {farm = f;} 
   
 protected:
+  virtual void setUtilities (); 
+  
   AgeTracker males;
   AgeTracker women; 
   MilitiaTradition* milTrad;

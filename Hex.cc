@@ -430,8 +430,8 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
 }
 
 void Hex::endOfTurn () {
+  holdMarket(); 
   if (village) village->endOfTurn();
-  holdMarket();
   if (farms) {
     if (village) farms->deliverLabour(village->getId(), village->labourForFarm()); 
     farms->endOfTurn();
@@ -466,12 +466,11 @@ Direction Hex::getDirection (Hex const * const dat) const {
 void Hex::holdMarket () {
   vector<Bid> wantBuy;
   vector<Bid> wantSell; 
-  village->getBids(prices, wantBuy, wantSell);
-  //castle->getBids(prices, wantBuy, wantSell);
-  //owner->getBids(prices, wantBuy, wantSell);
+  if (village) village->getBids(prices, wantBuy, wantSell);
+  //if (castle) castle->getBids(prices, wantBuy, wantSell);
+  if (owner) owner->getBids(prices, wantBuy, wantSell);
   findPrices(wantBuy, wantSell);
   trade(wantBuy, wantSell); 
-  
 }
 
 Vertices Vertex::getDirection (Vertex const * const ofdis) const {

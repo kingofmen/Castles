@@ -700,7 +700,8 @@ int main (int argc, char** argv) {
     QObject::connect(&(Logger::logStream(i)),   SIGNAL(message(QString)), &window, SLOT(message(QString)));
     Logger::logStream(i).setActive(false); 
   }
-  Logger::logStream(DebugAI).setActive(true); 
+  //Logger::logStream(DebugAI).setActive(true);
+  Logger::logStream(DebugTrade).setActive(true); 
   
   return industryApp.exec();  
 }

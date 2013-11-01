@@ -133,6 +133,17 @@ void Market::trade (const vector<Bid>& wantToBuy, const vector<Bid>& wantToSell)
 
 void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
   double unitUtilityPrice = 1; 
+  for (unsigned int i = 1; i < numGoods; ++i) {
+    double accumulated = 0; 
+    for (unsigned int j = 0; j < needs[i].size(); ++i) {
+      if (accumulated + needs[i][j].margin >= goods[i]) {
+	unitUtilityPrice = min(unitUtilityPrice, prices[i] / needs[i][j].utility);
+	break; 
+      }
+      accumulated += goods[i]; 
+    }
+  }
+
   
   for (unsigned int i = 1; i < numGoods; ++i) {
     double accumulated = 0; 
@@ -182,3 +193,8 @@ unsigned int EconActor::getIndex (string gName) {
   return goodNames.size(); 
 }
 
+void EconActor::setAllUtils () {
+  for (Iter e = start(); e != final(); ++e) (*e)->setUtilities(); 
+}
+
+void EconActor::setUtilities () {} // Do nothing by default - override in subclasses. 

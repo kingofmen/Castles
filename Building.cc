@@ -234,15 +234,17 @@ double Village::adjustedMortality (int age, bool male) const {
   return baseFemaleMortality[age]*foodMortalityModifier;
 }
 
-void Village::endOfTurn () {
-  eatFood();
-  deliverGoods(EconActor::Labor, production());
-
+void Village::setUtilities () {
+  deliverGoods(EconActor::Labor, production());  
   needs[EconActor::Labor].clear(); 
   double labourForFarm = farm->getNeededLabour(getId());
   needs[EconActor::Labor].push_back(Utility(100, 0.5*labourForFarm));
   needs[EconActor::Labor].push_back(Utility(66,  0.5*labourForFarm));
   needs[EconActor::Labor].push_back(Utility(33,  0.5*labourForFarm)); 				    
+}
+
+void Village::endOfTurn () {
+  eatFood();
 
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter != currSeason) return;

@@ -32,40 +32,41 @@ public:
   typedef vector<Vertex*>::iterator VtxIterator; 
   typedef set<Hex*>::iterator Iterator; 
 
-  bool colonise (Line* lin, MilUnit* unit, Outcome out); 
-  void raid (MilUnit* raiders, Outcome out); 
-  void repair (Outcome out); 
-  void setNeighbour (Direction d, Hex* dat);
-  void createVertices (); 
-  int numPops () const {return units.size();}
-  PopUnit* removePop () {PopUnit* ret = units.back(); units.pop_back(); return ret;}
-  void addPop (PopUnit* p) {units.push_back(p);} 
-  pair<int, int> getPos () const {return pos;}
-  pair<int, int> getPos (Direction dat) const; 
-  TerrainType getType () const {return myType;}
-  int numMovesTo (Hex const * const dat) const;
-  void endOfTurn ();
-  void setOwner (Player* p);
-  HexGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;}   
-  Player* getOwner () {return owner;} 
-  Vertex* getVertex (int i);
-  Line* getLine (Direction dir) {return lines[dir];}
-  Vertices getDirection (Vertex const * const ofdis) const;
-  Direction getDirection (Hex const * const dat) const;
-  Direction getDirection (Line const * const dat) const;
-  Farmland* getFarm () {return farms;} 
-  int getTotalPopulation () const;
-  Village* getVillage () {return village;}
-  string toString () const;
-  VtxIterator vexBegin () {return vertices.begin();}
-  VtxIterator vexEnd   () {return vertices.end();} 
-  LineIterator linBegin () {return lines.begin();}
-  LineIterator linEnd   () {return lines.end();}
-  int recruit (Player* forhim, MilUnitTemplate const* const recruitType, MilUnit* target, Outcome out); 
-  void setLine (Direction dir, Line* l);
-  void setFarm (Farmland* f);
-  void setVillage (Village* v); 
-  virtual void setMirrorState (); 
+  void                   addPop (PopUnit* p) {units.push_back(p);}   
+  bool                   colonise (Line* lin, MilUnit* unit, Outcome out);
+  void                   createVertices ();
+  void                   endOfTurn ();
+  Vertices               getDirection (Vertex const * const ofdis) const;
+  Direction              getDirection (Hex const * const dat) const;
+  Direction              getDirection (Line const * const dat) const;
+  Farmland*              getFarm () {return farms;}   
+  HexGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;}
+  Line*                  getLine (Direction dir) {return lines[dir];}  
+  Player*                getOwner () {return owner;}
+  pair<int, int>         getPos () const {return pos;}
+  pair<int, int>         getPos (Direction dat) const; 
+  int                    getTotalPopulation () const;
+  TerrainType            getType () const {return myType;}   
+  Vertex*                getVertex (int i);  
+  Village*               getVillage () {return village;} 
+  void                   holdMarket ();
+  LineIterator           linBegin () {return lines.begin();}
+  LineIterator           linEnd   () {return lines.end();} 
+  int                    numMovesTo (Hex const * const dat) const;  
+  int                    numPops () const {return units.size();}
+  void                   raid (MilUnit* raiders, Outcome out);
+  PopUnit*               removePop () {PopUnit* ret = units.back(); units.pop_back(); return ret;}  
+  void                   repair (Outcome out); 
+  void                   setNeighbour (Direction d, Hex* dat);
+  void                   setOwner (Player* p);  
+  string                 toString () const;
+  VtxIterator            vexBegin () {return vertices.begin();}
+  VtxIterator            vexEnd   () {return vertices.end();}
+  int                    recruit (Player* forhim, MilUnitTemplate const* const recruitType, MilUnit* target, Outcome out); 
+  void                   setLine (Direction dir, Line* l);
+  void                   setFarm (Farmland* f);
+  void                   setVillage (Village* v); 
+  virtual void           setMirrorState (); 
   
   static Iterator begin () {return allHexes.begin();}
   static Iterator end () {return allHexes.end();}  
@@ -79,7 +80,6 @@ private:
   Hex (int x, int y, TerrainType t);
   Hex (Hex* other);
   void initialise (); 
-  void holdMarket ();
   
   vector<Line*> lines; 
   vector<Vertex*> vertices;

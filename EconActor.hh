@@ -44,15 +44,21 @@ public:
   void         deliverGoods   (unsigned int good, double amount) {goods[good] += amount;}
   virtual void getBids        (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell);
   int          getId          () const {return id;}   
-  
+
+  typedef vector<EconActor*>::iterator Iter;
+  static Iter start () {return allActors.begin();}
+  static Iter final () {return allActors.end();} 
 
   static EconActor* getById (int id);
   static unsigned int getIndex (string name);
+  static void setAllUtils (); 
 
   static const unsigned int Money;
   static const unsigned int Labor; 
 
 protected:
+  virtual void setUtilities (); 
+  
   double* goods;
   vector<vector<Utility> > needs; 
   static unsigned int numGoods;

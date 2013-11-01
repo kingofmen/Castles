@@ -214,10 +214,10 @@ void findRoute (Geography* source, Geography* destination, Player* side, double 
 }
 
 void WarfareGame::endOfTurn () {
-  updateGreatestMilStrength(); 
+  updateGreatestMilStrength();
+  EconActor::setAllUtils(); 
   LineGraphicsInfo::endTurn(); 
-  
-  // Production phase
+
   for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) (*hex)->endOfTurn();
   for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) (*lin)->endOfTurn();
   for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) (*vex)->endOfTurn();

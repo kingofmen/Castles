@@ -20,7 +20,8 @@ enum Debugs {DebugLeaders = 30,
 	     DebugSliders,
 	     DebugIdeas,
 	     DebugRevolters,
-	     DebugCores, 
+	     DebugCores,
+	     DebugTrade, 
 	     NumDebugs};
 
 const int DebugStartup = NumDebugs+1; 
