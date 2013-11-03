@@ -54,6 +54,13 @@ void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
     // Can we do business at all? 
     if (buys[0].price < sell[0].price) {
       prices[currGood] = sell[0].price;
+      Logger::logStream(DebugTrade) << "Highest "
+				    << EconActor::getGoodName(currGood)
+				    << " bid "
+				    << buys[0].price
+				    << "less than lowest offer "
+				    << sell[0].price
+				    << ".\n"; 
       continue; 
     }
 
@@ -78,6 +85,7 @@ void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
       if (buysIndex >= buys.size()) break;
       if (sell[sellIndex].price > buys[buysIndex].price) break;
     }
+    Logger::logStream(DebugTrade) << "Set price of " << EconActor::getGoodName(currGood) << " to " << prices[currGood] << "\n"; 
   }
 }
 
@@ -146,7 +154,8 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
       accumulated += goods[i]; 
     }
   }
-
+  Logger::logStream(DebugTrade) << getId() << " entering getBids with unit util price " << unitUtilityPrice << "\n"; 
+  //if (2 == getId()) Logger::logStream(DebugTrade) << "Entering getBids with unit util price " << unitUtilityPrice << "\n"; 
   
   for (unsigned int i = 1; i < numGoods; ++i) {
     double accumulated = 0; 

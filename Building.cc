@@ -83,6 +83,15 @@ void Castle::endOfTurn () {
   taxExtraction.delivered = 0;
 }
 
+void Castle::setUtilities () {
+  needs[EconActor::Labor].clear(); 
+  double labourForFarm = support->getFarm()->getNeededLabour(getId());
+  needs[EconActor::Labor].push_back(Utility(100, 0.5*labourForFarm));
+  needs[EconActor::Labor].push_back(Utility(66,  0.5*labourForFarm));
+  needs[EconActor::Labor].push_back(Utility(33,  0.5*labourForFarm));
+  Logger::logStream(DebugTrade) << "Castle needs " << labourForFarm << " labour for farm, have " << goods[EconActor::Labor] << "\n"; 
+}
+
 void Castle::supplyGarrison () {
   if (0 == garrison.size()) return; 
   double totalRequired = 0.001; 

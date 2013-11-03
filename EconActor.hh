@@ -6,7 +6,6 @@
 using namespace std; 
 class EconActor; 
 
-
 struct Bid {
   EconActor* actor; 
   unsigned int good;
@@ -51,6 +50,7 @@ public:
 
   static EconActor* getById (int id);
   static unsigned int getIndex (string name);
+  static string getGoodName (unsigned int idx) {return goodNames[idx];} 
   static void setAllUtils (); 
 
   static const unsigned int Money;

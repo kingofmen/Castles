@@ -90,7 +90,8 @@ private:
   Player* owner;
   HexGraphicsInfo* graphicsInfo; 
   Farmland* farms;
-  Village* village; 
+  Village* village;
+  Castle* castle; 
   int arableLand; 
   
   

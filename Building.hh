@@ -72,6 +72,9 @@ public:
   
   static const int maxGarrison; 
   static double getSiegeMod () {return siegeModifier;} 
+
+protected:
+  virtual void setUtilities (); 
   
 private:
   Castle (Castle* other);   

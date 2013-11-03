@@ -321,6 +321,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     Line* lin = findLine(cinfo, hex);
     assert(0 == lin->getCastle());             
     Castle* castle = new Castle(hex, lin);
+    hex->castle = castle; 
     castle->setOwner(owner);
     initialiseBuilding(castle, cinfo);
     initialiseContract(&(castle->taxExtraction), cinfo->safeGetObject("taxes"));

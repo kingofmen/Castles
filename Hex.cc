@@ -54,6 +54,8 @@ Hex::Hex (int x, int y, TerrainType t)
   , myType(t)
   , owner(0)
   , farms(0)
+  , village(0)
+  , castle(0)
 {
   initialise();
 
@@ -72,6 +74,8 @@ Hex::Hex (Hex* other)
   , myType(other->myType)
   , owner(0)
   , farms(0)
+  , village(0)
+  , castle(0)    
 {}
 
 void Hex::initialise () {
@@ -430,7 +434,7 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
 }
 
 void Hex::endOfTurn () {
-  if ((pos.first == 1) && (pos.second == 1)) Logger::logStream(DebugTrade).setActive(true);
+  if ((pos.first == 0) && (pos.second == 0)) Logger::logStream(DebugTrade).setActive(true);
   else Logger::logStream(DebugTrade).setActive(false); 
   holdMarket(); 
   if (village) village->endOfTurn();
@@ -469,7 +473,7 @@ void Hex::holdMarket () {
   vector<Bid> wantBuy;
   vector<Bid> wantSell; 
   if (village) village->getBids(prices, wantBuy, wantSell);
-  //if (castle) castle->getBids(prices, wantBuy, wantSell);
+  if (castle) castle->getBids(prices, wantBuy, wantSell);
   if (owner) owner->getBids(prices, wantBuy, wantSell);
   findPrices(wantBuy, wantSell);
   trade(wantBuy, wantSell); 
@@ -626,7 +630,7 @@ void Vertex::setMirrorState () {
 
 void Hex::setMirrorState () {
   mirror->owner = owner;
-
+  
   if (farms) {
     farms->setMirrorState();
     mirror->farms = farms->Mirrorable<Farmland>::getMirror();
@@ -642,7 +646,9 @@ void Hex::setMirrorState () {
   else {
     if (mirror->village) delete mirror->village->Mirrorable<Village>::getReal(); 
     mirror->village = 0; 
-  }    
+  }
+  if (castle) mirror->castle = castle->Mirrorable<Castle>::getMirror();
+  else mirror->castle = 0;
 }
 
 bool Hex::colonise (Line* lin, MilUnit* unit, Outcome out) {
@@ -689,7 +695,7 @@ bool Hex::colonise (Line* lin, MilUnit* unit, Outcome out) {
 
   if (!success) return false;
   
-  Castle* castle = new Castle(this, lin); 
+  castle = new Castle(this, lin);
   castle->setOwner(unit->getOwner());
   setOwner(unit->getOwner()); 
   addContent(lin, castle, &Line::addCastle);
