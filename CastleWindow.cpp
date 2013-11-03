@@ -695,7 +695,7 @@ int main (int argc, char** argv) {
   QObject::connect(&(Logger::logStream(Logger::Warning)), SIGNAL(message(QString)), &window, SLOT(message(QString)));
   QObject::connect(&(Logger::logStream(Logger::Error)),   SIGNAL(message(QString)), &window, SLOT(message(QString))); 
 
-  for (int i = DebugLeaders; i < NumDebugs; ++i) {
+  for (int i = DebugGeneral; i < NumDebugs; ++i) {
     Logger::createStream(i);
     QObject::connect(&(Logger::logStream(i)),   SIGNAL(message(QString)), &window, SLOT(message(QString)));
     Logger::logStream(i).setActive(false); 

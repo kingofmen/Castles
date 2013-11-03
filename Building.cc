@@ -240,7 +240,8 @@ void Village::setUtilities () {
   double labourForFarm = farm->getNeededLabour(getId());
   needs[EconActor::Labor].push_back(Utility(100, 0.5*labourForFarm));
   needs[EconActor::Labor].push_back(Utility(66,  0.5*labourForFarm));
-  needs[EconActor::Labor].push_back(Utility(33,  0.5*labourForFarm)); 				    
+  needs[EconActor::Labor].push_back(Utility(33,  0.5*labourForFarm));
+  Logger::logStream(DebugTrade) << "Need " << labourForFarm << " labour for farm, have " << goods[EconActor::Labor] << "\n"; 
 }
 
 void Village::endOfTurn () {
@@ -420,13 +421,13 @@ void Farmland::endOfTurn () {
 
 void Farmland::deliverLabour (int ownerId, double amount) {
   unsigned int divs = 0; 
-  for (int i = 1; i < numOwners; ++i) {
+  for (int i = 0; i < numOwners; ++i) {
     if (ownerId == owners[i]) ++divs;
   }
 
   if (0 == divs) return;
   amount /= divs; 
-  for (int i = 1; i < numOwners; ++i) {
+  for (int i = 0; i < numOwners; ++i) {
     if (ownerId != owners[i]) continue;
     labour[i] += amount;
   }

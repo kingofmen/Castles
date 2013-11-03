@@ -1,6 +1,7 @@
 #include "EconActor.hh"
-#include <cassert>
 #include "StructUtils.hh"
+#include "Logger.hh" 
+#include <cassert>
 #include <algorithm> 
 
 const unsigned int EconActor::Money = 0;
@@ -31,6 +32,8 @@ Market::Market () {
 Market::~Market () {}
 
 void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
+  Logger::logStream(DebugTrade) << "Entering findPrices with " << wantToBuy.size() << " " << wantToSell.size() << "\n"; 
+  
   for (unsigned int currGood = 1; currGood < EconActor::numGoods; ++currGood) {
     vector<Bid> buys;
     vector<Bid> sell;

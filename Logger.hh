@@ -8,19 +8,10 @@
 #include <fstream>
 #include <ios> 
 
-enum Debugs {DebugLeaders = 30,
-	     DebugProvinces,
-	     DebugMinisters,
-	     DebugTechTeams,
-	     DebugResources,
-	     DebugAI,
+enum Debugs {DebugGeneral = 30,
+	     DebugAI = 30,
 	     DebugBuildings,
-	     DebugUnits,
-	     DebugStockpiles,
-	     DebugSliders,
-	     DebugIdeas,
-	     DebugRevolters,
-	     DebugCores,
+	     DebugProduction,
 	     DebugTrade, 
 	     NumDebugs};
 
