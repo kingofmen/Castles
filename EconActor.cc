@@ -58,7 +58,7 @@ void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
 				    << EconActor::getGoodName(currGood)
 				    << " bid "
 				    << buys[0].price
-				    << "less than lowest offer "
+				    << " less than lowest offer "
 				    << sell[0].price
 				    << ".\n"; 
       continue; 
@@ -121,17 +121,19 @@ void Market::trade (const vector<Bid>& wantToBuy, const vector<Bid>& wantToSell)
 	sell[sellIndex].actor->deliverGoods(currGood, -currAmount);
 	buys[buysIndex].actor->deliverGoods(EconActor::Money,    -currAmount*prices[currGood]);
 	sell[sellIndex].actor->deliverGoods(EconActor::Money,     currAmount*prices[currGood]);	
-	accBuys += sell[sellIndex].amount - accSell;
+	accBuys += currAmount; 
+	Logger::logStream(DebugTrade) << "Sold " << currAmount << " " << EconActor::getGoodName(currGood) << " at price " << prices[currGood] << "\n"; 
 	accSell = 0;
 	sellIndex++; 
       }
       else {
-	double currAmount = buys[buysIndex].amount - accSell;
+	double currAmount = buys[buysIndex].amount - accBuys;
 	buys[buysIndex].actor->deliverGoods(currGood,  currAmount);
 	sell[sellIndex].actor->deliverGoods(currGood, -currAmount);
 	buys[buysIndex].actor->deliverGoods(EconActor::Money,    -currAmount*prices[currGood]);
 	sell[sellIndex].actor->deliverGoods(EconActor::Money,     currAmount*prices[currGood]);	
-	accSell += buys[buysIndex].amount - accBuys;
+	accSell += currAmount; 
+	Logger::logStream(DebugTrade) << "Sold " << currAmount << " " << EconActor::getGoodName(currGood) << " at price " << prices[currGood] << "\n"; 
 	accBuys = 0;
 	buysIndex++; 
       }
@@ -148,6 +150,15 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
     double accumulated = 0; 
     for (unsigned int j = 0; j < needs[i].size(); ++i) {
       if (accumulated + needs[i][j].margin >= goods[i]) {
+	Logger::logStream(DebugTrade) << "Found "
+				      << i
+				      << " margin at "
+				      << accumulated << " "
+				      << goods[i] << " "
+				      << needs[i][j].margin << " "
+				      << needs[i][j].utility << " "
+				      << prices[i] << " " 
+				      << "\n"; 
 	unitUtilityPrice = min(unitUtilityPrice, prices[i] / needs[i][j].utility);
 	break; 
       }
@@ -155,11 +166,10 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
     }
   }
   Logger::logStream(DebugTrade) << getId() << " entering getBids with unit util price " << unitUtilityPrice << "\n"; 
-  //if (2 == getId()) Logger::logStream(DebugTrade) << "Entering getBids with unit util price " << unitUtilityPrice << "\n"; 
   
   for (unsigned int i = 1; i < numGoods; ++i) {
     double accumulated = 0; 
-    for (unsigned int j = 0; j < needs[i].size(); ++i) {
+    for (unsigned int j = 0; j < needs[i].size(); ++j) {
       Bid currBid;
       currBid.good = i;
       currBid.actor = this; 
@@ -168,6 +178,13 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
 	currBid.amount = needs[i][j].margin;
 	currBid.price  = needs[i][j].utility * unitUtilityPrice * 1.1;
 	wantToSell.push_back(currBid);
+	Logger::logStream(DebugTrade) << getId() << " sells " << i << " due to "
+				      << needs[i][j].margin << " "
+				      << goods[i] << " "
+				      << needs[i][j].utility << " "
+				      << accumulated << " "
+				      << needs[i].size() << " "
+				      << "\n"; 
       }
       else if ((accumulated < goods[i]) && (accumulated + needs[i][j].margin > goods[i])) {
 	// Buy and sell
@@ -186,6 +203,15 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
 	wantToBuy.push_back(currBid); 
       }
       accumulated += needs[i][j].margin;
+    }
+    if (accumulated < goods[i]) {
+      // Final "leftovers" sell bid
+      Bid finalBid;
+      finalBid.good = i;
+      finalBid.actor = this;
+      finalBid.amount = goods[i] - accumulated;
+      finalBid.price = unitUtilityPrice * 0.1;
+      wantToSell.push_back(finalBid);
     }
   }
 }

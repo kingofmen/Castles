@@ -83,13 +83,20 @@ void Castle::endOfTurn () {
   taxExtraction.delivered = 0;
 }
 
+double Castle::labourForFarm () {
+  double ret = goods[EconActor::Labor];
+  goods[EconActor::Labor] -= ret;
+  Logger::logStream(DebugTrade) << "Castle delivers " << ret << " labour to farm.\n"; 
+  return ret; 
+}
+
 void Castle::setUtilities () {
   needs[EconActor::Labor].clear(); 
   double labourForFarm = support->getFarm()->getNeededLabour(getId());
   needs[EconActor::Labor].push_back(Utility(100, 0.5*labourForFarm));
   needs[EconActor::Labor].push_back(Utility(66,  0.5*labourForFarm));
   needs[EconActor::Labor].push_back(Utility(33,  0.5*labourForFarm));
-  Logger::logStream(DebugTrade) << "Castle needs " << labourForFarm << " labour for farm, have " << goods[EconActor::Labor] << "\n"; 
+  Logger::logStream(Logger::Debug) << "Castle needs " << labourForFarm << " labour for farm, have " << goods[EconActor::Labor] << "\n"; 
 }
 
 void Castle::supplyGarrison () {
@@ -250,7 +257,6 @@ void Village::setUtilities () {
   needs[EconActor::Labor].push_back(Utility(100, 0.5*labourForFarm));
   needs[EconActor::Labor].push_back(Utility(66,  0.5*labourForFarm));
   needs[EconActor::Labor].push_back(Utility(33,  0.5*labourForFarm));
-  Logger::logStream(DebugTrade) << "Need " << labourForFarm << " labour for farm, have " << goods[EconActor::Labor] << "\n"; 
 }
 
 void Village::endOfTurn () {

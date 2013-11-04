@@ -57,9 +57,10 @@ public:
   void callForSurrender (MilUnit* siegers, Outcome out); 
   virtual void endOfTurn ();
   Line* getLocation () {return location;}
-  Hex* getSupport () {return support;}
-  int numGarrison () const {return garrison.size();}
   MilUnit* getGarrison (unsigned int i) {if (i >= garrison.size()) return 0; return garrison[i];}
+  Hex* getSupport () {return support;}
+  double labourForFarm (); 
+  int numGarrison () const {return garrison.size();}
   void recruit (Outcome out);  
   MilUnit* removeGarrison ();
   double removeSupplies (double amount);   
