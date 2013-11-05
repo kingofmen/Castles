@@ -202,7 +202,7 @@ void initialiseContract (ContractInfo* contract, Object* info) {
   if (info->safeGetString("type") == "fixed") contract->delivery = ContractInfo::Fixed;
   else if (info->safeGetString("type") == "percentage") contract->delivery = ContractInfo::Percentage; 
   else if (info->safeGetString("type") == "surplus_percentage") contract->delivery = ContractInfo::SurplusPercentage;
-  contract->good = EconActor::getIndex(info->safeGetString("good")); 
+  contract->good = EconActor::getIndex(info->safeGetString("good"));
 }
 
 void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
@@ -216,11 +216,21 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
   }
   EconActor::allActors[id] = econ;
 
+  static map<Object*, ContractInfo*> unFilled;
+  objvec toRemove;
+  for (map<Object*, ContractInfo*>::iterator un = unFilled.begin(); un != unFilled.end(); ++un) {
+    if ((*un).first->safeGetInt("recipient") != id) continue;
+    (*un).second->recipient = econ;
+    toRemove.push_back((*un).first);
+  }
+  for (objiter tr = toRemove.begin(); tr != toRemove.end(); ++tr) unFilled.erase(*tr); 
+  
   objvec contracts = info->getValue("contract");
   for (objiter cInfo = contracts.begin(); cInfo != contracts.end(); ++cInfo) {
     ContractInfo* contract = new ContractInfo();
+    initialiseContract(contract, *cInfo);
+    if (!contract->recipient) unFilled[*cInfo] = contract;
     econ->obligations.push_back(contract);
-    initialiseContract(contract, *cInfo); 
   }
 }
 
