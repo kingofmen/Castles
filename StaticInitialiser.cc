@@ -193,6 +193,18 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Village::femaleSurplusZero = popInfo->safeGetFloat("femaleSurplusZero", Village::femaleSurplusZero);    
 }
 
+void initialiseContract (ContractInfo* contract, Object* info) {
+  if (!info) return; 
+  if (!contract) return;
+  
+  contract->recipient = EconActor::getById(info->safeGetInt("target")); 
+  contract->amount = info->safeGetFloat("amount", 0);
+  if (info->safeGetString("type") == "fixed") contract->delivery = ContractInfo::Fixed;
+  else if (info->safeGetString("type") == "percentage") contract->delivery = ContractInfo::Percentage; 
+  else if (info->safeGetString("type") == "surplus_percentage") contract->delivery = ContractInfo::SurplusPercentage;
+  contract->good = EconActor::getIndex(info->safeGetString("good")); 
+}
+
 void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
   int id = info->safeGetInt("id", -1);
   if (0 > id) id = EconActor::allActors.size();
@@ -203,7 +215,13 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
     econ->goods[i] = info->safeGetFloat(EconActor::goodNames[i]);
   }
   EconActor::allActors[id] = econ;
-  
+
+  objvec contracts = info->getValue("contract");
+  for (objiter cInfo = contracts.begin(); cInfo != contracts.end(); ++cInfo) {
+    ContractInfo* contract = new ContractInfo();
+    econ->obligations.push_back(contract);
+    initialiseContract(contract, *cInfo); 
+  }
 }
 
 inline int heightMapWidth (int zoneSide) {
@@ -300,16 +318,6 @@ void StaticInitialiser::initialiseBuilding (Building* build, Object* info) {
   build->supplies = info->safeGetFloat("supplies", 0); 
 }
 
-void initialiseContract (ContractInfo* contract, Object* info) {
-  if (!info) return; 
-  if (!contract) return;
-
-  contract->amount = info->safeGetFloat("amount", 0);
-  if (info->safeGetString("type") == "fixed") contract->delivery = ContractInfo::Fixed;
-  else if (info->safeGetString("type") == "percentage") contract->delivery = ContractInfo::Percentage; 
-  else if (info->safeGetString("type") == "surplus_percentage") contract->delivery = ContractInfo::SurplusPercentage;
-}
-
 void StaticInitialiser::buildHex (Object* hInfo) {
   Hex* hex = findHex(hInfo);
   string ownername = hInfo->safeGetString("player");
@@ -324,7 +332,6 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     hex->castle = castle; 
     castle->setOwner(owner);
     initialiseBuilding(castle, cinfo);
-    initialiseContract(&(castle->taxExtraction), cinfo->safeGetObject("taxes"));
     castle->recruitType = MilUnitTemplate::getUnitType(cinfo->safeGetString("recruiting", *(MilUnitTemplate::beginTypeNames()))); 
     Object* garrison = cinfo->safeGetObject("garrison");
     if (garrison) {
@@ -1100,6 +1107,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
 	castleObject->setValue(garrObject);
 	writeUnitToObject(castle->getGarrison(i), garrObject);
       }
+      /*
       Object* taxObject = new Object("taxes");
       castleObject->setValue(taxObject);
       taxObject->setLeaf("amount", castle->taxExtraction.amount);
@@ -1109,6 +1117,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       case ContractInfo::Percentage:        taxObject->setLeaf("type", "percentage"); break;
       case ContractInfo::SurplusPercentage: taxObject->setLeaf("type", "surplus_percentage"); break;
       }
+      */
     }
 
     Village* village = (*hex)->getVillage();

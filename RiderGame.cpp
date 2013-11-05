@@ -215,6 +215,8 @@ void findRoute (Geography* source, Geography* destination, Player* side, double 
 
 void WarfareGame::endOfTurn () {
   updateGreatestMilStrength();
+  EconActor::production(); 
+  EconActor::executeContracts();  
   EconActor::setAllUtils(); 
   LineGraphicsInfo::endTurn(); 
 

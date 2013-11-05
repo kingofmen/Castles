@@ -16,15 +16,6 @@ class Line;
 class Player;
 class Farmland; 
 
-struct ContractInfo {
-  ContractInfo () : amount(0), delivery(Fixed) {}
-  
-  enum AmountType {Fixed, Percentage, SurplusPercentage};
-  double amount;
-  AmountType delivery;
-  double delivered; 
-};
-
 class Building {
   friend class StaticInitialiser; 
 public: 
@@ -32,7 +23,7 @@ public:
   ~Building () {}
   
   virtual void endOfTurn () = 0; 
-  virtual void setOwner (Player* p); // {owner = p;}
+  virtual void setOwner (Player* p); 
   Player* getOwner () {return owner;} 
   int getAssignedLand () const {return assignedLand;}
   void assignLand (int amount) {assignedLand += amount; if (0 > assignedLand) assignedLand = 0;}
@@ -84,8 +75,6 @@ private:
   Hex* support;
   Line* location; 
   const MilUnitTemplate* recruitType;
-  ContractInfo taxExtraction; 
-  
   static double siegeModifier; 
 }; 
 
@@ -123,7 +112,6 @@ public:
 
 
   double consumption () const;
-  void demandSupplies (ContractInfo* taxes);
   void demobMilitia ();
   virtual void endOfTurn ();  
   double getFractionOfMaxPop () const {double ret = getTotalPopulation(); ret /= maxPopulation; return min(1.0, ret);}
@@ -133,7 +121,8 @@ public:
   double labourForFarm (); 
   MilUnit* raiseMilitia ();
   int produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll);
-  double production () const;    
+  double production () const;
+  virtual void produce (); 
   virtual void setMirrorState ();  
   void increaseTradition (MilUnitTemplate const* target = 0) {milTrad->increaseTradition(target);} 
   

@@ -78,9 +78,9 @@ void Castle::callForSurrender (MilUnit* siegers, Outcome out) {
 }
 
 void Castle::endOfTurn () {
-  support->getVillage()->demandSupplies(&taxExtraction);
-  supplies += taxExtraction.delivered;
-  taxExtraction.delivered = 0;
+  //support->getVillage()->demandSupplies(&taxExtraction);
+  //supplies += taxExtraction.delivered;
+  //taxExtraction.delivered = 0;
 }
 
 double Castle::labourForFarm () {
@@ -251,12 +251,15 @@ double Village::adjustedMortality (int age, bool male) const {
 }
 
 void Village::setUtilities () {
-  deliverGoods(EconActor::Labor, production());  
   needs[EconActor::Labor].clear(); 
   double labourForFarm = farm->getNeededLabour(getId());
   needs[EconActor::Labor].push_back(Utility(100, 0.5*labourForFarm));
   needs[EconActor::Labor].push_back(Utility(66,  0.5*labourForFarm));
   needs[EconActor::Labor].push_back(Utility(33,  0.5*labourForFarm));
+}
+
+void Village::produce () {
+  deliverGoods(EconActor::Labor, production());  
 }
 
 void Village::endOfTurn () {
@@ -399,6 +402,7 @@ void Farmland::devastate (int devastation) {
   }
 }
 
+/*
 void Village::demandSupplies (ContractInfo* taxes) {
   double amount = 0;
   double needed = consumption() * Calendar::turnsToAutumn(); 
@@ -429,6 +433,7 @@ void Village::demandSupplies (ContractInfo* taxes) {
   supplies -= amount;
   taxes->delivered = amount; 
 }
+*/ 
 
 void Farmland::endOfTurn () {
   workFields();

@@ -6,6 +6,17 @@
 using namespace std; 
 class EconActor; 
 
+struct ContractInfo {
+  ContractInfo () : amount(0), delivery(Fixed) {}
+  
+  enum AmountType {Fixed, Percentage, SurplusPercentage};
+  unsigned int good; 
+  double amount;
+  AmountType delivery;
+  double delivered;
+  EconActor* recipient; 
+};
+
 struct Bid {
   EconActor* actor; 
   unsigned int good;
@@ -43,15 +54,18 @@ public:
   void         deliverGoods   (unsigned int good, double amount) {goods[good] += amount;}
   virtual void getBids        (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell);
   int          getId          () const {return id;}   
-
+  virtual void produce        () {}
+  
   typedef vector<EconActor*>::iterator Iter;
   static Iter start () {return allActors.begin();}
   static Iter final () {return allActors.end();} 
 
+  static void executeContracts ();   
   static EconActor* getById (int id);
   static unsigned int getIndex (string name);
-  static string getGoodName (unsigned int idx) {return goodNames[idx];} 
-  static void setAllUtils (); 
+  static string getGoodName (unsigned int idx) {return goodNames[idx];}
+  static void production (); 
+  static void setAllUtils ();
 
   static const unsigned int Money;
   static const unsigned int Labor; 
@@ -66,6 +80,7 @@ protected:
   
 private:
   int id;
+  vector<ContractInfo*> obligations; 
   static vector<EconActor*> allActors; 
 };
 

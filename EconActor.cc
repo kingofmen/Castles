@@ -144,6 +144,28 @@ void Market::trade (const vector<Bid>& wantToBuy, const vector<Bid>& wantToSell)
   }
 }
 
+void EconActor::executeContracts () {
+  for (Iter e = start(); e != final(); ++e) {
+    for (vector<ContractInfo*>::iterator contract = (*e)->obligations.begin(); contract != (*e)->obligations.end(); ++contract) {
+      if (!(*contract)->recipient) continue;
+      double amountWanted = (*contract)->amount;
+      switch ((*contract)->delivery) {
+      default:
+      case ContractInfo::Fixed:
+	break;
+      case ContractInfo::Percentage:
+      case ContractInfo::SurplusPercentage:
+	amountWanted *= (*e)->goods[(*contract)->good];
+	break; 
+      }
+      Logger::logStream(Logger::Debug) << (*e)->getId() << " contract with " << (*contract)->recipient->getId() << " " << amountWanted << "\n"; 
+      amountWanted = min((*e)->goods[(*contract)->good], amountWanted);
+      (*contract)->recipient->deliverGoods((*contract)->good, amountWanted);
+      (*e)->deliverGoods((*contract)->good, -amountWanted);
+    }
+  }
+}
+
 void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
   double unitUtilityPrice = 1; 
   for (unsigned int i = 1; i < numGoods; ++i) {
@@ -236,3 +258,7 @@ void EconActor::setAllUtils () {
 }
 
 void EconActor::setUtilities () {} // Do nothing by default - override in subclasses. 
+
+void EconActor::production () {
+  for (Iter e = start(); e != final(); ++e) (*e)->produce(); 
+}
