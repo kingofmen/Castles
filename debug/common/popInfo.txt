@@ -9,6 +9,24 @@ cropsFrom3    = 700;
 cropsFrom2    = 600;
 cropsFrom1    = 500;
 
+pop_needs = {
+  level = {
+    food = 2
+  }
+  level = {
+    wood = 1
+    iron = 1
+    food = 1
+  }
+  level = {
+    labour = 1
+  }
+}
+
+farmland = {
+  
+}
+
 
 femaleFert = { 
   0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 

@@ -30,6 +30,27 @@ struct Utility {
   double margin;  // Max amount at which we get this utility
 };
 
+struct MaslowNeed {
+  // For storing the full hierarchy of utilities,
+  // ie food then furniture then leisure. The Utility
+  // class stores immediate marginal utilities, the things
+  // to bid on this turn.
+
+  unsigned int good; 
+  double amount; // Amount to count as "one unit" for purposes of taking the log. 
+};
+
+class Consumer {
+  friend class StaticInitialiser;
+  
+protected:
+  void setUtilities (vector<vector<Utility> >& needs, double* goods, double consumption); 
+  
+private:
+  static vector<vector<MaslowNeed> > hierarchy;
+  static vector<double> levelAmounts; // Utility that counts as 100 percent for each level.   
+};
+
 class Market {
   friend class StaticInitialiser; 
 public:
@@ -64,6 +85,7 @@ public:
   static EconActor* getById (int id);
   static unsigned int getIndex (string name);
   static string getGoodName (unsigned int idx) {return goodNames[idx];}
+  static unsigned int getNumGoods () {return numGoods;} 
   static void production (); 
   static void setAllUtils ();
 

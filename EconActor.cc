@@ -9,6 +9,8 @@ const unsigned int EconActor::Labor = 1;
 unsigned int EconActor::numGoods = 2; // Money and labour are hardcoded to exist.
 vector<string> EconActor::goodNames; 
 vector<EconActor*> EconActor::allActors; 
+vector<double> Consumer::levelAmounts; 
+vector<vector<MaslowNeed> > Consumer::hierarchy;
 
 EconActor::EconActor ()
   : id(-1)
@@ -144,6 +146,33 @@ void Market::trade (const vector<Bid>& wantToBuy, const vector<Bid>& wantToSell)
   }
 }
 
+
+void Consumer::setUtilities (vector<vector<Utility> >& needs, double* goods, double consumption) {
+  double priorLevels = 1;
+  double invConsumption = 1.0 / consumption; 
+  for (unsigned int level = 0; level < hierarchy.size(); ++level) {
+    double percentage = 0; 
+    for (unsigned int i = 0; i < hierarchy[level].size(); ++i) {
+      unsigned int currGood = hierarchy[level][i].good;
+      double goodsPerPerson = goods[currGood] * invConsumption;
+      double currAmount = hierarchy[level][i].amount;
+      goodsPerPerson /= currAmount;
+      percentage += log(goodsPerPerson + 1);
+      double margin = log(goodsPerPerson + 2) - log(goodsPerPerson + 1); // Marginal utility from buying currAmount per consumer.
+      margin *= priorLevels;
+      needs[currGood].push_back(Utility(margin/currAmount, currAmount*consumption));
+      margin = log(goodsPerPerson + 3) - log(goodsPerPerson + 2);
+      margin *= priorLevels;      
+      needs[currGood].push_back(Utility(margin/currAmount, currAmount*consumption));
+      margin = log(goodsPerPerson + 4) - log(goodsPerPerson + 3);
+      margin *= priorLevels;      
+      needs[currGood].push_back(Utility(margin/currAmount, currAmount*consumption));       
+    }
+    priorLevels *= min(priorLevels, priorLevels * percentage / levelAmounts[level]);
+    if (0.01 > priorLevels) break;
+  }
+}
+
 void EconActor::executeContracts () {
   for (Iter e = start(); e != final(); ++e) {
     for (vector<ContractInfo*>::iterator contract = (*e)->obligations.begin(); contract != (*e)->obligations.end(); ++contract) {
@@ -172,6 +201,7 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
     double accumulated = 0; 
     for (unsigned int j = 0; j < needs[i].size(); ++i) {
       if (accumulated + needs[i][j].margin >= goods[i]) {
+	/*
 	Logger::logStream(DebugTrade) << "Found "
 				      << i
 				      << " margin at "
@@ -180,14 +210,15 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
 				      << needs[i][j].margin << " "
 				      << needs[i][j].utility << " "
 				      << prices[i] << " " 
-				      << "\n"; 
+				      << "\n";
+	*/
 	unitUtilityPrice = min(unitUtilityPrice, prices[i] / needs[i][j].utility);
 	break; 
       }
       accumulated += goods[i]; 
     }
   }
-  Logger::logStream(DebugTrade) << getId() << " entering getBids with unit util price " << unitUtilityPrice << "\n"; 
+  //Logger::logStream(DebugTrade) << getId() << " entering getBids with unit util price " << unitUtilityPrice << "\n"; 
   
   for (unsigned int i = 1; i < numGoods; ++i) {
     double accumulated = 0; 
@@ -200,13 +231,15 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
 	currBid.amount = needs[i][j].margin;
 	currBid.price  = needs[i][j].utility * unitUtilityPrice * 1.1;
 	wantToSell.push_back(currBid);
+	/*
 	Logger::logStream(DebugTrade) << getId() << " sells " << i << " due to "
 				      << needs[i][j].margin << " "
 				      << goods[i] << " "
 				      << needs[i][j].utility << " "
 				      << accumulated << " "
 				      << needs[i].size() << " "
-				      << "\n"; 
+				      << "\n";
+	*/
       }
       else if ((accumulated < goods[i]) && (accumulated + needs[i][j].margin > goods[i])) {
 	// Buy and sell
@@ -249,6 +282,7 @@ unsigned int EconActor::getIndex (string gName) {
     if (goodNames[i] != gName) continue;
     return i;
   }
+  Logger::logStream(DebugStartup) << "Bad name " << gName << "\n"; 
   assert(false);
   return goodNames.size(); 
 }

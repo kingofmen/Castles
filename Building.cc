@@ -251,7 +251,7 @@ double Village::adjustedMortality (int age, bool male) const {
 }
 
 void Village::setUtilities () {
-  needs[EconActor::Labor].clear(); 
+  Consumer::setUtilities(needs, goods, consumption()); 
   double labourForFarm = farm->getNeededLabour(getId());
   needs[EconActor::Labor].push_back(Utility(100, 0.5*labourForFarm));
   needs[EconActor::Labor].push_back(Utility(66,  0.5*labourForFarm));

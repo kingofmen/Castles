@@ -25,6 +25,7 @@ public:
   static void      initialiseGoods (Object* gInfo); 
   static void      initialiseGraphics (Object* gInfo);
   static void      initialiseMarket (Market* market, Object* pInfo);
+  static void      initialiseMaslowHierarchy (Object* popNeeds); 
   static Farmland* buildFarm (Object* fInfo);
   static void      buildHex (Object* hInfo);
   static void      buildMilitia (Village* target, Object* mInfo);  

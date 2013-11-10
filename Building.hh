@@ -103,7 +103,7 @@ private:
   int drillLevel;
 };
 
-class Village : public Building, public EconActor, public Mirrorable<Village> { 
+class Village : public Building, public EconActor, public Consumer, public Mirrorable<Village> { 
   friend class StaticInitialiser;
   friend class Mirrorable<Village>;  
 public:

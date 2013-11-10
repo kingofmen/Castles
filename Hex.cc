@@ -434,8 +434,8 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
 }
 
 void Hex::endOfTurn () {
-  if ((pos.first == 0) && (pos.second == 0)) Logger::logStream(DebugTrade).setActive(true);
-  else Logger::logStream(DebugTrade).setActive(false); 
+  //if ((pos.first == 0) && (pos.second == 0)) Logger::logStream(DebugTrade).setActive(true);
+  //else Logger::logStream(DebugTrade).setActive(false); 
   holdMarket(); 
   if (village) village->endOfTurn();
   if (farms) {

@@ -120,8 +120,9 @@ void StaticInitialiser::graphicsInitialisation () {
 }
 
 void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
-  assert(popInfo); 
-
+  assert(popInfo);
+  
+  initialiseMaslowHierarchy(popInfo->safeGetObject("pop_needs")); 
   Castle::siegeModifier = popInfo->safeGetFloat("siegeModifier", Castle::siegeModifier);
 
   Farmland::_labourToSow    = popInfo->safeGetInt("labourToSow",    Farmland::_labourToSow);
@@ -294,6 +295,24 @@ void StaticInitialiser::initialiseGraphics (Object* gInfo) {
 void StaticInitialiser::initialiseMarket (Market* market, Object* pInfo) {
   for (unsigned int i = 1; i < EconActor::numGoods; ++i) {
     market->prices[i] = pInfo->safeGetFloat(EconActor::goodNames[i], 1);
+  }
+}
+
+void StaticInitialiser::initialiseMaslowHierarchy (Object* popNeeds) {
+  assert(popNeeds);
+  objvec levels = popNeeds->getValue("level");
+  Consumer::hierarchy.resize(levels.size());
+  Consumer::levelAmounts.resize(levels.size());
+
+  for (unsigned int level = 0; level < levels.size(); ++level) {
+    objvec leaves = levels[level]->getLeaves();
+    for (objiter leaf = leaves.begin(); leaf != leaves.end(); ++leaf) {
+      MaslowNeed maslow;
+      maslow.good = EconActor::getIndex((*leaf)->getKey());
+      maslow.amount = atof((*leaf)->getLeaf().c_str());
+      Consumer::levelAmounts[level] += maslow.amount;
+      Consumer::hierarchy[level].push_back(maslow);
+    }
   }
 }
 
