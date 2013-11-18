@@ -26,6 +26,10 @@ Next gameplay iteration (thoughts, not all to be implemented):
      4. Make mirrorable 
    - Mine, forest, farm
      1. Split Pop and Farm info (check)
+     2. Allow capital to substitute for labour 
+     3. Capitalist class to calculate needs
+     4. Forest
+     5. Mine
    - Ownership
      0. Split into tenths (check) 
      1. Implement from save (check) 
@@ -42,7 +46,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      1. Create class (check)
      2. Read prices from save (check) 
      3. Need some sort of notation for indifference or utility. (check)
-     4. Now need to calculate utilities! 
+     4. Now need to calculate utilities! (check)
      5. Find supply-demand intersection. (check) 
      6. Execute trades. (check) 
      7. Short-term debt. 

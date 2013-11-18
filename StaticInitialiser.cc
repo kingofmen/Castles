@@ -247,7 +247,9 @@ void StaticInitialiser::initialiseGoods (Object* gInfo) {
   EconActor::goodNames.push_back("money");
   EconActor::goodNames.push_back("labour");
   for (int i = 0; i < gInfo->numTokens(); ++i) EconActor::goodNames.push_back(gInfo->getToken(i)); 
-  EconActor::numGoods = EconActor::goodNames.size(); 
+  EconActor::numGoods = EconActor::goodNames.size();
+
+  Industry<Farmland>::capital = new double[EconActor::numGoods]; 
 }
 
 void StaticInitialiser::initialiseGraphics (Object* gInfo) {

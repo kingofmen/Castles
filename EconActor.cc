@@ -146,6 +146,21 @@ void Market::trade (const vector<Bid>& wantToBuy, const vector<Bid>& wantToSell)
   }
 }
 
+/*
+void Capitalist::setUtilities (vector<vector<Utility> >& needs, const vector<double>& prices, CivilBuilding const* const target) {
+  // Consider Farmland, Forest, etc as converting input to output.
+  // Assign inputs in two circumstances: Utility of output is higher,
+  // or price of output is higher. 
+
+  double totalInputUtility = 0;
+  double totalOutputUtility = 0;
+  double totalInputPrice = 0;
+  double totalOutputPrice = 0; 
+  for (unsigned int good = 1; good < EconActor::getNumGoods(); ++good) {
+    
+  }
+}
+*/
 
 void Consumer::setUtilities (vector<vector<Utility> >& needs, double* goods, double consumption) {
   double priorLevels = 1;
@@ -296,3 +311,4 @@ void EconActor::setUtilities () {} // Do nothing by default - override in subcla
 void EconActor::production () {
   for (Iter e = start(); e != final(); ++e) (*e)->produce(); 
 }
+

@@ -2,7 +2,8 @@
 #define ECONACTOR_HH
 
 #include <vector>
-#include <string> 
+#include <string>
+#include <cmath>
 using namespace std; 
 class EconActor; 
 
@@ -40,7 +41,18 @@ struct MaslowNeed {
   double amount; // Amount to count as "one unit" for purposes of taking the log. 
 };
 
+class Capitalist {
+public:
+  friend class StaticInitialiser;
+
+protected:
+  void setUtilities ();
+  
+private:
+}; 
+
 class Consumer {
+public:  
   friend class StaticInitialiser;
   
 protected:
@@ -105,5 +117,24 @@ private:
   vector<ContractInfo*> obligations; 
   static vector<EconActor*> allActors; 
 };
+
+template<class T> class Industry {
+  friend class StaticInitialiser;
+  
+public:
+  virtual double marginalOutput (unsigned int good, int owner) const = 0; // Returns additional expected output for one unit of given input. 
+  
+protected:
+  double capitalFactor (double* goods) const {
+    double ret = 1;
+    for (unsigned int g = 0; g < EconActor::getNumGoods(); ++g) ret *= (1 - capital[g]*log(goods[g]+1)); 
+    return ret;
+  }
+  
+  // Capital reduces the amount of labour required by factor (1 - x log (N+1)). This array stores x. 
+  static double* capital; 
+}; 
+
+template<class T> double* Industry<T>::capital; 
 
 #endif 

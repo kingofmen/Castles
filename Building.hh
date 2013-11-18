@@ -162,7 +162,7 @@ private:
   static vector<double> fertility;
 };
 
-class Farmland : public Building, public Mirrorable<Farmland> {
+class Farmland : public Building, public Industry<Farmland>, public Mirrorable<Farmland> {
   friend class Mirrorable<Farmland>;
   friend class StaticInitialiser;
   friend class FarmGraphicsInfo; 
@@ -179,7 +179,7 @@ public:
   virtual void setMirrorState ();
   int getFieldStatus (int s) {return fields[numOwners][s];}
   double getNeededLabour (int ownerId) const;
-  void deliverLabour (int ownerId, double amount);
+  void delivery (int ownerId, unsigned int good, double amount);
   int totalFields () const {return
       fields[numOwners][Clear] +
       fields[numOwners][Ready] +
@@ -188,7 +188,8 @@ public:
       fields[numOwners][Ripe2] +
       fields[numOwners][Ripe3] +
       fields[numOwners][Ended];}
-
+  virtual double marginalOutput (unsigned int good, int owner) const; 
+  
   static const int numOwners = 10; 
   
 private:
@@ -196,7 +197,7 @@ private:
   void countTotals (); 
   int fields[numOwners+1][NumStatus]; // Last is total
   int owners[numOwners];
-  int labour[numOwners]; 
+  double* goods[numOwners]; 
   
   static int _labourToSow;
   static int _labourToPlow;
