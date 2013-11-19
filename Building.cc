@@ -498,8 +498,8 @@ double Farmland::getNeededLabour (int ownerId) const {
   return ret; 
 }
 
-double Farmland::marginalOutput (unsigned int good, int owner) const {
-  return 0; 
+void Farmland::marginalOutput (unsigned int good, int owner, double** output) const {
+  
 }
 
 void Village::eatFood () {
@@ -579,13 +579,14 @@ void Farmland::workFields () {
     // If there isn't enough labour to tend the crops, they
     // degrade; if the weather is bad they don't advance.
     for (int i = 0; i < numOwners; ++i) {
+      double capFactor = capitalFactor(goods[i]); 
       availableLabour = goods[i][EconActor::Labor]; 
       double weatherModifier = 1; // TODO: Insert weather-getting code here
       int untendedRipe1 = fields[i][Ripe1]; fields[i][Ripe1] = 0;
       int untendedRipe2 = fields[i][Ripe2]; fields[i][Ripe2] = 0;
       int untendedRipe3 = fields[i][Ripe3]; fields[i][Ripe3] = 0;
-      while (availableLabour >= _labourToWeed * weatherModifier) {
-	availableLabour -= _labourToWeed * weatherModifier;	
+      while (availableLabour >= _labourToWeed * capFactor * weatherModifier) {
+	availableLabour -= _labourToWeed * capFactor * weatherModifier;	
 	if (fields[i][Sowed] > 0) {
 	  fields[i][Sowed]--;
 	  fields[i][Ripe1]++;
@@ -606,7 +607,7 @@ void Farmland::workFields () {
       }
       fields[i][Sowed] += untendedRipe1;
       fields[i][Ripe1] += untendedRipe2;
-      fields[i][Ripe2] += untendedRipe3;            
+      fields[i][Ripe2] += untendedRipe3;
     }
     
     break;
@@ -614,21 +615,22 @@ void Farmland::workFields () {
   case Calendar::Autumn:
     for (int i = 0; i < numOwners; ++i) {
       // In autumn we harvest.
+      double capFactor = capitalFactor(goods[i]); 
       availableLabour = goods[i][EconActor::Labor]; 
-      int harvest = min(fields[i][Ripe3], (int) floor(availableLabour / _labourToReap));
-      availableLabour -= harvest * _labourToReap;
+      int harvest = min(fields[i][Ripe3], (int) floor(availableLabour / (_labourToReap * capFactor)));
+      availableLabour -= harvest * _labourToReap * capFactor;
       EconActor::getById(owners[i])->deliverGoods(foodIdx, _cropsFrom3 * harvest); 
       fields[i][Ripe3] -= harvest;
       fields[i][Ended] += harvest;
 
-      harvest = min(fields[i][Ripe2], (int) floor(availableLabour / _labourToReap));
-      availableLabour -= harvest * _labourToReap;
+      harvest = min(fields[i][Ripe2], (int) floor(availableLabour / (_labourToReap * capFactor)));
+      availableLabour -= harvest * _labourToReap * capFactor;
       EconActor::getById(owners[i])->deliverGoods(foodIdx, _cropsFrom2 * harvest); 
       fields[i][Ripe2] -= harvest;
       fields[i][Ended] += harvest;
 
-      harvest = min(fields[i][Ripe1], (int) floor(availableLabour / _labourToReap));
-      availableLabour -= harvest * _labourToReap;
+      harvest = min(fields[i][Ripe1], (int) floor(availableLabour / (_labourToReap * capFactor)));
+      availableLabour -= harvest * _labourToReap * capFactor;
       EconActor::getById(owners[i])->deliverGoods(foodIdx, _cropsFrom1 * harvest); 
       fields[i][Ripe1] -= harvest;
       fields[i][Ended] += harvest;      

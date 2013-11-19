@@ -311,4 +311,3 @@ void EconActor::setUtilities () {} // Do nothing by default - override in subcla
 void EconActor::production () {
   for (Iter e = start(); e != final(); ++e) (*e)->produce(); 
 }
-

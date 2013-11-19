@@ -122,7 +122,7 @@ template<class T> class Industry {
   friend class StaticInitialiser;
   
 public:
-  virtual double marginalOutput (unsigned int good, int owner) const = 0; // Returns additional expected output for one unit of given input. 
+  virtual void marginalOutput (unsigned int good, int owner, double** output) const = 0; // Returns additional expected output for one unit of given input. 
   
 protected:
   double capitalFactor (double* goods) const {

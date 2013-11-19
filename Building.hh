@@ -188,7 +188,7 @@ public:
       fields[numOwners][Ripe2] +
       fields[numOwners][Ripe3] +
       fields[numOwners][Ended];}
-  virtual double marginalOutput (unsigned int good, int owner) const; 
+  virtual void marginalOutput (unsigned int good, int owner, double** output) const; 
   
   static const int numOwners = 10; 
   

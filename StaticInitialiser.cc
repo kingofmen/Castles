@@ -125,15 +125,19 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   initialiseMaslowHierarchy(popInfo->safeGetObject("pop_needs")); 
   Castle::siegeModifier = popInfo->safeGetFloat("siegeModifier", Castle::siegeModifier);
 
-  Farmland::_labourToSow    = popInfo->safeGetInt("labourToSow",    Farmland::_labourToSow);
-  Farmland::_labourToPlow   = popInfo->safeGetInt("labourToPlow",   Farmland::_labourToPlow);
-  Farmland::_labourToClear  = popInfo->safeGetInt("labourToClear",  Farmland::_labourToClear);
-  Farmland::_labourToWeed   = popInfo->safeGetInt("labourToWeed",   Farmland::_labourToWeed);
-  Farmland::_labourToReap   = popInfo->safeGetInt("labourToReap",   Farmland::_labourToReap);
-  Farmland::_cropsFrom3     = popInfo->safeGetInt("cropsFrom3",     Farmland::_cropsFrom3);
-  Farmland::_cropsFrom2     = popInfo->safeGetInt("cropsFrom2",     Farmland::_cropsFrom2);
-  Farmland::_cropsFrom1     = popInfo->safeGetInt("cropsFrom1",     Farmland::_cropsFrom1);
-  
+  Object* farmInfo = popInfo->getNeededObject("farmland"); 
+  Farmland::_labourToSow    = farmInfo->safeGetInt("labourToSow",    Farmland::_labourToSow);
+  Farmland::_labourToPlow   = farmInfo->safeGetInt("labourToPlow",   Farmland::_labourToPlow);
+  Farmland::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmland::_labourToClear);
+  Farmland::_labourToWeed   = farmInfo->safeGetInt("labourToWeed",   Farmland::_labourToWeed);
+  Farmland::_labourToReap   = farmInfo->safeGetInt("labourToReap",   Farmland::_labourToReap);
+  Farmland::_cropsFrom3     = farmInfo->safeGetInt("cropsFrom3",     Farmland::_cropsFrom3);
+  Farmland::_cropsFrom2     = farmInfo->safeGetInt("cropsFrom2",     Farmland::_cropsFrom2);
+  Farmland::_cropsFrom1     = farmInfo->safeGetInt("cropsFrom1",     Farmland::_cropsFrom1);
+  Object* farmCap = farmInfo->getNeededObject("capital");
+  for (unsigned int i = 0; i < EconActor::getNumGoods(); ++i) {
+    Industry<Farmland>::capital[i] = farmCap->safeGetFloat(EconActor::getGoodName(i)); 
+  }
 
   
   Object* femf = popInfo->safeGetObject("femaleFert");

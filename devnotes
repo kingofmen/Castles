@@ -26,7 +26,8 @@ Next gameplay iteration (thoughts, not all to be implemented):
      4. Make mirrorable 
    - Mine, forest, farm
      1. Split Pop and Farm info (check)
-     2. Allow capital to substitute for labour 
+     2a. Allow capital to substitute for labour (check)
+     2b. Read from setup. 
      3. Capitalist class to calculate needs
      4. Forest
      5. Mine
