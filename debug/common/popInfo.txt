@@ -1,5 +1,7 @@
 siegeModifier = 10 
 
+goods = { food iron wood }
+
 pop_needs = {
   level = {
     food = 2

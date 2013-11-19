@@ -40,7 +40,9 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
   currGame = new WarfareGame();
   Object* game = processFile(filename); 
   assert(game);
-  Object* goods = game->safeGetObject("goods"); // Must come before any EconActors are created. 
+  Object* popInfo = processFile("./common/popInfo.txt");
+  assert(popInfo); 
+  Object* goods = popInfo->safeGetObject("goods"); // Must come before any EconActors are created. 
   StaticInitialiser::initialiseGoods(goods);
   Object* hexgrid = game->safeGetObject("hexgrid");
   assert(hexgrid);
@@ -76,10 +78,6 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
   Object* guiInfo = processFile("./common/gui.txt");
   if (!guiInfo) guiInfo = new Object("guiInfo");
   StaticInitialiser::setUItexts(guiInfo); 
-
-  
-  Object* popInfo = processFile("./common/popInfo.txt");
-  assert(popInfo); 
   StaticInitialiser::initialiseCivilBuildings(popInfo);
   
   for (int i = 0; i < xsize; ++i) {
