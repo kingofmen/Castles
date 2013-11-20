@@ -125,9 +125,9 @@ public:
   virtual void marginalOutput (unsigned int good, int owner, double** output) const = 0; // Returns additional expected output for one unit of given input. 
   
 protected:
-  double capitalFactor (double* goods) const {
+  double capitalFactor (double* goods, int dilution = 1) const {
     double ret = 1;
-    for (unsigned int g = 0; g < EconActor::getNumGoods(); ++g) ret *= (1 - capital[g]*log(goods[g]+1)); 
+    for (unsigned int g = 0; g < EconActor::getNumGoods(); ++g) ret *= (1 - capital[g]*log(goods[g]/dilution+1)); 
     return ret;
   }
   

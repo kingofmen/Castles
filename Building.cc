@@ -549,7 +549,7 @@ void Farmland::workFields () {
   case Calendar::Spring:
     // In spring we clear new fields, plow and sow existing ones.
     for (int i = 0; i < numOwners; ++i) {
-      double capFactor = capitalFactor(goods[i]); 
+      double capFactor = capitalFactor(goods[i], fields[i][Ready]+fields[i][Clear]+fields[i][Sowed]); 
 
       availableLabour = goods[i][EconActor::Labor]; 
       while (true) {
@@ -579,7 +579,7 @@ void Farmland::workFields () {
     // If there isn't enough labour to tend the crops, they
     // degrade; if the weather is bad they don't advance.
     for (int i = 0; i < numOwners; ++i) {
-      double capFactor = capitalFactor(goods[i]); 
+      double capFactor = capitalFactor(goods[i], fields[i][Sowed]+fields[i][Ripe1]+fields[i][Ripe2]+fields[i][Ripe3]); 
       availableLabour = goods[i][EconActor::Labor]; 
       double weatherModifier = 1; // TODO: Insert weather-getting code here
       int untendedRipe1 = fields[i][Ripe1]; fields[i][Ripe1] = 0;
@@ -615,7 +615,7 @@ void Farmland::workFields () {
   case Calendar::Autumn:
     for (int i = 0; i < numOwners; ++i) {
       // In autumn we harvest.
-      double capFactor = capitalFactor(goods[i]); 
+      double capFactor = capitalFactor(goods[i], fields[i][Ripe1]+fields[i][Ripe2]+fields[i][Ripe3]); 
       availableLabour = goods[i][EconActor::Labor]; 
       int harvest = min(fields[i][Ripe3], (int) floor(availableLabour / (_labourToReap * capFactor)));
       availableLabour -= harvest * _labourToReap * capFactor;

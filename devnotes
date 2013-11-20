@@ -27,7 +27,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Mine, forest, farm
      1. Split Pop and Farm info (check)
      2a. Allow capital to substitute for labour (check)
-     2b. Read from setup. 
+     2b. Read from setup (check) 
      3. Capitalist class to calculate needs
      4. Forest
      5. Mine
@@ -42,7 +42,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      2. Write to save
      3. Impose upon conquest
      4. Renegotiate
-   - Farmland input/output cleanup 
+   - Farmland input/output cleanup (check) 
    - Markets
      1. Create class (check)
      2. Read prices from save (check) 
