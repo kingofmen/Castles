@@ -41,16 +41,6 @@ struct MaslowNeed {
   double amount; // Amount to count as "one unit" for purposes of taking the log. 
 };
 
-class Capitalist {
-public:
-  friend class StaticInitialiser;
-
-protected:
-  void setUtilities ();
-  
-private:
-}; 
-
 class Consumer {
 public:  
   friend class StaticInitialiser;
@@ -122,7 +112,7 @@ template<class T> class Industry {
   friend class StaticInitialiser;
   
 public:
-  virtual void marginalOutput (unsigned int good, int owner, double** output) const = 0; // Returns additional expected output for one unit of given input. 
+  virtual void marginalOutput (unsigned int good, int owner, double** output) = 0; // Returns additional expected output for one unit of given input. 
   
 protected:
   double capitalFactor (double* goods, int dilution = 1) const {

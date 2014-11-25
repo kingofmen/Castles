@@ -22,9 +22,12 @@ public:
   std::string getName () const {return name;}
   std::string getDisplayName () const {return displayName;} 
   PlayerGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;} 
-  
-  static Player* findByName (std::string n);   
-  static Player* nextPlayer (Player* curr); 
+
+  static void setCurrentPlayerByName (std::string name) {currentPlayer = findByName(name);}
+  static void advancePlayer () {currentPlayer = nextPlayer();}
+  static Player* getCurrentPlayer () {return currentPlayer;}
+  static Player* findByName (std::string n);
+  static Player* nextPlayer ();
   typedef std::vector<Player*>::iterator Iterator; 
   static Iterator begin () {return allPlayers.begin();}
   static Iterator end () {return allPlayers.end();} 
@@ -44,13 +47,14 @@ private:
   double calculateUnitStrength (MilUnit* dat, double modifiers); 
   static std::vector<Player*> allPlayers;
 
+  static Player* currentPlayer;
   static double influenceDecay;
   static double castleWeight;
-  static double casualtyValue; 
+  static double casualtyValue;
   static double distanceModifier;
   static double distancePower;
   static double supplyWeight;
-  static double siegeInfluenceValue; 
+  static double siegeInfluenceValue;
 }; 
 
 

@@ -19,6 +19,7 @@
 
 int StaticInitialiser::defaultUnitPriority = 4; 
 ThreeDSprite* makeSprite (Object* info); 
+map<MilUnitTemplate*, Object*> milUnitSpriteObjectMap;
 
 void StaticInitialiser::createCalculator (Object* info, Action::Calculator* ret) {
   assert(info);
@@ -97,10 +98,11 @@ GLuint loadTexture (string fname, QColor backup, GLuint index) {
 }
 
 void StaticInitialiser::graphicsInitialisation () {
+  loadSprites();  
   for (MilUnit::Iterator m = MilUnit::begin(); m != MilUnit::end(); ++m) {
     (*m)->graphicsInfo->updateSprites(*m);
   }
-
+  
   for (Hex::Iterator h = Hex::begin(); h != Hex::end(); ++h) {
     Village* f = (*h)->getVillage();
     if (!f) continue;
@@ -116,7 +118,6 @@ void StaticInitialiser::graphicsInitialisation () {
     texid = loadTexture(pName, Qt::red, texid); 
     WarfareWindow::currWindow->hexDrawer->playerToTextureMap[*p] = texid; 
   }
-  loadSprites();
 }
 
 void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
@@ -257,8 +258,13 @@ void StaticInitialiser::initialiseGoods (Object* gInfo) {
 }
 
 void StaticInitialiser::initialiseGraphics (Object* gInfo) {
-  //Logger::logStream(DebugStartup) << "StaticInitialiser::initialiseGraphics\n"; 
+  Logger::logStream(DebugStartup) << "Entering StaticInitialiser::initialiseGraphics\n"; 
 
+  // Must come after buildMilUnits so templates can check for icons. 
+  Object* guiInfo = processFile("./common/gui.txt");
+  if (!guiInfo) guiInfo = new Object("guiInfo");
+  setUItexts(guiInfo); 
+  
   new ZoneGraphicsInfo(); 
   GraphicsInfo::zoneSide = gInfo->safeGetInt("zoneSide", 4);
   int mapWidth = heightMapWidth(GraphicsInfo::zoneSide);
@@ -296,6 +302,7 @@ void StaticInitialiser::initialiseGraphics (Object* gInfo) {
       }      
     }
   }
+  Logger::logStream(DebugStartup) << "Leaving StaticInitialiser::initialiseGraphics\n";   
 }
 
 void StaticInitialiser::initialiseMarket (Market* market, Object* pInfo) {
@@ -528,6 +535,8 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
 
     Object* spriteInfo = (*unit)->safeGetObject("sprite");
     if (spriteInfo) {
+      milUnitSpriteObjectMap[nType] = spriteInfo;
+      /*
       ThreeDSprite* nSprite = makeSprite(spriteInfo);
       MilUnitGraphicsInfo::indexMap[nType] = SpriteContainer::sprites.size();
       MilUnitSprite* mSprite = new MilUnitSprite();
@@ -540,6 +549,7 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
 	}
       }
       SpriteContainer::sprites.push_back(mSprite);
+      */      
     }
   }
 }
@@ -841,6 +851,24 @@ void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, dou
 }
 
 void StaticInitialiser::loadSprites () {
+  Logger::logStream(DebugStartup) << "loadSprites begin\n";
+  for (map<MilUnitTemplate*, Object*>::iterator muto = milUnitSpriteObjectMap.begin(); muto != milUnitSpriteObjectMap.end(); ++muto) {
+    Logger::logStream(DebugStartup) << (*muto).first->name << "\n";
+    Object* spriteInfo = (*muto).second;
+    ThreeDSprite* nSprite = makeSprite(spriteInfo);
+    MilUnitGraphicsInfo::indexMap[(*muto).first] = SpriteContainer::sprites.size();
+    MilUnitSprite* mSprite = new MilUnitSprite();
+    mSprite->soldier = nSprite;
+    objvec positions = spriteInfo->getValue("position");
+    if (0 == positions.size()) mSprite->positions.push_back(doublet(0, 0));
+    else {
+      for (objiter p = positions.begin(); p != positions.end(); ++p) {
+	mSprite->positions.push_back(doublet((*p)->safeGetFloat("x"), (*p)->safeGetFloat("y"))); 
+      }
+    }
+    SpriteContainer::sprites.push_back(mSprite);
+  }
+  
   if (WarfareWindow::currWindow->hexDrawer->cSprite) delete WarfareWindow::currWindow->hexDrawer->cSprite;
   if (WarfareWindow::currWindow->hexDrawer->tSprite) delete WarfareWindow::currWindow->hexDrawer->tSprite;
   if (WarfareWindow::currWindow->hexDrawer->farmSprite) delete WarfareWindow::currWindow->hexDrawer->farmSprite;  
@@ -885,7 +913,8 @@ void StaticInitialiser::loadSprites () {
       VillageGraphicsInfo::cowPositions.push_back(doublet(cows[i]->safeGetFloat("x", (i%3)*0.1),
 							  cows[i]->safeGetFloat("y", (i/3)*0.1)));
     }
-  }
+  }    
+  milUnitSpriteObjectMap.clear();
 }
 
 void StaticInitialiser::loadTextures () {
@@ -896,6 +925,23 @@ void StaticInitialiser::loadTextures () {
   FarmGraphicsInfo::textureIndices.push_back(loadTexture("gfx\\ripe2.png", Qt::green));
   FarmGraphicsInfo::textureIndices.push_back(loadTexture("gfx\\ripe3.png", Qt::yellow));
   FarmGraphicsInfo::textureIndices.push_back(loadTexture("gfx\\reaped.png", Qt::darkYellow));
+}
+
+void StaticInitialiser::makeGraphicsInfoObjects () {
+  for (Hex::Iterator h = Hex::begin(); h != Hex::end(); ++h) {
+    (*h)->graphicsInfo = new HexGraphicsInfo(*h);
+    for (int i = LeftUp; i < NoVertex; ++i) {
+      Vertex* vex = (*h)->vertices[i];
+      if (vex->graphicsInfo) continue;
+      vex->graphicsInfo = new VertexGraphicsInfo(vex, (*h)->getGraphicsInfo(), convertToVertex(i));
+    }
+    if ((*h)->village) (*h)->setGraphicsVillage((*h)->village);
+    if ((*h)->farms) (*h)->setGraphicsFarm((*h)->farms); 
+  }
+  for (Line::Iterator l = Line::begin(); l != Line::end(); ++l) {
+    (*l)->graphicsInfo = new LineGraphicsInfo((*l), (*l)->vex1->getDirection((*l)->vex2));
+    if ((*l)->getCastle()) (*l)->addGraphicCastle((*l)->getCastle()); 
+  }
 }
 
 void StaticInitialiser::makeZoneTextures (Object* ginfo) {
@@ -979,7 +1025,6 @@ void StaticInitialiser::makeZoneTextures (Object* ginfo) {
     createTexture(fbo, minHeight, maxHeight, GraphicsInfo::heightMap, heightMapWidth(GraphicsInfo::zoneSide), hexDrawer->terrainTextureIndices[i]);   
   }
 
-
   GLuint shadowTexture = 0;
   glGenTextures(1, &shadowTexture); 
   // 2x2 matrix of half-transparent black. 
@@ -1002,8 +1047,6 @@ void StaticInitialiser::makeZoneTextures (Object* ginfo) {
   hexDrawer->zoneTextures[0] = fbo->texture();  
 
   //shadProg.release(); 
-  
-  //Logger::logStream(DebugStartup) << "Exiting makeZoneTextures" << QThread::currentThreadId() << "\n"; 
 }
 
 void StaticInitialiser::setUItexts (Object* tInfo) {
@@ -1038,7 +1081,6 @@ void StaticInitialiser::setUItexts (Object* tInfo) {
     Logger::logStream(DebugStartup) << "Setting icon " << iconfile << "\n"; 
     if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) CastleInterface::icons[*unit] = QIcon(iconfile.c_str()); 
   }
-
   
   WarfareWindow::currWindow->villageInterface->increaseDrillButton.setToolTip(remQuotes(tInfo->safeGetString("incDrill", badString)).c_str());
   iconfile = icons->safeGetString("incDrill", badString);
@@ -1052,9 +1094,6 @@ void StaticInitialiser::setUItexts (Object* tInfo) {
     WarfareWindow::currWindow->villageInterface->decreaseDrillButton.setArrowType(Qt::NoArrow);
     WarfareWindow::currWindow->villageInterface->decreaseDrillButton.setIcon(QIcon(iconfile.c_str()));
   }
-  
-
-  
 }
 
 void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
@@ -1107,7 +1146,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
     game->setValue(faction); 
   }
 
-  game->setLeaf("currentplayer", WarfareWindow::currWindow->currentPlayer->getName()); 
+  game->setLeaf("currentplayer", Player::getCurrentPlayer()->getName()); 
 
   int maxx = -1;
   int maxy = -1;
@@ -1174,15 +1213,27 @@ void StaticInitialiser::writeGameToFile (string fname) {
     if (farm) {
       Object* farmInfo = new Object("farmland");
       hexInfo->setValue(farmInfo);
-      
-      farmInfo->setLeaf("clear", farm->getFieldStatus(Farmland::Clear));
-      farmInfo->setLeaf("ready", farm->getFieldStatus(Farmland::Ready));
-      farmInfo->setLeaf("sowed", farm->getFieldStatus(Farmland::Sowed));
-      farmInfo->setLeaf("ripe1", farm->getFieldStatus(Farmland::Ripe1));
-      farmInfo->setLeaf("ripe2", farm->getFieldStatus(Farmland::Ripe2));
-      farmInfo->setLeaf("ripe3", farm->getFieldStatus(Farmland::Ripe3));
-      farmInfo->setLeaf("ended", farm->getFieldStatus(Farmland::Ended));
-      farmInfo->setLeaf("supplies", farm->supplies);
+      map<Farmland::FieldStatus, Object*> statuses;
+      statuses[Farmland::Clear] = new Object("clear");
+      statuses[Farmland::Ready] = new Object("ready");
+      statuses[Farmland::Sowed] = new Object("sowed");
+      statuses[Farmland::Ripe1] = new Object("ripe1");
+      statuses[Farmland::Ripe2] = new Object("ripe2");
+      statuses[Farmland::Ripe3] = new Object("ripe3");
+      statuses[Farmland::Ended] = new Object("ended");
+      for (map<Farmland::FieldStatus, Object*>::iterator status = statuses.begin(); status != statuses.end(); ++status) {
+	(*status).second->setObjList(true);
+	for (int i = 0; i < Farmland::numOwners; ++i) {
+	  (*status).second->addToList(farm->fields[i][(*status).first]);
+	}
+	farmInfo->setValue((*status).second);
+      }
+      Object* owner = new Object("owner");
+      owner->setObjList(true);
+      farmInfo->setValue(owner);
+      for (int i = 0; i < Farmland::numOwners; ++i) {
+	owner->addToList(farm->owners[i]); 
+      }
     }
   }
 

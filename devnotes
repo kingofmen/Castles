@@ -10,6 +10,10 @@ Suggestions from forums:
  * Political map mode 
  * Finer-grained texture
 
+It would be good to refactor this to make use of the cool features from BattleFront, 
+and maybe make all the code a bit more generic - there'a a lot of specialised classes.
+Then again, perhaps a graphics engine is indicated. 
+
 Next gameplay iteration (thoughts, not all to be implemented):
 
  * Militia raids
@@ -34,7 +38,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Ownership
      0. Split into tenths (check) 
      1. Implement from save (check) 
-     2. Write to save
+     2. Write to save (check) 
      3. Change upon conquest
      4. Move labour around 
    - Contracts and feudal dues

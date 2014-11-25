@@ -65,7 +65,9 @@ public:
   int                    recruit (Player* forhim, MilUnitTemplate const* const recruitType, MilUnit* target, Outcome out); 
   void                   setLine (Direction dir, Line* l);
   void                   setFarm (Farmland* f);
-  void                   setVillage (Village* v); 
+  void                   setGraphicsFarm (Farmland* f);  
+  void                   setGraphicsVillage (Village* v);
+  void                   setVillage (Village* v);
   virtual void           setMirrorState (); 
   
   static Iterator begin () {return allHexes.begin();}
@@ -117,8 +119,9 @@ public:
 
 
 class Vertex : public Mirrorable<Vertex>, public Named, public Geography {
-  friend class Mirrorable<Vertex>; 
-  friend class Hex; 
+  friend class Mirrorable<Vertex>;
+  friend class StaticInitialiser;     
+  friend class Hex;
 public:
   Vertex();
   ~Vertex();
@@ -176,7 +179,8 @@ private:
 };
 
 class Line : public Mirrorable<Line>, public Named, public Geography { 
-  friend class Mirrorable<Line>; 
+  friend class Mirrorable<Line>;
+  friend class StaticInitialiser;  
 public:
   Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo); 
   ~Line (); 
@@ -189,7 +193,8 @@ public:
   Hex* oneHex () {return hex1;}
   Hex* twoHex () {return hex2;}
   Hex* otherHex (Hex* dat); 
-  void addCastle (Castle* dat); 
+  void addCastle (Castle* dat);
+  void addGraphicCastle (Castle* dat); 
   Castle* getCastle () {return castle;}
   LineGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;} 
   virtual void setMirrorState ();

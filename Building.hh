@@ -188,13 +188,14 @@ public:
       fields[numOwners][Ripe2] +
       fields[numOwners][Ripe3] +
       fields[numOwners][Ended];}
-  virtual void marginalOutput (unsigned int good, int owner, double** output) const; 
+  virtual void marginalOutput (unsigned int good, int owner, double** output); 
   
   static const int numOwners = 10; 
   
 private:
   Farmland (Farmland* other);
-  void countTotals (); 
+  void countTotals ();
+  double expectedOutput (int owner) const; 
   int fields[numOwners+1][NumStatus]; // Last is total
   int owners[numOwners];
   double* goods[numOwners]; 
@@ -206,7 +207,8 @@ private:
   static int _labourToReap;
   static int _cropsFrom3;
   static int _cropsFrom2;
-  static int _cropsFrom1; 
+  static int _cropsFrom1;
+  static int _cropsIndex;
 };
 
 

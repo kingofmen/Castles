@@ -13,6 +13,7 @@
 std::vector<Player*> Player::allPlayers; 
 bool detailDebug = false;
 
+Player* Player::currentPlayer      = 0;
 double Player::influenceDecay      = 0.5;
 double Player::castleWeight        = 1000;
 double Player::casualtyValue       = 100; 
@@ -491,8 +492,8 @@ void Player::getAction () {
   finished(); 
 }
 
-Player* Player::nextPlayer (Player* curr) {
-  Iterator pl = std::find(begin(), end(), curr);
+Player* Player::nextPlayer () {
+  Iterator pl = std::find(begin(), end(), currentPlayer);
   assert(end() != pl);
   do {
     ++pl;

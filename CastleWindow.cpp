@@ -629,7 +629,7 @@ Vertex* GLDrawer::findVertex (double x, double y) {
   return 0;
 }
 
-int main (int argc, char** argv) {
+int main (int argc, char** argv) { 
   Logger::createStream(Logger::Debug);
   Logger::createStream(Logger::Trace);
   Logger::createStream(Logger::Game);
@@ -641,6 +641,15 @@ int main (int argc, char** argv) {
   FileLog debugfile("startDebugLog");
   QObject::connect(&(Logger::logStream(DebugStartup)), SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
 
+  if ((argc > 2) && (2 == atoi(argv[2]))) {
+    QObject::connect(&(Logger::logStream(Logger::Debug)),   SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
+    QObject::connect(&(Logger::logStream(Logger::Trace)),   SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
+    QObject::connect(&(Logger::logStream(Logger::Game)),    SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
+    QObject::connect(&(Logger::logStream(Logger::Warning)), SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
+    QObject::connect(&(Logger::logStream(Logger::Error)),   SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
+    WarfareGame::unitTests(argv[1]);
+    return 0; 
+  }
   
   QApplication industryApp(argc, argv);
 
@@ -780,8 +789,9 @@ void WarfareWindow::newGame () {
 }
 
 void WarfareWindow::newGame (string fname) {
-  clearGame(); 
-  currentGame = WarfareGame::createGame(fname, currentPlayer);
+  clearGame();
+  currentGame = WarfareGame::createGame(fname);
+  initialiseGraphics();  
   initialiseColours();
   runNonHumans();
   update();
@@ -791,12 +801,7 @@ void WarfareWindow::loadGame () {
   QString filename = QFileDialog::getOpenFileName(this, tr("Select file"), QString("./savegames/"), QString("*.txt"));
   string fn(filename.toAscii().data());
   if (fn == "") return;
-
-  clearGame();
-  currentGame = WarfareGame::createGame(fn, currentPlayer);
-  initialiseColours();
-  runNonHumans();
-  update();
+  newGame(fn);
 }
 
 void WarfareWindow::saveGame () {
@@ -805,17 +810,32 @@ void WarfareWindow::saveGame () {
   if (fn == "") return;
 
   StaticInitialiser::writeGameToFile(fn);
-  //WarfareGame::saveGame(fn, currentPlayer);
 }
 
 void WarfareWindow::endTurn () {
   if (!currentGame) return;
-  if (!currentPlayer->isHuman()) return; 
+  if (!Player::getCurrentPlayer()->isHuman()) return; 
   Action act;
   act.todo = Action::EndTurn;
-  act.player = currentPlayer; 
+  act.player = Player::getCurrentPlayer(); 
   humanAction(act); 
   update(); 
+}
+
+void WarfareWindow::initialiseGraphics () {
+  Object* gInfo = processFile("./common/graphics.txt");
+  assert(gInfo); 
+  StaticInitialiser::initialiseGraphics(gInfo);
+  StaticInitialiser::makeZoneTextures(gInfo);
+  Logger::logStream(DebugStartup) << "makeGraphicsInfoObjects\n";
+  StaticInitialiser::makeGraphicsInfoObjects();
+  Logger::logStream(DebugStartup) << "graphicsInitialisation\n";
+  StaticInitialiser::graphicsInitialisation();
+  Logger::logStream(DebugStartup) << "updateFieldStatus\n";
+  FarmGraphicsInfo::updateFieldStatus();
+  Logger::logStream(DebugStartup) << "updateVillageStatus\n";
+  VillageGraphicsInfo::updateVillageStatus();
+  Logger::logStream(DebugStartup) << "Done with initialiseGraphics\n";
 }
 
 void GLDrawer::draw () { 
@@ -937,7 +957,7 @@ void WarfareWindow::selectObject () {
   if (selectedVertex) {
     selDrawer->setSelected(selectedVertex->getGraphicsInfo());
     MilUnit* unit = selectedVertex->getUnit(0);    
-    if ((unit) && (unit->getOwner() == currentPlayer)) {
+    if ((unit) && (unit->getOwner() == Player::getCurrentPlayer())) {
       unitInterface->setUnit(unit); 
       unitInterface->show();
     }
@@ -947,7 +967,7 @@ void WarfareWindow::selectObject () {
   
   if (selectedLine) {
     Castle* castle = selectedLine->getCastle();
-    if ((castle) && (castle->getOwner() == currentPlayer)) {
+    if ((castle) && (castle->getOwner() == Player::getCurrentPlayer())) {
       castleInterface->setCastle(castle);
       castleInterface->show();
       MilUnit* unit = castle->getGarrison(0);
@@ -1005,7 +1025,7 @@ void WarfareWindow::mouseReleaseEvent (QMouseEvent* event) {
       //return;
       //}
       Action act;
-      act.player = currentPlayer;
+      act.player = Player::getCurrentPlayer();
       act.todo = Action::BuildFortress;
       act.source = clickedHex;
       act.cease = clickedLine;
@@ -1030,7 +1050,7 @@ void WarfareWindow::mouseReleaseEvent (QMouseEvent* event) {
   }
 
   Action act;
-  act.player = currentPlayer;
+  act.player = Player::getCurrentPlayer();
   
   if (clickedHex) {
     if (selectedVertex) {
@@ -1043,7 +1063,7 @@ void WarfareWindow::mouseReleaseEvent (QMouseEvent* event) {
 	Logger::logStream(Logger::Warning) << "No unit selected.\n";
 	return;
       }
-      if (currentPlayer != selectedVertex->getUnit(0)->getOwner()) {
+      if (Player::getCurrentPlayer() != selectedVertex->getUnit(0)->getOwner()) {
 	Logger::logStream(Logger::Warning) << "Not your unit.\n";
 	return; 
       }
@@ -1069,7 +1089,7 @@ void WarfareWindow::mouseReleaseEvent (QMouseEvent* event) {
 	Logger::logStream(Logger::Warning) << "Cannot mobilise without castle.\n";
 	return;
       }
-      if (selectedLine->getCastle()->getOwner() != currentPlayer) {
+      if (selectedLine->getCastle()->getOwner() != Player::getCurrentPlayer()) {
 	Logger::logStream(Logger::Warning) << "Not your castle, cannot mobilise.\n"; 
 	return;
       }
@@ -1077,7 +1097,7 @@ void WarfareWindow::mouseReleaseEvent (QMouseEvent* event) {
 	Logger::logStream(Logger::Warning) << "Empty castle, cannot be mobilised.\n"; 
 	return;
       }
-      if ((0 < clickedVertex->numUnits()) && (clickedVertex->getUnit(0)->getOwner() == currentPlayer)) {
+      if ((0 < clickedVertex->numUnits()) && (clickedVertex->getUnit(0)->getOwner() == Player::getCurrentPlayer())) {
       	Logger::logStream(Logger::Warning) << "Friendly unit is in the way.\n"; 
 	return;
       }
@@ -1092,7 +1112,7 @@ void WarfareWindow::mouseReleaseEvent (QMouseEvent* event) {
 	Logger::logStream(Logger::Warning) << "No unit, cannot move.\n";
 	return; 
       }
-      if (currentPlayer != selectedVertex->getUnit(0)->getOwner()) {
+      if (Player::getCurrentPlayer() != selectedVertex->getUnit(0)->getOwner()) {
 	Logger::logStream(Logger::Warning) << "Not your unit.\n";
 	return; 
       }
@@ -1100,7 +1120,7 @@ void WarfareWindow::mouseReleaseEvent (QMouseEvent* event) {
 	Logger::logStream(Logger::Warning) << "Not adjacent.\n";
 	return; 
       }
-      if ((0 < clickedVertex->numUnits()) && (clickedVertex->getUnit(0)->getOwner() == currentPlayer)) {
+      if ((0 < clickedVertex->numUnits()) && (clickedVertex->getUnit(0)->getOwner() == Player::getCurrentPlayer())) {
       	Logger::logStream(Logger::Warning) << "Friendly unit is in the way.\n"; 
 	return;
       }
@@ -1109,7 +1129,7 @@ void WarfareWindow::mouseReleaseEvent (QMouseEvent* event) {
 	Logger::logStream(Logger::Warning) << "Not adjacent.\n";
 	return; 
       }
-      if ((middle->getCastle()) && (middle->getCastle()->getOwner() != currentPlayer)) {
+      if ((middle->getCastle()) && (middle->getCastle()->getOwner() != Player::getCurrentPlayer())) {
 	Logger::logStream(Logger::Warning) << "Enemy castle in the way.\n"; 
 	return; 
       }
@@ -1124,7 +1144,7 @@ void WarfareWindow::mouseReleaseEvent (QMouseEvent* event) {
 	Logger::logStream(Logger::Warning) << "No unit, cannot reinforce.\n";
 	return; 
       }
-      if (currentPlayer != selectedVertex->getUnit(0)->getOwner()) {
+      if (Player::getCurrentPlayer() != selectedVertex->getUnit(0)->getOwner()) {
 	Logger::logStream(Logger::Warning) << "Not your unit.\n";
 	return; 
       }
@@ -1149,13 +1169,13 @@ void WarfareWindow::mouseReleaseEvent (QMouseEvent* event) {
 	Logger::logStream(Logger::Warning) << "Must have unit to call for surrender.\n"; 
 	return; 
       }
-      if (currentPlayer != selectedVertex->getUnit(0)->getOwner()) {
+      if (Player::getCurrentPlayer() != selectedVertex->getUnit(0)->getOwner()) {
 	Logger::logStream(Logger::Warning) << "Not your unit.\n"; 
 	return; 
       }
       act.cease = clickedLine;
       act.start = selectedVertex;
-      if (clickedLine->getCastle()->getOwner() == currentPlayer) {
+      if (clickedLine->getCastle()->getOwner() == Player::getCurrentPlayer()) {
 	// This is a move into garrison, not call for surrender. 
 	act.todo = Action::EnterGarrison; 
       }
@@ -1168,12 +1188,12 @@ void WarfareWindow::mouseReleaseEvent (QMouseEvent* event) {
 	Logger::logStream(Logger::Warning) << "No castle there, cannot reinforce.\n";
 	return; 
       }
-      if (clickedLine->getCastle()->getOwner() != currentPlayer) {
+      if (clickedLine->getCastle()->getOwner() != Player::getCurrentPlayer()) {
 	Logger::logStream(Logger::Warning) << "Not your castle, cannot reinforce.\n";
 	return; 
       }
-      if ((0 < clickedLine->oneEnd()->numUnits()) && (currentPlayer != clickedLine->oneEnd()->getUnit(0)->getOwner()) &&
-	  (0 < clickedLine->twoEnd()->numUnits()) && (currentPlayer != clickedLine->twoEnd()->getUnit(0)->getOwner())) {
+      if ((0 < clickedLine->oneEnd()->numUnits()) && (Player::getCurrentPlayer() != clickedLine->oneEnd()->getUnit(0)->getOwner()) &&
+	  (0 < clickedLine->twoEnd()->numUnits()) && (Player::getCurrentPlayer() != clickedLine->twoEnd()->getUnit(0)->getOwner())) {
 	Logger::logStream(Logger::Warning) << "Castle is besieged, cannot reinforce.\n"; 
 	return; 
       }
@@ -1279,20 +1299,20 @@ void WarfareWindow::humanAction (Action& act) {
     return; 
   }
   if (turnEnded()) endOfTurn(); 
-  
-  currentPlayer = Player::nextPlayer(currentPlayer);
+
+  Player::advancePlayer();
   runNonHumans();
   selectObject();
 }
 
 void WarfareWindow::runNonHumans () {
-  while (!currentPlayer->isHuman()) {
-    Logger::logStream(Logger::Debug) << currentPlayer->getDisplayName() << "\n";
-    currentPlayer->getAction();
-    //currentPlayer->finished(); 
-    if (turnEnded()) endOfTurn(); 
-    currentPlayer = Player::nextPlayer(currentPlayer);
-    Logger::logStream(Logger::Debug) << currentPlayer->getDisplayName() << "\n";
+  while (!Player::getCurrentPlayer()->isHuman()) {
+    Logger::logStream(Logger::Debug) << Player::getCurrentPlayer()->getDisplayName() << "\n";
+    Player::getCurrentPlayer()->getAction();
+    //Player::getCurrentPlayer()->finished(); 
+    if (turnEnded()) endOfTurn();
+    Player::advancePlayer();
+    Logger::logStream(Logger::Debug) << Player::getCurrentPlayer()->getDisplayName() << "\n";
   }
 }
 
@@ -1310,7 +1330,6 @@ void WarfareWindow::clearGame () {
     if (currentGame) {
     delete currentGame;
     currentGame = 0;
-    currentPlayer = 0;
     hexDrawer->draw(); 
   }
 }

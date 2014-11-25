@@ -171,7 +171,7 @@ double ZoneGraphicsInfo::calcHeight (double x, double y) {
 }
 
 int GraphicsInfo::getHeight (int x, int y) {
-  return heightMap[y*(2 + 3*zoneSide) + x]; 
+  return heightMap ? heightMap[y*(2 + 3*zoneSide) + x] : 0; 
 }
 
 void GraphicsInfo::getHeightMapCoords (int& hexX, int& hexY, Vertices dir) {

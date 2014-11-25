@@ -208,6 +208,7 @@ private:
   void humanAction (Action& act); 
   bool turnEnded ();
   void endOfTurn ();
+  void initialiseGraphics(); 
   void runNonHumans (); 
   Player* gameOver (); 
 
@@ -216,7 +217,6 @@ private:
   static char* popText (PopUnit* dat); 
   
   WarfareGame* currentGame;
-  Player* currentPlayer; 
   Hex* selectedHex;
   Line* selectedLine; 
   Vertex* selectedVertex; 

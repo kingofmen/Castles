@@ -29,6 +29,8 @@ farmland = {
   capital = {
     wood = 0.1
   }  
+
+  output = food 
 }
 
 

@@ -23,6 +23,7 @@ int abs(int x) {
 Vertex::Vertex ()
   : Mirrorable<Vertex>()
   , groupNum(0)
+  , graphicsInfo(0)    
 {
   neighbours.resize(NoVertex);
   allVertices.insert(this); 
@@ -31,6 +32,7 @@ Vertex::Vertex ()
 Vertex::Vertex (Vertex* other)
   : Mirrorable<Vertex>(other)
   , groupNum(other->groupNum)
+  , graphicsInfo(0)    
 {
   neighbours.resize(NoVertex);
 }
@@ -53,6 +55,7 @@ Hex::Hex (int x, int y, TerrainType t)
   , pos(x, y)
   , myType(t)
   , owner(0)
+  , graphicsInfo(0)        
   , farms(0)
   , village(0)
   , castle(0)
@@ -64,8 +67,6 @@ Hex::Hex (int x, int y, TerrainType t)
   mirror->myType = myType;
   mirror->owner = owner;
   mirror->initialise();
-
-  graphicsInfo = new HexGraphicsInfo(this); 
 }
 
 Hex::Hex (Hex* other)
@@ -73,6 +74,7 @@ Hex::Hex (Hex* other)
   , pos(0, 0) // Mirror constructor gets called before main initialise list is finished!
   , myType(other->myType)
   , owner(0)
+  , graphicsInfo(0)
   , farms(0)
   , village(0)
   , castle(0)    
@@ -197,7 +199,6 @@ void Hex::createVertices () {
   for (int i = LeftUp; i < NoVertex; ++i) {
     if (!vertices[i]) {
       vertices[i] = new Vertex();
-      vertices[i]->graphicsInfo = new VertexGraphicsInfo(vertices[i], getGraphicsInfo(), convertToVertex(i)); 
     }
     vertices[i]->hexes.push_back(this); 
   }
@@ -239,8 +240,16 @@ void Hex::setFarm (Farmland* f) {
     farms->setDefaultOwner(village);
     village->setFarm(farms);
   }
-  graphicsInfo->setFarm(new FarmGraphicsInfo(f)); 
+  setGraphicsFarm(f);
 } 
+
+void Hex::setGraphicsFarm (Farmland* f) {
+  if (graphicsInfo) graphicsInfo->setFarm(new FarmGraphicsInfo(f)); 
+}
+
+void Hex::setGraphicsVillage (Village* f) {
+  if (graphicsInfo) graphicsInfo->setVillage(new VillageGraphicsInfo(f)); 
+}
 
 void Hex::setVillage (Village* f) {
   village = f;
@@ -248,7 +257,7 @@ void Hex::setVillage (Village* f) {
     village->setFarm(farms);
     farms->setDefaultOwner(village); 
   }
-  graphicsInfo->setVillage(new VillageGraphicsInfo(f)); 
+  setGraphicsVillage(f);
 } 
 
 void Hex::setLine (Direction dir, Line* l) {
@@ -549,6 +558,7 @@ Line::Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo)
   , hex1(hone)
   , hex2(thwo)
   , castle(0)
+  , graphicsInfo(0)
 {
   assert(vex1);
   assert(vex2);
@@ -561,7 +571,6 @@ Line::Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo)
   position.second = 0.5*(vex1->position.second + vex2->position.second);
 
   allLines.insert(this);
-  graphicsInfo = new LineGraphicsInfo(this, vex1->getDirection(vex2)); 
 }
 
 // Mirror constructor
@@ -572,6 +581,7 @@ Line::Line (Line* other)
   , hex1(0)
   , hex2(0)
   , castle(0)
+  , graphicsInfo(0)    
 {}
     
 Line::~Line () {
@@ -604,8 +614,12 @@ void Vertex::forceRetreat (Castle*& c, Vertex*& v) {
   }
 }
 
+void Line::addGraphicCastle (Castle* dat) {
+  if (graphicsInfo) graphicsInfo->addCastle(dat->getSupport()->getGraphicsInfo());
+}
+
 void Line::addCastle (Castle* dat) {
-  if (isReal()) graphicsInfo->addCastle(dat->getSupport()->getGraphicsInfo());
+  addGraphicCastle(dat); 
   castle = dat;
 }
 

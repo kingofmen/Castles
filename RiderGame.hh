@@ -18,10 +18,11 @@ class WarfareGame {
 public:
   ~WarfareGame ();
 
-  static WarfareGame* createGame (std::string fname, Player*& currentplayer);
+  static WarfareGame* createGame (std::string fname);
   
   void endOfTurn ();
   static void unitComparison (string fname);
+  static void unitTests (string fname); 
   static void updateGreatestMilStrength ();    
   
 private:

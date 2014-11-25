@@ -32,7 +32,7 @@ WarfareGame::~WarfareGame () {
   currGame = 0; 
 }
 
-WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
+WarfareGame* WarfareGame::createGame (string filename) {
   Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
   //srand(time(NULL));
   srand(42); 
@@ -55,11 +55,6 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
   Vertex::clear();
   Line::clear(); 
   
-  Object* gInfo = processFile("./common/graphics.txt");
-  assert(gInfo); 
-  StaticInitialiser::initialiseGraphics(gInfo); // Must come before Hex creation so there's a zone to stuff them in. 
-  StaticInitialiser::makeZoneTextures(gInfo); 
- 
   for (int i = 0; i < xsize; ++i) {
     for (int j = 0; j < ysize; ++j) {
       Hex::createHex(i, j, Plain); 
@@ -73,11 +68,6 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
   Object* unitInfo = processFile("./common/units.txt");
   assert(unitInfo); 
   StaticInitialiser::buildMilUnitTemplates(unitInfo);
-
-  // Must come after buildMilUnits so templates can check for icons. 
-  Object* guiInfo = processFile("./common/gui.txt");
-  if (!guiInfo) guiInfo = new Object("guiInfo");
-  StaticInitialiser::setUItexts(guiInfo); 
   StaticInitialiser::initialiseCivilBuildings(popInfo);
   
   for (int i = 0; i < xsize; ++i) {
@@ -123,13 +113,9 @@ WarfareGame* WarfareGame::createGame (string filename, Player*& currplayer) {
     StaticInitialiser::buildMilUnit(*unit);
   }
 
-  currplayer = Player::findByName(game->safeGetString("currentplayer"));
-  assert(currplayer);
-  updateGreatestMilStrength(); // Must happen before graphics init, for unit sprites. 
-  StaticInitialiser::graphicsInitialisation(); 
-  FarmGraphicsInfo::updateFieldStatus(); 
-  VillageGraphicsInfo::updateVillageStatus(); // Must happen after graphics init for supply sprite.   
-
+  Player::setCurrentPlayerByName(game->safeGetString("currentplayer"));
+  assert(Player::getCurrentPlayer());
+  updateGreatestMilStrength(); 
   return currGame; 
 }
 
@@ -344,6 +330,16 @@ void WarfareGame::unitComparison (string fname) {
     }
   }
   
+}
+
+void WarfareGame::unitTests (string fname) {
+  Logger::logStream(DebugStartup) << "Test: Creating game from file " << fname << "\n"; 
+  WarfareGame* testGame = createGame(fname);
+  Logger::logStream(DebugStartup) << "Passed.\n";
+  Logger::logStream(DebugStartup) << "Test: Writing game to file.\n";
+  StaticInitialiser::writeGameToFile("C:\\Rolf\\Users\\Desktop\\Castles\\testsave.txt");
+  Logger::logStream(DebugStartup) << "Passed\n.";
+  //Logger::logStream(DebugStartup) << "Test: ";
 }
 
 void WarfareGame::updateGreatestMilStrength() {
