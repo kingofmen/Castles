@@ -27,6 +27,10 @@ EconActor::~EconActor () {
   delete[] goods;
 }
 
+void EconActor::clear () {
+  allActors.clear(); 
+}
+
 Market::Market () {
   prices.resize(EconActor::numGoods);
 }

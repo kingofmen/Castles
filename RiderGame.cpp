@@ -19,6 +19,7 @@
 #include "Directions.hh" 
 
 WarfareGame* WarfareGame::currGame = 0; 
+bool testingBool = true;
 
 WarfareGame::WarfareGame () {
   // Clear hexes, vertices, etc
@@ -28,21 +29,27 @@ WarfareGame::~WarfareGame () {
   Vertex::clear();
   Hex::clear();
   Line::clear();
-  Player::clear(); 
-  currGame = 0; 
+  Player::clear();
+  EconActor::clear(); 
+  currGame = 0;
 }
 
 WarfareGame* WarfareGame::createGame (string filename) {
-  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
+  Logger::logStream(DebugStartup) << "Entering createGame\n";
   //srand(time(NULL));
   srand(42); 
   if (currGame) delete currGame; 
   currGame = new WarfareGame();
+  Logger::logStream(DebugStartup) << "Processing savegame\n";
+  //assert(testingBool);   
   Object* game = processFile(filename); 
   assert(game);
+  Logger::logStream(DebugStartup) << "Loading pop info\n";
   Object* popInfo = processFile("./common/popInfo.txt");
-  assert(popInfo); 
-  Object* goods = popInfo->safeGetObject("goods"); // Must come before any EconActors are created. 
+  assert(popInfo);
+  Logger::logStream(DebugStartup) << "Loading goods\n";
+  Object* goods = popInfo->safeGetObject("goods"); // Must come before any EconActors are created.
+  Logger::logStream(DebugStartup) << "Initialising goods\n";
   StaticInitialiser::initialiseGoods(goods);
   Object* hexgrid = game->safeGetObject("hexgrid");
   assert(hexgrid);
@@ -50,26 +57,31 @@ WarfareGame* WarfareGame::createGame (string filename) {
   int ysize = hexgrid->safeGetInt("y", -1);
   assert(xsize > 0);
   assert(ysize > 0);
-
+  Logger::logStream(DebugStartup) << "Clearing geography\n";
   Hex::clear();
   Vertex::clear();
   Line::clear(); 
-  
+
+  Logger::logStream(DebugStartup) << "Creating geography\n";
   for (int i = 0; i < xsize; ++i) {
     for (int j = 0; j < ysize; ++j) {
       Hex::createHex(i, j, Plain); 
     }
   }
-  
+
+  Logger::logStream(DebugStartup) << "Creating actions\n";
   Object* actionInfo = processFile("./common/actions.txt");
   assert(actionInfo); 
   StaticInitialiser::createActionProbabilities(actionInfo);
 
+  Logger::logStream(DebugStartup) << "Creating unit templates\n";
   Object* unitInfo = processFile("./common/units.txt");
   assert(unitInfo); 
   StaticInitialiser::buildMilUnitTemplates(unitInfo);
+  Logger::logStream(DebugStartup) << "Initialising buildings\n";
   StaticInitialiser::initialiseCivilBuildings(popInfo);
-  
+
+  Logger::logStream(DebugStartup) << "Creating neighbours\n";
   for (int i = 0; i < xsize; ++i) {
     for (int j = 0; j < ysize; ++j) {
       Hex* curr = Hex::getHex(i, j);
@@ -112,8 +124,8 @@ WarfareGame* WarfareGame::createGame (string filename) {
   for (objiter unit = units.begin(); unit != units.end(); ++unit) {
     StaticInitialiser::buildMilUnit(*unit);
   }
-
-  Player::setCurrentPlayerByName(game->safeGetString("currentplayer"));
+  
+  Player::setCurrentPlayerByName(game->safeGetString("currentplayer"));  
   assert(Player::getCurrentPlayer());
   updateGreatestMilStrength(); 
   return currGame; 
@@ -333,11 +345,18 @@ void WarfareGame::unitComparison (string fname) {
 }
 
 void WarfareGame::unitTests (string fname) {
+  ofstream writer;
+  writer.open("parseroutput.txt");
+  setOutputStream(&writer);   
   Logger::logStream(DebugStartup) << "Test: Creating game from file " << fname << "\n"; 
   WarfareGame* testGame = createGame(fname);
   Logger::logStream(DebugStartup) << "Passed.\n";
   Logger::logStream(DebugStartup) << "Test: Writing game to file.\n";
-  StaticInitialiser::writeGameToFile("C:\\Rolf\\Users\\Desktop\\Castles\\testsave.txt");
+  StaticInitialiser::writeGameToFile(".\\savegames\\testsave.txt");
+  Logger::logStream(DebugStartup) << "Passed\n";
+  Logger::logStream(DebugStartup) << "Test: Loading from savegame again\n";
+  testingBool = false;
+  testGame = createGame(".\\savegames\\testsave.txt");
   Logger::logStream(DebugStartup) << "Passed\n.";
   //Logger::logStream(DebugStartup) << "Test: ";
 }

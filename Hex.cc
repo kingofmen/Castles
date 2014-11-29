@@ -806,24 +806,24 @@ void Hex::raid (MilUnit* raiders, Outcome out) {
 
 
 void Hex::clear () {
-  for (Iterator h = begin(); h != end(); ++h) {
+  while (!allHexes.empty()) {
+    Iterator h = begin();
     (*h)->destroyIfReal();
   }
-  allHexes.clear(); 
 }
 
 void Vertex::clear () {
-  for (Iterator h = begin(); h != end(); ++h) {
+  while (!allVertices.empty()) {
+    Iterator h = begin();
     (*h)->destroyIfReal();
   }
-  allVertices.clear(); 
 }
 
 void Line::clear () {
-  for (Iterator h = begin(); h != end(); ++h) {
+  while (!allLines.empty()) {
+    Iterator h = begin();  
     (*h)->destroyIfReal();
   }
-  allLines.clear(); 
 }
 
 void Line::endOfTurn () {

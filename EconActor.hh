@@ -83,6 +83,7 @@ public:
   static Iter start () {return allActors.begin();}
   static Iter final () {return allActors.end();} 
 
+  static void clear ();  
   static void executeContracts ();   
   static EconActor* getById (int id);
   static unsigned int getIndex (string name);
@@ -91,6 +92,10 @@ public:
   static void production (); 
   static void setAllUtils ();
 
+  typedef vector<string>::iterator GoodsNameIter;
+  static GoodsNameIter beginGoods () {return goodNames.begin();}
+  static GoodsNameIter finalGoods () {return goodNames.end();}
+  
   static const unsigned int Money;
   static const unsigned int Labor; 
 

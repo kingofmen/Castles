@@ -852,10 +852,10 @@ void MilUnitGraphicsInfo::updateSprites (MilStrength* dat) {
     }
   }
 
+  assert(spriteIndices.size() < allFormations.size()); 
   for (unsigned int i = 0; i < spriteIndices.size(); ++i) {
     formation.push_back(allFormations[spriteIndices.size()][i]);
   }
-  
 }
 
 double area (GraphicsInfo::FieldShape const& field) {

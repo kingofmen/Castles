@@ -215,7 +215,10 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
   int id = info->safeGetInt("id", -1);
   if (0 > id) id = EconActor::allActors.size();
   if (id >= (int) EconActor::allActors.size()) EconActor::allActors.resize(id+1);
-  assert(!EconActor::allActors[id]);
+  if (EconActor::allActors[id]) {
+    Logger::logStream(DebugStartup) << "Bad econ id " << id << " " << info << " already exists.\n";
+    assert(!EconActor::allActors[id]);
+  }
   econ->id = id;
   for (unsigned int i = 0; i < EconActor::numGoods; ++i) {
     econ->goods[i] = info->safeGetFloat(EconActor::goodNames[i]);
@@ -1121,6 +1124,16 @@ void StaticInitialiser::writeAgeInfoToObject (AgeTracker& age, Object* obj, int 
   }
 }
 
+void StaticInitialiser::writeEconActorIntoObject (EconActor* econ, Object* info) {
+  info->setLeaf("id", econ->getId());
+  for (unsigned int i = 0; i < EconActor::getNumGoods(); ++i) {
+    double amount = econ->goods[i];
+    if (fabs(amount) < 0.001) continue;
+    string gname = EconActor::getGoodName(i);
+    info->setLeaf(gname, amount); 
+  }
+}
+
 void StaticInitialiser::writeGameToFile (string fname) {
   Object* game = new Object("game");
   Parser::topLevel = game;
@@ -1132,7 +1145,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
   }
   game->setValue(pLevels);
   game->setLeaf("defaultPriority", defaultUnitPriority); 
-
+  
   for (Player::Iterator p = Player::begin(); p != Player::end(); ++p) {
     Object* faction = new Object("faction");
     faction->setLeaf("name", (*p)->getName());
@@ -1173,6 +1186,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       hexInfo->setLeaf("player", castle->getOwner()->getName());
       Object* castleObject = new Object("castle");
       hexInfo->setValue(castleObject);
+      writeEconActorIntoObject(castle, castleObject); 
       castleObject->setLeaf("pos", getDirectionName((*hex)->getDirection(*lin)));
       castleObject->setLeaf("supplies", castle->supplies);
       castleObject->setLeaf("recruiting", castle->recruitType->name); 
@@ -1180,6 +1194,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
 	Object* garrObject = new Object("garrison");
 	castleObject->setValue(garrObject);
 	writeUnitToObject(castle->getGarrison(i), garrObject);
+	writeEconActorIntoObject(castle->getGarrison(i), garrObject); 
       }
       /*
       Object* taxObject = new Object("taxes");
@@ -1198,6 +1213,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
     if (village) {
       Object* villageInfo = new Object("village");
       hexInfo->setValue(villageInfo);
+      writeEconActorIntoObject(village, villageInfo); 
       Object* males = new Object("males");
       writeAgeInfoToObject(village->males, males);
       villageInfo->setValue(males);
