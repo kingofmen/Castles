@@ -29,7 +29,8 @@ WarfareGame::~WarfareGame () {
   Vertex::clear();
   Hex::clear();
   Line::clear();
-  Player::clear();
+  Iterable<Player>::clear();
+  Named<Player>::clear(); 
   EconActor::clear(); 
   currGame = 0;
 }
@@ -223,7 +224,7 @@ void WarfareGame::endOfTurn () {
   // TODO: Clear or refresh the cache (routeMaps) every so often. 
   
   // Trade
-  for (Player::Iterator p = Player::begin(); p != Player::end(); ++p) {
+  for (Iterable<Player>::Iter p = Iterable<Player>::start(); p != Iterable<Player>::final(); ++p) {
     vector<Route*> routes;
     vector<Castle*> sources;
     vector<MilUnit*> sinks;

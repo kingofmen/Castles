@@ -22,6 +22,7 @@ int abs(int x) {
 
 Vertex::Vertex ()
   : Mirrorable<Vertex>()
+  , Named<Vertex>()
   , groupNum(0)
   , graphicsInfo(0)    
 {
@@ -31,6 +32,7 @@ Vertex::Vertex ()
 
 Vertex::Vertex (Vertex* other)
   : Mirrorable<Vertex>(other)
+  , Named<Vertex>()
   , groupNum(other->groupNum)
   , graphicsInfo(0)    
 {
@@ -45,13 +47,13 @@ Vertex::~Vertex () {
   allVertices.erase(this); 
 }
 
-
 void Hex::createHex (int x, int y, TerrainType t) {
   allHexes.insert(new Hex(x, y, t));
 }
 
 Hex::Hex (int x, int y, TerrainType t)
   : Mirrorable<Hex>()
+  , Named<Hex>()
   , pos(x, y)
   , myType(t)
   , owner(0)
@@ -71,6 +73,7 @@ Hex::Hex (int x, int y, TerrainType t)
 
 Hex::Hex (Hex* other)
   : Mirrorable<Hex>(other)
+  , Named<Hex>()    
   , pos(0, 0) // Mirror constructor gets called before main initialise list is finished!
   , myType(other->myType)
   , owner(0)
@@ -553,6 +556,7 @@ bool Vertex::isLand () const {
 // Real constructor 
 Line::Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo)
   : Mirrorable<Line>()
+  , Named<Line>()
   , vex1(one)
   , vex2(two)
   , hex1(hone)
@@ -576,6 +580,7 @@ Line::Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo)
 // Mirror constructor
 Line::Line (Line* other)
   : Mirrorable<Line>(other)
+  , Named<Line>()
   , vex1(0)
   , vex2(0)
   , hex1(0)
@@ -810,6 +815,7 @@ void Hex::clear () {
     Iterator h = begin();
     (*h)->destroyIfReal();
   }
+  Named<Hex>::clear();
 }
 
 void Vertex::clear () {
@@ -817,6 +823,7 @@ void Vertex::clear () {
     Iterator h = begin();
     (*h)->destroyIfReal();
   }
+  Named<Vertex>::clear();
 }
 
 void Line::clear () {
@@ -824,6 +831,7 @@ void Line::clear () {
     Iterator h = begin();  
     (*h)->destroyIfReal();
   }
+  Named<Line>::clear(); 
 }
 
 void Line::endOfTurn () {

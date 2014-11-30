@@ -20,7 +20,8 @@ vector<double> MilUnitTemplate::drillEffects;
 
 MilUnit::MilUnit ()
   : Unit()
-  , Mirrorable<MilUnit>() 
+  , Mirrorable<MilUnit>()
+  , Named<MilUnit, false>()
   , rear(Left)
   , supplies(0)
   , supplyRatio(1) 
@@ -34,7 +35,8 @@ MilUnit::MilUnit ()
 
 MilUnit::MilUnit (MilUnit* other) 
   : Unit()
-  , Mirrorable<MilUnit>(other) 
+  , Mirrorable<MilUnit>(other)
+  , Named<MilUnit, false>()
   , rear(other->rear)
   , graphicsInfo(0)
 {}

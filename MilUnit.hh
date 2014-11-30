@@ -67,7 +67,7 @@ public:
   AgeTracker* soldiers; 
 };
 
-class MilUnit : public Unit, public EconActor, public Mirrorable<MilUnit>, public Named, public MilStrength {
+class MilUnit : public Unit, public EconActor, public Mirrorable<MilUnit>, public Named<MilUnit, false>, public MilStrength {
   friend class Mirrorable<MilUnit>;
   friend class StaticInitialiser;
   friend class MilUnitGraphicsInfo; 

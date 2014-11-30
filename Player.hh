@@ -3,13 +3,14 @@
 
 #include <string>
 #include <vector>
-#include "EconActor.hh" 
+#include "EconActor.hh"
+#include "UtilityFunctions.hh"
 class WarfareGame;
 class Action; 
 class MilUnit; 
 class PlayerGraphicsInfo; 
 
-class Player : public EconActor {
+class Player : public EconActor, public Iterable<Player>, public Named<Player> {
   friend class StaticInitialiser; 
 public:
   Player (bool h, std::string d, std::string n);
@@ -19,19 +20,13 @@ public:
   bool turnEnded () const {return doneWithTurn;}
   void finished () {doneWithTurn = true;} 
   void newTurn () {doneWithTurn = false;} 
-  std::string getName () const {return name;}
   std::string getDisplayName () const {return displayName;} 
   PlayerGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;} 
 
   static void setCurrentPlayerByName (std::string name) {currentPlayer = findByName(name);}
   static void advancePlayer () {currentPlayer = nextPlayer();}
   static Player* getCurrentPlayer () {return currentPlayer;}
-  static Player* findByName (std::string n);
   static Player* nextPlayer ();
-  typedef std::vector<Player*>::iterator Iterator; 
-  static Iterator begin () {return allPlayers.begin();}
-  static Iterator end () {return allPlayers.end();} 
-  static void clear (); 
   
 private:
   bool human;
@@ -45,7 +40,6 @@ private:
   double evaluateAttackStrength (Player* att, Player* def);
   double calculateInfluence ();
   double calculateUnitStrength (MilUnit* dat, double modifiers); 
-  static std::vector<Player*> allPlayers;
 
   static Player* currentPlayer;
   static double influenceDecay;
@@ -57,5 +51,6 @@ private:
   static double siegeInfluenceValue;
 }; 
 
+typedef Iterable<Player>::Iter PlIter; 
 
 #endif

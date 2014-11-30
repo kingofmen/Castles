@@ -1255,7 +1255,7 @@ void WarfareWindow::keyReleaseEvent (QKeyEvent* event) {
 bool WarfareWindow::turnEnded () {
   if (!currentGame) return false;
 
-  for (Player::Iterator pl = Player::begin(); pl != Player::end(); ++pl) {
+  for (PlIter pl = Iterable<Player>::start(); pl != Iterable<Player>::final(); ++pl) {
     if ((*pl)->turnEnded()) continue;
     return false; 
   }
@@ -1265,7 +1265,7 @@ bool WarfareWindow::turnEnded () {
 
 void WarfareWindow::endOfTurn () {
   currentGame->endOfTurn();
-  for (Player::Iterator pl = Player::begin(); pl != Player::end(); ++pl) {
+  for (PlIter pl = Iterable<Player>::start(); pl != Iterable<Player>::final(); ++pl) {
     (*pl)->newTurn(); 
   }
 }

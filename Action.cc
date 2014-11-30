@@ -355,14 +355,13 @@ Action::Calculator::Calculator ()
   
 }
 
-void buildStr (std::string& str, Named const * const nam, int& idx) {
+template <class T>
+void buildStr (std::string& str, Named<T> const * const nam, int& idx) {
   if (!nam) return; 
   static std::string adjectives[3] = {" from ", " to ", " via "};
   str += adjectives[idx++];
   str += nam->getName();
 }
-
-
 
 std::string Action::describe () const {
   std::string ret = (player ? player->getDisplayName() : std::string("Temp"));

@@ -10,7 +10,6 @@
 #include "Logger.hh" 
 #include <queue>
 
-std::vector<Player*> Player::allPlayers; 
 bool detailDebug = false;
 
 Player* Player::currentPlayer      = 0;
@@ -23,20 +22,12 @@ double Player::supplyWeight        = 1000;
 double Player::siegeInfluenceValue = 20;
 
 Player::Player (bool h, std::string d, std::string n)
-  : human(h)
+  : Iterable<Player>(this)
+  , Named<Player>(n, this)
+  , human(h)
   , doneWithTurn(false)
-  , name(n)
   , displayName(d)
-{
-  allPlayers.push_back(this); 
-}
-
-void Player::clear () {
-  for (Iterator p = begin(); p != end(); ++p) {
-    delete (*p); 
-  }
-  allPlayers.clear(); 
-}
+{}
 
 double Player::calculateUnitStrength (MilUnit* dat, double modifiers) {
   return dat->calcStrength(dat->getDecayConstant() * modifiers, &MilUnitElement::shock);
@@ -265,7 +256,7 @@ double Player::evaluate (Action act) {
 
     //Logger::logStream(DebugAI) << "(" << i << " " << temp << " ";
     
-    for (Iterator p = begin(); p != end(); ++p) {
+    for (PlIter p = Iterable<Player>::start(); p != Iterable<Player>::final(); ++p) {
       if ((*p) == this) continue;
       temp -= evaluateAttackStrength((*p), this);
       //Logger::logStream(DebugAI) << temp << " ";
@@ -493,19 +484,11 @@ void Player::getAction () {
 }
 
 Player* Player::nextPlayer () {
-  Iterator pl = std::find(begin(), end(), currentPlayer);
-  assert(end() != pl);
+  PlIter pl = std::find(Iterable<Player>::start(), Iterable<Player>::final(), currentPlayer);
+  assert(Iterable<Player>::final() != pl);
   do {
     ++pl;
-    if (end() == pl) pl = begin();
+    if (Iterable<Player>::final() == pl) pl = Iterable<Player>::start();
   } while ((*pl)->turnEnded());
   return (*pl); 
-}
-
-Player* Player::findByName (std::string n) {
-  for (Iterator p = begin(); p != end(); ++p) {
-    if ((*p)->getName() != n) continue;
-    return (*p); 
-  }
-  return 0; 
 }

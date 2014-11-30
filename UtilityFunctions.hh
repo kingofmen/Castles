@@ -3,6 +3,7 @@
 
 #include <cstdlib> 
 #include <map>
+#include <cassert>
 #include <cmath> 
 #include <string>
 #include <vector>
@@ -32,6 +33,7 @@ private:
   DieRoll* next; 
 };
 
+/*
 class Named {
 public:
   string getName() const {return name;}
@@ -39,6 +41,7 @@ public:
 private:
   string name;
 };
+*/ 
 
 string outcomeToString (Outcome out);
 
@@ -148,6 +151,101 @@ class MilStrength {
   int getTotalStrength () const;
 
   static double greatestStrength; 
+};
+
+template <class T> class Iterable {
+ public:
+
+  Iterable<T> (T* dat) {allThings.push_back(dat);} 
+  ~Iterable<T> () {
+    for (unsigned int i = 0; i < allThings.size(); ++i) {
+      if (allThings[i] != this) continue;
+      allThings[i] = allThings.back();
+      break;
+    }
+    allThings.pop_back(); 
+  }
+
+  typedef typename vector<T*>::iterator Iter;
+  static Iter start () {return allThings.begin();}
+  static Iter final () {return allThings.end();}
+  static unsigned int totalAmount () {return allThings.size();}
+  static void clear () {
+    for (Iter i = start(); i != final(); ++i) {
+      delete (*i);
+    }
+    allThings.clear();
+  }
+  
+ private:
+  static vector<T*> allThings;
+};
+
+template <class T> vector<T*> Iterable<T>::allThings; 
+
+template <class T> class Finalizable {
+public:
+  Finalizable<T> (bool final = false) {
+    assert(!s_Final);
+    s_Final = final;
+  }
+
+private:
+  static bool s_Final;
+};
+
+template<class T> bool Finalizable<T>::s_Final = false; 
+
+template<class T, bool unique=true> class Named {
+public:
+  Named (string n, T* dat) : name(n) {if (unique) assert(!nameToObjectMap[n]); nameToObjectMap[n] = dat;} 
+  Named () : name("ToBeNamed") {}
+  string getName () const {return name;}
+  void resetName (string n) {T* dat = nameToObjectMap[name]; assert(dat); nameToObjectMap[n] = dat; name = n;}
+  // Use setName for objects that don't have a name yet.
+  void setName (string n) {assert(name == "ToBeNamed"); if (unique) assert(!nameToObjectMap[n]); nameToObjectMap[n] = (T*) this; name = n;} 
+  static T* getByName (string n) {assert(unique); return nameToObjectMap[n];}
+  static T* findByName (string n) {return getByName(n);}
+  static void clear () {nameToObjectMap.clear();}
+private:
+  string name;
+  static map<string, T*> nameToObjectMap;
+};
+
+template<class T, bool unique> map<string, T*> Named<T, unique>::nameToObjectMap;
+
+template<class T> class Numbered {
+public:
+  Numbered<T> (T* dat, unsigned int i) : idx(i) {
+    if (i >= theNumbers.size()) theNumbers.resize(i+1);
+    theNumbers[i] = dat;
+  }
+
+  Numbered<T> (T* dat) : idx(theNumbers.size()) {
+    theNumbers.push_back(dat); 
+  }
+
+  unsigned int getIdx () const {return idx;}
+  static T* getByIndex (unsigned int i) {return theNumbers[i];}
+  operator unsigned int() const {return idx;}
+  
+private:
+  unsigned int idx; 
+  static vector<T*> theNumbers;
+};
+
+template<class T> vector<T*> Numbered<T>::theNumbers; 
+
+template<class T> class Enumerable : public Finalizable<T>, public Iterable<T>, public Named<T>, public Numbered<T> {
+public:
+  Enumerable<T> (T* dat, string n, int i, bool final = false) 
+    : Finalizable<T>(final)
+    , Iterable<T>(dat)
+    , Named<T>(n, dat)
+    , Numbered<T>(dat, i)
+  {}
+  
+private:
 };
 
 #endif 

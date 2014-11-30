@@ -111,7 +111,7 @@ void StaticInitialiser::graphicsInitialisation () {
     f->milTrad->militia->graphicsInfo->updateSprites(f->milTrad);
   }
 
-  for (Player::Iterator p = Player::begin(); p != Player::end(); ++p) {
+  for (Iterable<Player>::Iter p = Iterable<Player>::start(); p != Iterable<Player>::final(); ++p) {
     string pName = "gfx/" + (*p)->getName() + ".png";
     GLuint texid; 
     glGenTextures(1, &texid);
@@ -1146,7 +1146,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
   game->setValue(pLevels);
   game->setLeaf("defaultPriority", defaultUnitPriority); 
   
-  for (Player::Iterator p = Player::begin(); p != Player::end(); ++p) {
+  for (Iterable<Player>::Iter p = Iterable<Player>::start(); p != Iterable<Player>::final(); ++p) {
     Object* faction = new Object("faction");
     faction->setLeaf("name", (*p)->getName());
     faction->setLeaf("displayname", string("\"") + (*p)->getDisplayName() + "\"");

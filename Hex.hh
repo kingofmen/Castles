@@ -21,7 +21,7 @@ class Vertex;
 class Line;
 
 
-class Hex : public Mirrorable<Hex>, public Market, public Named {
+class Hex : public Mirrorable<Hex>, public Market, public Named<Hex> {
   friend class Mirrorable<Hex>;
   friend class StaticInitialiser; 
 public: 
@@ -118,7 +118,7 @@ public:
 };
 
 
-class Vertex : public Mirrorable<Vertex>, public Named, public Geography {
+class Vertex : public Mirrorable<Vertex>, public Named<Vertex>, public Geography {
   friend class Mirrorable<Vertex>;
   friend class StaticInitialiser;     
   friend class Hex;
@@ -178,7 +178,7 @@ private:
   static set<Vertex*> allVertices;
 };
 
-class Line : public Mirrorable<Line>, public Named, public Geography { 
+class Line : public Mirrorable<Line>, public Named<Line>, public Geography { 
   friend class Mirrorable<Line>;
   friend class StaticInitialiser;  
 public:
