@@ -1272,7 +1272,7 @@ void WarfareWindow::endOfTurn () {
 
 Player* WarfareWindow::gameOver () {
   set<Player*> stillHaveCastles;
-  for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) {
+  for (Line::Iterator lin = Line::start(); lin != Line::final(); ++lin) {
     Castle* curr = (*lin)->getCastle();
     if (!curr) continue;
     stillHaveCastles.insert(curr->getOwner());

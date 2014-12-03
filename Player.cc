@@ -34,12 +34,12 @@ double Player::calculateUnitStrength (MilUnit* dat, double modifiers) {
 }
 
 double Player::calculateInfluence () {
-  for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
+  for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) {
     (*vex)->getMirror()->value.influenceMap[this] = 0; 
   }
   double influence = 0; 
   std::queue<Vertex*> infVerts;
-  for (Vertex::Iterator v = Vertex::begin(); v != Vertex::end(); ++v) {
+  for (Vertex::Iterator v = Vertex::start(); v != Vertex::final(); ++v) {
     Vertex* vex = (*v)->getMirror();
     if (0 == vex->numUnits()) continue;
     MilUnit* unit = vex->getUnit(0);
@@ -51,7 +51,7 @@ double Player::calculateInfluence () {
     //Logger::logStream(DebugAI) << "{" << (*v)->getName() << " " << str*vex->value.strategic << " = " << str << "*" << vex->value.strategic << "} "; 
   }
 
-  for (Line::Iterator l = Line::begin(); l != Line::end(); ++l) {
+  for (Line::Iterator l = Line::start(); l != Line::final(); ++l) {
     Line* lin = (*l)->getMirror();
     if (0 == lin->getCastle()) continue;
     if (this != lin->getCastle()->getOwner()) continue;
@@ -101,7 +101,7 @@ double Player::evaluateGlobalStrength () {
   double suppliesUsed = 0;
   double suppliesNeeded = 0; 
   double unitStrength = 0;
-  for (Vertex::Iterator v = Vertex::begin(); v != Vertex::end(); ++v) {
+  for (Vertex::Iterator v = Vertex::start(); v != Vertex::final(); ++v) {
     Vertex* vex = (*v)->getMirror();
     if (0 == vex->numUnits()) continue;
     MilUnit* unit = vex->getUnit(0);
@@ -115,7 +115,7 @@ double Player::evaluateGlobalStrength () {
   // Economic and geographic strength - castles, population, productive capacity 
   double castlePoints = 0;
   double suppliesProduced = 0; 
-  for (Line::Iterator l = Line::begin(); l != Line::end(); ++l) {
+  for (Line::Iterator l = Line::start(); l != Line::final(); ++l) {
     Line* lin = (*l)->getMirror();
     Castle* castle = lin->getCastle();
     if (0 == castle) continue;
@@ -158,7 +158,7 @@ double Player::evaluateAttackStrength (Player* att, Player* def) {
   // plus a bonus for having influence close to enemy-held areas. 
   
   // Attacks on fortresses and sorties out of them
-  for (Line::Iterator l = Line::begin(); l != Line::end(); ++l) {
+  for (Line::Iterator l = Line::start(); l != Line::final(); ++l) {
     Line* lin = (*l)->getMirror(); 
     Castle* curr = lin->getCastle();
     if (!curr) continue;
@@ -192,7 +192,7 @@ double Player::evaluateAttackStrength (Player* att, Player* def) {
   }
 
   
-  for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
+  for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) {
     Vertex* vtx = (*vex)->getMirror();
     if (0 == vtx->numUnits()) continue;
     MilUnit* mil = vtx->getUnit(0);
@@ -225,13 +225,13 @@ double Player::evaluate (Action act) {
   act.player = this; 
   if (Action::Ok != act.checkPossible()) return -100;
 
-  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
+  for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
     (*hex)->setMirrorState(); 
   }
-  for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
+  for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) {
     (*vex)->setMirrorState(); 
   }
-  for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) {
+  for (Line::Iterator lin = Line::start(); lin != Line::final(); ++lin) {
     (*lin)->setMirrorState(); 
   }
 
@@ -297,23 +297,23 @@ void Player::getAction () {
   best.todo = Action::Nothing;
   
   double maxPopulation = 1; 
-  for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
+  for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) {
     (*vex)->getMirror()->value.clearFully();
   }
-  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
+  for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
     (*hex)->setMirrorState();
     if ((*hex)->getVillage()) maxPopulation = std::max(maxPopulation, (*hex)->getVillage()->production()); 
   }
-  for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
+  for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) {
     (*vex)->setMirrorState(); 
   }
-  for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) {
+  for (Line::Iterator lin = Line::start(); lin != Line::final(); ++lin) {
     (*lin)->setMirrorState();
     (*lin)->getMirror()->value.clearFully(); 
   }
  
   std::queue<Vertex*> castleDistances; 
-  for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) {
+  for (Line::Iterator lin = Line::start(); lin != Line::final(); ++lin) {
     Line* mir = (*lin)->getMirror();
     mir->value.strategic *= 3; 
     if (0 == mir->getCastle()) continue;
@@ -345,7 +345,7 @@ void Player::getAction () {
     }
   }
 
-  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
+  for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
     Village* village = (*hex)->getVillage();
     double economicWeight = 0;
     if (!village) continue;
@@ -358,7 +358,7 @@ void Player::getAction () {
   
   double bestScore = evaluate(best); 
 
-  for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
+  for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) {
     if (0 == (*vex)->numUnits()) continue;
     MilUnit* unit = (*vex)->getUnit(0);
     if (unit->getOwner() != this) continue; 
@@ -421,7 +421,7 @@ void Player::getAction () {
     }
   }
 
-  for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) {
+  for (Line::Iterator lin = Line::start(); lin != Line::final(); ++lin) {
     Castle* castle = (*lin)->getCastle();
     if (!castle) continue;
     if (castle->getOwner() != this) continue;
@@ -462,7 +462,7 @@ void Player::getAction () {
   }
 
   /*
-  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
+  for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
     Action curr;
     curr.todo = Action::Repair;
     curr.target = (*hex);

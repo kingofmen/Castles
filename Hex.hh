@@ -21,7 +21,7 @@ class Vertex;
 class Line;
 
 
-class Hex : public Mirrorable<Hex>, public Market, public Named<Hex> {
+class Hex : public Mirrorable<Hex>, public Market, public Named<Hex>, public Iterable<Hex> {
   friend class Mirrorable<Hex>;
   friend class StaticInitialiser; 
 public: 
@@ -30,7 +30,6 @@ public:
   typedef vector<Line*>::iterator LineIterator; 
   typedef vector<PopUnit*>::iterator PopIterator;
   typedef vector<Vertex*>::iterator VtxIterator; 
-  typedef set<Hex*>::iterator Iterator; 
 
   void                   addPop (PopUnit* p) {units.push_back(p);}   
   bool                   colonise (Line* lin, MilUnit* unit, Outcome out);
@@ -70,8 +69,6 @@ public:
   void                   setVillage (Village* v);
   virtual void           setMirrorState (); 
   
-  static Iterator begin () {return allHexes.begin();}
-  static Iterator end () {return allHexes.end();}  
   static TerrainType getType (char t); 
   static pair<int, int> getNeighbourCoordinates (pair<int, int> pos, Direction dere);
   static Hex* getHex (int x, int y);
@@ -95,9 +92,6 @@ private:
   Village* village;
   Castle* castle; 
   int arableLand; 
-  
-  
-  static set<Hex*> allHexes;
 };
 
 class Geography {
@@ -118,7 +112,7 @@ public:
 };
 
 
-class Vertex : public Mirrorable<Vertex>, public Named<Vertex>, public Geography {
+class Vertex : public Mirrorable<Vertex>, public Named<Vertex>, public Geography, public Iterable<Vertex> {
   friend class Mirrorable<Vertex>;
   friend class StaticInitialiser;     
   friend class Hex;
@@ -126,7 +120,6 @@ public:
   Vertex();
   ~Vertex();
 
-  typedef set<Vertex*>::iterator Iterator;
   typedef vector<Vertex*>::iterator NeighbourIterator;   
   typedef vector<Hex*>::iterator HexIterator; 
   typedef vector<MilUnit*>::iterator UnitIterator; 
@@ -161,8 +154,6 @@ public:
   void forceRetreat (Castle*& c, Vertex*& v); 
   virtual void setMirrorState ();
   
-  static Iterator begin () {return allVertices.begin();}
-  static Iterator end () {return allVertices.end();} 
   static void clear (); 
   
 private:
@@ -174,11 +165,9 @@ private:
   vector<MilUnit*> units;
   int groupNum;
   VertexGraphicsInfo* graphicsInfo; 
-  
-  static set<Vertex*> allVertices;
 };
 
-class Line : public Mirrorable<Line>, public Named<Line>, public Geography { 
+class Line : public Mirrorable<Line>, public Named<Line>, public Geography, public Iterable<Line> { 
   friend class Mirrorable<Line>;
   friend class StaticInitialiser;  
 public:
@@ -203,10 +192,6 @@ public:
   virtual double traversalCost (Player* side) const;
   virtual double traversalRisk (Player* side) const;   
   virtual double traverseSupplies (double& amount, Player* side, Geography* previous);
-  
-  typedef set<Line*>::iterator Iterator;
-  static Iterator begin () {return allLines.begin();}
-  static Iterator end () {return allLines.end();} 
   static void clear (); 
   
 private:
@@ -218,8 +203,6 @@ private:
   Hex* hex2;
   Castle* castle;
   LineGraphicsInfo* graphicsInfo; 
-
-  static set<Line*> allLines;
 };
 
 #endif

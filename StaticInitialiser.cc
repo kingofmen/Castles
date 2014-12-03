@@ -103,7 +103,7 @@ void StaticInitialiser::graphicsInitialisation () {
     (*m)->graphicsInfo->updateSprites(*m);
   }
   
-  for (Hex::Iterator h = Hex::begin(); h != Hex::end(); ++h) {
+  for (Hex::Iterator h = Hex::start(); h != Hex::final(); ++h) {
     Village* f = (*h)->getVillage();
     if (!f) continue;
     if (!f->milTrad) continue;
@@ -931,7 +931,7 @@ void StaticInitialiser::loadTextures () {
 }
 
 void StaticInitialiser::makeGraphicsInfoObjects () {
-  for (Hex::Iterator h = Hex::begin(); h != Hex::end(); ++h) {
+  for (Hex::Iterator h = Hex::start(); h != Hex::final(); ++h) {
     (*h)->graphicsInfo = new HexGraphicsInfo(*h);
     for (int i = LeftUp; i < NoVertex; ++i) {
       Vertex* vex = (*h)->vertices[i];
@@ -941,7 +941,7 @@ void StaticInitialiser::makeGraphicsInfoObjects () {
     if ((*h)->village) (*h)->setGraphicsVillage((*h)->village);
     if ((*h)->farms) (*h)->setGraphicsFarm((*h)->farms); 
   }
-  for (Line::Iterator l = Line::begin(); l != Line::end(); ++l) {
+  for (Line::Iterator l = Line::start(); l != Line::final(); ++l) {
     (*l)->graphicsInfo = new LineGraphicsInfo((*l), (*l)->vex1->getDirection((*l)->vex2));
     if ((*l)->getCastle()) (*l)->addGraphicCastle((*l)->getCastle()); 
   }
@@ -1163,7 +1163,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
 
   int maxx = -1;
   int maxy = -1;
-  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
+  for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
     maxx = max((*hex)->getPos().first, maxx);
     maxy = max((*hex)->getPos().second, maxy);
   }
@@ -1173,7 +1173,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
   hexgrid->setLeaf("y", maxy+1);
   game->setValue(hexgrid); 
 
-  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
+  for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
     Object* hexInfo = new Object("hexinfo");
     game->setValue(hexInfo);
     hexInfo->setLeaf("x", (*hex)->getPos().first);
@@ -1253,7 +1253,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
     }
   }
 
-  for (Vertex::Iterator vtx = Vertex::begin(); vtx != Vertex::end(); ++vtx) {
+  for (Vertex::Iterator vtx = Vertex::start(); vtx != Vertex::final(); ++vtx) {
     if (0 == (*vtx)->numUnits()) continue;
     MilUnit* unit = (*vtx)->getUnit(0); 
     Object* uinfo = new Object("unit");

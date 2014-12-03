@@ -156,17 +156,19 @@ class MilStrength {
 template <class T> class Iterable {
  public:
 
+  Iterable<T> (int i) {} // Constructor for mirrors, which we don't want to iterate over. Don't make it empty, to avoid accidents. 
   Iterable<T> (T* dat) {allThings.push_back(dat);} 
   ~Iterable<T> () {
     for (unsigned int i = 0; i < allThings.size(); ++i) {
       if (allThings[i] != this) continue;
       allThings[i] = allThings.back();
+      allThings.pop_back(); 
       break;
     }
-    allThings.pop_back(); 
   }
 
   typedef typename vector<T*>::iterator Iter;
+  typedef typename vector<T*>::iterator Iterator;
   static Iter start () {return allThings.begin();}
   static Iter final () {return allThings.end();}
   static unsigned int totalAmount () {return allThings.size();}

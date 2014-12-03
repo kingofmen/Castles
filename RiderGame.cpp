@@ -93,11 +93,11 @@ WarfareGame* WarfareGame::createGame (string filename) {
     }
   }
 
-  for (Hex::Iterator i = Hex::begin(); i != Hex::end(); ++i) { 
+  for (Hex::Iterator i = Hex::start(); i != Hex::final(); ++i) { 
     (*i)->createVertices(); 
   }
 
-  for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) {
+  for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) {
     (*vex)->createLines(); 
   }
 
@@ -137,7 +137,7 @@ void WarfareGame::findUnits (vector<MilUnit*>& ret, Player* p) {
 }
 
 void WarfareGame::findCastles (vector<Castle*>& ret, Player* p) {
-  for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) {
+  for (Line::Iterator lin = Line::start(); lin != Line::final(); ++lin) {
     Castle* curr = (*lin)->getCastle();
     if (!curr) continue;
     if (curr->getOwner() != p) continue;
@@ -156,8 +156,8 @@ map<Player*, map<Geography*, map<Geography*, Route*> > > routeMap;
 
 void findRoute (Geography* source, Geography* destination, Player* side, double maxRisk) {
   set<Geography*> open;
-  for (Vertex::Iterator v = Vertex::begin(); v != Vertex::end(); ++v) (*v)->clearGeography();
-  for (Line::Iterator l = Line::begin(); l != Line::end(); ++l) (*l)->clearGeography();
+  for (Vertex::Iterator v = Vertex::start(); v != Vertex::final(); ++v) (*v)->clearGeography();
+  for (Line::Iterator l = Line::start(); l != Line::final(); ++l) (*l)->clearGeography();
   
   open.insert(source);
   source->distFromStart = 0;
@@ -217,9 +217,9 @@ void WarfareGame::endOfTurn () {
   EconActor::setAllUtils(); 
   LineGraphicsInfo::endTurn(); 
 
-  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) (*hex)->endOfTurn();
-  for (Line::Iterator lin = Line::begin(); lin != Line::end(); ++lin) (*lin)->endOfTurn();
-  for (Vertex::Iterator vex = Vertex::begin(); vex != Vertex::end(); ++vex) (*vex)->endOfTurn();
+  for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
+  for (Line::Iterator lin = Line::start(); lin != Line::final(); ++lin) (*lin)->endOfTurn();
+  for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) (*vex)->endOfTurn();
 
   // TODO: Clear or refresh the cache (routeMaps) every so often. 
   
@@ -292,7 +292,7 @@ void WarfareGame::endOfTurn () {
   
   if (Calendar::Winter == Calendar::getCurrentSeason()) {
     // Hex buildings do special things in winter. 
-    for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) (*hex)->endOfTurn();
+    for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
 
     // So do MilUnits.
     for (MilUnit::Iterator mil = MilUnit::begin(); mil != MilUnit::end(); ++mil) (*mil)->endOfTurn();
@@ -367,7 +367,7 @@ void WarfareGame::updateGreatestMilStrength() {
   for (MilUnit::Iterator m = MilUnit::begin(); m != MilUnit::end(); ++m) {
     largest = max(largest, (*m)->getTotalStrength());
   }
-  for (Hex::Iterator hex = Hex::begin(); hex != Hex::end(); ++hex) {
+  for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
     Village* village = (*hex)->getVillage();
     if (!village) continue;
     largest = max(largest, village->getMilitia()->getTotalStrength());

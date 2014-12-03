@@ -11,10 +11,6 @@
 #include <algorithm> 
 #include "UtilityFunctions.hh" 
 
-std::set<Vertex*> Vertex::allVertices; 
-std::set<Line*> Line::allLines;
-std::set<Hex*> Hex::allHexes; 
-
 char stringbuffer[1000]; 
 int abs(int x) {
   return (x < 0 ? -x : x); 
@@ -23,16 +19,17 @@ int abs(int x) {
 Vertex::Vertex ()
   : Mirrorable<Vertex>()
   , Named<Vertex>()
+  , Iterable<Vertex>(this)
   , groupNum(0)
   , graphicsInfo(0)    
 {
   neighbours.resize(NoVertex);
-  allVertices.insert(this); 
 }
 
 Vertex::Vertex (Vertex* other)
   : Mirrorable<Vertex>(other)
   , Named<Vertex>()
+  , Iterable<Vertex>(1)
   , groupNum(other->groupNum)
   , graphicsInfo(0)    
 {
@@ -44,16 +41,16 @@ Vertex::~Vertex () {
     (*u)->destroyIfReal();
   }
   units.clear();
-  allVertices.erase(this); 
 }
 
 void Hex::createHex (int x, int y, TerrainType t) {
-  allHexes.insert(new Hex(x, y, t));
+  new Hex(x, y, t);
 }
 
 Hex::Hex (int x, int y, TerrainType t)
   : Mirrorable<Hex>()
   , Named<Hex>()
+  , Iterable<Hex>(this)
   , pos(x, y)
   , myType(t)
   , owner(0)
@@ -73,7 +70,8 @@ Hex::Hex (int x, int y, TerrainType t)
 
 Hex::Hex (Hex* other)
   : Mirrorable<Hex>(other)
-  , Named<Hex>()    
+  , Named<Hex>()
+  , Iterable<Hex>(1)
   , pos(0, 0) // Mirror constructor gets called before main initialise list is finished!
   , myType(other->myType)
   , owner(0)
@@ -91,12 +89,10 @@ void Hex::initialise () {
   setName(stringbuffer);
 }
 
-Hex::~Hex () {
-  allHexes.erase(this); 
-}
+Hex::~Hex () {}
 
 Hex* Hex::getHex (int x, int y) {
-  for (Iterator i = begin(); i != end(); ++i) { 
+  for (Iterator i = start(); i != final(); ++i) { 
     if ((*i)->pos.first != x) continue;
     if ((*i)->pos.second != y) continue;
     return (*i); 
@@ -225,7 +221,7 @@ void Hex::createVertices () {
   vertices[LeftUp]->neighbours[LeftDown] = vertices[Left]; vertices[LeftUp]->mirror->neighbours[LeftDown] = vertices[Left]->mirror;
   
   for (int i = 0; i < NoVertex; ++i) {
-    if (vertices[i]->getName() != "") continue;
+    if (vertices[i]->getName() != "ToBeNamed") continue;
     sprintf(stringbuffer, "[%i, %i, %s]", pos.first, pos.second, getVertexName(convertToVertex(i)).c_str());
     vertices[i]->setName(stringbuffer);
     sprintf(stringbuffer, "[%i, %i, %s (M)]", pos.first, pos.second, getVertexName(convertToVertex(i)).c_str());
@@ -264,7 +260,7 @@ void Hex::setVillage (Village* f) {
 } 
 
 void Hex::setLine (Direction dir, Line* l) {
-  if (l->getName() == "") {
+  if (l->getName() == "ToBeNamed") {
     sprintf(stringbuffer, "{%i, %i, %s}", pos.first, pos.second, getDirectionName(dir).c_str()); 
     l->setName(stringbuffer);
     sprintf(stringbuffer, "{%i, %i, %s (M)}", pos.first, pos.second, getDirectionName(dir).c_str()); 
@@ -557,6 +553,7 @@ bool Vertex::isLand () const {
 Line::Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo)
   : Mirrorable<Line>()
   , Named<Line>()
+  , Iterable<Line>(this)
   , vex1(one)
   , vex2(two)
   , hex1(hone)
@@ -573,14 +570,13 @@ Line::Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo)
   if (hex2) mirror->hex2 = hex2->getMirror();
   position.first = 0.5*(vex1->position.first + vex2->position.first);
   position.second = 0.5*(vex1->position.second + vex2->position.second);
-
-  allLines.insert(this);
 }
 
 // Mirror constructor
 Line::Line (Line* other)
   : Mirrorable<Line>(other)
   , Named<Line>()
+  , Iterable<Line>(1)
   , vex1(0)
   , vex2(0)
   , hex1(0)
@@ -592,7 +588,6 @@ Line::Line (Line* other)
 Line::~Line () {
   if (castle) castle->destroyIfReal();
   delete graphicsInfo; 
-  allLines.erase(this); 
 }
 
 void Vertex::forceRetreat (Castle*& c, Vertex*& v) {
@@ -811,24 +806,24 @@ void Hex::raid (MilUnit* raiders, Outcome out) {
 
 
 void Hex::clear () {
-  while (!allHexes.empty()) {
-    Iterator h = begin();
+  while (0 < totalAmount()) {
+    Iter h = start();
     (*h)->destroyIfReal();
   }
   Named<Hex>::clear();
 }
 
 void Vertex::clear () {
-  while (!allVertices.empty()) {
-    Iterator h = begin();
+  while (0 < totalAmount()) {
+    Iter h = start();
     (*h)->destroyIfReal();
   }
   Named<Vertex>::clear();
 }
 
-void Line::clear () {
-  while (!allLines.empty()) {
-    Iterator h = begin();  
+void Line::clear () {  
+  while (0 < totalAmount()) {
+    Iter h = start();
     (*h)->destroyIfReal();
   }
   Named<Line>::clear(); 
