@@ -27,7 +27,14 @@ Player::Player (bool h, std::string d, std::string n)
   , human(h)
   , doneWithTurn(false)
   , displayName(d)
-{}
+  , econActor(0)
+{
+  econActor = new EconPlayer(); 
+}
+
+Player::~Player () {
+  delete econActor; 
+}
 
 double Player::calculateUnitStrength (MilUnit* dat, double modifiers) {
   return dat->calcStrength(dat->getDecayConstant() * modifiers, &MilUnitElement::shock);
@@ -90,6 +97,11 @@ double Player::calculateInfluence () {
   }
   
   return influence; 
+}
+
+void Player::clear () {
+  Iterable<Player>::clear();
+  Named<Player>::clear(); 
 }
 
 double Player::evaluateGlobalStrength () {
@@ -256,7 +268,7 @@ double Player::evaluate (Action act) {
 
     //Logger::logStream(DebugAI) << "(" << i << " " << temp << " ";
     
-    for (PlIter p = Iterable<Player>::start(); p != Iterable<Player>::final(); ++p) {
+    for (Iter p = start(); p != final(); ++p) {
       if ((*p) == this) continue;
       temp -= evaluateAttackStrength((*p), this);
       //Logger::logStream(DebugAI) << temp << " ";
@@ -484,11 +496,17 @@ void Player::getAction () {
 }
 
 Player* Player::nextPlayer () {
-  PlIter pl = std::find(Iterable<Player>::start(), Iterable<Player>::final(), currentPlayer);
-  assert(Iterable<Player>::final() != pl);
+  Iter pl = std::find(start(), final(), currentPlayer);
+  assert(final() != pl);
   do {
     ++pl;
-    if (Iterable<Player>::final() == pl) pl = Iterable<Player>::start();
+    if (final() == pl) pl = start();
   } while ((*pl)->turnEnded());
   return (*pl); 
 }
+
+EconPlayer::EconPlayer ()
+  : EconActor()
+{}
+
+EconPlayer::~EconPlayer () {}

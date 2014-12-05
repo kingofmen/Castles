@@ -111,7 +111,7 @@ void StaticInitialiser::graphicsInitialisation () {
     f->milTrad->militia->graphicsInfo->updateSprites(f->milTrad);
   }
 
-  for (Iterable<Player>::Iter p = Iterable<Player>::start(); p != Iterable<Player>::final(); ++p) {
+  for (Player::Iter p = Player::start(); p != Player::final(); ++p) {
     string pName = "gfx/" + (*p)->getName() + ".png";
     GLuint texid; 
     glGenTextures(1, &texid);
@@ -578,7 +578,7 @@ void StaticInitialiser::createPlayer (Object* info) {
   string name = info->safeGetString("name", strbuffer);
   string display = remQuotes(info->safeGetString("displayname", name));
   Player* ret = new Player(human, display, name);
-  initialiseEcon(ret, info); 
+  initialiseEcon(ret->econActor, info); 
   ret->graphicsInfo = new PlayerGraphicsInfo();
 
   int red = info->safeGetInt("red");
@@ -1146,7 +1146,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
   game->setValue(pLevels);
   game->setLeaf("defaultPriority", defaultUnitPriority); 
   
-  for (Iterable<Player>::Iter p = Iterable<Player>::start(); p != Iterable<Player>::final(); ++p) {
+  for (Player::Iter p = Player::start(); p != Player::final(); ++p) {
     Object* faction = new Object("faction");
     faction->setLeaf("name", (*p)->getName());
     faction->setLeaf("displayname", string("\"") + (*p)->getDisplayName() + "\"");

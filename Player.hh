@@ -10,11 +10,20 @@ class Action;
 class MilUnit; 
 class PlayerGraphicsInfo; 
 
-class Player : public EconActor, public Iterable<Player>, public Named<Player> {
+class EconPlayer : public EconActor {
+public:
+  EconPlayer ();
+  ~EconPlayer ();
+private:
+};
+
+
+class Player : public Iterable<Player>, public Named<Player> {
   friend class StaticInitialiser; 
 public:
   Player (bool h, std::string d, std::string n);
-
+  ~Player ();
+  
   bool isHuman () const {return human;}
   void getAction (); 
   bool turnEnded () const {return doneWithTurn;}
@@ -22,18 +31,21 @@ public:
   void newTurn () {doneWithTurn = false;} 
   std::string getDisplayName () const {return displayName;} 
   PlayerGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;} 
+  EconPlayer* getEconActor () const {return econActor;}
 
+  static void clear (); 
   static void setCurrentPlayerByName (std::string name) {currentPlayer = findByName(name);}
   static void advancePlayer () {currentPlayer = nextPlayer();}
   static Player* getCurrentPlayer () {return currentPlayer;}
   static Player* nextPlayer ();
   
-private:
+private: 
   bool human;
   bool doneWithTurn;
   std::string name;
   std::string displayName;
   PlayerGraphicsInfo* graphicsInfo; 
+  EconPlayer* econActor;
   
   double evaluate (Action act); 
   double evaluateGlobalStrength (); 
@@ -50,7 +62,5 @@ private:
   static double supplyWeight;
   static double siegeInfluenceValue;
 }; 
-
-typedef Iterable<Player>::Iter PlIter; 
 
 #endif
