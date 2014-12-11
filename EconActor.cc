@@ -4,51 +4,46 @@
 #include <cassert>
 #include <algorithm> 
 
-const unsigned int EconActor::Money = 0;
-const unsigned int EconActor::Labor = 1;
-unsigned int EconActor::numGoods = 2; // Money and labour are hardcoded to exist.
-vector<string> EconActor::goodNames; 
+TradeGood const* TradeGood::Money = 0;
+TradeGood const* TradeGood::Labor = 0;
+
 vector<EconActor*> EconActor::allActors; 
 vector<double> Consumer::levelAmounts; 
 vector<vector<MaslowNeed> > Consumer::hierarchy;
 
 EconActor::EconActor ()
-  : id(-1)
+  : tradeGoods(TradeGood::numTypes(), 0)
+  , id(-1)
 {
-  goods = new double[numGoods];
-  for (unsigned int i = 0; i < numGoods; ++i) {
-    goods[i] = 0;
-  }
-  needs.resize(numGoods); 
+  needs.resize(TradeGood::numTypes()); 
 }
 
 EconActor::~EconActor () {
   allActors[id] = 0;
-  delete[] goods;
 }
 
 void EconActor::clear () {
   allActors.clear(); 
 }
 
-Market::Market () {
-  prices.resize(EconActor::numGoods);
-}
+Market::Market ()
+  : prices(TradeGood::numTypes(), 0)
+{}
 
 Market::~Market () {}
 
 void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
   Logger::logStream(DebugTrade) << "Entering findPrices with " << wantToBuy.size() << " " << wantToSell.size() << "\n"; 
   
-  for (unsigned int currGood = 1; currGood < EconActor::numGoods; ++currGood) {
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     vector<Bid> buys;
     vector<Bid> sell;
     for (vector<Bid>::iterator g = wantToBuy.begin(); g != wantToBuy.end(); ++g) {
-      if ((*g).good != currGood) continue;
+      if ((*g).tradeGood != (*tg)) continue;
       buys.push_back(*g);
     }
     for (vector<Bid>::iterator g = wantToSell.begin(); g != wantToSell.end(); ++g) {
-      if ((*g).good != currGood) continue;
+      if ((*g).tradeGood != (*tg)) continue;
       sell.push_back(*g);
     }
 
@@ -59,9 +54,9 @@ void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
 
     // Can we do business at all? 
     if (buys[0].price < sell[0].price) {
-      prices[currGood] = sell[0].price;
+      prices[**tg] = sell[0].price;
       Logger::logStream(DebugTrade) << "Highest "
-				    << EconActor::getGoodName(currGood)
+				    << (*tg)->getName()
 				    << " bid "
 				    << buys[0].price
 				    << " less than lowest offer "
@@ -75,8 +70,8 @@ void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
     unsigned int sellIndex = 0; 
     unsigned int buysIndex = 0;
     while (true) {
-      prices[currGood]  = (sell[sellIndex].price * sell[sellIndex].amount) + (buys[buysIndex].price * buys[buysIndex].amount);
-      prices[currGood] /= (buys[buysIndex].amount + sell[sellIndex].amount);
+      prices[**tg]  = (sell[sellIndex].price * sell[sellIndex].amount) + (buys[buysIndex].price * buys[buysIndex].amount);
+      prices[**tg] /= (buys[buysIndex].amount + sell[sellIndex].amount);
       if (buys[buysIndex].amount - accBuys > sell[sellIndex].amount - accSell) {
 	accBuys += sell[sellIndex].amount - accSell;
 	accSell = 0;
@@ -91,20 +86,20 @@ void Market::findPrices (vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
       if (buysIndex >= buys.size()) break;
       if (sell[sellIndex].price > buys[buysIndex].price) break;
     }
-    Logger::logStream(DebugTrade) << "Set price of " << EconActor::getGoodName(currGood) << " to " << prices[currGood] << "\n"; 
+    Logger::logStream(DebugTrade) << "Set price of " << (*tg)->getName() << " to " << prices[**tg] << "\n"; 
   }
 }
 
 void Market::trade (const vector<Bid>& wantToBuy, const vector<Bid>& wantToSell) {
-  for (unsigned int currGood = 1; currGood < EconActor::numGoods; ++currGood) {
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     vector<Bid> buys;
     vector<Bid> sell;
     for (vector<Bid>::const_iterator g = wantToBuy.begin(); g != wantToBuy.end(); ++g) {
-      if ((*g).good != currGood) continue;
+      if ((*g).tradeGood != (*tg)) continue;
       buys.push_back(*g);
     }
     for (vector<Bid>::const_iterator g = wantToSell.begin(); g != wantToSell.end(); ++g) {
-      if ((*g).good != currGood) continue;
+      if ((*g).tradeGood != (*tg)) continue;
       sell.push_back(*g);
     }
 
@@ -118,28 +113,28 @@ void Market::trade (const vector<Bid>& wantToBuy, const vector<Bid>& wantToSell)
     unsigned int sellIndex = 0; 
     unsigned int buysIndex = 0;
     while (true) {
-      if (prices[currGood] > buys[buysIndex].price) break;
-      if (prices[currGood] < sell[sellIndex].price) break;
+      if (prices[**tg] > buys[buysIndex].price) break;
+      if (prices[**tg] < sell[sellIndex].price) break;
       
       if (buys[buysIndex].amount - accBuys > sell[sellIndex].amount - accSell) {
 	double currAmount = sell[sellIndex].amount - accSell;
-	buys[buysIndex].actor->deliverGoods(currGood,  currAmount);
-	sell[sellIndex].actor->deliverGoods(currGood, -currAmount);
-	buys[buysIndex].actor->deliverGoods(EconActor::Money,    -currAmount*prices[currGood]);
-	sell[sellIndex].actor->deliverGoods(EconActor::Money,     currAmount*prices[currGood]);	
+	buys[buysIndex].actor->deliverGoods((*tg),             currAmount);
+	sell[sellIndex].actor->deliverGoods((*tg),            -currAmount);
+	buys[buysIndex].actor->deliverGoods(TradeGood::Money, -currAmount*prices[**tg]);
+	sell[sellIndex].actor->deliverGoods(TradeGood::Money,  currAmount*prices[**tg]);	
 	accBuys += currAmount; 
-	Logger::logStream(DebugTrade) << "Sold " << currAmount << " " << EconActor::getGoodName(currGood) << " at price " << prices[currGood] << "\n"; 
+	Logger::logStream(DebugTrade) << "Sold " << currAmount << " " << (*tg)->getName() << " at price " << prices[**tg] << "\n"; 
 	accSell = 0;
 	sellIndex++; 
       }
       else {
 	double currAmount = buys[buysIndex].amount - accBuys;
-	buys[buysIndex].actor->deliverGoods(currGood,  currAmount);
-	sell[sellIndex].actor->deliverGoods(currGood, -currAmount);
-	buys[buysIndex].actor->deliverGoods(EconActor::Money,    -currAmount*prices[currGood]);
-	sell[sellIndex].actor->deliverGoods(EconActor::Money,     currAmount*prices[currGood]);	
+	buys[buysIndex].actor->deliverGoods((*tg),             currAmount);
+	sell[sellIndex].actor->deliverGoods((*tg),            -currAmount);
+	buys[buysIndex].actor->deliverGoods(TradeGood::Money, -currAmount*prices[**tg]);
+	sell[sellIndex].actor->deliverGoods(TradeGood::Money,  currAmount*prices[**tg]);	
 	accSell += currAmount; 
-	Logger::logStream(DebugTrade) << "Sold " << currAmount << " " << EconActor::getGoodName(currGood) << " at price " << prices[currGood] << "\n"; 
+	Logger::logStream(DebugTrade) << "Sold " << currAmount << " " << (*tg)->getName() << " at price " << prices[**tg] << "\n"; 
 	accBuys = 0;
 	buysIndex++; 
       }
@@ -150,26 +145,26 @@ void Market::trade (const vector<Bid>& wantToBuy, const vector<Bid>& wantToSell)
   }
 }
 
-void Consumer::setUtilities (vector<vector<Utility> >& needs, double* goods, double consumption) {
+void Consumer::setUtilities (vector<vector<Utility> >& needs, const vector<double>& goods, double consumption) {
   double priorLevels = 1;
   double invConsumption = 1.0 / consumption; 
   for (unsigned int level = 0; level < hierarchy.size(); ++level) {
     double percentage = 0; 
     for (unsigned int i = 0; i < hierarchy[level].size(); ++i) {
-      unsigned int currGood = hierarchy[level][i].good;
-      double goodsPerPerson = goods[currGood] * invConsumption;
+      TradeGood const* const tg = hierarchy[level][i].tradeGood;
+      double goodsPerPerson = goods[*tg] * invConsumption;
       double currAmount = hierarchy[level][i].amount;
       goodsPerPerson /= currAmount;
       percentage += log(goodsPerPerson + 1);
       double margin = log(goodsPerPerson + 2) - log(goodsPerPerson + 1); // Marginal utility from buying currAmount per consumer.
       margin *= priorLevels;
-      needs[currGood].push_back(Utility(margin/currAmount, currAmount*consumption));
+      needs[*tg].push_back(Utility(margin/currAmount, currAmount*consumption));
       margin = log(goodsPerPerson + 3) - log(goodsPerPerson + 2);
       margin *= priorLevels;      
-      needs[currGood].push_back(Utility(margin/currAmount, currAmount*consumption));
+      needs[*tg].push_back(Utility(margin/currAmount, currAmount*consumption));
       margin = log(goodsPerPerson + 4) - log(goodsPerPerson + 3);
       margin *= priorLevels;      
-      needs[currGood].push_back(Utility(margin/currAmount, currAmount*consumption));       
+      needs[*tg].push_back(Utility(margin/currAmount, currAmount*consumption));       
     }
     priorLevels *= min(priorLevels, priorLevels * percentage / levelAmounts[level]);
     if (0.01 > priorLevels) break;
@@ -187,87 +182,87 @@ void EconActor::executeContracts () {
 	break;
       case ContractInfo::Percentage:
       case ContractInfo::SurplusPercentage:
-	amountWanted *= (*e)->goods[(*contract)->good];
-	break; 
+	amountWanted *= (*e)->getAmount((*contract)->tradeGood);
+	break;
       }
       Logger::logStream(Logger::Debug) << (*e)->getId() << " contract with " << (*contract)->recipient->getId() << " " << amountWanted << "\n"; 
-      amountWanted = min((*e)->goods[(*contract)->good], amountWanted);
-      (*contract)->recipient->deliverGoods((*contract)->good, amountWanted);
-      (*e)->deliverGoods((*contract)->good, -amountWanted);
+      amountWanted = min((*e)->getAmount((*contract)->tradeGood), amountWanted);
+      (*contract)->recipient->deliverGoods((*contract)->tradeGood, amountWanted);
+      (*e)->deliverGoods((*contract)->tradeGood, -amountWanted);
     }
   }
 }
 
 void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {
-  double unitUtilityPrice = 1; 
-  for (unsigned int i = 1; i < numGoods; ++i) {
+  double unitUtilityPrice = 1;
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     double accumulated = 0; 
-    for (unsigned int j = 0; j < needs[i].size(); ++i) {
-      if (accumulated + needs[i][j].margin >= goods[i]) {
+    for (unsigned int j = 0; j < needs[**tg].size(); ++j) {
+      if (accumulated + needs[**tg][j].margin >= getAmount(*tg)) {
 	/*
 	Logger::logStream(DebugTrade) << "Found "
 				      << i
 				      << " margin at "
 				      << accumulated << " "
-				      << goods[i] << " "
-				      << needs[i][j].margin << " "
-				      << needs[i][j].utility << " "
-				      << prices[i] << " " 
+				      << goods[**tg] << " "
+				      << needs[**tg][j].margin << " "
+				      << needs[**tg][j].utility << " "
+				      << prices[**tg] << " " 
 				      << "\n";
 	*/
-	unitUtilityPrice = min(unitUtilityPrice, prices[i] / needs[i][j].utility);
+	unitUtilityPrice = min(unitUtilityPrice, prices[**tg] / needs[**tg][j].utility);
 	break; 
       }
-      accumulated += goods[i]; 
+      accumulated += getAmount(*tg);
     }
   }
   //Logger::logStream(DebugTrade) << getId() << " entering getBids with unit util price " << unitUtilityPrice << "\n"; 
   
-  for (unsigned int i = 1; i < numGoods; ++i) {
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     double accumulated = 0; 
-    for (unsigned int j = 0; j < needs[i].size(); ++j) {
+    for (unsigned int j = 0; j < needs[**tg].size(); ++j) {
       Bid currBid;
-      currBid.good = i;
+      currBid.tradeGood = (*tg);
       currBid.actor = this; 
-      if (accumulated + needs[i][j].margin < goods[i]) {
+      if (accumulated + needs[**tg][j].margin < getAmount(*tg)) {
 	// Sell if the price is high enough
-	currBid.amount = needs[i][j].margin;
-	currBid.price  = needs[i][j].utility * unitUtilityPrice * 1.1;
+	currBid.amount = needs[**tg][j].margin;
+	currBid.price  = needs[**tg][j].utility * unitUtilityPrice * 1.1;
 	wantToSell.push_back(currBid);
 	/*
 	Logger::logStream(DebugTrade) << getId() << " sells " << i << " due to "
-				      << needs[i][j].margin << " "
-				      << goods[i] << " "
-				      << needs[i][j].utility << " "
+				      << needs[**tg][j].margin << " "
+				      << goods[**tg] << " "
+				      << needs[**tg][j].utility << " "
 				      << accumulated << " "
-				      << needs[i].size() << " "
+				      << needs[**tg].size() << " "
 				      << "\n";
 	*/
       }
-      else if ((accumulated < goods[i]) && (accumulated + needs[i][j].margin > goods[i])) {
+      else if ((accumulated < getAmount(*tg)) && (accumulated + needs[**tg][j].margin > getAmount(*tg))) {
 	// Buy and sell
-	currBid.amount = accumulated + needs[i][j].margin - goods[i]; 
-	currBid.price = needs[i][j].utility * unitUtilityPrice; 
+	currBid.amount = accumulated + needs[**tg][j].margin - getAmount(*tg); 
+	currBid.price = needs[**tg][j].utility * unitUtilityPrice; 
 	wantToBuy.push_back(currBid); 
 
-	currBid.amount = goods[i] - accumulated;
-	currBid.price  = needs[i][j].utility * unitUtilityPrice * 1.1;
+	currBid.amount = getAmount(*tg) - accumulated;
+	currBid.price  = needs[**tg][j].utility * unitUtilityPrice * 1.1;
 	wantToSell.push_back(currBid);
       }
       else {
 	// Buy
-	currBid.amount = needs[i][j].margin; 
-	currBid.price = needs[i][j].utility * unitUtilityPrice; 
+	currBid.amount = needs[**tg][j].margin; 
+	currBid.price = needs[**tg][j].utility * unitUtilityPrice; 
 	wantToBuy.push_back(currBid); 
       }
-      accumulated += needs[i][j].margin;
+      accumulated += needs[**tg][j].margin;
     }
-    if (accumulated < goods[i]) {
+    if (accumulated < getAmount(*tg)) {
       // Final "leftovers" sell bid
       Bid finalBid;
-      finalBid.good = i;
+      finalBid.tradeGood = (*tg);
       finalBid.actor = this;
-      finalBid.amount = goods[i] - accumulated;
+      finalBid.amount = getAmount(*tg) - accumulated;
       finalBid.price = unitUtilityPrice * 0.1;
       wantToSell.push_back(finalBid);
     }
@@ -280,16 +275,6 @@ EconActor* EconActor::getById (int id) {
   return allActors[id]; 
 }
 
-unsigned int EconActor::getIndex (string gName) {
-  for (unsigned int i = 0; i < goodNames.size(); ++i) {
-    if (goodNames[i] != gName) continue;
-    return i;
-  }
-  Logger::logStream(DebugStartup) << "Bad name " << gName << "\n"; 
-  assert(false);
-  return goodNames.size(); 
-}
-
 void EconActor::setAllUtils () {
   for (Iter e = start(); e != final(); ++e) (*e)->setUtilities(); 
 }
@@ -298,4 +283,16 @@ void EconActor::setUtilities () {} // Do nothing by default - override in subcla
 
 void EconActor::production () {
   for (Iter e = start(); e != final(); ++e) (*e)->produce(); 
+}
+
+TradeGood::TradeGood (string n, bool lastOne)
+  : Enumerable<const TradeGood>(this, n, lastOne)
+{}
+
+TradeGood::~TradeGood () {}
+
+void TradeGood::initialise () {
+  Enumerable<const TradeGood>::clear();
+  Money = new TradeGood("money");  
+  Labor = new TradeGood("labour");
 }

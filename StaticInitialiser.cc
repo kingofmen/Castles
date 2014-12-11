@@ -74,6 +74,7 @@ void StaticInitialiser::overallInitialisation (Object* info) {
   defaultUnitPriority = info->safeGetInt("defaultUnitPriority", 4);
 
   Calendar::setWeek(info->safeGetInt("week", 0));
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
 }
 
 GLuint loadTexture (string fname, QColor backup, GLuint index) {
@@ -136,8 +137,8 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Farmland::_cropsFrom2     = farmInfo->safeGetInt("cropsFrom2",     Farmland::_cropsFrom2);
   Farmland::_cropsFrom1     = farmInfo->safeGetInt("cropsFrom1",     Farmland::_cropsFrom1);
   Object* farmCap = farmInfo->getNeededObject("capital");
-  for (unsigned int i = 0; i < EconActor::getNumGoods(); ++i) {
-    Industry<Farmland>::capital[i] = farmCap->safeGetFloat(EconActor::getGoodName(i)); 
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {    
+    Industry<Farmland>::capital[**tg] = farmCap->safeGetFloat((*tg)->getName());
   }
 
   
@@ -202,13 +203,13 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
 void initialiseContract (ContractInfo* contract, Object* info) {
   if (!info) return; 
   if (!contract) return;
-  
+
   contract->recipient = EconActor::getById(info->safeGetInt("target")); 
   contract->amount = info->safeGetFloat("amount", 0);
   if (info->safeGetString("type") == "fixed") contract->delivery = ContractInfo::Fixed;
   else if (info->safeGetString("type") == "percentage") contract->delivery = ContractInfo::Percentage; 
   else if (info->safeGetString("type") == "surplus_percentage") contract->delivery = ContractInfo::SurplusPercentage;
-  contract->good = EconActor::getIndex(info->safeGetString("good"));
+  contract->tradeGood = TradeGood::getByName(info->safeGetString("good"));
 }
 
 void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
@@ -220,8 +221,8 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
     assert(!EconActor::allActors[id]);
   }
   econ->id = id;
-  for (unsigned int i = 0; i < EconActor::numGoods; ++i) {
-    econ->goods[i] = info->safeGetFloat(EconActor::goodNames[i]);
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+    econ->deliverGoods(*tg, info->safeGetFloat((*tg)->getName()));
   }
   EconActor::allActors[id] = econ;
 
@@ -252,12 +253,13 @@ inline int heightMapHeight (int zoneSide) {
 }
 
 void StaticInitialiser::initialiseGoods (Object* gInfo) {
-  EconActor::goodNames.push_back("money");
-  EconActor::goodNames.push_back("labour");
-  for (int i = 0; i < gInfo->numTokens(); ++i) EconActor::goodNames.push_back(gInfo->getToken(i)); 
-  EconActor::numGoods = EconActor::goodNames.size();
+  TradeGood::initialise();
+  
+  for (int i = 0; i < gInfo->numTokens(); ++i) {
+    new TradeGood(gInfo->getToken(i), (i+1) == gInfo->numTokens()); 
+  }
 
-  Industry<Farmland>::capital = new double[EconActor::numGoods]; 
+  Industry<Farmland>::capital = new double[TradeGood::numTypes()]; 
 }
 
 void StaticInitialiser::initialiseGraphics (Object* gInfo) {
@@ -309,8 +311,8 @@ void StaticInitialiser::initialiseGraphics (Object* gInfo) {
 }
 
 void StaticInitialiser::initialiseMarket (Market* market, Object* pInfo) {
-  for (unsigned int i = 1; i < EconActor::numGoods; ++i) {
-    market->prices[i] = pInfo->safeGetFloat(EconActor::goodNames[i], 1);
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    market->prices[**tg] = pInfo->safeGetFloat((*tg)->getName(), 1);
   }
 }
 
@@ -324,7 +326,7 @@ void StaticInitialiser::initialiseMaslowHierarchy (Object* popNeeds) {
     objvec leaves = levels[level]->getLeaves();
     for (objiter leaf = leaves.begin(); leaf != leaves.end(); ++leaf) {
       MaslowNeed maslow;
-      maslow.good = EconActor::getIndex((*leaf)->getKey());
+      maslow.tradeGood = TradeGood::getByName((*leaf)->getKey());
       maslow.amount = atof((*leaf)->getLeaf().c_str());
       Consumer::levelAmounts[level] += maslow.amount;
       Consumer::hierarchy[level].push_back(maslow);
@@ -368,7 +370,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
   string ownername = hInfo->safeGetString("player");
   Player* owner = Player::findByName(ownername);
   if (owner) hex->setOwner(owner);
-  
+
   Object* cinfo = hInfo->safeGetObject("castle");
   if (cinfo) {
     Line* lin = findLine(cinfo, hex);
@@ -387,13 +389,15 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     lin->addCastle(castle);
     initialiseEcon(castle, cinfo); 
   }
+
   Object* fInfo = hInfo->safeGetObject("village");
   if (fInfo) {
     Village* village = StaticInitialiser::buildVillage(fInfo);
     initialiseBuilding(village, fInfo); 
     if (owner) village->setOwner(owner);
     hex->setVillage(village); 
-  }      
+  }
+
   fInfo = hInfo->safeGetObject("farmland");
   if (fInfo) {
     Farmland* farms = StaticInitialiser::buildFarm(fInfo);
@@ -401,6 +405,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     if (owner) farms->setOwner(owner);
     hex->setFarm(farms); 
   }
+
   initialiseMarket(hex, hInfo->getNeededObject("prices")); 
 }
 
@@ -1126,10 +1131,10 @@ void StaticInitialiser::writeAgeInfoToObject (AgeTracker& age, Object* obj, int 
 
 void StaticInitialiser::writeEconActorIntoObject (EconActor* econ, Object* info) {
   info->setLeaf("id", econ->getId());
-  for (unsigned int i = 0; i < EconActor::getNumGoods(); ++i) {
-    double amount = econ->goods[i];
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+    double amount = econ->getAmount(*tg);
     if (fabs(amount) < 0.001) continue;
-    string gname = EconActor::getGoodName(i);
+    string gname = (*tg)->getName();
     info->setLeaf(gname, amount); 
   }
 }

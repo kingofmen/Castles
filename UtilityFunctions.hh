@@ -9,6 +9,7 @@
 #include <vector>
 #include "boost/tuple/tuple.hpp"
 #include <QtOpenGL>
+#include "Logger.hh"
 
 using namespace std;
 enum Outcome {Disaster = 0, Bad, Neutral, Good, VictoGlory, NumOutcomes}; 
@@ -173,10 +174,9 @@ template <class T> class Iterable {
   static Iter final () {return allThings.end();}
   static unsigned int totalAmount () {return allThings.size();}
   static void clear () {
-    for (Iter i = start(); i != final(); ++i) {
-      delete (*i);
+    while (0 < totalAmount()) {
+      delete allThings[0];
     }
-    allThings.clear();
   }
   
  private:
@@ -189,9 +189,13 @@ template <class T> class Finalizable {
 public:
   Finalizable<T> (bool final = false) {
     assert(!s_Final);
-    s_Final = final;
+    if (final) freeze();
   }
 
+protected:
+  static void thaw () {s_Final = false;}
+  static void freeze () {s_Final = true;}
+  
 private:
   static bool s_Final;
 };
@@ -230,6 +234,11 @@ public:
   unsigned int getIdx () const {return idx;}
   static T* getByIndex (unsigned int i) {return theNumbers[i];}
   operator unsigned int() const {return idx;}
+
+protected:
+  static void clear () {
+    theNumbers.clear();
+  }
   
 private:
   unsigned int idx; 
@@ -246,6 +255,23 @@ public:
     , Named<T>(n, dat)
     , Numbered<T>(dat, i)
   {}
+
+  Enumerable<T> (T* dat, string n, bool final = false) 
+    : Finalizable<T>(final)
+    , Iterable<T>(dat)
+    , Named<T>(n, dat)
+    , Numbered<T>(dat)
+  {}
+ 
+  static unsigned int numTypes () {return Iterable<T>::totalAmount();}
+
+protected:
+  static void clear () {
+    Named<T>::clear();
+    Iterable<T>::clear();
+    Numbered<T>::clear();
+    Finalizable<T>::thaw();
+  }
   
 private:
 };

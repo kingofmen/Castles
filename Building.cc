@@ -84,19 +84,19 @@ void Castle::endOfTurn () {
 }
 
 double Castle::labourForFarm () {
-  double ret = goods[EconActor::Labor];
-  goods[EconActor::Labor] -= ret;
+  double ret = getAmount(TradeGood::Labor);
+  deliverGoods(TradeGood::Labor, -ret);
   Logger::logStream(DebugTrade) << "Castle delivers " << ret << " labour to farm.\n"; 
   return ret; 
 }
 
 void Castle::setUtilities () {
-  needs[EconActor::Labor].clear(); 
+  needs[*TradeGood::Labor].clear(); 
   double labourForFarm = support->getFarm()->getNeededLabour(getId());
-  needs[EconActor::Labor].push_back(Utility(100, 0.5*labourForFarm));
-  needs[EconActor::Labor].push_back(Utility(66,  0.5*labourForFarm));
-  needs[EconActor::Labor].push_back(Utility(33,  0.5*labourForFarm));
-  Logger::logStream(Logger::Debug) << "Castle needs " << labourForFarm << " labour for farm, have " << goods[EconActor::Labor] << "\n"; 
+  needs[*TradeGood::Labor].push_back(Utility(100, 0.5*labourForFarm));
+  needs[*TradeGood::Labor].push_back(Utility(66,  0.5*labourForFarm));
+  needs[*TradeGood::Labor].push_back(Utility(33,  0.5*labourForFarm));
+  Logger::logStream(Logger::Debug) << "Castle needs " << labourForFarm << " labour for farm, have " << getAmount(TradeGood::Labor) << "\n"; 
 }
 
 void Castle::supplyGarrison () {
@@ -251,15 +251,15 @@ double Village::adjustedMortality (int age, bool male) const {
 }
 
 void Village::setUtilities () {
-  Consumer::setUtilities(needs, goods, consumption()); 
+  Consumer::setUtilities(needs, tradeGoods, consumption()); 
   double labourForFarm = farm->getNeededLabour(getId());
-  needs[EconActor::Labor].push_back(Utility(100, 0.5*labourForFarm));
-  needs[EconActor::Labor].push_back(Utility(66,  0.5*labourForFarm));
-  needs[EconActor::Labor].push_back(Utility(33,  0.5*labourForFarm));
+  needs[*TradeGood::Labor].push_back(Utility(100, 0.5*labourForFarm));
+  needs[*TradeGood::Labor].push_back(Utility(66,  0.5*labourForFarm));
+  needs[*TradeGood::Labor].push_back(Utility(33,  0.5*labourForFarm));
 }
 
 void Village::produce () {
-  deliverGoods(EconActor::Labor, production());  
+  deliverGoods(TradeGood::Labor, production());  
 }
 
 void Village::endOfTurn () {
@@ -311,8 +311,8 @@ void Village::endOfTurn () {
 
 
 double Village::labourForFarm () {
-  double ret = goods[EconActor::Labor];
-  goods[EconActor::Labor] -= ret;
+  double ret = getAmount(TradeGood::Labor);
+  deliverGoods(TradeGood::Labor, -ret);
   return ret; 
 }
  
@@ -343,8 +343,10 @@ Farmland::Farmland ()
   , Mirrorable<Farmland>()
 {
   for (int j = 0; j <= numOwners; ++j) {
-    goods[j] = new double[EconActor::getNumGoods()];
-    for (unsigned int k = 0; k < EconActor::getNumGoods(); ++k) goods[j][k] = 0;    
+    goods[j] = new double[TradeGood::numTypes()];
+    for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+      goods[j][**tg] = 0;
+    }
     for (int i = 0; i < NumStatus; ++i) fields[j][i] = 0;
   }
 }
@@ -357,7 +359,7 @@ Farmland::Farmland (Farmland* other)
   : Mirrorable<Farmland>(other) 
 {
   for (int j = 0; j <= numOwners; ++j) {
-    goods[j] = new double[EconActor::getNumGoods()];
+    goods[j] = new double[TradeGood::numTypes()];
   }
 }
 
@@ -376,7 +378,9 @@ void Farmland::setMirrorState () {
   for (int j = 0; j <= numOwners; ++j) {  
     for (int i = 0; i < NumStatus; ++i) {
       mirror->fields[j][i] = fields[j][i];
-      for (unsigned int k = 0; k < EconActor::getNumGoods(); ++k) mirror->goods[j][k] = goods[j][k];    
+      for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+	mirror->goods[j][**tg] = goods[j][**tg];
+      }
     }
   }
 }
@@ -446,7 +450,7 @@ void Farmland::endOfTurn () {
   workFields();
 }
 
-void Farmland::delivery (int ownerId, unsigned int good, double amount) {
+void Farmland::delivery (int ownerId, TradeGood const* const good, double amount) {
   unsigned int divs = 0; 
   for (int i = 0; i < numOwners; ++i) {
     if (ownerId == owners[i]) ++divs;
@@ -456,7 +460,7 @@ void Farmland::delivery (int ownerId, unsigned int good, double amount) {
   amount /= divs; 
   for (int i = 0; i < numOwners; ++i) {
     if (ownerId != owners[i]) continue;
-    goods[i][good] += amount;
+    goods[i][*good] += amount;
   }
 }
 
@@ -523,7 +527,7 @@ void Farmland::setDefaultOwner (EconActor* o) {
 void Farmland::workFields () {  
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   int total = getAssignedLand();
-  unsigned int foodIdx = EconActor::getIndex("food"); 
+  TradeGood const* const food = TradeGood::getByName("food"); 
   double availableLabour = 0;
   
   switch (currSeason) {
@@ -551,7 +555,7 @@ void Farmland::workFields () {
     for (int i = 0; i < numOwners; ++i) {
       double capFactor = capitalFactor(goods[i]); 
 
-      availableLabour = goods[i][EconActor::Labor]; 
+      availableLabour = goods[i][*TradeGood::Labor]; 
       while (true) {
 	if ((availableLabour >= _labourToSow*capFactor) && (fields[i][Ready] > 0)) {
 	  fields[i][Ready]--;
@@ -580,7 +584,7 @@ void Farmland::workFields () {
     // degrade; if the weather is bad they don't advance.
     for (int i = 0; i < numOwners; ++i) {
       double capFactor = capitalFactor(goods[i]); 
-      availableLabour = goods[i][EconActor::Labor]; 
+      availableLabour = goods[i][*TradeGood::Labor]; 
       double weatherModifier = 1; // TODO: Insert weather-getting code here
       int untendedRipe1 = fields[i][Ripe1]; fields[i][Ripe1] = 0;
       int untendedRipe2 = fields[i][Ripe2]; fields[i][Ripe2] = 0;
@@ -616,22 +620,22 @@ void Farmland::workFields () {
     for (int i = 0; i < numOwners; ++i) {
       // In autumn we harvest.
       double capFactor = capitalFactor(goods[i]); 
-      availableLabour = goods[i][EconActor::Labor]; 
+      availableLabour = goods[i][*TradeGood::Labor]; 
       int harvest = min(fields[i][Ripe3], (int) floor(availableLabour / (_labourToReap * capFactor)));
       availableLabour -= harvest * _labourToReap * capFactor;
-      EconActor::getById(owners[i])->deliverGoods(foodIdx, _cropsFrom3 * harvest); 
+      EconActor::getById(owners[i])->deliverGoods(food, _cropsFrom3 * harvest); 
       fields[i][Ripe3] -= harvest;
       fields[i][Ended] += harvest;
 
       harvest = min(fields[i][Ripe2], (int) floor(availableLabour / (_labourToReap * capFactor)));
       availableLabour -= harvest * _labourToReap * capFactor;
-      EconActor::getById(owners[i])->deliverGoods(foodIdx, _cropsFrom2 * harvest); 
+      EconActor::getById(owners[i])->deliverGoods(food, _cropsFrom2 * harvest); 
       fields[i][Ripe2] -= harvest;
       fields[i][Ended] += harvest;
 
       harvest = min(fields[i][Ripe1], (int) floor(availableLabour / (_labourToReap * capFactor)));
       availableLabour -= harvest * _labourToReap * capFactor;
-      EconActor::getById(owners[i])->deliverGoods(foodIdx, _cropsFrom1 * harvest); 
+      EconActor::getById(owners[i])->deliverGoods(food, _cropsFrom1 * harvest); 
       fields[i][Ripe1] -= harvest;
       fields[i][Ended] += harvest;      
     }
@@ -649,7 +653,7 @@ void Farmland::countTotals () {
   fields[numOwners][Ripe2] = fields[0][Ripe2];
   fields[numOwners][Ripe3] = fields[0][Ripe3];
   fields[numOwners][Ended] = fields[0][Ended];
-  goods[0][EconActor::Labor] = 0; 
+  goods[0][*TradeGood::Labor] = 0; 
   
   for (int i = 1; i < numOwners; ++i) {
     fields[numOwners][Clear] += fields[i][Clear];
@@ -659,7 +663,7 @@ void Farmland::countTotals () {
     fields[numOwners][Ripe2] += fields[i][Ripe2];
     fields[numOwners][Ripe3] += fields[i][Ripe3];
     fields[numOwners][Ended] += fields[i][Ended];
-    goods[i][EconActor::Labor] = 0;
+    goods[i][*TradeGood::Labor] = 0;
   }
 }
 

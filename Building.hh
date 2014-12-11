@@ -179,7 +179,7 @@ public:
   virtual void setMirrorState ();
   int getFieldStatus (int s) {return fields[numOwners][s];}
   double getNeededLabour (int ownerId) const;
-  void delivery (int ownerId, unsigned int good, double amount);
+  void delivery (int ownerId, TradeGood const* const good, double amount);
   int totalFields () const {return
       fields[numOwners][Clear] +
       fields[numOwners][Ready] +

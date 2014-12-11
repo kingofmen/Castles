@@ -4,14 +4,14 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include "UtilityFunctions.hh"
 using namespace std; 
 class EconActor; 
+class TradeGood;
 
 struct ContractInfo {
-  ContractInfo () : amount(0), delivery(Fixed) {}
-  
   enum AmountType {Fixed, Percentage, SurplusPercentage};
-  unsigned int good; 
+  TradeGood const* tradeGood;
   double amount;
   AmountType delivery;
   double delivered;
@@ -20,7 +20,7 @@ struct ContractInfo {
 
 struct Bid {
   EconActor* actor; 
-  unsigned int good;
+  TradeGood const* tradeGood;
   double amount;
   double price; 
 };
@@ -37,7 +37,7 @@ struct MaslowNeed {
   // class stores immediate marginal utilities, the things
   // to bid on this turn.
 
-  unsigned int good; 
+  TradeGood const* tradeGood;
   double amount; // Amount to count as "one unit" for purposes of taking the log. 
 };
 
@@ -46,7 +46,7 @@ public:
   friend class StaticInitialiser;
   
 protected:
-  void setUtilities (vector<vector<Utility> >& needs, double* goods, double consumption); 
+  void setUtilities (vector<vector<Utility> >& needs, const vector<double>& goods, double consumption); 
   
 private:
   static vector<vector<MaslowNeed> > hierarchy;
@@ -66,6 +66,21 @@ protected:
   vector<double> prices; 
 };
 
+class TradeGood : public Enumerable<const TradeGood> {
+  friend class StaticInitialiser; 
+public:
+  TradeGood (string n, bool lastOne=false);
+  ~TradeGood ();
+  
+  static TradeGood const* Money;
+  static TradeGood const* Labor;
+
+  static Iter exMoneyStart() {Iter r = start(); ++r; return r;}
+  
+private:
+  static void initialise ();
+}; 
+
 class EconActor {
   friend class StaticInitialiser; 
   friend class Market; 
@@ -74,7 +89,9 @@ public:
   EconActor ();
   ~EconActor ();
 
-  void         deliverGoods   (unsigned int good, double amount) {goods[good] += amount;}
+  double       getAmount      (unsigned int idx) const {return tradeGoods[idx];}
+  double       getAmount      (TradeGood const* const tg) const {return tradeGoods[*tg];}
+  void         deliverGoods   (TradeGood const* const tg, double amount) {tradeGoods[*tg] += amount;}
   virtual void getBids        (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell);
   int          getId          () const {return id;}   
   virtual void produce        () {}
@@ -86,26 +103,13 @@ public:
   static void clear ();  
   static void executeContracts ();   
   static EconActor* getById (int id);
-  static unsigned int getIndex (string name);
-  static string getGoodName (unsigned int idx) {return goodNames[idx];}
-  static unsigned int getNumGoods () {return numGoods;} 
   static void production (); 
   static void setAllUtils ();
-
-  typedef vector<string>::iterator GoodsNameIter;
-  static GoodsNameIter beginGoods () {return goodNames.begin();}
-  static GoodsNameIter finalGoods () {return goodNames.end();}
-  
-  static const unsigned int Money;
-  static const unsigned int Labor; 
-
 protected:
   virtual void setUtilities (); 
-  
-  double* goods;
+
+  vector<double> tradeGoods;
   vector<vector<Utility> > needs; 
-  static unsigned int numGoods;
-  static vector<string> goodNames;
   
 private:
   int id;
@@ -122,7 +126,9 @@ public:
 protected:
   double capitalFactor (double* goods, int dilution = 1) const {
     double ret = 1;
-    for (unsigned int g = 0; g < EconActor::getNumGoods(); ++g) ret *= (1 - capital[g]*log(goods[g]/dilution+1)); 
+    for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+      ret *= (1 - capital[**tg]*log(goods[**tg]/dilution+1));
+    }
     return ret;
   }
   

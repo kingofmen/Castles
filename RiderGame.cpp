@@ -119,15 +119,16 @@ WarfareGame* WarfareGame::createGame (string filename) {
   for (objiter hinfo = hexinfos.begin(); hinfo != hexinfos.end(); ++hinfo) {
     StaticInitialiser::buildHex(*hinfo); 
   }
-
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
   objvec units = game->getValue("unit");
   for (objiter unit = units.begin(); unit != units.end(); ++unit) {
     StaticInitialiser::buildMilUnit(*unit);
   }
-  
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
   Player::setCurrentPlayerByName(game->safeGetString("currentplayer"));  
   assert(Player::getCurrentPlayer());
-  updateGreatestMilStrength(); 
+  updateGreatestMilStrength();
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
   return currGame; 
 }
 
@@ -350,6 +351,11 @@ void WarfareGame::unitTests (string fname) {
   setOutputStream(&writer);   
   Logger::logStream(DebugStartup) << "Test: Creating game from file " << fname << "\n"; 
   WarfareGame* testGame = createGame(fname);
+  Logger::logStream(DebugStartup) << "Passed.\n";
+  Logger::logStream(DebugStartup) << "Test: EconActor contracts.\n";
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    assert((*tg) != TradeGood::Money); 
+  }
   Logger::logStream(DebugStartup) << "Passed.\n";
   Logger::logStream(DebugStartup) << "Test: Writing game to file.\n";
   StaticInitialiser::writeGameToFile(".\\savegames\\testsave.txt");
