@@ -81,7 +81,7 @@ private:
   static void initialise ();
 }; 
 
-class EconActor {
+class EconActor : public Iterable<EconActor>, public Numbered<EconActor> {
   friend class StaticInitialiser; 
   friend class Market; 
   
@@ -93,36 +93,30 @@ public:
   double       getAmount      (TradeGood const* const tg) const {return tradeGoods[*tg];}
   void         deliverGoods   (TradeGood const* const tg, double amount) {tradeGoods[*tg] += amount;}
   virtual void getBids        (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell);
-  int          getId          () const {return id;}   
   virtual void produce        () {}
-  
-  typedef vector<EconActor*>::iterator Iter;
-  static Iter start () {return allActors.begin();}
-  static Iter final () {return allActors.end();} 
 
   static void clear ();  
-  static void executeContracts ();   
-  static EconActor* getById (int id);
-  static void production (); 
+  static void executeContracts ();
+  static void production ();
   static void setAllUtils ();
+
+  int creationOrder;
 protected:
-  virtual void setUtilities (); 
+  virtual void setUtilities ();
 
   vector<double> tradeGoods;
-  vector<vector<Utility> > needs; 
-  
+  vector<vector<Utility> > needs;
+
 private:
-  int id;
-  vector<ContractInfo*> obligations; 
-  static vector<EconActor*> allActors; 
+  vector<ContractInfo*> obligations;
 };
 
 template<class T> class Industry {
   friend class StaticInitialiser;
-  
+
 public:
-  virtual void marginalOutput (unsigned int good, int owner, double** output) = 0; // Returns additional expected output for one unit of given input. 
-  
+  virtual void marginalOutput (unsigned int good, int owner, double** output) = 0; // Returns additional expected output for one unit of given input.
+
 protected:
   double capitalFactor (double* goods, int dilution = 1) const {
     double ret = 1;

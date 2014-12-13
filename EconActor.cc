@@ -7,23 +7,23 @@
 TradeGood const* TradeGood::Money = 0;
 TradeGood const* TradeGood::Labor = 0;
 
-vector<EconActor*> EconActor::allActors; 
 vector<double> Consumer::levelAmounts; 
 vector<vector<MaslowNeed> > Consumer::hierarchy;
 
 EconActor::EconActor ()
-  : tradeGoods(TradeGood::numTypes(), 0)
-  , id(-1)
+  : Iterable<EconActor>(this)
+  , Numbered<EconActor>()
+  , tradeGoods(TradeGood::numTypes(), 0)
 {
+  creationOrder = totalAmount();
   needs.resize(TradeGood::numTypes()); 
 }
 
-EconActor::~EconActor () {
-  allActors[id] = 0;
-}
+EconActor::~EconActor () {}
 
 void EconActor::clear () {
-  allActors.clear(); 
+  Numbered<EconActor>::clear();
+  assert(0 == totalAmount());
 }
 
 Market::Market ()
@@ -185,7 +185,7 @@ void EconActor::executeContracts () {
 	amountWanted *= (*e)->getAmount((*contract)->tradeGood);
 	break;
       }
-      Logger::logStream(Logger::Debug) << (*e)->getId() << " contract with " << (*contract)->recipient->getId() << " " << amountWanted << "\n"; 
+      Logger::logStream(Logger::Debug) << (*e)->getIdx() << " contract with " << (*contract)->recipient->getIdx() << " " << amountWanted << "\n"; 
       amountWanted = min((*e)->getAmount((*contract)->tradeGood), amountWanted);
       (*contract)->recipient->deliverGoods((*contract)->tradeGood, amountWanted);
       (*e)->deliverGoods((*contract)->tradeGood, -amountWanted);
@@ -216,7 +216,7 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
       accumulated += getAmount(*tg);
     }
   }
-  //Logger::logStream(DebugTrade) << getId() << " entering getBids with unit util price " << unitUtilityPrice << "\n"; 
+  //Logger::logStream(DebugTrade) << getIdx() << " entering getBids with unit util price " << unitUtilityPrice << "\n"; 
   
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     double accumulated = 0; 
@@ -230,7 +230,7 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
 	currBid.price  = needs[**tg][j].utility * unitUtilityPrice * 1.1;
 	wantToSell.push_back(currBid);
 	/*
-	Logger::logStream(DebugTrade) << getId() << " sells " << i << " due to "
+	Logger::logStream(DebugTrade) << getIdx() << " sells " << i << " due to "
 				      << needs[**tg][j].margin << " "
 				      << goods[**tg] << " "
 				      << needs[**tg][j].utility << " "
@@ -267,12 +267,6 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
       wantToSell.push_back(finalBid);
     }
   }
-}
-
-EconActor* EconActor::getById (int id) {
-  if (0 > id) return 0;
-  if (id >= (int) allActors.size()) return 0; 
-  return allActors[id]; 
 }
 
 void EconActor::setAllUtils () {

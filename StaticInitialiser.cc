@@ -204,7 +204,7 @@ void initialiseContract (ContractInfo* contract, Object* info) {
   if (!info) return; 
   if (!contract) return;
 
-  contract->recipient = EconActor::getById(info->safeGetInt("target")); 
+  contract->recipient = EconActor::getByIndex(info->safeGetUint("target")); 
   contract->amount = info->safeGetFloat("amount", 0);
   if (info->safeGetString("type") == "fixed") contract->delivery = ContractInfo::Fixed;
   else if (info->safeGetString("type") == "percentage") contract->delivery = ContractInfo::Percentage; 
@@ -213,23 +213,20 @@ void initialiseContract (ContractInfo* contract, Object* info) {
 }
 
 void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
-  int id = info->safeGetInt("id", -1);
-  if (0 > id) id = EconActor::allActors.size();
-  if (id >= (int) EconActor::allActors.size()) EconActor::allActors.resize(id+1);
-  if (EconActor::allActors[id]) {
+  unsigned int id = info->safeGetUint("id");
+  if (EconActor::getByIndex(id)) {
     Logger::logStream(DebugStartup) << "Bad econ id " << id << " " << info << " already exists.\n";
-    assert(!EconActor::allActors[id]);
+    assert(!EconActor::getByIndex(id)); 
   }
-  econ->id = id;
+  econ->setIdx(id); 
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     econ->deliverGoods(*tg, info->safeGetFloat((*tg)->getName()));
   }
-  EconActor::allActors[id] = econ;
 
   static map<Object*, ContractInfo*> unFilled;
   objvec toRemove;
   for (map<Object*, ContractInfo*>::iterator un = unFilled.begin(); un != unFilled.end(); ++un) {
-    if ((*un).first->safeGetInt("recipient") != id) continue;
+    if ((*un).first->safeGetUint("recipient") != id) continue;
     (*un).second->recipient = econ;
     toRemove.push_back((*un).first);
   }
@@ -406,7 +403,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     hex->setFarm(farms); 
   }
 
-  initialiseMarket(hex, hInfo->getNeededObject("prices")); 
+  initialiseMarket(hex, hInfo->getNeededObject("prices"));
 }
 
 ThreeDSprite* makeSprite (Object* info) {
@@ -496,7 +493,7 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
   m->setName(mInfo->safeGetString("name", "\"Unknown Soldiers\"")); 
   m->supplies = mInfo->safeGetFloat("supplies"); 
 
-  initialiseEcon(m, mInfo); 
+  initialiseEcon(m, mInfo);
   return m; 
 }
 
@@ -563,13 +560,13 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
 }
 
 Village* StaticInitialiser::buildVillage (Object* fInfo) {
-  Village* ret = new Village(); 
+  Village* ret = new Village();
   Object* males = fInfo->safeGetObject("males");
   Object* females = fInfo->safeGetObject("females"); 
   readAgeTrackerFromObject(ret->males, males);
   readAgeTrackerFromObject(ret->women, females);
   ret->updateMaxPop(); 
-  
+
   buildMilitia(ret, fInfo->safeGetObject("militiaUnits"));
   initialiseEcon(ret, fInfo);
   return ret; 
@@ -1114,6 +1111,7 @@ void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
     writeAgeInfoToObject(*((*i)->soldiers), numbers, 16); 
   }
   if (0 < unit->supplies) obj->setLeaf("supplies", unit->supplies);
+  writeEconActorIntoObject(unit, obj);
   obj->setLeaf("priority", unit->priority);
 }
 
@@ -1130,7 +1128,7 @@ void StaticInitialiser::writeAgeInfoToObject (AgeTracker& age, Object* obj, int 
 }
 
 void StaticInitialiser::writeEconActorIntoObject (EconActor* econ, Object* info) {
-  info->setLeaf("id", econ->getId());
+  info->setLeaf("id", econ->getIdx());
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     double amount = econ->getAmount(*tg);
     if (fabs(amount) < 0.001) continue;
@@ -1159,7 +1157,8 @@ void StaticInitialiser::writeGameToFile (string fname) {
     PlayerGraphicsInfo const* pgInfo = (*p)->getGraphicsInfo();
     faction->setLeaf("red",   pgInfo->getRed());
     faction->setLeaf("green", pgInfo->getGreen());
-    faction->setLeaf("blue",  pgInfo->getBlue());    
+    faction->setLeaf("blue",  pgInfo->getBlue());
+    writeEconActorIntoObject((*p)->getEconActor(), faction);
     
     game->setValue(faction); 
   }

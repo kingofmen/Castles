@@ -30,15 +30,16 @@ WarfareGame::~WarfareGame () {
   Hex::clear();
   Line::clear();
   Player::clear();
-  EconActor::clear(); 
+  EconActor::clear();
   currGame = 0;
 }
 
 WarfareGame* WarfareGame::createGame (string filename) {
-  Logger::logStream(DebugStartup) << "Entering createGame\n";
+  Logger::logStream(DebugStartup) << "Entering createGame " << currGame << "\n";
   //srand(time(NULL));
-  srand(42); 
-  if (currGame) delete currGame; 
+  srand(42);
+  if (currGame) delete currGame;
+  Logger::logStream(DebugStartup) << "Creating new game\n";
   currGame = new WarfareGame();
   Logger::logStream(DebugStartup) << "Processing savegame\n";
   //assert(testingBool);   
@@ -100,7 +101,6 @@ WarfareGame* WarfareGame::createGame (string filename) {
     (*vex)->createLines(); 
   }
 
-  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
   HexGraphicsInfo::getHeights(); // Must come after Vertex and Line creation to get right zone width and height. 
   ZoneGraphicsInfo::calcGrid(); 
   StaticInitialiser::loadTextures(); 
@@ -110,25 +110,23 @@ WarfareGame* WarfareGame::createGame (string filename) {
     StaticInitialiser::createPlayer(*p);
   }
 
-  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
   Object* aiInfo = processFile("./common/ai.txt"); 
   StaticInitialiser::loadAiConstants(aiInfo);
   StaticInitialiser::overallInitialisation(game); 
-    
+
   objvec hexinfos = game->getValue("hexinfo");
   for (objiter hinfo = hexinfos.begin(); hinfo != hexinfos.end(); ++hinfo) {
     StaticInitialiser::buildHex(*hinfo); 
   }
-  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
+
   objvec units = game->getValue("unit");
   for (objiter unit = units.begin(); unit != units.end(); ++unit) {
     StaticInitialiser::buildMilUnit(*unit);
   }
-  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
+
   Player::setCurrentPlayerByName(game->safeGetString("currentplayer"));  
   assert(Player::getCurrentPlayer());
   updateGreatestMilStrength();
-  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
   return currGame; 
 }
 

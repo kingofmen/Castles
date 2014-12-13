@@ -40,7 +40,7 @@ Castle::Castle (Hex* dat, Line* lin)
   setMirrorState();
 }
 
-Castle::Castle (Castle* other) 
+Castle::Castle (Castle* other)
   : Mirrorable<Castle>(other)
   , support(0) // Sequence issues - this constructor is called before anything is initialised in real constructor
 {}
@@ -92,7 +92,7 @@ double Castle::labourForFarm () {
 
 void Castle::setUtilities () {
   needs[*TradeGood::Labor].clear(); 
-  double labourForFarm = support->getFarm()->getNeededLabour(getId());
+  double labourForFarm = support->getFarm()->getNeededLabour(getIdx());
   needs[*TradeGood::Labor].push_back(Utility(100, 0.5*labourForFarm));
   needs[*TradeGood::Labor].push_back(Utility(66,  0.5*labourForFarm));
   needs[*TradeGood::Labor].push_back(Utility(33,  0.5*labourForFarm));
@@ -187,10 +187,13 @@ Village::Village ()
 }
 
 Village::Village (Village* other)
-  : Mirrorable<Village>(other) 
+  : Mirrorable<Village>(other)
+  , milTrad(0)
 {}
 
-Village::~Village () {}
+Village::~Village () {
+  if (milTrad) milTrad->destroyIfReal();
+}
 
 const MilUnitGraphicsInfo* Village::getMilitiaGraphics () const {
   return milTrad ? milTrad->militia->getGraphicsInfo() : 0;
@@ -203,7 +206,9 @@ MilitiaTradition::MilitiaTradition ()
   setMirrorState();
 }
 
-MilitiaTradition::~MilitiaTradition () {}
+MilitiaTradition::~MilitiaTradition () {
+  militia->destroyIfReal();
+}
 
 MilitiaTradition::MilitiaTradition (MilitiaTradition* other)
   : Mirrorable<MilitiaTradition>(other)
@@ -252,7 +257,7 @@ double Village::adjustedMortality (int age, bool male) const {
 
 void Village::setUtilities () {
   Consumer::setUtilities(needs, tradeGoods, consumption()); 
-  double labourForFarm = farm->getNeededLabour(getId());
+  double labourForFarm = farm->getNeededLabour(getIdx());
   needs[*TradeGood::Labor].push_back(Utility(100, 0.5*labourForFarm));
   needs[*TradeGood::Labor].push_back(Utility(66,  0.5*labourForFarm));
   needs[*TradeGood::Labor].push_back(Utility(33,  0.5*labourForFarm));
@@ -519,8 +524,8 @@ void Village::eatFood () {
 void Farmland::setDefaultOwner (EconActor* o) {
   if (!o) return;
   for (int i = 0; i < numOwners; ++i) {
-    if (EconActor::getById(owners[i])) continue;
-    owners[i] = o->getId(); 
+    if (EconActor::getByIndex(owners[i])) continue;
+    owners[i] = o->getIdx(); 
   }
 }
 
@@ -623,19 +628,19 @@ void Farmland::workFields () {
       availableLabour = goods[i][*TradeGood::Labor]; 
       int harvest = min(fields[i][Ripe3], (int) floor(availableLabour / (_labourToReap * capFactor)));
       availableLabour -= harvest * _labourToReap * capFactor;
-      EconActor::getById(owners[i])->deliverGoods(food, _cropsFrom3 * harvest); 
+      EconActor::getByIndex(owners[i])->deliverGoods(food, _cropsFrom3 * harvest); 
       fields[i][Ripe3] -= harvest;
       fields[i][Ended] += harvest;
 
       harvest = min(fields[i][Ripe2], (int) floor(availableLabour / (_labourToReap * capFactor)));
       availableLabour -= harvest * _labourToReap * capFactor;
-      EconActor::getById(owners[i])->deliverGoods(food, _cropsFrom2 * harvest); 
+      EconActor::getByIndex(owners[i])->deliverGoods(food, _cropsFrom2 * harvest); 
       fields[i][Ripe2] -= harvest;
       fields[i][Ended] += harvest;
 
       harvest = min(fields[i][Ripe1], (int) floor(availableLabour / (_labourToReap * capFactor)));
       availableLabour -= harvest * _labourToReap * capFactor;
-      EconActor::getById(owners[i])->deliverGoods(food, _cropsFrom1 * harvest); 
+      EconActor::getByIndex(owners[i])->deliverGoods(food, _cropsFrom1 * harvest); 
       fields[i][Ripe1] -= harvest;
       fields[i][Ended] += harvest;      
     }

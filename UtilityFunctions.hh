@@ -1,7 +1,8 @@
 #ifndef UTILITIES_HH
 #define UTILITIES_HH
 
-#include <cstdlib> 
+#include <climits>
+#include <cstdlib>
 #include <map>
 #include <cassert>
 #include <cmath> 
@@ -204,12 +205,12 @@ template<class T> bool Finalizable<T>::s_Final = false;
 
 template<class T, bool unique=true> class Named {
 public:
-  Named (string n, T* dat) : name(n) {if (unique) assert(!nameToObjectMap[n]); nameToObjectMap[n] = dat;} 
+  Named (string n, T* dat) : name(n) {if (unique) assert(!nameToObjectMap[n]); nameToObjectMap[n] = dat;}
   Named () : name("ToBeNamed") {}
   string getName () const {return name;}
   void resetName (string n) {T* dat = nameToObjectMap[name]; assert(dat); nameToObjectMap[n] = dat; name = n;}
   // Use setName for objects that don't have a name yet.
-  void setName (string n) {assert(name == "ToBeNamed"); if (unique) assert(!nameToObjectMap[n]); nameToObjectMap[n] = (T*) this; name = n;} 
+  void setName (string n) {assert(name == "ToBeNamed"); if (unique) assert(!nameToObjectMap[n]); nameToObjectMap[n] = (T*) this; name = n;}
   static T* getByName (string n) {assert(unique); return nameToObjectMap[n];}
   static T* findByName (string n) {return getByName(n);}
   static void clear () {nameToObjectMap.clear();}
@@ -222,17 +223,25 @@ template<class T, bool unique> map<string, T*> Named<T, unique>::nameToObjectMap
 
 template<class T> class Numbered {
 public:
-  Numbered<T> (T* dat, unsigned int i) : idx(i) {
-    if (i >= theNumbers.size()) theNumbers.resize(i+1);
-    theNumbers[i] = dat;
+  Numbered<T> (T* dat, unsigned int i) : idx(UINT_MAX) {
+    setIdx(i);
   }
 
   Numbered<T> (T* dat) : idx(theNumbers.size()) {
-    theNumbers.push_back(dat); 
+    theNumbers.push_back(dat);
   }
 
+  Numbered<T> () : idx(UINT_MAX) {} // Empty constructor awaits later setting of id.
+
+  void setIdx (unsigned int id) {
+    assert(UINT_MAX == idx);
+    if (id >= theNumbers.size()) theNumbers.resize(id+1);
+    assert(!theNumbers[id]);
+    theNumbers[id] = (T*) this;
+    idx = id;
+  }
   unsigned int getIdx () const {return idx;}
-  static T* getByIndex (unsigned int i) {return theNumbers[i];}
+  static T* getByIndex (unsigned int i) {if (i >= theNumbers.size()) return 0; return theNumbers[i];}
   operator unsigned int() const {return idx;}
 
 protected:
