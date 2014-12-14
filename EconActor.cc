@@ -10,12 +10,15 @@ TradeGood const* TradeGood::Labor = 0;
 vector<double> Consumer::levelAmounts; 
 vector<vector<MaslowNeed> > Consumer::hierarchy;
 
+GoodsHolder::GoodsHolder ()
+  : tradeGoods(TradeGood::numTypes(), 0)
+{}
+
 EconActor::EconActor ()
   : Iterable<EconActor>(this)
   , Numbered<EconActor>()
-  , tradeGoods(TradeGood::numTypes(), 0)
+  , GoodsHolder()
 {
-  creationOrder = totalAmount();
   needs.resize(TradeGood::numTypes()); 
 }
 
@@ -145,14 +148,14 @@ void Market::trade (const vector<Bid>& wantToBuy, const vector<Bid>& wantToSell)
   }
 }
 
-void Consumer::setUtilities (vector<vector<Utility> >& needs, const vector<double>& goods, double consumption) {
+void Consumer::setUtilities (vector<vector<Utility> >& needs, GoodsHolder const* const goods, double consumption) {
   double priorLevels = 1;
   double invConsumption = 1.0 / consumption; 
   for (unsigned int level = 0; level < hierarchy.size(); ++level) {
     double percentage = 0; 
     for (unsigned int i = 0; i < hierarchy[level].size(); ++i) {
       TradeGood const* const tg = hierarchy[level][i].tradeGood;
-      double goodsPerPerson = goods[*tg] * invConsumption;
+      double goodsPerPerson = goods->getAmount(tg) * invConsumption;
       double currAmount = hierarchy[level][i].amount;
       goodsPerPerson /= currAmount;
       percentage += log(goodsPerPerson + 1);

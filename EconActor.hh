@@ -7,7 +7,31 @@
 #include "UtilityFunctions.hh"
 using namespace std; 
 class EconActor; 
-class TradeGood;
+
+class TradeGood : public Enumerable<const TradeGood> {
+  friend class StaticInitialiser; 
+public:
+  TradeGood (string n, bool lastOne=false);
+  ~TradeGood ();
+  
+  static TradeGood const* Money;
+  static TradeGood const* Labor;
+
+  static Iter exMoneyStart() {Iter r = start(); ++r; return r;}
+  
+private:
+  static void initialise ();
+}; 
+
+struct GoodsHolder {
+public:
+  GoodsHolder ();
+  double       getAmount      (unsigned int idx) const {return tradeGoods[idx];}
+  double       getAmount      (TradeGood const* const tg) const {return tradeGoods[*tg];}
+  void         deliverGoods   (TradeGood const* const tg, double amount) {tradeGoods[*tg] += amount;}
+private:
+  vector<double> tradeGoods;
+};
 
 struct ContractInfo {
   enum AmountType {Fixed, Percentage, SurplusPercentage};
@@ -46,7 +70,7 @@ public:
   friend class StaticInitialiser;
   
 protected:
-  void setUtilities (vector<vector<Utility> >& needs, const vector<double>& goods, double consumption); 
+  void setUtilities (vector<vector<Utility> >& needs, GoodsHolder const* const goods, double consumption); 
   
 private:
   static vector<vector<MaslowNeed> > hierarchy;
@@ -66,22 +90,7 @@ protected:
   vector<double> prices; 
 };
 
-class TradeGood : public Enumerable<const TradeGood> {
-  friend class StaticInitialiser; 
-public:
-  TradeGood (string n, bool lastOne=false);
-  ~TradeGood ();
-  
-  static TradeGood const* Money;
-  static TradeGood const* Labor;
-
-  static Iter exMoneyStart() {Iter r = start(); ++r; return r;}
-  
-private:
-  static void initialise ();
-}; 
-
-class EconActor : public Iterable<EconActor>, public Numbered<EconActor> {
+class EconActor : public Iterable<EconActor>, public Numbered<EconActor>, public GoodsHolder {
   friend class StaticInitialiser; 
   friend class Market; 
   
@@ -89,9 +98,6 @@ public:
   EconActor ();
   ~EconActor ();
 
-  double       getAmount      (unsigned int idx) const {return tradeGoods[idx];}
-  double       getAmount      (TradeGood const* const tg) const {return tradeGoods[*tg];}
-  void         deliverGoods   (TradeGood const* const tg, double amount) {tradeGoods[*tg] += amount;}
   virtual void getBids        (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell);
   virtual void produce        () {}
 
@@ -100,11 +106,8 @@ public:
   static void production ();
   static void setAllUtils ();
 
-  int creationOrder;
 protected:
   virtual void setUtilities ();
-
-  vector<double> tradeGoods;
   vector<vector<Utility> > needs;
 
 private:
