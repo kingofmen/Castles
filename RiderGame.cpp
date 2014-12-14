@@ -363,6 +363,8 @@ void WarfareGame::unitTests (string fname) {
   testGame = createGame(".\\savegames\\testsave.txt");
   Logger::logStream(DebugStartup) << "Passed\n.";
   //Logger::logStream(DebugStartup) << "Test: ";
+  //Logger::logStream(DebugStartup) << "Passed\n.";
+  Logger::logStream(DebugStartup) << "All tests passed\n.";
 }
 
 void WarfareGame::updateGreatestMilStrength() {

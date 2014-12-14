@@ -198,7 +198,7 @@ private:
   double expectedOutput (int owner) const; 
   int fields[numOwners+1][NumStatus]; // Last is total
   int owners[numOwners];
-  double* goods[numOwners]; 
+  vector<GoodsHolder> farmEquipment;
   
   static int _labourToSow;
   static int _labourToPlow;

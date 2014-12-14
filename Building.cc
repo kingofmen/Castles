@@ -346,28 +346,19 @@ MilUnit* Village::raiseMilitia () {
 Farmland::Farmland () 
   : Building()
   , Mirrorable<Farmland>()
+  , farmEquipment(numOwners)
 {
   for (int j = 0; j <= numOwners; ++j) {
-    goods[j] = new double[TradeGood::numTypes()];
-    for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
-      goods[j][**tg] = 0;
-    }
     for (int i = 0; i < NumStatus; ++i) fields[j][i] = 0;
   }
 }
 
-Farmland::~Farmland () {
-  delete[] goods; 
-}
+Farmland::~Farmland () {}
 
 Farmland::Farmland (Farmland* other)
-  : Mirrorable<Farmland>(other) 
-{
-  for (int j = 0; j <= numOwners; ++j) {
-    goods[j] = new double[TradeGood::numTypes()];
-  }
-}
-
+  : Mirrorable<Farmland>(other)
+  , farmEquipment(numOwners)
+{}
 
 void Village::setMirrorState () {
   women.setMirrorState();
@@ -380,12 +371,10 @@ void Village::setMirrorState () {
 
 void Farmland::setMirrorState () {
   mirror->setOwner(getOwner());
-  for (int j = 0; j <= numOwners; ++j) {  
+  for (int j = 0; j <= numOwners; ++j) {
+    mirror->farmEquipment[j].setMirrorState(farmEquipment[j]);
     for (int i = 0; i < NumStatus; ++i) {
       mirror->fields[j][i] = fields[j][i];
-      for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
-	mirror->goods[j][**tg] = goods[j][**tg];
-      }
     }
   }
 }
@@ -465,7 +454,7 @@ void Farmland::delivery (int ownerId, TradeGood const* const good, double amount
   amount /= divs; 
   for (int i = 0; i < numOwners; ++i) {
     if (ownerId != owners[i]) continue;
-    goods[i][*good] += amount;
+    farmEquipment[i].deliverGoods(good, amount);
   }
 }
 
@@ -558,9 +547,9 @@ void Farmland::workFields () {
   case Calendar::Spring:
     // In spring we clear new fields, plow and sow existing ones.
     for (int i = 0; i < numOwners; ++i) {
-      double capFactor = capitalFactor(goods[i]); 
+      double capFactor = capitalFactor(farmEquipment[i]); 
 
-      availableLabour = goods[i][*TradeGood::Labor]; 
+      availableLabour = farmEquipment[i].getAmount(TradeGood::Labor);
       while (true) {
 	if ((availableLabour >= _labourToSow*capFactor) && (fields[i][Ready] > 0)) {
 	  fields[i][Ready]--;
@@ -588,8 +577,8 @@ void Farmland::workFields () {
     // If there isn't enough labour to tend the crops, they
     // degrade; if the weather is bad they don't advance.
     for (int i = 0; i < numOwners; ++i) {
-      double capFactor = capitalFactor(goods[i]); 
-      availableLabour = goods[i][*TradeGood::Labor]; 
+      double capFactor = capitalFactor(farmEquipment[i]); 
+      availableLabour = farmEquipment[i].getAmount(TradeGood::Labor);
       double weatherModifier = 1; // TODO: Insert weather-getting code here
       int untendedRipe1 = fields[i][Ripe1]; fields[i][Ripe1] = 0;
       int untendedRipe2 = fields[i][Ripe2]; fields[i][Ripe2] = 0;
@@ -624,8 +613,8 @@ void Farmland::workFields () {
   case Calendar::Autumn:
     for (int i = 0; i < numOwners; ++i) {
       // In autumn we harvest.
-      double capFactor = capitalFactor(goods[i]); 
-      availableLabour = goods[i][*TradeGood::Labor]; 
+      double capFactor = capitalFactor(farmEquipment[i]); 
+      availableLabour = farmEquipment[i].getAmount(TradeGood::Labor); 
       int harvest = min(fields[i][Ripe3], (int) floor(availableLabour / (_labourToReap * capFactor)));
       availableLabour -= harvest * _labourToReap * capFactor;
       EconActor::getByIndex(owners[i])->deliverGoods(food, _cropsFrom3 * harvest); 
@@ -658,7 +647,8 @@ void Farmland::countTotals () {
   fields[numOwners][Ripe2] = fields[0][Ripe2];
   fields[numOwners][Ripe3] = fields[0][Ripe3];
   fields[numOwners][Ended] = fields[0][Ended];
-  goods[0][*TradeGood::Labor] = 0; 
+  // TODO: Incorporate this in a more generic decay mechanism. 
+  farmEquipment[0].deliverGoods(TradeGood::Labor, -farmEquipment[0].getAmount(TradeGood::Labor));
   
   for (int i = 1; i < numOwners; ++i) {
     fields[numOwners][Clear] += fields[i][Clear];
@@ -668,7 +658,7 @@ void Farmland::countTotals () {
     fields[numOwners][Ripe2] += fields[i][Ripe2];
     fields[numOwners][Ripe3] += fields[i][Ripe3];
     fields[numOwners][Ended] += fields[i][Ended];
-    goods[i][*TradeGood::Labor] = 0;
+    farmEquipment[i].deliverGoods(TradeGood::Labor, -farmEquipment[i].getAmount(TradeGood::Labor));
   }
 }
 

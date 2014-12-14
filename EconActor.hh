@@ -29,6 +29,8 @@ public:
   double       getAmount      (unsigned int idx) const {return tradeGoods[idx];}
   double       getAmount      (TradeGood const* const tg) const {return tradeGoods[*tg];}
   void         deliverGoods   (TradeGood const* const tg, double amount) {tradeGoods[*tg] += amount;}
+  void         setMirrorState (GoodsHolder const* const gh);
+  void         setMirrorState (const GoodsHolder& gh);  
 private:
   vector<double> tradeGoods;
 };
@@ -121,10 +123,10 @@ public:
   virtual void marginalOutput (unsigned int good, int owner, double** output) = 0; // Returns additional expected output for one unit of given input.
 
 protected:
-  double capitalFactor (double* goods, int dilution = 1) const {
+  double capitalFactor (const GoodsHolder& capitalToUse, int dilution = 1) const {
     double ret = 1;
     for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
-      ret *= (1 - capital[**tg]*log(goods[**tg]/dilution+1));
+      ret *= (1 - capital[**tg]*log(capitalToUse.getAmount(*tg)/dilution+1));
     }
     return ret;
   }

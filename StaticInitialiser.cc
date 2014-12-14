@@ -384,23 +384,23 @@ void StaticInitialiser::buildHex (Object* hInfo) {
       castle->addGarrison(m);
     }
     lin->addCastle(castle);
-    initialiseEcon(castle, cinfo); 
+    initialiseEcon(castle, cinfo);
   }
 
   Object* fInfo = hInfo->safeGetObject("village");
   if (fInfo) {
     Village* village = StaticInitialiser::buildVillage(fInfo);
-    initialiseBuilding(village, fInfo); 
+    initialiseBuilding(village, fInfo);
     if (owner) village->setOwner(owner);
-    hex->setVillage(village); 
+    hex->setVillage(village);
   }
 
   fInfo = hInfo->safeGetObject("farmland");
   if (fInfo) {
     Farmland* farms = StaticInitialiser::buildFarm(fInfo);
-    initialiseBuilding(farms, fInfo); 
+    initialiseBuilding(farms, fInfo);
     if (owner) farms->setOwner(owner);
-    hex->setFarm(farms); 
+    hex->setFarm(farms);
   }
 
   initialiseMarket(hex, hInfo->getNeededObject("prices"));
