@@ -355,6 +355,9 @@ void WarfareGame::unitTests (string fname) {
     assert((*tg) != TradeGood::Money); 
   }
   Logger::logStream(DebugStartup) << "Passed.\n";
+  Logger::logStream(DebugStartup) << "Test: Running a turn";
+  testGame->endOfTurn();
+  Logger::logStream(DebugStartup) << "Passed\n";  
   Logger::logStream(DebugStartup) << "Test: Writing game to file.\n";
   StaticInitialiser::writeGameToFile(".\\savegames\\testsave.txt");
   Logger::logStream(DebugStartup) << "Passed\n";
@@ -363,7 +366,7 @@ void WarfareGame::unitTests (string fname) {
   testGame = createGame(".\\savegames\\testsave.txt");
   Logger::logStream(DebugStartup) << "Passed\n";
   //Logger::logStream(DebugStartup) << "Test: ";
-  //Logger::logStream(DebugStartup) << "Passed\n";
+  //Logger::logStream(DebugStartup) << "Passed\n";  
   Logger::logStream(DebugStartup) << "All tests passed\n.";
 }
 

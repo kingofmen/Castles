@@ -188,6 +188,7 @@ void Consumer::setUtilities (vector<vector<Utility> >& needs, GoodsHolder const*
 
 void EconActor::executeContracts () {
   for (Iter e = start(); e != final(); ++e) {
+    if (UINT_MAX == (*e)->getIdx()) continue;
     for (vector<ContractInfo*>::iterator contract = (*e)->obligations.begin(); contract != (*e)->obligations.end(); ++contract) {
       if (!(*contract)->recipient) continue;
       double amountWanted = (*contract)->amount;
@@ -285,13 +286,19 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
 }
 
 void EconActor::setAllUtils () {
-  for (Iter e = start(); e != final(); ++e) (*e)->setUtilities(); 
+  for (Iter e = start(); e != final(); ++e) {
+    if (UINT_MAX == (*e)->getIdx()) continue;
+    (*e)->setUtilities();
+  }
 }
 
 void EconActor::setUtilities () {} // Do nothing by default - override in subclasses. 
 
 void EconActor::production () {
-  for (Iter e = start(); e != final(); ++e) (*e)->produce(); 
+  for (Iter e = start(); e != final(); ++e) {
+    if (UINT_MAX == (*e)->getIdx()) continue;
+    (*e)->produce();
+  }
 }
 
 TradeGood::TradeGood (string n, bool lastOne)

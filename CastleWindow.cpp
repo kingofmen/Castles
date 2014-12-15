@@ -635,7 +635,11 @@ int main (int argc, char** argv) {
   Logger::createStream(Logger::Game);
   Logger::createStream(Logger::Warning);
   Logger::createStream(Logger::Error);
-
+  for (int i = DebugGeneral; i < NumDebugs; ++i) {
+    Logger::createStream(i);
+    Logger::logStream(i).setActive(false);     
+  }
+  
   // Write debug log to file
   Logger::createStream(DebugStartup);  
   FileLog debugfile("startDebugLog");
@@ -647,6 +651,9 @@ int main (int argc, char** argv) {
     QObject::connect(&(Logger::logStream(Logger::Game)),    SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
     QObject::connect(&(Logger::logStream(Logger::Warning)), SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
     QObject::connect(&(Logger::logStream(Logger::Error)),   SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
+    for (int i = DebugGeneral; i < NumDebugs; ++i) {
+      QObject::connect(&(Logger::logStream(i)), SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
+    }
     WarfareGame::unitTests(argv[1]);
     return 0; 
   }
@@ -703,11 +710,8 @@ int main (int argc, char** argv) {
   QObject::connect(&(Logger::logStream(Logger::Game)),    SIGNAL(message(QString)), &window, SLOT(message(QString)));
   QObject::connect(&(Logger::logStream(Logger::Warning)), SIGNAL(message(QString)), &window, SLOT(message(QString)));
   QObject::connect(&(Logger::logStream(Logger::Error)),   SIGNAL(message(QString)), &window, SLOT(message(QString))); 
-
   for (int i = DebugGeneral; i < NumDebugs; ++i) {
-    Logger::createStream(i);
     QObject::connect(&(Logger::logStream(i)),   SIGNAL(message(QString)), &window, SLOT(message(QString)));
-    Logger::logStream(i).setActive(false); 
   }
   //Logger::logStream(DebugAI).setActive(true);
   Logger::logStream(DebugTrade).setActive(true); 
