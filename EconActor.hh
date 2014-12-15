@@ -29,8 +29,8 @@ public:
   double       getAmount      (unsigned int idx) const {return tradeGoods[idx];}
   double       getAmount      (TradeGood const* const tg) const {return tradeGoods[*tg];}
   void         deliverGoods   (TradeGood const* const tg, double amount) {tradeGoods[*tg] += amount;}
-  void         setMirrorState (GoodsHolder const* const gh);
-  void         setMirrorState (const GoodsHolder& gh);  
+  void         setAmounts (GoodsHolder const* const gh);
+  void         setAmounts (const GoodsHolder& gh);  
 private:
   vector<double> tradeGoods;
 };

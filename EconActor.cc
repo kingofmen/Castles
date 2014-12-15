@@ -14,13 +14,13 @@ GoodsHolder::GoodsHolder ()
   : tradeGoods(TradeGood::numTypes(), 0)
 {}
 
-void GoodsHolder::setMirrorState (GoodsHolder const* const gh) {
+void GoodsHolder::setAmounts (GoodsHolder const* const gh) {
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     tradeGoods[**tg] = gh->getAmount(*tg);
   }
 }
 
-void GoodsHolder::setMirrorState (const GoodsHolder& gh) {
+void GoodsHolder::setAmounts (const GoodsHolder& gh) {
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     tradeGoods[**tg] = gh.getAmount(*tg);
   }

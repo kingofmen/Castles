@@ -148,7 +148,6 @@ protected:
   static double femaleSurplusEffect; 
   static double femaleSurplusZero;
   
-  
 private:
   Village (Village* other); 
   

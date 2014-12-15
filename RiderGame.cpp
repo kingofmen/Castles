@@ -361,9 +361,9 @@ void WarfareGame::unitTests (string fname) {
   Logger::logStream(DebugStartup) << "Test: Loading from savegame again\n";
   testingBool = false;
   testGame = createGame(".\\savegames\\testsave.txt");
-  Logger::logStream(DebugStartup) << "Passed\n.";
+  Logger::logStream(DebugStartup) << "Passed\n";
   //Logger::logStream(DebugStartup) << "Test: ";
-  //Logger::logStream(DebugStartup) << "Passed\n.";
+  //Logger::logStream(DebugStartup) << "Passed\n";
   Logger::logStream(DebugStartup) << "All tests passed\n.";
 }
 

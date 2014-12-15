@@ -182,6 +182,7 @@ Village::Village ()
   , Mirrorable<Village>()
   , milTrad(0)
   , foodMortalityModifier(1)
+  , farm(0)
 {
   milTrad = new MilitiaTradition();
 }
@@ -189,6 +190,8 @@ Village::Village ()
 Village::Village (Village* other)
   : Mirrorable<Village>(other)
   , milTrad(0)
+  , foodMortalityModifier(1)
+  , farm(0)    
 {}
 
 Village::~Village () {
@@ -349,7 +352,9 @@ Farmland::Farmland ()
   , farmEquipment(numOwners)
 {
   for (int j = 0; j <= numOwners; ++j) {
-    for (int i = 0; i < NumStatus; ++i) fields[j][i] = 0;
+    for (int i = 0; i < NumStatus; ++i) {
+      fields[j][i] = 0;
+    }
   }
 }
 
@@ -367,15 +372,18 @@ void Village::setMirrorState () {
   mirror->milTrad = milTrad->getMirror();
   mirror->foodMortalityModifier = foodMortalityModifier; 
   mirror->setOwner(getOwner());
+  if (farm) mirror->farm = farm->getMirror();
+  // Farm mirror state set by Hex.
 }
 
 void Farmland::setMirrorState () {
   mirror->setOwner(getOwner());
   for (int j = 0; j <= numOwners; ++j) {
-    mirror->farmEquipment[j].setMirrorState(farmEquipment[j]);
     for (int i = 0; i < NumStatus; ++i) {
       mirror->fields[j][i] = fields[j][i];
     }
+    if (numOwners == j) break;
+    mirror->farmEquipment[j].setAmounts(farmEquipment[j]);
   }
 }
 
