@@ -210,9 +210,11 @@ void findRoute (Geography* source, Geography* destination, Player* side, double 
 
 void WarfareGame::endOfTurn () {
   updateGreatestMilStrength();
-  EconActor::production(); 
-  EconActor::executeContracts();  
-  EconActor::setAllUtils(); 
+  Hex::production();
+  EconActor::executeContracts();
+  Hex::setUtilities();
+  Vertex::setUtilities();
+  for (Player::Iter p = Player::start(); p != Player::final(); ++p) (*p)->getEconActor()->setUtilities();
   LineGraphicsInfo::endTurn(); 
 
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();

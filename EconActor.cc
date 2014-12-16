@@ -285,22 +285,6 @@ void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, v
   }
 }
 
-void EconActor::setAllUtils () {
-  for (Iter e = start(); e != final(); ++e) {
-    if (UINT_MAX == (*e)->getIdx()) continue;
-    (*e)->setUtilities();
-  }
-}
-
-void EconActor::setUtilities () {} // Do nothing by default - override in subclasses. 
-
-void EconActor::production () {
-  for (Iter e = start(); e != final(); ++e) {
-    if (UINT_MAX == (*e)->getIdx()) continue;
-    (*e)->produce();
-  }
-}
-
 TradeGood::TradeGood (string n, bool lastOne)
   : Enumerable<const TradeGood>(this, n, lastOne)
 {}

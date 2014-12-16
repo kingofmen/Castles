@@ -499,6 +499,27 @@ Vertices Vertex::getDirection (Vertex const * const ofdis) const {
   return NoVertex; 
 }
 
+void Hex::production () {
+  for (Iter hex = start(); hex != final(); ++hex) {
+    (*hex)->village->produce();
+  }
+}
+
+void Vertex::setUtilities () {
+  for (Iter vex = start(); vex != final(); ++vex) {
+    for (UnitIterator unit = (*vex)->beginUnits(); unit != (*vex)->endUnits(); ++unit) {
+      (*unit)->setUtilities();
+    }
+  }
+}
+
+void Hex::setUtilities () {
+  for (Iter hex = start(); hex != final(); ++hex) {
+    (*hex)->village->setUtilities();
+    if ((*hex)->castle) (*hex)->castle->setUtilities();
+  }
+}
+
 void Hex::setOwner (Player* p) {
   owner = p;
   for (std::vector<PopUnit*>::iterator pop = units.begin(); pop != units.end(); ++pop) {

@@ -37,43 +37,45 @@ public:
   Vertices               getDirection (Vertex const * const ofdis) const;
   Direction              getDirection (Hex const * const dat) const;
   Direction              getDirection (Line const * const dat) const;
-  Farmland*              getFarm () {return farms;}   
+  Farmland*              getFarm () {return farms;}
   HexGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;}
-  Line*                  getLine (Direction dir) {return lines[dir];}  
+  Line*                  getLine (Direction dir) {return lines[dir];}
   Player*                getOwner () {return owner;}
   pair<int, int>         getPos () const {return pos;}
-  pair<int, int>         getPos (Direction dat) const; 
+  pair<int, int>         getPos (Direction dat) const;
   int                    getTotalPopulation () const;
-  TerrainType            getType () const {return myType;}   
-  Vertex*                getVertex (int i);  
-  Village*               getVillage () {return village;} 
+  TerrainType            getType () const {return myType;}
+  Vertex*                getVertex (int i);
+  Village*               getVillage () {return village;}
   void                   holdMarket ();
   LineIterator           linBegin () {return lines.begin();}
-  LineIterator           linEnd   () {return lines.end();} 
-  int                    numMovesTo (Hex const * const dat) const;  
+  LineIterator           linEnd   () {return lines.end();}
+  int                    numMovesTo (Hex const * const dat) const;
   int                    numPops () const {return units.size();}
   void                   raid (MilUnit* raiders, Outcome out);
-  PopUnit*               removePop () {PopUnit* ret = units.back(); units.pop_back(); return ret;}  
-  void                   repair (Outcome out); 
+  PopUnit*               removePop () {PopUnit* ret = units.back(); units.pop_back(); return ret;}
+  void                   repair (Outcome out);
   void                   setNeighbour (Direction d, Hex* dat);
-  void                   setOwner (Player* p);  
+  void                   setOwner (Player* p);
   string                 toString () const;
   VtxIterator            vexBegin () {return vertices.begin();}
   VtxIterator            vexEnd   () {return vertices.end();}
-  int                    recruit (Player* forhim, MilUnitTemplate const* const recruitType, MilUnit* target, Outcome out); 
+  int                    recruit (Player* forhim, MilUnitTemplate const* const recruitType, MilUnit* target, Outcome out);
   void                   setLine (Direction dir, Line* l);
   void                   setFarm (Farmland* f);
-  void                   setGraphicsFarm (Farmland* f);  
+  void                   setGraphicsFarm (Farmland* f);
   void                   setGraphicsVillage (Village* v);
   void                   setVillage (Village* v);
-  virtual void           setMirrorState (); 
+  virtual void           setMirrorState ();
   
-  static TerrainType getType (char t); 
+  static TerrainType getType (char t);
   static pair<int, int> getNeighbourCoordinates (pair<int, int> pos, Direction dere);
   static Hex* getHex (int x, int y);
   static void clear ();
   static void createHex (int x, int y, TerrainType t);
-
+  static void production ();
+  static void setUtilities();
+  
 private:
   Hex (int x, int y, TerrainType t);
   Hex (Hex* other);
@@ -153,7 +155,8 @@ public:
   void forceRetreat (Castle*& c, Vertex*& v); 
   virtual void setMirrorState ();
   
-  static void clear (); 
+  static void clear ();
+  static void setUtilities();
   
 private:
   Vertex (Vertex* other); 

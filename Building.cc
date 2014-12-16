@@ -91,11 +91,12 @@ double Castle::labourForFarm () {
 }
 
 void Castle::setUtilities () {
-  needs[*TradeGood::Labor].clear(); 
+  needs[*TradeGood::Labor].clear();
   double labourForFarm = support->getFarm()->getNeededLabour(getIdx());
   needs[*TradeGood::Labor].push_back(Utility(100, 0.5*labourForFarm));
   needs[*TradeGood::Labor].push_back(Utility(66,  0.5*labourForFarm));
   needs[*TradeGood::Labor].push_back(Utility(33,  0.5*labourForFarm));
+  for (vector<MilUnit*>::iterator m = garrison.begin(); m != garrison.end(); ++m) (*m)->setUtilities();
   Logger::logStream(Logger::Debug) << "Castle needs " << labourForFarm << " labour for farm, have " << getAmount(TradeGood::Labor) << "\n"; 
 }
 
@@ -265,6 +266,7 @@ void Village::setUtilities () {
   needs[*TradeGood::Labor].push_back(Utility(100, 0.5*labourForFarm));
   needs[*TradeGood::Labor].push_back(Utility(66,  0.5*labourForFarm));
   needs[*TradeGood::Labor].push_back(Utility(33,  0.5*labourForFarm));
+  if (milTrad) milTrad->militia->setUtilities();
 }
 
 void Village::produce () {

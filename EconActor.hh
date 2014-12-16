@@ -100,16 +100,13 @@ public:
   EconActor ();
   ~EconActor ();
 
-  virtual void getBids        (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell);
-  virtual void produce        () {}
-
+  virtual void getBids      (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell);
+  virtual void setUtilities () {}
+  
   static void clear ();  
   static void executeContracts ();
-  static void production ();
-  static void setAllUtils ();
 
 protected:
-  virtual void setUtilities ();
   vector<vector<Utility> > needs;
 
 private:

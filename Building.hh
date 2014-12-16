@@ -61,12 +61,12 @@ public:
   const MilUnitTemplate* getRecruitType () const {return recruitType;} 
   void supplyGarrison (); 
   virtual void setMirrorState ();
+  virtual void setUtilities ();
   
   static const int maxGarrison; 
   static double getSiegeMod () {return siegeModifier;} 
 
 protected:
-  virtual void setUtilities (); 
   
 private:
   Castle (Castle* other);   
@@ -130,10 +130,9 @@ public:
   int getMilitiaStrength (MilUnitTemplate const* const dat) {return milTrad ? milTrad->getStrength(dat) : 0;} 
   void updateMaxPop () const {maxPopulation = max(maxPopulation, getTotalPopulation());} 
   void setFarm (Farmland* f) {farm = f;} 
+  virtual void setUtilities ();
   
-protected:
-  virtual void setUtilities (); 
-  
+protected: 
   AgeTracker males;
   AgeTracker women; 
   MilitiaTradition* milTrad;
