@@ -175,6 +175,7 @@ void Castle::setMirrorState () {
     (*unt)->setMirrorState(); 
     mirror->garrison.push_back((*unt)->getMirror());
   }
+  mirror->setAmounts(this);
 }
 
 Village::Village ()
@@ -372,6 +373,7 @@ void Village::setMirrorState () {
   mirror->milTrad = milTrad->getMirror();
   mirror->foodMortalityModifier = foodMortalityModifier; 
   mirror->setOwner(getOwner());
+  mirror->setAmounts(this);
   if (farm) mirror->farm = farm->getMirror();
   // Farm mirror state set by Hex.
 }

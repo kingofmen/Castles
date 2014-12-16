@@ -347,25 +347,25 @@ void WarfareGame::unitTests (string fname) {
   ofstream writer;
   writer.open("parseroutput.txt");
   setOutputStream(&writer);   
-  Logger::logStream(DebugStartup) << "Test: Creating game from file " << fname << "\n"; 
+  Logger::logStream(DebugStartup) << "Test: Creating game from file " << fname << "... "; 
   WarfareGame* testGame = createGame(fname);
   Logger::logStream(DebugStartup) << "Passed.\n";
-  Logger::logStream(DebugStartup) << "Test: EconActor contracts.\n";
+  Logger::logStream(DebugStartup) << "Test: EconActor contracts... ";
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     assert((*tg) != TradeGood::Money); 
   }
   Logger::logStream(DebugStartup) << "Passed.\n";
-  Logger::logStream(DebugStartup) << "Test: Running a turn";
+  Logger::logStream(DebugStartup) << "Test: Running a turn... ";
   testGame->endOfTurn();
   Logger::logStream(DebugStartup) << "Passed\n";  
-  Logger::logStream(DebugStartup) << "Test: Writing game to file.\n";
+  Logger::logStream(DebugStartup) << "Test: Writing game to file... ";
   StaticInitialiser::writeGameToFile(".\\savegames\\testsave.txt");
   Logger::logStream(DebugStartup) << "Passed\n";
-  Logger::logStream(DebugStartup) << "Test: Loading from savegame again\n";
+  Logger::logStream(DebugStartup) << "Test: Loading from savegame again... ";
   testingBool = false;
   testGame = createGame(".\\savegames\\testsave.txt");
   Logger::logStream(DebugStartup) << "Passed\n";
-  //Logger::logStream(DebugStartup) << "Test: ";
+  //Logger::logStream(DebugStartup) << "Test: ... ";
   //Logger::logStream(DebugStartup) << "Passed\n";  
   Logger::logStream(DebugStartup) << "All tests passed\n.";
 }

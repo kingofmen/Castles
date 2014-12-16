@@ -11,7 +11,6 @@
 #include "GraphicsInfo.hh"
 #include "UtilityFunctions.hh" 
 #include "Directions.hh" 
-#include "EconActor.hh" 
 
 class PopUnit;
 class MilUnit;

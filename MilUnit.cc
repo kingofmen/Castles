@@ -155,7 +155,7 @@ void MilUnitElement::setMirrorState () {
   mirror->tacmob     = tacmob;
   mirror->unitType   = unitType;
   soldiers->setMirrorState();
-  mirror->soldiers = soldiers->getMirror(); 
+  mirror->soldiers = soldiers->getMirror();
 }
 
 void MilUnit::setMirrorState () {
@@ -173,6 +173,7 @@ void MilUnit::setMirrorState () {
     (*i)->setMirrorState();
     mirror->forces.push_back((*i)->getMirror());     
   }
+  mirror->setAmounts(this);  
 }
 
 int MilUnit::totalSoldiers () const {
