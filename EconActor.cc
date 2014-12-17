@@ -186,27 +186,23 @@ void Consumer::setUtilities (vector<vector<Utility> >& needs, GoodsHolder const*
   }
 }
 
-void EconActor::executeContracts () {
-  for (Iter e = start(); e != final(); ++e) {
-    if (UINT_MAX == (*e)->getIdx()) continue;
-    for (vector<ContractInfo*>::iterator contract = (*e)->obligations.begin(); contract != (*e)->obligations.end(); ++contract) {
-      if (!(*contract)->recipient) continue;
-      double amountWanted = (*contract)->amount;
-      switch ((*contract)->delivery) {
-      default:
-      case ContractInfo::Fixed:
-	break;
-      case ContractInfo::Percentage:
-      case ContractInfo::SurplusPercentage:
-	amountWanted *= (*e)->getAmount((*contract)->tradeGood);
-	break;
-      }
-      Logger::logStream(Logger::Debug) << (*e)->getIdx() << " contract with " << (*contract)->recipient->getIdx() << " " << amountWanted << "\n"; 
-      amountWanted = min((*e)->getAmount((*contract)->tradeGood), amountWanted);
-      (*contract)->recipient->deliverGoods((*contract)->tradeGood, amountWanted);
-      (*e)->deliverGoods((*contract)->tradeGood, -amountWanted);
-    }
+void ContractInfo::execute () const {
+  if (!recipient) return;
+  if (!source) return;
+  double amountWanted = amount;
+  switch (delivery) {
+  default:
+  case Fixed:
+    break;
+  case Percentage:
+  case SurplusPercentage:
+    amountWanted *= source->getAmount(tradeGood);
+    break;
   }
+  Logger::logStream(Logger::Debug) << source->getIdx() << " contract with " << recipient->getIdx() << " " << amountWanted << "\n"; 
+  amountWanted = min(source->getAmount(tradeGood), amountWanted);
+  recipient->deliverGoods(tradeGood, amountWanted);
+  source->deliverGoods(tradeGood, -amountWanted);
 }
 
 void EconActor::getBids (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell) {

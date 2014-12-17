@@ -211,7 +211,7 @@ void findRoute (Geography* source, Geography* destination, Player* side, double 
 void WarfareGame::endOfTurn () {
   updateGreatestMilStrength();
   Hex::production();
-  EconActor::executeContracts();
+  for (ContractInfo::Iter c = ContractInfo::start(); c != ContractInfo::final(); ++c) (*c)->execute();
   Hex::setUtilities();
   Vertex::setUtilities();
   for (Player::Iter p = Player::start(); p != Player::final(); ++p) (*p)->getEconActor()->setUtilities();

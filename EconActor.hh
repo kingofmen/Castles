@@ -35,13 +35,16 @@ private:
   vector<double> tradeGoods;
 };
 
-struct ContractInfo {
+struct ContractInfo : public Iterable<ContractInfo> {
+  ContractInfo () : Iterable<ContractInfo>(this) {}
+  void execute () const;
   enum AmountType {Fixed, Percentage, SurplusPercentage};
   TradeGood const* tradeGood;
   double amount;
   AmountType delivery;
   double delivered;
-  EconActor* recipient; 
+  EconActor* recipient;
+  EconActor* source;
 };
 
 struct Bid {
@@ -104,7 +107,6 @@ public:
   virtual void setUtilities () {}
   
   static void clear ();  
-  static void executeContracts ();
 
 protected:
   vector<vector<Utility> > needs;

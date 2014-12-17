@@ -27,8 +27,8 @@ Next gameplay iteration (thoughts, not all to be implemented):
      1. Id from save (check)
      2. Goods from save (check) 
      3. Write to save (check) 
-     4. Make mirrorable 
-     5. Ensure that iterator never encounters a null from deleting an object that inherits from it
+     4. Make mirrorable (check)
+     5. Ensure that iterator never encounters a null from deleting an object that inherits from it (check)
    - Mine, forest, farm
      1. Split Pop and Farm info (check)
      2a. Allow capital to substitute for labour (check)
