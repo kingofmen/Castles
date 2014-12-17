@@ -237,6 +237,7 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
     ContractInfo* contract = new ContractInfo();
     initialiseContract(contract, *cInfo);
     if (!contract->recipient) unFilled[*cInfo] = contract;
+    contract->source = econ;
     econ->obligations.push_back(contract);
   }
 }
