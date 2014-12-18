@@ -106,6 +106,8 @@ public:
   virtual void getBids      (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell);
   virtual void setUtilities () {}
   static void clear () {Numbered<EconActor>::clear();}
+
+  static CallbackRegistry<EconActor, &EconActor::setUtilities> utilityCallbacks;
     
 protected:
   vector<vector<Utility> > needs;

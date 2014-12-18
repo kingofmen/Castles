@@ -9,6 +9,7 @@ TradeGood const* TradeGood::Labor = 0;
 
 vector<double> Consumer::levelAmounts; 
 vector<vector<MaslowNeed> > Consumer::hierarchy;
+CallbackRegistry<EconActor, &EconActor::setUtilities> EconActor::utilityCallbacks;
 
 GoodsHolder::GoodsHolder ()
   : tradeGoods(TradeGood::numTypes(), 0)

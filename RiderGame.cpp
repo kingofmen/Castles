@@ -212,9 +212,7 @@ void WarfareGame::endOfTurn () {
   updateGreatestMilStrength();
   Hex::production();
   for (ContractInfo::Iter c = ContractInfo::start(); c != ContractInfo::final(); ++c) (*c)->execute();
-  Hex::setUtilities();
-  Vertex::setUtilities();
-  for (Player::Iter p = Player::start(); p != Player::final(); ++p) (*p)->setUtilities();
+  EconActor::utilityCallbacks.call();
   LineGraphicsInfo::endTurn(); 
 
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();

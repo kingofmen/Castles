@@ -285,5 +285,17 @@ protected:
 private:
 };
 
-#endif 
+template<class T, void (T::*fPtr)()> class CallbackRegistry {
+public:
+  CallbackRegistry () {}
+  ~CallbackRegistry () {}
 
+  void registerCallback (T* dat) {toCall.push_back(dat);}
+  void unregister (T* dat) {typename vector<T*>::iterator pos = find(toCall.begin(), toCall.end(), dat); if (pos != toCall.end()) toCall.erase(pos);}
+  void call () {for (typename vector<T*>::iterator i = toCall.begin(); i != toCall.end(); ++i) {((*i)->*(fPtr))();}}
+
+private:
+  vector<T*> toCall;
+};
+
+#endif

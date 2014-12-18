@@ -38,6 +38,7 @@ Castle::Castle (Hex* dat, Line* lin)
 {
   recruitType = *(MilUnitTemplate::begin());
   setMirrorState();
+  EconActor::utilityCallbacks.registerCallback(this);
 }
 
 Castle::Castle (Castle* other)
@@ -49,7 +50,8 @@ Castle::~Castle () {
   for (std::vector<MilUnit*>::iterator i = garrison.begin(); i != garrison.end(); ++i) {
     (*i)->destroyIfReal();
   }
-  garrison.clear(); 
+  garrison.clear();
+  EconActor::utilityCallbacks.unregister(this);
 }
 
 void Castle::addGarrison (MilUnit* p) {
@@ -187,6 +189,7 @@ Village::Village ()
   , farm(0)
 {
   milTrad = new MilitiaTradition();
+  EconActor::utilityCallbacks.registerCallback(this);
 }
 
 Village::Village (Village* other)
@@ -198,6 +201,7 @@ Village::Village (Village* other)
 
 Village::~Village () {
   if (milTrad) milTrad->destroyIfReal();
+    EconActor::utilityCallbacks.unregister(this);
 }
 
 const MilUnitGraphicsInfo* Village::getMilitiaGraphics () const {

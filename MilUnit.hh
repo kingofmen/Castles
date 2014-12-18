@@ -117,11 +117,10 @@ public:
   double getPriority () const {return priorityLevels[priority];} 
   virtual int getUnitTypeAmount (MilUnitTemplate const* const ut) const; 
   double efficiency () const {return max(0.1, supplyRatio);} 
-
   void endOfTurn ();
-
   void incPriority (bool up = true) {setPriority(priority + (up ? 1 : -1));}
   void setPriority (int p) {if (p < 0) priority = 0; else if (p >= (int) priorityLevels.size()) priority = priorityLevels.size() - 1; else priority = p;}
+  void setUtilities ();
   
   static Iterator begin () {return allUnits.begin();}
   static Iterator end   () {return allUnits.end();}
