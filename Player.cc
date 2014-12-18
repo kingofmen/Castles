@@ -24,17 +24,13 @@ double Player::siegeInfluenceValue = 20;
 Player::Player (bool h, std::string d, std::string n)
   : Iterable<Player>(this)
   , Named<Player>(n, this)
+  , EconActor()
   , human(h)
   , doneWithTurn(false)
   , displayName(d)
-  , econActor(0)
-{
-  econActor = new EconPlayer(); 
-}
+{}
 
-Player::~Player () {
-  delete econActor; 
-}
+Player::~Player () {}
 
 double Player::calculateUnitStrength (MilUnit* dat, double modifiers) {
   return dat->calcStrength(dat->getDecayConstant() * modifiers, &MilUnitElement::shock);
@@ -505,8 +501,3 @@ Player* Player::nextPlayer () {
   return (*pl); 
 }
 
-EconPlayer::EconPlayer ()
-  : EconActor()
-{}
-
-EconPlayer::~EconPlayer () {}

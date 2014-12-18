@@ -10,15 +10,7 @@ class Action;
 class MilUnit; 
 class PlayerGraphicsInfo; 
 
-class EconPlayer : public EconActor {
-public:
-  EconPlayer ();
-  ~EconPlayer ();
-private:
-};
-
-
-class Player : public Iterable<Player>, public Named<Player> {
+class Player : public Iterable<Player>, public Named<Player>, public EconActor {
   friend class StaticInitialiser; 
 public:
   Player (bool h, std::string d, std::string n);
@@ -31,7 +23,6 @@ public:
   void newTurn () {doneWithTurn = false;} 
   std::string getDisplayName () const {return displayName;} 
   PlayerGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;} 
-  EconPlayer* getEconActor () const {return econActor;}
 
   static void clear (); 
   static void setCurrentPlayerByName (std::string name) {currentPlayer = findByName(name);}
@@ -45,7 +36,6 @@ private:
   std::string name;
   std::string displayName;
   PlayerGraphicsInfo* graphicsInfo; 
-  EconPlayer* econActor;
   
   double evaluate (Action act); 
   double evaluateGlobalStrength (); 

@@ -581,7 +581,7 @@ void StaticInitialiser::createPlayer (Object* info) {
   string name = info->safeGetString("name", strbuffer);
   string display = remQuotes(info->safeGetString("displayname", name));
   Player* ret = new Player(human, display, name);
-  initialiseEcon(ret->econActor, info); 
+  initialiseEcon(ret, info); 
   ret->graphicsInfo = new PlayerGraphicsInfo();
 
   int red = info->safeGetInt("red");
@@ -1159,7 +1159,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
     faction->setLeaf("red",   pgInfo->getRed());
     faction->setLeaf("green", pgInfo->getGreen());
     faction->setLeaf("blue",  pgInfo->getBlue());
-    writeEconActorIntoObject((*p)->getEconActor(), faction);
+    writeEconActorIntoObject((*p), faction);
     
     game->setValue(faction); 
   }

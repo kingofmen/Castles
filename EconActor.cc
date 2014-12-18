@@ -27,19 +27,13 @@ void GoodsHolder::setAmounts (const GoodsHolder& gh) {
 }
 
 EconActor::EconActor ()
-  : Iterable<EconActor>(this)
-  , Numbered<EconActor>()
+  : Numbered<EconActor>()
   , GoodsHolder()
 {
   needs.resize(TradeGood::numTypes()); 
 }
 
 EconActor::~EconActor () {}
-
-void EconActor::clear () {
-  Numbered<EconActor>::clear();
-  assert(0 == totalAmount());
-}
 
 Market::Market ()
   : prices(TradeGood::numTypes(), 0)

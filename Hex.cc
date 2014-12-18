@@ -485,8 +485,8 @@ void Hex::holdMarket () {
   vector<Bid> wantBuy;
   vector<Bid> wantSell; 
   if (village) village->getBids(prices, wantBuy, wantSell);
-  if (castle) castle->getBids(prices, wantBuy, wantSell);
-  if (owner) owner->getEconActor()->getBids(prices, wantBuy, wantSell);
+  if (castle)   castle->getBids(prices, wantBuy, wantSell);
+  if (owner)     owner->getBids(prices, wantBuy, wantSell);
   findPrices(wantBuy, wantSell);
   trade(wantBuy, wantSell); 
 }

@@ -95,7 +95,7 @@ protected:
   vector<double> prices; 
 };
 
-class EconActor : public Iterable<EconActor>, public Numbered<EconActor>, public GoodsHolder {
+class EconActor : public Numbered<EconActor>, public GoodsHolder {
   friend class StaticInitialiser; 
   friend class Market; 
   
@@ -105,9 +105,8 @@ public:
 
   virtual void getBids      (const vector<double>& prices, vector<Bid>& wantToBuy, vector<Bid>& wantToSell);
   virtual void setUtilities () {}
-  
-  static void clear ();  
-
+  static void clear () {Numbered<EconActor>::clear();}
+    
 protected:
   vector<vector<Utility> > needs;
 
