@@ -67,7 +67,7 @@ public:
   AgeTracker* soldiers; 
 };
 
-class MilUnit : public Unit, public EconActor, public Mirrorable<MilUnit>, public Named<MilUnit, false>, public MilStrength {
+class MilUnit : public Unit, public EconActor, public Mirrorable<MilUnit>, public Named<MilUnit, false>, public MilStrength, public Iterable<MilUnit> {
   friend class Mirrorable<MilUnit>;
   friend class StaticInitialiser;
   friend class MilUnitGraphicsInfo; 
@@ -75,8 +75,6 @@ public:
   MilUnit ();
   ~MilUnit ();
 
-  typedef set<MilUnit*>::iterator Iterator;
-  
   // Strength manipulations
   void addElement (MilUnitTemplate const* const temp, AgeTracker& str);
   //void clear ();
@@ -122,9 +120,6 @@ public:
   void setPriority (int p) {if (p < 0) priority = 0; else if (p >= (int) priorityLevels.size()) priority = priorityLevels.size() - 1; else priority = p;}
   void setUtilities ();
   
-  static Iterator begin () {return allUnits.begin();}
-  static Iterator end   () {return allUnits.end();}
-
   static void setPriorityLevels (vector<double> newPs);
   
 private:
@@ -146,7 +141,6 @@ private:
   MilUnitGraphicsInfo* graphicsInfo; 
   double aggression;
   
-  static set<MilUnit*> allUnits;
   static vector<double> priorityLevels;
   static double defaultDecayConstant; 
 }; 

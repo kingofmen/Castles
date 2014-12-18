@@ -100,7 +100,7 @@ GLuint loadTexture (string fname, QColor backup, GLuint index) {
 
 void StaticInitialiser::graphicsInitialisation () {
   loadSprites();  
-  for (MilUnit::Iterator m = MilUnit::begin(); m != MilUnit::end(); ++m) {
+  for (MilUnit::Iterator m = MilUnit::start(); m != MilUnit::final(); ++m) {
     (*m)->graphicsInfo->updateSprites(*m);
   }
   

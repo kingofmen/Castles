@@ -131,7 +131,7 @@ WarfareGame* WarfareGame::createGame (string filename) {
 }
 
 void WarfareGame::findUnits (vector<MilUnit*>& ret, Player* p) {
-  for (MilUnit::Iterator m = MilUnit::begin(); m != MilUnit::end(); ++m) if ((*m)->getOwner() == p) ret.push_back(*m);
+  for (MilUnit::Iterator m = MilUnit::start(); m != MilUnit::final(); ++m) if ((*m)->getOwner() == p) ret.push_back(*m);
 }
 
 void WarfareGame::findCastles (vector<Castle*>& ret, Player* p) {
@@ -283,7 +283,7 @@ void WarfareGame::endOfTurn () {
   
 
   // Supply consumption, strength calculation
-  for (MilUnit::Iterator mil = MilUnit::begin(); mil != MilUnit::end(); ++mil) (*mil)->endOfTurn(); 
+  for (MilUnit::Iterator mil = MilUnit::start(); mil != MilUnit::final(); ++mil) (*mil)->endOfTurn(); 
 
   Calendar::newWeekBegins();
   Logger::logStream(Logger::Game) << Calendar::toString() << "\n";
@@ -293,7 +293,7 @@ void WarfareGame::endOfTurn () {
     for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
 
     // So do MilUnits.
-    for (MilUnit::Iterator mil = MilUnit::begin(); mil != MilUnit::end(); ++mil) (*mil)->endOfTurn();
+    for (MilUnit::Iterator mil = MilUnit::start(); mil != MilUnit::final(); ++mil) (*mil)->endOfTurn();
     
     Calendar::newYearBegins(); 
   }
@@ -372,7 +372,7 @@ void WarfareGame::unitTests (string fname) {
 
 void WarfareGame::updateGreatestMilStrength() {
   int largest = 0;
-  for (MilUnit::Iterator m = MilUnit::begin(); m != MilUnit::end(); ++m) {
+  for (MilUnit::Iterator m = MilUnit::start(); m != MilUnit::final(); ++m) {
     largest = max(largest, (*m)->getTotalStrength());
   }
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {

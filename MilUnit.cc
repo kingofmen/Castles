@@ -13,7 +13,6 @@ typedef std::vector<MilUnitElement*>::const_reverse_iterator CRElmIter;
 map<string, MilUnitTemplate const*> MilUnitTemplate::allUnitTemplates;
 vector<string> MilUnitTemplate::allUnitTypeNames;
 set<MilUnitTemplate const*> MilUnitTemplate::allUnitTypes; 
-set<MilUnit*> MilUnit::allUnits;
 vector<double> MilUnit::priorityLevels; 
 double MilUnit::defaultDecayConstant = 1000; 
 vector<double> MilUnitTemplate::drillEffects;
@@ -22,6 +21,7 @@ MilUnit::MilUnit ()
   : Unit()
   , Mirrorable<MilUnit>()
   , Named<MilUnit, false>()
+  , Iterable<MilUnit>(this)
   , rear(Left)
   , supplies(0)
   , supplyRatio(1) 
@@ -29,7 +29,6 @@ MilUnit::MilUnit ()
   , fightFraction(1.0)
   , aggression(0.25)
 {
-  allUnits.insert(this);
   graphicsInfo = new MilUnitGraphicsInfo(this);
   EconActor::utilityCallbacks.registerCallback(this);
 }
@@ -38,12 +37,12 @@ MilUnit::MilUnit (MilUnit* other)
   : Unit()
   , Mirrorable<MilUnit>(other)
   , Named<MilUnit, false>()
+  , Iterable<MilUnit>(0)
   , rear(other->rear)
   , graphicsInfo(0)
 {}
 
 MilUnit::~MilUnit () {
-  allUnits.erase(this);
   for (std::vector<MilUnitElement*>::iterator f = forces.begin(); f != forces.end(); ++f) {
     (*f)->destroyIfReal();
   }
