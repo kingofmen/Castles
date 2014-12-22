@@ -177,7 +177,7 @@ public:
   virtual void setMirrorState ();
   int getFieldStatus (int s) {return fields[numOwners][s];}
   double getNeededLabour (int ownerId) const;
-  void delivery (int ownerId, TradeGood const* const good, double amount);
+  void delivery (EconActor* target, TradeGood const* const good, double amount);
   int totalFields () const {return
       fields[numOwners][Clear] +
       fields[numOwners][Ready] +
@@ -195,7 +195,7 @@ private:
   void countTotals ();
   double expectedOutput (int owner) const; 
   int fields[numOwners+1][NumStatus]; // Last is total
-  int owners[numOwners];
+  EconActor* owners[numOwners];
   vector<GoodsHolder> farmEquipment;
   
   static int _labourToSow;

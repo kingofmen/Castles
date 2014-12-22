@@ -449,7 +449,7 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
     ret->fields[i][Farmland::Ripe2] = ripe2 ? (ripe2->numTokens() >= i ? ripe2->tokenAsInt(i) : 0) : 0;
     ret->fields[i][Farmland::Ripe3] = ripe3 ? (ripe3->numTokens() >= i ? ripe3->tokenAsInt(i) : 0) : 0;
     ret->fields[i][Farmland::Ended] = ended ? (ended->numTokens() >= i ? ended->tokenAsInt(i) : 0) : 0;
-    ret->owners[i]                  = owner ? (owner->numTokens() >= i ? owner->tokenAsInt(i) : -1) : -1;    
+    ret->owners[i]                  = owner ? (owner->numTokens() >= i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
   }
   ret->countTotals();
   
@@ -1253,7 +1253,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       owner->setObjList(true);
       farmInfo->setValue(owner);
       for (int i = 0; i < Farmland::numOwners; ++i) {
-	owner->addToList(farm->owners[i]); 
+	owner->addToList((int) farm->owners[i]->getIdx());
       }
     }
   }

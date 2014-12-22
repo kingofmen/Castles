@@ -450,8 +450,8 @@ void Hex::endOfTurn () {
   holdMarket(); 
   if (village) village->endOfTurn();
   if (farms) {
-    if (village) farms->delivery(village->getIdx(), TradeGood::Labor, village->labourForFarm());
-    if (castle)  farms->delivery(castle->getIdx(),  TradeGood::Labor, castle->labourForFarm());
+    if (village) farms->delivery(village, TradeGood::Labor, village->labourForFarm());
+    if (castle)  farms->delivery(castle,  TradeGood::Labor, castle->labourForFarm());
     farms->endOfTurn();
   }
 }

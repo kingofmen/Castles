@@ -460,16 +460,16 @@ void Farmland::endOfTurn () {
   workFields();
 }
 
-void Farmland::delivery (int ownerId, TradeGood const* const good, double amount) {
+void Farmland::delivery (EconActor* target, TradeGood const* const good, double amount) {
   unsigned int divs = 0; 
   for (int i = 0; i < numOwners; ++i) {
-    if (ownerId == owners[i]) ++divs;
+    if (target == owners[i]) ++divs;
   }
 
   if (0 == divs) return;
   amount /= divs; 
   for (int i = 0; i < numOwners; ++i) {
-    if (ownerId != owners[i]) continue;
+    if (target != owners[i]) continue;
     farmEquipment[i].deliverGoods(good, amount);
   }
 }
@@ -482,10 +482,11 @@ double Farmland::getNeededLabour (int ownerId) const {
 
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter == currSeason) return 0;
+  EconActor* target = EconActor::getByIndex(ownerId);
   
   double ret = 0;
   for (int i = 0; i < numOwners; ++i) {
-    if (owners[i] != ownerId) continue;
+    if (owners[i] != target) continue;
 
     switch (currSeason) {
     default:
@@ -529,8 +530,8 @@ void Village::eatFood () {
 void Farmland::setDefaultOwner (EconActor* o) {
   if (!o) return;
   for (int i = 0; i < numOwners; ++i) {
-    if (EconActor::getByIndex(owners[i])) continue;
-    owners[i] = o->getIdx(); 
+    if (owners[i]) continue;
+    owners[i] = o;
   }
 }
 
@@ -633,19 +634,19 @@ void Farmland::workFields () {
       availableLabour = farmEquipment[i].getAmount(TradeGood::Labor); 
       int harvest = min(fields[i][Ripe3], (int) floor(availableLabour / (_labourToReap * capFactor)));
       availableLabour -= harvest * _labourToReap * capFactor;
-      EconActor::getByIndex(owners[i])->deliverGoods(food, _cropsFrom3 * harvest); 
+      owners[i]->deliverGoods(food, _cropsFrom3 * harvest); 
       fields[i][Ripe3] -= harvest;
       fields[i][Ended] += harvest;
 
       harvest = min(fields[i][Ripe2], (int) floor(availableLabour / (_labourToReap * capFactor)));
       availableLabour -= harvest * _labourToReap * capFactor;
-      EconActor::getByIndex(owners[i])->deliverGoods(food, _cropsFrom2 * harvest); 
+      owners[i]->deliverGoods(food, _cropsFrom2 * harvest); 
       fields[i][Ripe2] -= harvest;
       fields[i][Ended] += harvest;
 
       harvest = min(fields[i][Ripe1], (int) floor(availableLabour / (_labourToReap * capFactor)));
       availableLabour -= harvest * _labourToReap * capFactor;
-      EconActor::getByIndex(owners[i])->deliverGoods(food, _cropsFrom1 * harvest); 
+      owners[i]->deliverGoods(food, _cropsFrom1 * harvest); 
       fields[i][Ripe1] -= harvest;
       fields[i][Ended] += harvest;      
     }
