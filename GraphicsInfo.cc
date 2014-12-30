@@ -965,7 +965,7 @@ double FarmGraphicsInfo::fieldArea () {
 
 void FarmGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
   double currentArea = 0;
-  while ((currentArea = fieldArea()) < myFarm->totalFields()) {
+  while ((currentArea = fieldArea()) < myFarm->getTotalFields()) {
     FieldShape testField = hex->getPatch(); 
     fields.push_back(FieldInfo(testField));
   }
@@ -986,7 +986,7 @@ int VillageGraphicsInfo::getHouses () const {
 void FarmGraphicsInfo::updateFieldStatus () {
   for (Iterator info = begin(); info != end(); ++info) {
     // Status of fields. 
-    double totalFieldArea = 1.0 / (*info)->myFarm->totalFields();
+    double totalFieldArea = 1.0 / (*info)->myFarm->getTotalFields();
     double totalGraphArea = 1.0 / (*info)->fieldArea();
     fit currentField = (*info)->start(); 
     for (int s = Farmland::Clear; s < Farmland::NumStatus; ++s) {

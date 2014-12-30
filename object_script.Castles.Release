@@ -10,6 +10,7 @@ INPUT(
 ./release\GraphicsInfo.o
 ./release\Hex.o
 ./release\Logger.o
+./release\Market.o
 ./release\MilUnit.o
 ./release\Mirrorable.o
 ./release\Player.o

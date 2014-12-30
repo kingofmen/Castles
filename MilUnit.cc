@@ -30,7 +30,6 @@ MilUnit::MilUnit ()
   , aggression(0.25)
 {
   graphicsInfo = new MilUnitGraphicsInfo(this);
-  EconActor::utilityCallbacks.registerCallback(this);
 }
 
 MilUnit::MilUnit (MilUnit* other) 
@@ -46,7 +45,6 @@ MilUnit::~MilUnit () {
   for (std::vector<MilUnitElement*>::iterator f = forces.begin(); f != forces.end(); ++f) {
     (*f)->destroyIfReal();
   }
-  EconActor::utilityCallbacks.unregister(this);
 }
 
 MilUnitTemplate::MilUnitTemplate (string n)
@@ -411,8 +409,6 @@ BattleResult MilUnit::attack (MilUnit* const adversary, Outcome dieroll) {
   if (thLoss > 0.1) ret.attackerSuccess = VictoGlory;
   return ret; 
 }
-
-void MilUnit::setUtilities () {}
 
 void MilUnit::battleCasualties (MilUnit* const adversary) {
   takeCasualties(calcBattleCasualties(adversary)); 

@@ -10,9 +10,10 @@ pop_needs = {
     wood = 1
     iron = 1
     food = 1
+    labor = 0.1
   }
   level = {
-    labour = 1
+    labor = 1
   }
 }
 

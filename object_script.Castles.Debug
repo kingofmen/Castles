@@ -10,6 +10,7 @@ INPUT(
 ./debug\GraphicsInfo.o
 ./debug\Hex.o
 ./debug\Logger.o
+./debug\Market.o
 ./debug\MilUnit.o
 ./debug\Mirrorable.o
 ./debug\Player.o

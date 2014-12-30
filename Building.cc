@@ -20,6 +20,7 @@ double Village::femaleConsumption = 0.90;
 double Village::femaleSurplusEffect = -2.0;
 double Village::femaleSurplusZero = 1.0;
 double Castle::siegeModifier = 10; 
+vector<GoodsHolder> Village::maslowLevels;
 
 int Farmland::_labourToSow    = 1;
 int Farmland::_labourToPlow   = 10;
@@ -29,6 +30,7 @@ int Farmland::_labourToReap   = 10;
 int Farmland::_cropsFrom3     = 1000;
 int Farmland::_cropsFrom2     = 500;
 int Farmland::_cropsFrom1     = 100;
+TradeGood const* Farmland::output = 0;
 
 Castle::Castle (Hex* dat, Line* lin) 
   : Mirrorable<Castle>()
@@ -38,7 +40,6 @@ Castle::Castle (Hex* dat, Line* lin)
 {
   recruitType = *(MilUnitTemplate::begin());
   setMirrorState();
-  EconActor::utilityCallbacks.registerCallback(this);
 }
 
 Castle::Castle (Castle* other)
@@ -51,7 +52,6 @@ Castle::~Castle () {
     (*i)->destroyIfReal();
   }
   garrison.clear();
-  EconActor::utilityCallbacks.unregister(this);
 }
 
 void Castle::addGarrison (MilUnit* p) {
@@ -83,23 +83,6 @@ void Castle::endOfTurn () {
   //support->getVillage()->demandSupplies(&taxExtraction);
   //supplies += taxExtraction.delivered;
   //taxExtraction.delivered = 0;
-}
-
-double Castle::labourForFarm () {
-  double ret = getAmount(TradeGood::Labor);
-  deliverGoods(TradeGood::Labor, -ret);
-  Logger::logStream(DebugTrade) << "Castle delivers " << ret << " labour to farm.\n"; 
-  return ret; 
-}
-
-void Castle::setUtilities () {
-  needs[*TradeGood::Labor].clear();
-  double labourForFarm = support->getFarm()->getNeededLabour(getIdx());
-  needs[*TradeGood::Labor].push_back(Utility(100, 0.5*labourForFarm));
-  needs[*TradeGood::Labor].push_back(Utility(66,  0.5*labourForFarm));
-  needs[*TradeGood::Labor].push_back(Utility(33,  0.5*labourForFarm));
-  for (vector<MilUnit*>::iterator m = garrison.begin(); m != garrison.end(); ++m) (*m)->setUtilities();
-  Logger::logStream(Logger::Debug) << "Castle needs " << labourForFarm << " labour for farm, have " << getAmount(TradeGood::Labor) << "\n"; 
 }
 
 void Castle::supplyGarrison () {
@@ -187,9 +170,9 @@ Village::Village ()
   , milTrad(0)
   , foodMortalityModifier(1)
   , farm(0)
+  , workedThisTurn(0)
 {
   milTrad = new MilitiaTradition();
-  EconActor::utilityCallbacks.registerCallback(this);
 }
 
 Village::Village (Village* other)
@@ -201,7 +184,84 @@ Village::Village (Village* other)
 
 Village::~Village () {
   if (milTrad) milTrad->destroyIfReal();
-    EconActor::utilityCallbacks.unregister(this);
+}
+
+void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
+  // For each level in the Maslow hierarchy,
+  // see if we can sell enough labor to cover it
+  // (at the given prices). Then put in a sell bid
+  // for enough labor to buy the last level we can
+  // completely cover, and buy bids to get us that
+  // level.
+
+  double moneyAvailable    = getAmount(TradeGood::Money);
+  double consumptionFactor = consumption();
+  double laborAvailable    = production();
+  GoodsHolder amountToBuy;
+  for (vector<GoodsHolder>::iterator level = maslowLevels.begin(); level != maslowLevels.end(); ++level) {
+    double moneyNeeded = 0;
+    bool canGetLevel = true;
+    for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      if (amountNeeded < 0.001) continue;
+      if (TradeGood::Labor == (*tg)) {
+	// Deal with labour specially since we produce it and presumably don't need to buy.
+	if (amountNeeded > laborAvailable) {
+	  canGetLevel = false;
+	  break;
+	}
+	else {
+	  laborAvailable -= amountNeeded;
+	  continue;
+	}
+      }
+      moneyNeeded += prices.getAmount(*tg) * amountNeeded;
+      if (moneyNeeded > moneyAvailable + laborAvailable*prices.getAmount(TradeGood::Labor)) {
+	canGetLevel = false;
+	break;
+      }
+    }
+    if (!canGetLevel) break;
+
+    for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      if (amountNeeded < 0.001) continue;
+      moneyNeeded = prices.getAmount(*tg) * amountNeeded;
+      double laborNeeded = moneyNeeded / prices.getAmount(TradeGood::Labor);
+      amountToBuy.deliverGoods((*tg), amountNeeded);
+      amountToBuy.deliverGoods(TradeGood::Labor, -laborNeeded);
+    }
+  }
+
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    double amount = amountToBuy.getAmount(*tg);
+    if (fabs(amount) < 1) continue;
+    bidlist.push_back(new MarketBid((*tg), amount, this));
+  }
+}
+
+void Village::unitTests () {
+  Village testVillage;
+  testVillage.males.addPop(1000, 20); // 1000 20-year-old males... wonder what they do for entertainment?
+  GoodsHolder prices;
+  vector<MarketBid*> bidlist;
+  prices.deliverGoods(TradeGood::Labor, 1);
+  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+    prices.deliverGoods((*tg), 0.25);
+  }
+  testVillage.getBids(prices, bidlist);
+  if (0 == bidlist.size()) throw string("Village should have made at least one bid.");
+  BOOST_FOREACH(MarketBid* mb, bidlist) {
+    if ((mb->tradeGood == TradeGood::Labor) && (mb->amountToBuy > 0)) throw string("Should be selling, not buying, labor.");
+    else if ((mb->tradeGood != TradeGood::Labor) && (mb->amountToBuy < 0)) throw string("Should be buying, not selling, ") + mb->tradeGood->getName();
+  }
+
+  double labor = testVillage.produceForContract(TradeGood::Labor, 100);
+  if (fabs(labor - 100) > 0.1) {
+    char number[500];
+    sprintf(number, "Village should have produced 100 labor, got %f", labor);    
+    throw string(number);
+  }
 }
 
 const MilUnitGraphicsInfo* Village::getMilitiaGraphics () const {
@@ -264,21 +324,18 @@ double Village::adjustedMortality (int age, bool male) const {
   return baseFemaleMortality[age]*foodMortalityModifier;
 }
 
-void Village::setUtilities () {
-  Consumer::setUtilities(needs, this, consumption()); 
-  double labourForFarm = farm->getNeededLabour(getIdx());
-  needs[*TradeGood::Labor].push_back(Utility(100, 0.5*labourForFarm));
-  needs[*TradeGood::Labor].push_back(Utility(66,  0.5*labourForFarm));
-  needs[*TradeGood::Labor].push_back(Utility(33,  0.5*labourForFarm));
-  if (milTrad) milTrad->militia->setUtilities();
-}
-
-void Village::produce () {
-  deliverGoods(TradeGood::Labor, production());  
+double Village::produceForContract (TradeGood const* const tg, double amount) {
+  if (tg == TradeGood::Labor) {
+    amount = min(amount, production() - workedThisTurn);
+    workedThisTurn += amount;
+    return amount;
+  }
+  return EconActor::produceForContract(tg, amount);
 }
 
 void Village::endOfTurn () {
   eatFood();
+  workedThisTurn = 0;
 
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter != currSeason) return;
@@ -324,14 +381,6 @@ void Village::endOfTurn () {
   updateMaxPop(); 
 }
 
-
-double Village::labourForFarm () {
-  double ret = getAmount(TradeGood::Labor);
-  deliverGoods(TradeGood::Labor, -ret);
-  return ret; 
-}
- 
-
 void Village::demobMilitia () {
   if (!milTrad) return;
   milTrad->militia->demobilise(males); 
@@ -356,21 +405,221 @@ MilUnit* Village::raiseMilitia () {
 Farmland::Farmland () 
   : Building()
   , Mirrorable<Farmland>()
-  , farmEquipment(numOwners)
 {
-  for (int j = 0; j <= numOwners; ++j) {
-    for (int i = 0; i < NumStatus; ++i) {
-      fields[j][i] = 0;
-    }
+  for (int j = 0; j < numOwners; ++j) {
+    farmers.push_back(new Farmer());
+  }
+  for (int i = 0; i < NumStatus; ++i) {
+    totalFields[i] = 0;
+  }  
+}
+
+Farmland::~Farmland () {
+  BOOST_FOREACH(Farmer* farmer, farmers) {
+    farmer->destroyIfReal();
   }
 }
 
-Farmland::~Farmland () {}
-
 Farmland::Farmland (Farmland* other)
   : Mirrorable<Farmland>(other)
-  , farmEquipment(numOwners)
 {}
+
+Farmland::Farmer::Farmer ()
+  : Mirrorable<Farmland::Farmer>()
+  , fields(NumStatus, 0)
+  , owner(0)
+{}
+
+Farmland::Farmer::Farmer (Farmer* other)
+  : Mirrorable<Farmland::Farmer>(other)
+  , fields(NumStatus, 0)
+  , owner(0)
+{}
+
+void Farmland::Farmer::setMirrorState () {
+  mirror->owner = owner;
+  for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
+}
+
+Farmland::Farmer::~Farmer () {}
+
+void Farmland::Farmer::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
+  // Goal is to maximise profit. Calculate how much labor we need to get in the harvest;
+  // if the price of the expected food is more, bid for enough labor to do this turn's work.
+  // If there is money left over, bid for equipment to reduce the amount of labor needed
+  // next turn, provided the net-present-value of the reduction is higher than the cost
+  // of the machinery.
+
+  double laborNeeded = getNeededLabour();
+  double expectedProduction = expectedOutput();
+  if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction) {
+    bidlist.push_back(new MarketBid(TradeGood::Labor, laborNeeded, this));
+  }
+  else {
+    // These fields cannot be economically worked.
+    // TODO: Query village about whether to do it
+    // anyway as subsistence agriculture. 
+  }
+
+  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+    if (capital[**tg] < 0.00001) continue;
+    double laborSaving = laborNeeded * (1 - marginalCapFactor((*tg), getAmount(*tg)));
+    // Assuming discount rate of 10%. Present value of amount x every period to infinity is (x/r) with r the interest rate.
+    // TODO: Take decay into account. Variable discount rate?
+    double npv = laborSaving * prices.getAmount(TradeGood::Labor) * 10;
+    if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this));
+  }
+}
+
+double Farmland::Farmer::expectedOutput () const {
+  return _cropsFrom3 * (fields[Clear] + fields[Ready] + fields[Sowed] + fields[Ripe1] + fields[Ripe2] + fields[Ripe3]);
+}
+
+double Farmland::Farmer::produceForContract (TradeGood const* const tg, double amount) {
+  return owner->produceForContract(tg, amount);
+}
+
+void Farmland::unitTests () {
+  if (!output) throw string("Farm output has not been set.");
+  Farmland testFarm;
+  // Stupidest imaginable test, but did actually catch a problem, so...
+  if ((int) testFarm.farmers.size() != numOwners) {
+    char errorMessage[500];
+    sprintf(errorMessage, "Farm should have %i Farmers, has %i", numOwners, testFarm.farmers.size());
+    throw string(errorMessage);
+  }
+
+  testFarm.farmers[0]->unitTests();
+}
+
+void Farmland::Farmer::unitTests () {
+  // Note that this is not static, it's run on a particular Farmer.
+  char errorMessage[500];  
+  double* oldCapital = capital;
+  capital = new double[TradeGood::numTypes()];
+  TradeGood const* testCapGood = 0;
+  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+    capital[**tg] = 0;
+    if ((*tg) == output) continue;
+    if (testCapGood) continue;
+    testCapGood = (*tg);
+    capital[**tg] = 0.1;
+  }
+
+  Calendar::newYearBegins();
+  fields[Clear] = 1400;
+  double laborNeeded = getNeededLabour();
+  if (laborNeeded <= 0) {
+    sprintf(errorMessage, "Expected to need positive amount of labor, but found %f", laborNeeded);
+    throw string(errorMessage);
+  }
+
+  deliverGoods(testCapGood, 1);
+  double laborNeededWithCapital = getNeededLabour();
+  if (laborNeededWithCapital >= laborNeeded) {
+    sprintf(errorMessage,
+	    "With capital %f of %s, should require less than %f labour, but need %f",
+	    getAmount(testCapGood),
+	    testCapGood->getName().c_str(),
+	    laborNeeded,
+	    laborNeededWithCapital);
+    throw string(errorMessage);
+  }
+  deliverGoods(testCapGood, -1);
+
+  // This makes us need 100 labour per Spring turn on 1400 clear fields, if capital is zero.
+  // With capital 1, we need 100 * (1 - 0.1 log(2)) = 93. So we are saving
+  // 7 labor with 1 iron. At price 1, that's net-present-value of 70. So,
+  // there should be a bid for iron if the price is below seventy, but not if
+  // it is above.
+  int oldLabourToSow = _labourToSow;
+  int oldLabourToPlow = _labourToPlow;
+  _labourToSow = 0;
+  _labourToPlow = 1;
+  laborNeeded = getNeededLabour();
+  GoodsHolder prices;
+  vector<MarketBid*> bidlist;
+  prices.deliverGoods(TradeGood::Labor, 1);
+  prices.deliverGoods(testCapGood, 1);
+  prices.deliverGoods(output, 1);
+  getBids(prices, bidlist);
+  
+  if (2 != bidlist.size()) {
+    sprintf(errorMessage, "Expected to make 2 bids, got %i", bidlist.size());
+    throw string(errorMessage);
+  }
+  bool foundLabour = false;
+  bool foundCapGood = false;
+  BOOST_FOREACH(MarketBid* mb, bidlist) {
+    if (mb->tradeGood == TradeGood::Labor) {
+      foundLabour = true;
+      if (fabs(mb->amountToBuy - 100) > 0.1) {
+	sprintf(errorMessage, "Expected to buy 100 %s, bid is for %f", TradeGood::Labor->getName().c_str(), mb->amountToBuy);
+	throw string(errorMessage);
+      }
+    }
+    else if (mb->tradeGood == testCapGood) {
+      foundCapGood = true;
+      if (mb->amountToBuy <= 0) {
+	sprintf(errorMessage, "Expected to buy %s, but am selling", testCapGood->getName().c_str());
+	throw string(errorMessage);
+      }
+    }
+    else {
+      sprintf(errorMessage,
+	      "Expected to bid on %s and %s, but got bid for %f %s (capital %f price %f) %i %i %f %p %p",
+	      TradeGood::Labor->getName().c_str(),
+	      testCapGood->getName().c_str(),
+	      mb->amountToBuy,
+	      mb->tradeGood->getName().c_str(),
+	      capital[*(mb->tradeGood)],
+	      prices.getAmount(mb->tradeGood),
+	      mb->tradeGood->getIdx(),
+	      testCapGood->getIdx(),
+	      capital[*testCapGood],
+	      capital,
+	      oldCapital);
+      throw string(errorMessage);
+    }
+  }
+  if (!foundLabour) {
+    sprintf(errorMessage, "Expected to buy %s, no bid found", TradeGood::Labor->getName().c_str());
+    throw string(errorMessage);
+  }
+  if (!foundCapGood) {
+    sprintf(errorMessage, "Expected to buy %s, no bid found", testCapGood->getName().c_str());
+    throw string(errorMessage);
+  }
+
+  owner = this;
+  while (Calendar::getCurrentSeason() != Calendar::Winter) {
+    deliverGoods(TradeGood::Labor, getNeededLabour());
+    workFields();
+    Calendar::newWeekBegins();
+  }
+  if (fields[Ended] != 1400) {
+    sprintf(errorMessage,
+	    "Expected to have 1400 ended fields, but have %i. Clear %i, Ready %i, Sowed %i, Ripe1 %i, Ripe2 %i, Ripe3 %i",
+	    fields[Ended],
+	    fields[Clear],
+	    fields[Ready],
+	    fields[Sowed],
+	    fields[Ripe1],
+	    fields[Ripe2],
+	    fields[Ripe3]);
+    throw string(errorMessage);
+  }
+  if (fabs(getAmount(output) - _cropsFrom3*1400) > 100) {
+    sprintf(errorMessage, "Expected to have %f %s, but have %f", _cropsFrom3*1400.0, output->getName().c_str(), getAmount(output));
+    throw string(errorMessage);
+  }
+  Calendar::newYearBegins();
+  
+  delete[] capital;
+  _labourToSow = oldLabourToSow;
+  _labourToPlow = oldLabourToPlow;
+  capital = oldCapital;
+}
 
 void Village::setMirrorState () {
   women.setMirrorState();
@@ -386,12 +635,10 @@ void Village::setMirrorState () {
 
 void Farmland::setMirrorState () {
   mirror->setOwner(getOwner());
-  for (int j = 0; j <= numOwners; ++j) {
-    for (int i = 0; i < NumStatus; ++i) {
-      mirror->fields[j][i] = fields[j][i];
-    }
-    if (numOwners == j) break;
-    mirror->farmEquipment[j].setAmounts(farmEquipment[j]);
+  mirror->farmers.clear();
+  BOOST_FOREACH(Farmer* farmer, farmers) {
+    farmer->setMirrorState();
+    mirror->farmers.push_back(farmer->getMirror());
   }
 }
 
@@ -401,7 +648,8 @@ double Village::production () const {
     ret += (males.getPop(i) + femaleProduction*women.getPop(i)) * products[i]; 
   }
 
-  ret -= milTrad->getRequiredWork(); 
+  ret -= milTrad->getRequiredWork();
+  ret -= workedThisTurn;
   return ret;
 }
 
@@ -416,105 +664,65 @@ double Village::consumption () const {
 void Farmland::devastate (int devastation) {
   while (devastation > 0) {
     int target = rand() % numOwners;
-    if      (fields[target][Ripe3] > 0) {fields[target][Ripe3]--; fields[target][Ripe2]++;}
-    else if (fields[target][Ripe2] > 0) {fields[target][Ripe2]--; fields[target][Ripe1]++;}
-    else if (fields[target][Ripe1] > 0) {fields[target][Ripe1]--; fields[target][Ready]++;}
+    if      (farmers[target]->fields[Ripe3] > 0) {farmers[target]->fields[Ripe3]--; farmers[target]->fields[Ripe2]++;}
+    else if (farmers[target]->fields[Ripe2] > 0) {farmers[target]->fields[Ripe2]--; farmers[target]->fields[Ripe1]++;}
+    else if (farmers[target]->fields[Ripe1] > 0) {farmers[target]->fields[Ripe1]--; farmers[target]->fields[Ready]++;}
     devastation--;
   }
 }
 
-/*
-void Village::demandSupplies (ContractInfo* taxes) {
-  double amount = 0;
-  double needed = consumption() * Calendar::turnsToAutumn(); 
-  switch (taxes->delivery) {
-  case ContractInfo::Fixed:
-  default: 
-    amount = taxes->amount;
-    break;
-  case ContractInfo::Percentage:
-    amount = supplies*taxes->amount;
-    break;
-  case ContractInfo::SurplusPercentage:
-    amount = (supplies - needed);
-    if (amount < 0) amount = 0;
-    else amount *= taxes->amount; 
-    break;
-  }
-
-  
-  double starvingness = (supplies - amount);
-  starvingness /= needed;
-  if (starvingness < 1) {
-    // Hide the food!
-    amount *= ((atan(starvingness) + 3*0.25*M_PI) / (M_PI_2)); // Between 0.5 (starvingness = negative inf) and 1 (starvingness = 1)
-  }
-
-  if (amount > supplies) amount = supplies;
-  supplies -= amount;
-  taxes->delivered = amount; 
-}
-*/ 
-
 void Farmland::endOfTurn () {
-  workFields();
+  BOOST_FOREACH(Farmer* farmer, farmers) farmer->workFields();
+  countTotals(); 
 }
 
 void Farmland::delivery (EconActor* target, TradeGood const* const good, double amount) {
   unsigned int divs = 0; 
   for (int i = 0; i < numOwners; ++i) {
-    if (target == owners[i]) ++divs;
+    if (target == farmers[i]->owner) ++divs;
   }
 
   if (0 == divs) return;
   amount /= divs; 
   for (int i = 0; i < numOwners; ++i) {
-    if (target != owners[i]) continue;
-    farmEquipment[i].deliverGoods(good, amount);
+    if (target != farmers[i]->owner) continue;
+    farmers[i]->deliverGoods(good, amount);
   }
 }
 
-double Farmland::getNeededLabour (int ownerId) const {
+double Farmland::Farmer::getNeededLabour () const {
   // Returns the amount of labour needed to tend the
-  // fields owned by ownerId, on the assumption that
-  // the necessary labour will be spread over the remaining
-  // turns in the season. 
+  // fields, on the assumption that the necessary labour
+  // will be spread over the remaining turns in the season. 
 
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter == currSeason) return 0;
-  EconActor* target = EconActor::getByIndex(ownerId);
   
   double ret = 0;
-  for (int i = 0; i < numOwners; ++i) {
-    if (owners[i] != target) continue;
-
-    switch (currSeason) {
-    default:
-    case Calendar::Spring:
-      // In spring we clear new fields, plow and sow existing ones.
-      // Fields move from Clear to Ready to Sowed.
-      ret += fields[i][Ready] * _labourToSow;
-      ret += fields[i][Clear] * (_labourToPlow + _labourToSow); 
+  switch (currSeason) {
+  default:
+  case Calendar::Spring:
+    // In spring we clear new fields, plow and sow existing ones.
+    // Fields move from Clear to Ready to Sowed.
+    ret += fields[Ready] * _labourToSow;
+    ret += fields[Clear] * (_labourToPlow + _labourToSow);
     break;
 
-    case Calendar::Summer:
-      // All weeding work is equal. 
-      ret += (fields[i][Ready] + fields[i][Ripe1] + fields[i][Ripe2] + fields[i][Ripe3]) * _labourToWeed;
-      break;
+  case Calendar::Summer:
+    // Weeding is special: It is not done once and finished,
+    // like plowing, sowing, and harvesting. It must be re-done
+    // each turn. So, avoid the div-by-turns-remaining below.
+    return (fields[Sowed] + fields[Ripe1] + fields[Ripe2] + fields[Ripe3]) * _labourToWeed * capitalFactor(*this);
       
-    case Calendar::Autumn:
-      // All reaping is equal. 
-      ret += (fields[i][Ripe1] + fields[i][Ripe2] + fields[i][Ripe3]) * _labourToReap;
-      break; 
-    }
+  case Calendar::Autumn:
+    // All reaping is equal. 
+    ret += (fields[Ripe1] + fields[Ripe2] + fields[Ripe3]) * _labourToReap;
+    break; 
   }
 
+  ret *= capitalFactor(*this);
   ret /= Calendar::turnsToNextSeason();
   return ret; 
-}
-
-void Farmland::marginalOutput (unsigned int good, int owner, double** output) {
-  
 }
 
 void Village::eatFood () {
@@ -530,152 +738,137 @@ void Village::eatFood () {
 void Farmland::setDefaultOwner (EconActor* o) {
   if (!o) return;
   for (int i = 0; i < numOwners; ++i) {
-    if (owners[i]) continue;
-    owners[i] = o;
+    if (farmers[i]->owner) continue;
+    farmers[i]->owner = o;
   }
 }
 
-void Farmland::workFields () {  
+void Farmland::Farmer::workFields () {  
   Calendar::Season currSeason = Calendar::getCurrentSeason();
-  int total = getAssignedLand();
-  TradeGood const* const food = TradeGood::getByName("food"); 
-  double availableLabour = 0;
-  
+  double availableLabour = getAmount(TradeGood::Labor);
+  double capFactor = capitalFactor(*this);
+
   switch (currSeason) {
   default:
   case Calendar::Winter:
     // Cleanup.
     // Used land becomes 'clear' for next year.
-    for (int i = 0; i < numOwners; ++i) {
-      fields[i][Ended] += fields[i][Ripe3];
-      fields[i][Ended] += fields[i][Ripe2];
-      fields[i][Ended] += fields[i][Ripe1];
-      fields[i][Ended] += fields[i][Sowed];
-      fields[i][Ended] += fields[i][Ready];
-      fields[i][Ripe3] = fields[i][Ripe2] = fields[i][Ripe1] = fields[i][Sowed] = fields[i][Ready] = 0;
-
-      // Fallow acreage grows over.
-      fields[i][Clear] = fields[i][Ended];
-      fields[i][Ended] = 0; 
-    }
-      
+    fields[Ended] += fields[Ripe3];
+    fields[Ended] += fields[Ripe2];
+    fields[Ended] += fields[Ripe1];
+    fields[Ended] += fields[Sowed];
+    fields[Ended] += fields[Ready];
+    fields[Ripe3] = fields[Ripe2] = fields[Ripe1] = fields[Sowed] = fields[Ready] = 0;
+    
+    // Fallow acreage grows over.
+    fields[Clear] = fields[Ended];
+    fields[Ended] = 0; 
     break; 
 
   case Calendar::Spring:
     // In spring we clear new fields, plow and sow existing ones.
-    for (int i = 0; i < numOwners; ++i) {
-      double capFactor = capitalFactor(farmEquipment[i]); 
-
-      availableLabour = farmEquipment[i].getAmount(TradeGood::Labor);
-      while (true) {
-	if ((availableLabour >= _labourToSow*capFactor) && (fields[i][Ready] > 0)) {
-	  fields[i][Ready]--;
-	  fields[i][Sowed]++;
-	  availableLabour -= _labourToSow*capFactor;
-	}
-	else if ((availableLabour >= _labourToPlow*capFactor) && (fields[i][Clear] > 0)) {
-	  fields[i][Clear]--;
-	  fields[i][Ready]++;
-	  availableLabour -= _labourToPlow*capFactor;
-	}
-	else if ((availableLabour >= _labourToClear*capFactor) &&
-		 (total - fields[i][Clear] - fields[i][Ready] - fields[i][Sowed] - fields[i][Ripe1] - fields[i][Ripe2] - fields[i][Ripe3] - fields[i][Ended] > 0)) {
-	  fields[i][Clear]++;
-	  availableLabour -= _labourToClear*capFactor;
-	}
-	else break; 
+    while (true) {
+      if ((availableLabour >= _labourToSow*capFactor) && (fields[Ready] > 0)) {
+	fields[Ready]--;
+	fields[Sowed]++;
+	availableLabour -= _labourToSow*capFactor;
       }
+      else if ((availableLabour >= _labourToPlow*capFactor) && (fields[Clear] > 0)) {
+	fields[Clear]--;
+	fields[Ready]++;
+	availableLabour -= _labourToPlow*capFactor;
+      }
+      /*
+      // TODO: Move clearing of fields somewhere else, or divide assigned land up between farmers.
+      else if ((availableLabour >= _labourToClear*capFactor) &&
+      (total - fields[Clear] - fields[Ready] - fields[Sowed] - fields[Ripe1] - fields[Ripe2] - fields[Ripe3] - fields[Ended] > 0)) {
+      fields[Clear]++;
+      availableLabour -= _labourToClear*capFactor;
+      }
+      */
+      else break; 
     }
-    
     break;
 
-  case Calendar::Summer:
+  case Calendar::Summer: {
     // In summer the crops ripen and we fight the weeds.
     // If there isn't enough labour to tend the crops, they
     // degrade; if the weather is bad they don't advance.
-    for (int i = 0; i < numOwners; ++i) {
-      double capFactor = capitalFactor(farmEquipment[i]); 
-      availableLabour = farmEquipment[i].getAmount(TradeGood::Labor);
-      double weatherModifier = 1; // TODO: Insert weather-getting code here
-      int untendedRipe1 = fields[i][Ripe1]; fields[i][Ripe1] = 0;
-      int untendedRipe2 = fields[i][Ripe2]; fields[i][Ripe2] = 0;
-      int untendedRipe3 = fields[i][Ripe3]; fields[i][Ripe3] = 0;
-      while (availableLabour >= _labourToWeed * capFactor * weatherModifier) {
-	availableLabour -= _labourToWeed * capFactor * weatherModifier;	
-	if (fields[i][Sowed] > 0) {
-	  fields[i][Sowed]--;
-	  fields[i][Ripe1]++;
-	}
-	else if (untendedRipe1 > 0) {
-	  untendedRipe1--;
-	  fields[i][Ripe2]++;
-	}
-	else if (untendedRipe2 > 0) {
-	  untendedRipe2--;
-	  fields[i][Ripe3]++;
-	}
-	else if (untendedRipe3 > 0) {
-	  untendedRipe3--;
-	  fields[i][Ripe3]++;
-	}
-	else break; 
+    double weatherModifier = 1; // TODO: Insert weather-getting code here
+    int untendedRipe1 = fields[Ripe1]; fields[Ripe1] = 0;
+    int untendedRipe2 = fields[Ripe2]; fields[Ripe2] = 0;
+    int untendedRipe3 = fields[Ripe3]; fields[Ripe3] = 0;
+    while (availableLabour >= _labourToWeed * capFactor * weatherModifier) {
+      availableLabour -= _labourToWeed * capFactor * weatherModifier;	
+      if (fields[Sowed] > 0) {
+	fields[Sowed]--;
+	fields[Ripe1]++;
       }
-      fields[i][Sowed] += untendedRipe1;
-      fields[i][Ripe1] += untendedRipe2;
-      fields[i][Ripe2] += untendedRipe3;
+      else if (untendedRipe1 > 0) {
+	untendedRipe1--;
+	fields[Ripe2]++;
+      }
+      else if (untendedRipe2 > 0) {
+	untendedRipe2--;
+	fields[Ripe3]++;
+      }
+      else if (untendedRipe3 > 0) {
+	untendedRipe3--;
+	fields[Ripe3]++;
+      }
+      else break; 
     }
-    
+    fields[Sowed] += untendedRipe1;
+    fields[Ripe1] += untendedRipe2;
+    fields[Ripe2] += untendedRipe3;
     break;
-
-  case Calendar::Autumn:
-    for (int i = 0; i < numOwners; ++i) {
-      // In autumn we harvest.
-      double capFactor = capitalFactor(farmEquipment[i]); 
-      availableLabour = farmEquipment[i].getAmount(TradeGood::Labor); 
-      int harvest = min(fields[i][Ripe3], (int) floor(availableLabour / (_labourToReap * capFactor)));
-      availableLabour -= harvest * _labourToReap * capFactor;
-      owners[i]->deliverGoods(food, _cropsFrom3 * harvest); 
-      fields[i][Ripe3] -= harvest;
-      fields[i][Ended] += harvest;
-
-      harvest = min(fields[i][Ripe2], (int) floor(availableLabour / (_labourToReap * capFactor)));
-      availableLabour -= harvest * _labourToReap * capFactor;
-      owners[i]->deliverGoods(food, _cropsFrom2 * harvest); 
-      fields[i][Ripe2] -= harvest;
-      fields[i][Ended] += harvest;
-
-      harvest = min(fields[i][Ripe1], (int) floor(availableLabour / (_labourToReap * capFactor)));
-      availableLabour -= harvest * _labourToReap * capFactor;
-      owners[i]->deliverGoods(food, _cropsFrom1 * harvest); 
-      fields[i][Ripe1] -= harvest;
-      fields[i][Ended] += harvest;      
-    }
-    
-    break; 
   }
-  countTotals(); 
+  case Calendar::Autumn: {
+    // In autumn we harvest.
+    int harvest = min(fields[Ripe3], (int) floor(availableLabour / (_labourToReap * capFactor)));
+    availableLabour -= harvest * _labourToReap * capFactor;
+    owner->deliverGoods(output, _cropsFrom3 * harvest); 
+    fields[Ripe3] -= harvest;
+    fields[Ended] += harvest;
+    
+    harvest = min(fields[Ripe2], (int) floor(availableLabour / (_labourToReap * capFactor)));
+    availableLabour -= harvest * _labourToReap * capFactor;
+    owner->deliverGoods(output, _cropsFrom2 * harvest); 
+    fields[Ripe2] -= harvest;
+    fields[Ended] += harvest;
+    
+    harvest = min(fields[Ripe1], (int) floor(availableLabour / (_labourToReap * capFactor)));
+    availableLabour -= harvest * _labourToReap * capFactor;
+    owner->deliverGoods(output, _cropsFrom1 * harvest); 
+    fields[Ripe1] -= harvest;
+    fields[Ended] += harvest;      
+
+    break;
+  }
+  } // Not a typo, ends switch.
+
+  double usedLabour = availableLabour - getAmount(TradeGood::Labor);
+  deliverGoods(TradeGood::Labor, usedLabour);
+  if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workFields");
 }
 
 void Farmland::countTotals () {
-  fields[numOwners][Clear] = fields[0][Clear];
-  fields[numOwners][Ready] = fields[0][Ready];
-  fields[numOwners][Sowed] = fields[0][Sowed];
-  fields[numOwners][Ripe1] = fields[0][Ripe1];
-  fields[numOwners][Ripe2] = fields[0][Ripe2];
-  fields[numOwners][Ripe3] = fields[0][Ripe3];
-  fields[numOwners][Ended] = fields[0][Ended];
-  // TODO: Incorporate this in a more generic decay mechanism. 
-  farmEquipment[0].deliverGoods(TradeGood::Labor, -farmEquipment[0].getAmount(TradeGood::Labor));
+  totalFields[Clear] = farmers[0]->fields[Clear];
+  totalFields[Ready] = farmers[0]->fields[Ready];
+  totalFields[Sowed] = farmers[0]->fields[Sowed];
+  totalFields[Ripe1] = farmers[0]->fields[Ripe1];
+  totalFields[Ripe2] = farmers[0]->fields[Ripe2];
+  totalFields[Ripe3] = farmers[0]->fields[Ripe3];
+  totalFields[Ended] = farmers[0]->fields[Ended];
   
   for (int i = 1; i < numOwners; ++i) {
-    fields[numOwners][Clear] += fields[i][Clear];
-    fields[numOwners][Ready] += fields[i][Ready];
-    fields[numOwners][Sowed] += fields[i][Sowed];
-    fields[numOwners][Ripe1] += fields[i][Ripe1];
-    fields[numOwners][Ripe2] += fields[i][Ripe2];
-    fields[numOwners][Ripe3] += fields[i][Ripe3];
-    fields[numOwners][Ended] += fields[i][Ended];
-    farmEquipment[i].deliverGoods(TradeGood::Labor, -farmEquipment[i].getAmount(TradeGood::Labor));
+    totalFields[Clear] += farmers[i]->fields[Clear];
+    totalFields[Ready] += farmers[i]->fields[Ready];
+    totalFields[Sowed] += farmers[i]->fields[Sowed];
+    totalFields[Ripe1] += farmers[i]->fields[Ripe1];
+    totalFields[Ripe2] += farmers[i]->fields[Ripe2];
+    totalFields[Ripe3] += farmers[i]->fields[Ripe3];
+    totalFields[Ended] += farmers[i]->fields[Ended];
   }
 }
 
@@ -716,5 +909,3 @@ int Village::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit*
 
   return recruited; 
 }
-
-

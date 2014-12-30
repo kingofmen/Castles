@@ -1,22 +1,27 @@
 #include "RiderGame.hh"
-#include <QtCore> 
+#include <QtCore>
 #include <ctype.h>
-#include <list> 
+#include <list>
+#include "boost/function.hpp"
+#include "boost/bind.hpp"
 #include "PopUnit.hh"
-#include "MilUnit.hh" 
-#include "Hex.hh" 
+#include "Market.hh"
+#include "MilUnit.hh"
+#include "Hex.hh"
 #include "Player.hh"
 #include <set>
-#include "Logger.hh" 
-#include "Building.hh" 
-#include <cassert> 
+#include "Logger.hh"
+#include "Building.hh"
+#include <cassert>
 #include <ctime>
-#include "Parser.hh" 
-#include <fstream> 
-#include "StructUtils.hh" 
-#include "StaticInitialiser.hh" 
-#include "Calendar.hh" 
-#include "Directions.hh" 
+#include "Parser.hh"
+#include <fstream>
+#include "StructUtils.hh"
+#include "StaticInitialiser.hh"
+#include "Calendar.hh"
+#include "Directions.hh"
+
+using namespace boost;
 
 WarfareGame* WarfareGame::currGame = 0; 
 bool testingBool = true;
@@ -210,9 +215,7 @@ void findRoute (Geography* source, Geography* destination, Player* side, double 
 
 void WarfareGame::endOfTurn () {
   updateGreatestMilStrength();
-  Hex::production();
   for (ContractInfo::Iter c = ContractInfo::start(); c != ContractInfo::final(); ++c) (*c)->execute();
-  EconActor::utilityCallbacks.call();
   LineGraphicsInfo::endTurn(); 
 
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
@@ -343,31 +346,42 @@ void WarfareGame::unitComparison (string fname) {
   
 }
 
+int tests = 0;
+int passed = 0;
+
+void callTestFunction (string testName, function<void()> fcn) {
+  Logger::logStream(DebugStartup) << "Test: " << testName << "...";
+  ++tests;  
+  try {
+    fcn();
+    Logger::logStream(DebugStartup) << "Passed\n";
+    ++passed;
+  }
+  catch (string problem) {
+    Logger::logStream(DebugStartup) << "Failed with error " << problem << "\n";
+  }  
+}
+
+void callTestFunction (string testName, void (*fPtr) ()) {
+  callTestFunction(testName, function<void()>(fPtr));
+}
+
+
 void WarfareGame::unitTests (string fname) {
   ofstream writer;
   writer.open("parseroutput.txt");
-  setOutputStream(&writer);   
-  Logger::logStream(DebugStartup) << "Test: Creating game from file " << fname << "... "; 
-  WarfareGame* testGame = createGame(fname);
-  Logger::logStream(DebugStartup) << "Passed.\n";
-  Logger::logStream(DebugStartup) << "Test: EconActor contracts... ";
-  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-    assert((*tg) != TradeGood::Money); 
-  }
-  Logger::logStream(DebugStartup) << "Passed.\n";
-  Logger::logStream(DebugStartup) << "Test: Running a turn... ";
-  testGame->endOfTurn();
-  Logger::logStream(DebugStartup) << "Passed\n";  
-  Logger::logStream(DebugStartup) << "Test: Writing game to file... ";
-  StaticInitialiser::writeGameToFile(".\\savegames\\testsave.txt");
-  Logger::logStream(DebugStartup) << "Passed\n";
-  Logger::logStream(DebugStartup) << "Test: Loading from savegame again... ";
-  testingBool = false;
-  testGame = createGame(".\\savegames\\testsave.txt");
-  Logger::logStream(DebugStartup) << "Passed\n";
-  //Logger::logStream(DebugStartup) << "Test: ... ";
-  //Logger::logStream(DebugStartup) << "Passed\n";  
-  Logger::logStream(DebugStartup) << "All tests passed\n.";
+  setOutputStream(&writer);
+  string savename(".\\savegames\\testsave.txt");
+  callTestFunction(string("Creating game from file") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
+  callTestFunction("EconActor", &EconActor::unitTests);
+  callTestFunction("Running a turn", function<void()>(bind(&WarfareGame::endOfTurn, WarfareGame::currGame)));
+  callTestFunction(string("Writing to file") + savename, function<void()>(bind(&StaticInitialiser::writeGameToFile, savename)));
+  callTestFunction(string("Loading from savegame again") + fname, function<void()>(bind(&WarfareGame::createGame, savename)));
+  callTestFunction("Market", &Market::unitTests);
+  callTestFunction("Village", &Village::unitTests);
+  callTestFunction("Farmland", &Farmland::unitTests);
+
+  Logger::logStream(DebugStartup) << passed << " of " << tests << " tests passed.\n";
 }
 
 void WarfareGame::updateGreatestMilStrength() {

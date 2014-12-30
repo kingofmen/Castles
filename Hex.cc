@@ -238,6 +238,7 @@ void Hex::createVertices () {
 
 void Hex::setFarm (Farmland* f) {
   farms = f;
+  farms->setMarket(this);
   if (village) {
     farms->setDefaultOwner(village);
     village->setFarm(farms);
@@ -255,6 +256,7 @@ void Hex::setGraphicsVillage (Village* f) {
 
 void Hex::setVillage (Village* f) {
   village = f;
+  registerParticipant(village);
   if (farms) {
     village->setFarm(farms);
     farms->setDefaultOwner(village); 
@@ -445,15 +447,12 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
 }
 
 void Hex::endOfTurn () {
-  //if ((pos.first == 0) && (pos.second == 0)) Logger::logStream(DebugTrade).setActive(true);
-  //else Logger::logStream(DebugTrade).setActive(false); 
-  holdMarket(); 
+  // Farms buy labor and tools.
+  holdMarket();
+  // Use them to work the fields, and perhaps deliver food to owners.
+  if (farms) farms->endOfTurn();
+  // Who then consume.
   if (village) village->endOfTurn();
-  if (farms) {
-    if (village) farms->delivery(village, TradeGood::Labor, village->labourForFarm());
-    if (castle)  farms->delivery(castle,  TradeGood::Labor, castle->labourForFarm());
-    farms->endOfTurn();
-  }
 }
 
 std::string Hex::toString () const {
@@ -481,28 +480,12 @@ Direction Hex::getDirection (Hex const * const dat) const {
   return NoDirection; 
 }
 
-void Hex::holdMarket () {
-  vector<Bid> wantBuy;
-  vector<Bid> wantSell; 
-  if (village) village->getBids(prices, wantBuy, wantSell);
-  if (castle)   castle->getBids(prices, wantBuy, wantSell);
-  if (owner)     owner->getBids(prices, wantBuy, wantSell);
-  findPrices(wantBuy, wantSell);
-  trade(wantBuy, wantSell); 
-}
-
 Vertices Vertex::getDirection (Vertex const * const ofdis) const {
   for (int i = LeftUp; i < NoVertex; ++i) {
     if (neighbours[i] == ofdis) return convertToVertex(i);
   }
   
   return NoVertex; 
-}
-
-void Hex::production () {
-  for (Iter hex = start(); hex != final(); ++hex) {
-    (*hex)->village->produce();
-  }
 }
 
 void Hex::setOwner (Player* p) {

@@ -20,8 +20,8 @@ namespace Calendar {
   }
 
   int turnsToNextSeason () {
-    // Includes this turn, hence +1. 
-    return 1 + seasonLength - (week % seasonLength);
+    // Including this turn.
+    return seasonLength - (week % seasonLength);
   }
   
   int turnsToAutumn () {

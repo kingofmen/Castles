@@ -118,7 +118,6 @@ public:
   void endOfTurn ();
   void incPriority (bool up = true) {setPriority(priority + (up ? 1 : -1));}
   void setPriority (int p) {if (p < 0) priority = 0; else if (p >= (int) priorityLevels.size()) priority = priorityLevels.size() - 1; else priority = p;}
-  void setUtilities ();
   
   static void setPriorityLevels (vector<double> newPs);
   

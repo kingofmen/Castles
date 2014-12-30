@@ -2,6 +2,7 @@
 #define BUILDING_HH
 
 #include <vector> 
+#include "Market.hh"
 #include "Mirrorable.hh" 
 #include "Logger.hh" 
 #include "AgeTracker.hh" 
@@ -50,7 +51,6 @@ public:
   Line* getLocation () {return location;}
   MilUnit* getGarrison (unsigned int i) {if (i >= garrison.size()) return 0; return garrison[i];}
   Hex* getSupport () {return support;}
-  double labourForFarm (); 
   int numGarrison () const {return garrison.size();}
   void recruit (Outcome out);  
   MilUnit* removeGarrison ();
@@ -61,7 +61,6 @@ public:
   const MilUnitTemplate* getRecruitType () const {return recruitType;} 
   void supplyGarrison (); 
   virtual void setMirrorState ();
-  virtual void setUtilities ();
   
   static const int maxGarrison; 
   static double getSiegeMod () {return siegeModifier;} 
@@ -103,26 +102,25 @@ private:
   int drillLevel;
 };
 
-class Village : public Building, public EconActor, public Consumer, public Mirrorable<Village> { 
+class Village : public Building, public EconActor, public Mirrorable<Village> { 
   friend class StaticInitialiser;
-  friend class Mirrorable<Village>;  
+  friend class Mirrorable<Village>;
 public:
   Village ();
   ~Village ();
 
-
   double consumption () const;
   void demobMilitia ();
-  virtual void endOfTurn ();  
+  virtual void endOfTurn ();
+  virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
   double getFractionOfMaxPop () const {double ret = getTotalPopulation(); ret /= maxPopulation; return min(1.0, ret);}
   MilitiaTradition* getMilitia () {return milTrad;} 
   const MilUnitGraphicsInfo* getMilitiaGraphics () const; 
   int getTotalPopulation () const {return males.getTotalPopulation() + women.getTotalPopulation();}
-  double labourForFarm (); 
   MilUnit* raiseMilitia ();
+  virtual double produceForContract (TradeGood const* const tg, double amount);
   int produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll);
   double production () const;
-  virtual void produce (); 
   virtual void setMirrorState ();  
   void increaseTradition (MilUnitTemplate const* target = 0) {milTrad->increaseTradition(target);} 
   
@@ -130,7 +128,8 @@ public:
   int getMilitiaStrength (MilUnitTemplate const* const dat) {return milTrad ? milTrad->getStrength(dat) : 0;} 
   void updateMaxPop () const {maxPopulation = max(maxPopulation, getTotalPopulation());} 
   void setFarm (Farmland* f) {farm = f;} 
-  virtual void setUtilities ();
+
+  static void unitTests ();
   
 protected: 
   AgeTracker males;
@@ -138,7 +137,8 @@ protected:
   MilitiaTradition* milTrad;
   double foodMortalityModifier; 
   Farmland* farm; 
-  
+
+  static vector<GoodsHolder> maslowLevels;
   static vector<double> products;
   static vector<double> consume;
   static vector<double> recruitChance;   
@@ -152,7 +152,8 @@ private:
   
   double adjustedMortality (int age, bool male) const;   
   void eatFood ();
-  
+
+  double workedThisTurn;
   static int maxPopulation; 
   static vector<double> baseMaleMortality;
   static vector<double> baseFemaleMortality;
@@ -160,7 +161,7 @@ private:
   static vector<double> fertility;
 };
 
-class Farmland : public Building, public Industry<Farmland>, public Mirrorable<Farmland> {
+class Farmland : public Building, public Mirrorable<Farmland> {
   friend class Mirrorable<Farmland>;
   friend class StaticInitialiser;
   friend class FarmGraphicsInfo; 
@@ -169,34 +170,51 @@ public:
   ~Farmland ();
 
   enum FieldStatus {Clear = 0, Ready, Sowed, Ripe1, Ripe2, Ripe3, Ended, NumStatus}; 
-  
+
+  void setMarket (Market* market) {BOOST_FOREACH(Farmer* farmer, farmers) {market->registerParticipant(farmer);}}
   void devastate (int devastation);
   virtual void endOfTurn ();  
-  void workFields ();
   void setDefaultOwner (EconActor* o); 
   virtual void setMirrorState ();
-  int getFieldStatus (int s) {return fields[numOwners][s];}
-  double getNeededLabour (int ownerId) const;
+  int getFieldStatus (int s) {return totalFields[s];}
   void delivery (EconActor* target, TradeGood const* const good, double amount);
-  int totalFields () const {return
-      fields[numOwners][Clear] +
-      fields[numOwners][Ready] +
-      fields[numOwners][Sowed] +
-      fields[numOwners][Ripe1] +
-      fields[numOwners][Ripe2] +
-      fields[numOwners][Ripe3] +
-      fields[numOwners][Ended];}
-  virtual void marginalOutput (unsigned int good, int owner, double** output); 
+  int getTotalFields () const {return
+      totalFields[Clear] +
+      totalFields[Ready] +
+      totalFields[Sowed] +
+      totalFields[Ripe1] +
+      totalFields[Ripe2] +
+      totalFields[Ripe3] +
+      totalFields[Ended];}
+
+  static void unitTests ();
   
   static const int numOwners = 10; 
   
 private:
+  class Farmer : public EconActor, public Industry<Farmland::Farmer>, public Mirrorable<Farmland::Farmer> {
+    friend class Mirrorable<Farmland::Farmer>;    
+  public:
+    Farmer ();
+    ~Farmer ();
+    virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
+    virtual double produceForContract (TradeGood const* const tg, double amount);
+    virtual void setMirrorState ();
+    void unitTests ();
+    void workFields ();
+
+    vector<int> fields;
+    EconActor* owner;
+  private:
+    Farmer(Farmer* other);
+    double getNeededLabour () const;
+    double expectedOutput () const;
+  };
+
   Farmland (Farmland* other);
   void countTotals ();
-  double expectedOutput (int owner) const; 
-  int fields[numOwners+1][NumStatus]; // Last is total
-  EconActor* owners[numOwners];
-  vector<GoodsHolder> farmEquipment;
+  int totalFields[NumStatus]; // Sum over farmers.
+  vector<Farmer*> farmers;
   
   static int _labourToSow;
   static int _labourToPlow;
@@ -206,8 +224,18 @@ private:
   static int _cropsFrom3;
   static int _cropsFrom2;
   static int _cropsFrom1;
-  static int _cropsIndex;
+  static TradeGood const* output;
 };
 
+class Forest : public Building, public Industry<Forest>, public Mirrorable<Forest> {
+  friend class StaticInitialiser;
+public:
+  Forest ();
+  ~Forest ();
+
+  static const int numOwners = 10;
+private:
+  Forest (Forest* other);
+};
 
 #endif

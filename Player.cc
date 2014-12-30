@@ -28,13 +28,9 @@ Player::Player (bool h, std::string d, std::string n)
   , human(h)
   , doneWithTurn(false)
   , displayName(d)
-{
-  EconActor::utilityCallbacks.registerCallback(this);
-}
+{}
 
-Player::~Player () {
-  EconActor::utilityCallbacks.unregister(this);
-}
+Player::~Player () {}
 
 double Player::calculateUnitStrength (MilUnit* dat, double modifiers) {
   return dat->calcStrength(dat->getDecayConstant() * modifiers, &MilUnitElement::shock);

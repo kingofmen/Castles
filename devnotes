@@ -33,7 +33,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      1. Split Pop and Farm info (check)
      2a. Allow capital to substitute for labour (check)
      2b. Read from setup (check) 
-     3. Capitalist class to calculate needs
+     3. Capitalist class to calculate needs (obsolete)
      4. Forest
      5. Mine
    - Ownership
@@ -55,7 +55,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      4. Now need to calculate utilities! (check)
      5. Find supply-demand intersection. (check) 
      6. Execute trades. (check) 
-     7. Short-term debt. 
+     7. Short-term debt. (check)
      8. Display prices on GUI. 
    - Trade
  * Sieges

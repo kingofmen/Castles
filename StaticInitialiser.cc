@@ -2,6 +2,7 @@
 #include "Parser.hh"
 #include "Player.hh" 
 #include "Building.hh"
+#include "Market.hh"
 #include "MilUnit.hh" 
 #include "Action.hh"
 #include "EconActor.hh" 
@@ -22,6 +23,7 @@ ThreeDSprite* makeSprite (Object* info);
 map<MilUnitTemplate*, Object*> milUnitSpriteObjectMap;
 
 void StaticInitialiser::createCalculator (Object* info, Action::Calculator* ret) {
+  if (!info) throw string("Expected info object to create calculator, got null.");
   assert(info);
   int dice = info->safeGetInt("dice", 1);
   int faces = info->safeGetInt("faces", 6);
@@ -121,6 +123,18 @@ void StaticInitialiser::graphicsInitialisation () {
   }
 }
 
+void StaticInitialiser::readCapitalForIndustry (Object* capObject, double* capitalEffect) {
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {    
+    capitalEffect[**tg] = capObject->safeGetFloat((*tg)->getName());
+  }
+}
+
+void StaticInitialiser::readGoodsHolder (Object* goodsObject, GoodsHolder& goods) {
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {    
+    goods.deliverGoods((*tg), goodsObject->safeGetFloat((*tg)->getName()));
+  }
+}
+
 void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   assert(popInfo);
   
@@ -136,11 +150,10 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Farmland::_cropsFrom3     = farmInfo->safeGetInt("cropsFrom3",     Farmland::_cropsFrom3);
   Farmland::_cropsFrom2     = farmInfo->safeGetInt("cropsFrom2",     Farmland::_cropsFrom2);
   Farmland::_cropsFrom1     = farmInfo->safeGetInt("cropsFrom1",     Farmland::_cropsFrom1);
-  Object* farmCap = farmInfo->getNeededObject("capital");
-  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {    
-    Industry<Farmland>::capital[**tg] = farmCap->safeGetFloat((*tg)->getName());
-  }
+  Farmland::output          = TradeGood::getByName(farmInfo->safeGetString("output", "food"));
 
+  Object* farmCap = farmInfo->getNeededObject("capital");
+  readCapitalForIndustry(farmCap, Industry<Farmland::Farmer>::capital);
   
   Object* femf = popInfo->safeGetObject("femaleFert");
   assert(femf);
@@ -257,7 +270,7 @@ void StaticInitialiser::initialiseGoods (Object* gInfo) {
     new TradeGood(gInfo->getToken(i), (i+1) == gInfo->numTokens()); 
   }
 
-  Industry<Farmland>::capital = new double[TradeGood::numTypes()]; 
+  Industry<Farmland::Farmer>::capital = new double[TradeGood::numTypes()];
 }
 
 void StaticInitialiser::initialiseGraphics (Object* gInfo) {
@@ -309,26 +322,22 @@ void StaticInitialiser::initialiseGraphics (Object* gInfo) {
 }
 
 void StaticInitialiser::initialiseMarket (Market* market, Object* pInfo) {
+  /*
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     market->prices[**tg] = pInfo->safeGetFloat((*tg)->getName(), 1);
   }
+  */
 }
 
 void StaticInitialiser::initialiseMaslowHierarchy (Object* popNeeds) {
   assert(popNeeds);
   objvec levels = popNeeds->getValue("level");
-  Consumer::hierarchy.resize(levels.size());
-  Consumer::levelAmounts.resize(levels.size());
 
-  for (unsigned int level = 0; level < levels.size(); ++level) {
-    objvec leaves = levels[level]->getLeaves();
-    for (objiter leaf = leaves.begin(); leaf != leaves.end(); ++leaf) {
-      MaslowNeed maslow;
-      maslow.tradeGood = TradeGood::getByName((*leaf)->getKey());
-      maslow.amount = atof((*leaf)->getLeaf().c_str());
-      Consumer::levelAmounts[level] += maslow.amount;
-      Consumer::hierarchy[level].push_back(maslow);
-    }
+  Village::maslowLevels.clear();
+  for (objiter level = levels.begin(); level != levels.end(); ++level) {
+    GoodsHolder current;
+    readGoodsHolder((*level), current);
+    Village::maslowLevels.push_back(current);
   }
 }
 
@@ -404,7 +413,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     hex->setFarm(farms);
   }
 
-  initialiseMarket(hex, hInfo->getNeededObject("prices"));
+  //initialiseMarket(hex, hInfo->getNeededObject("prices"));
 }
 
 ThreeDSprite* makeSprite (Object* info) {
@@ -442,14 +451,14 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Object* owner = fInfo->safeGetObject("owner");  
   
   for (int i = 0; i < Farmland::numOwners; ++i) {
-    ret->fields[i][Farmland::Clear] = clear ? (clear->numTokens() >= i ? clear->tokenAsInt(i) : 0) : 0;
-    ret->fields[i][Farmland::Ready] = ready ? (ready->numTokens() >= i ? ready->tokenAsInt(i) : 0) : 0;
-    ret->fields[i][Farmland::Sowed] = sowed ? (sowed->numTokens() >= i ? sowed->tokenAsInt(i) : 0) : 0;
-    ret->fields[i][Farmland::Ripe1] = ripe1 ? (ripe1->numTokens() >= i ? ripe1->tokenAsInt(i) : 0) : 0;
-    ret->fields[i][Farmland::Ripe2] = ripe2 ? (ripe2->numTokens() >= i ? ripe2->tokenAsInt(i) : 0) : 0;
-    ret->fields[i][Farmland::Ripe3] = ripe3 ? (ripe3->numTokens() >= i ? ripe3->tokenAsInt(i) : 0) : 0;
-    ret->fields[i][Farmland::Ended] = ended ? (ended->numTokens() >= i ? ended->tokenAsInt(i) : 0) : 0;
-    ret->owners[i]                  = owner ? (owner->numTokens() >= i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Clear] = clear ? (clear->numTokens() >= i ? clear->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Ready] = ready ? (ready->numTokens() >= i ? ready->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Sowed] = sowed ? (sowed->numTokens() >= i ? sowed->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Ripe1] = ripe1 ? (ripe1->numTokens() >= i ? ripe1->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Ripe2] = ripe2 ? (ripe2->numTokens() >= i ? ripe2->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Ripe3] = ripe3 ? (ripe3->numTokens() >= i ? ripe3->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Ended] = ended ? (ended->numTokens() >= i ? ended->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->owner                   = owner ? (owner->numTokens() >= i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
   }
   ret->countTotals();
   
@@ -1245,7 +1254,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       for (map<Farmland::FieldStatus, Object*>::iterator status = statuses.begin(); status != statuses.end(); ++status) {
 	(*status).second->setObjList(true);
 	for (int i = 0; i < Farmland::numOwners; ++i) {
-	  (*status).second->addToList(farm->fields[i][(*status).first]);
+	  (*status).second->addToList(farm->farmers[i]->fields[(*status).first]);
 	}
 	farmInfo->setValue((*status).second);
       }
@@ -1253,7 +1262,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       owner->setObjList(true);
       farmInfo->setValue(owner);
       for (int i = 0; i < Farmland::numOwners; ++i) {
-	owner->addToList((int) farm->owners[i]->getIdx());
+	owner->addToList((int) farm->farmers[i]->owner->getIdx());
       }
     }
   }

@@ -8,6 +8,7 @@
 #include <cmath> 
 #include <string>
 #include <vector>
+#include "boost/foreach.hpp"
 #include "boost/tuple/tuple.hpp"
 #include <QtOpenGL>
 #include "Logger.hh"
@@ -34,16 +35,6 @@ private:
   int faces;
   DieRoll* next; 
 };
-
-/*
-class Named {
-public:
-  string getName() const {return name;}
-  void setName (string n) {name = n;} 
-private:
-  string name;
-};
-*/ 
 
 string outcomeToString (Outcome out);
 
@@ -292,10 +283,13 @@ public:
 
   void registerCallback (T* dat) {toCall.push_back(dat);}
   void unregister (T* dat) {typename vector<T*>::iterator pos = find(toCall.begin(), toCall.end(), dat); if (pos != toCall.end()) toCall.erase(pos);}
-  void call () {for (typename vector<T*>::iterator i = toCall.begin(); i != toCall.end(); ++i) {((*i)->*(fPtr))();}}
-
+  void call () {call(fPtr);}
+  void call (void (T::*otherPtr)()) {for (typename vector<T*>::iterator i = toCall.begin(); i != toCall.end(); ++i) {((*i)->*(otherPtr))();}}
+  
 private:
   vector<T*> toCall;
 };
+
+#define REMOVE(from, dis) from.erase(find(from.begin(), from.end(), dis))
 
 #endif
