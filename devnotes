@@ -56,7 +56,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      5. Find supply-demand intersection. (check) 
      6. Execute trades. (check) 
      7. Short-term debt. (check)
-     8. Display prices on GUI. 
+     8. Display prices on GUI. (check)
    - Trade
  * Sieges
  * Command points

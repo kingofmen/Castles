@@ -199,6 +199,7 @@ public:
   Named (string n, T* dat) : name(n) {if (unique) assert(!nameToObjectMap[n]); nameToObjectMap[n] = dat;}
   Named () : name("ToBeNamed") {}
   string getName () const {return name;}
+  string getName (int space) const {return name + string("").insert(0, space - name.size(), ' ');}
   void resetName (string n) {T* dat = nameToObjectMap[name]; assert(dat); nameToObjectMap[n] = dat; name = n;}
   // Use setName for objects that don't have a name yet.
   void setName (string n) {assert(name == "ToBeNamed"); if (unique) assert(!nameToObjectMap[n]); nameToObjectMap[n] = (T*) this; name = n;}

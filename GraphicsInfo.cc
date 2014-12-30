@@ -301,6 +301,10 @@ void HexGraphicsInfo::describe (QTextStream& str) const {
     if (0 == totalStrength) str << " None\n";
     else str << "\n    Drill level: " << village->getMilitiaDrill() << "\n";
   }
+  str << "Prices:\n";
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    str << "  " << (*tg)->getName().c_str() << " : " << myHex->getPrice(*tg) << "\n";
+  }
 }
 
 bool HexGraphicsInfo::isInside (double x, double y) const {
