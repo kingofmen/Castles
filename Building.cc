@@ -198,11 +198,17 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   double consumptionFactor = consumption();
   double laborAvailable    = production();
   GoodsHolder amountToBuy;
+  GoodsHolder reserveUsed;
   for (vector<MaslowLevel>::iterator level = maslowLevels.begin(); level != maslowLevels.end(); ++level) {
     double moneyNeeded = 0;
     bool canGetLevel = true;
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
       double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      double reserve = getAmount(*tg) - reserveUsed.getAmount(*tg);
+      if (reserve > 0) {
+	reserve = min(amountNeeded, reserve);
+	amountNeeded -= reserve;
+      }
       if (amountNeeded < 0.001) continue;
       if (TradeGood::Labor == (*tg)) {
 	// Deal with labour specially since we produce it and presumably don't need to buy.
@@ -225,6 +231,12 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
 
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
       double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      double reserve = getAmount(*tg) - reserveUsed.getAmount(*tg);
+      if (reserve > 0) {
+	reserve = min(amountNeeded, reserve);
+	reserveUsed.deliverGoods((*tg), reserve);
+	amountNeeded -= reserve;
+      }      
       if (amountNeeded < 0.001) continue;
       moneyNeeded = prices.getAmount(*tg) * amountNeeded;
       double laborNeeded = moneyNeeded / prices.getAmount(TradeGood::Labor);
@@ -450,7 +462,7 @@ void Farmland::Farmer::getBids (const GoodsHolder& prices, vector<MarketBid*>& b
   // next turn, provided the net-present-value of the reduction is higher than the cost
   // of the machinery.
 
-  double laborNeeded = getNeededLabour();
+  double laborNeeded = getNeededLabour() - getAmount(TradeGood::Labor);
   double expectedProduction = expectedOutput();
   if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction) {
     bidlist.push_back(new MarketBid(TradeGood::Labor, laborNeeded, this));
