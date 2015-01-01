@@ -6,7 +6,8 @@ const int seasonLength = 14;
 int week = 0; 
 
 namespace Calendar {
-
+  const double inverseYearLength = 1.0 / (1 + 3*seasonLength);
+  
   void newWeekBegins () {week++;}
   void newYearBegins () {week = 0;}
   void setWeek (int w) {week = w;}

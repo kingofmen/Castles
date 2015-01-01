@@ -335,8 +335,9 @@ void StaticInitialiser::initialiseMaslowHierarchy (Object* popNeeds) {
 
   Village::maslowLevels.clear();
   for (objiter level = levels.begin(); level != levels.end(); ++level) {
-    GoodsHolder current;
+    Village::MaslowLevel current;
     readGoodsHolder((*level), current);
+    current.mortalityModifier = (*level)->safeGetFloat("mortality", 1.0);
     Village::maslowLevels.push_back(current);
   }
 }

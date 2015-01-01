@@ -5,15 +5,18 @@ goods = { food iron wood }
 pop_needs = {
   level = {
     food = 2
+    mortality = 1.1
   }
   level = {
     wood = 1
     iron = 1
     food = 1
     labor = 0.1
+    mortality = 1.0
   }
   level = {
     labor = 1
+    mortality = 0.9
   }
 }
 

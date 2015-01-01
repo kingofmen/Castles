@@ -21,7 +21,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
  * Three-resource economy
    - Forest
    - Mine
-   - Close the loop: Make Village consume the food it gets (and have effects on birth/death rate)
+   - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
    - Restore clearing of land
    - Normalisation
    - Ending of contracts

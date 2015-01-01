@@ -138,7 +138,12 @@ protected:
   double foodMortalityModifier; 
   Farmland* farm; 
 
-  static vector<GoodsHolder> maslowLevels;
+  struct MaslowLevel : public GoodsHolder {
+    MaslowLevel () : GoodsHolder(), mortalityModifier(1.0) {}
+    double mortalityModifier;
+  };
+  
+  static vector<MaslowLevel> maslowLevels;
   static vector<double> products;
   static vector<double> consume;
   static vector<double> recruitChance;   

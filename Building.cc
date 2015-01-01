@@ -20,7 +20,7 @@ double Village::femaleConsumption = 0.90;
 double Village::femaleSurplusEffect = -2.0;
 double Village::femaleSurplusZero = 1.0;
 double Castle::siegeModifier = 10; 
-vector<GoodsHolder> Village::maslowLevels;
+vector<Village::MaslowLevel> Village::maslowLevels;
 
 int Farmland::_labourToSow    = 1;
 int Farmland::_labourToPlow   = 10;
@@ -198,7 +198,7 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   double consumptionFactor = consumption();
   double laborAvailable    = production();
   GoodsHolder amountToBuy;
-  for (vector<GoodsHolder>::iterator level = maslowLevels.begin(); level != maslowLevels.end(); ++level) {
+  for (vector<MaslowLevel>::iterator level = maslowLevels.begin(); level != maslowLevels.end(); ++level) {
     double moneyNeeded = 0;
     bool canGetLevel = true;
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
@@ -320,8 +320,9 @@ void MilitiaTradition::setMirrorState () {
 
 
 double Village::adjustedMortality (int age, bool male) const {
-  if (male) return baseMaleMortality[age]*foodMortalityModifier;
-  return baseFemaleMortality[age]*foodMortalityModifier;
+  // Mortality per week. The arrays store per year, so divide by weeks in a year.
+  if (male) return baseMaleMortality[age]*foodMortalityModifier*Calendar::inverseYearLength;
+  return baseFemaleMortality[age]*foodMortalityModifier*Calendar::inverseYearLength;
 }
 
 double Village::produceForContract (TradeGood const* const tg, double amount) {
@@ -339,25 +340,14 @@ void Village::endOfTurn () {
   eatFood();
   workedThisTurn = 0;
 
-  Calendar::Season currSeason = Calendar::getCurrentSeason();
-  if (Calendar::Winter != currSeason) return;
-
-  males.age();
-  women.age();
-  
-  for (int i = 1; i < AgeTracker::maxAge; ++i) {
+  for (int i = 0; i < AgeTracker::maxAge; ++i) {
     double fracLoss = adjustedMortality(i, true) * males.getPop(i);
     males.addPop(-convertFractionToInt(fracLoss), i);
     
     fracLoss = adjustedMortality(i, false) * women.getPop(i);
     women.addPop(-convertFractionToInt(fracLoss), i);
   }
-
-  milTrad->decayTradition(); 
-
-  MilUnitGraphicsInfo* milGraph = (MilUnitGraphicsInfo*) milTrad->militia->getGraphicsInfo();  
-  if (milGraph) milGraph->updateSprites(milTrad); 
-  
+ 
   // Simplifying assumptions:
   // No man ever impregnates an older woman
   // Male fertility is constant, only female fertility matters
@@ -371,7 +361,7 @@ void Village::endOfTurn () {
       int availableWomen = women.getPop(fAge) - takenWomen[fAge];
       if (1 > availableWomen) continue; 
       double pairs = min(availableWomen, males.getPop(mAge)) * pairChance[mAge - fAge];
-      double pregnancies = pairs * fertility[fAge];
+      double pregnancies = pairs * fertility[fAge] * Calendar::inverseYearLength;
       takenWomen[fAge] += (int) floor(pairs);
       popIncrease += convertFractionToInt(pregnancies); 
     }
@@ -380,7 +370,17 @@ void Village::endOfTurn () {
   males.addPop((int) floor(0.5 * popIncrease + 0.5), 0);
   women.addPop((int) floor(0.5 * popIncrease + 0.5), 0);
 
-  updateMaxPop(); 
+  updateMaxPop();
+
+  Calendar::Season currSeason = Calendar::getCurrentSeason();
+  if (Calendar::Winter != currSeason) return;
+  males.age();
+  women.age();
+
+  milTrad->decayTradition(); 
+
+  MilUnitGraphicsInfo* milGraph = (MilUnitGraphicsInfo*) milTrad->militia->getGraphicsInfo();  
+  if (milGraph) milGraph->updateSprites(milTrad);   
 }
 
 void Village::demobMilitia () {
@@ -725,13 +725,22 @@ double Farmland::Farmer::getNeededLabour () const {
 }
 
 void Village::eatFood () {
-  double needed = consumption();
-  double available = supplies;
-  available /= Calendar::turnsToAutumn();
-  double fraction = available/needed;
-  if (fraction > 2) fraction = 2;
-  supplies -= fraction * needed;
-  foodMortalityModifier = 1.0 / std::max(0.1, fraction); 
+  double consumptionFactor = consumption();
+  for (vector<MaslowLevel>::iterator level = maslowLevels.begin(); level != maslowLevels.end(); ++level) {
+    bool canGetLevel = true;
+    for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      if (amountNeeded < getAmount(*tg)) continue;
+      canGetLevel = false;
+      break;
+    }
+    if (!canGetLevel) break;
+    for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      deliverGoods((*tg), -amountNeeded);
+    }
+    foodMortalityModifier = (*level).mortalityModifier;
+  }
 }
 
 void Farmland::setDefaultOwner (EconActor* o) {

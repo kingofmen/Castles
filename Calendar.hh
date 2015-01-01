@@ -3,7 +3,7 @@
 #include <string> 
 
 namespace Calendar {
-
+  extern const double inverseYearLength;
   enum Season {Winter, Spring, Summer, Autumn}; 
   Season getCurrentSeason (); 
   void newWeekBegins (); 
