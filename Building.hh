@@ -204,7 +204,6 @@ private:
     void workFields ();
 
     vector<int> fields;
-    EconActor* owner;
   private:
     Farmer(Farmer* other);
     double getNeededLabour () const;

@@ -301,9 +301,15 @@ void HexGraphicsInfo::describe (QTextStream& str) const {
     if (0 == totalStrength) str << " None\n";
     else str << "\n    Drill level: " << village->getMilitiaDrill() << "\n";
   }
-  str << "Prices:\n";
+  str << "Prices, contracts, bids:\n";
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-    str << "  " << (*tg)->getName().c_str() << " : " << myHex->getPrice(*tg) << "\n";
+    str << "  " << (*tg)->getName().c_str() << " : " << myHex->getPrice(*tg) << ", ";
+    double contract = 0;
+    BOOST_FOREACH(MarketContract* mc, myHex->contracts) {
+      if (mc->tradeGood != (*tg)) continue;
+      contract += mc->amount;
+    }
+    str << contract << ", " << myHex->demand.getAmount(*tg) << "\n";
   }
 }
 

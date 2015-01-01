@@ -1268,7 +1268,12 @@ bool WarfareWindow::turnEnded () {
 }
 
 void WarfareWindow::endOfTurn () {
-  currentGame->endOfTurn();
+  try {
+    currentGame->endOfTurn();
+  }
+  catch (string errorMessage) {
+    Logger::logStream(Logger::Error) << "Exception with message " << errorMessage << ". Game is probably in a bad state.\n";
+  }    
   for (Player::Iter pl = Player::start(); pl != Player::final(); ++pl) {
     (*pl)->newTurn(); 
   }

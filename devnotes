@@ -10,10 +10,6 @@ Suggestions from forums:
  * Political map mode 
  * Finer-grained texture
 
-It would be good to refactor this to make use of the cool features from BattleFront, 
-and maybe make all the code a bit more generic - there'a a lot of specialised classes.
-Then again, perhaps a graphics engine is indicated. 
-
 Next gameplay iteration (thoughts, not all to be implemented):
 
  * Militia raids
@@ -23,63 +19,22 @@ Next gameplay iteration (thoughts, not all to be implemented):
  * Supply line interference
  * Raid/tribute/battle mapmode 
  * Three-resource economy
-   - EconActor class
-     1. Id from save (check)
-     2. Goods from save (check) 
-     3. Write to save (check) 
-     4. Make mirrorable (check)
-     5. Ensure that iterator never encounters a null from deleting an object that inherits from it (check)
-   - Mine, forest, farm
-     1. Split Pop and Farm info (check)
-     2a. Allow capital to substitute for labour (check)
-     2b. Read from setup (check) 
-     3. Capitalist class to calculate needs (obsolete)
-     4. Forest
-     5. Mine
-   - Ownership
-     0. Split into tenths (check) 
-     1. Implement from save (check) 
-     2. Write to save (check) 
-     3. Change upon conquest
-     4. Move labour around 
-   - Contracts and feudal dues
-     1. Implement from save (check) 
-     2. Write to save
-     3. Impose upon conquest
-     4. Renegotiate
-   - Farmland input/output cleanup (check) 
-   - Markets
-     1. Create class (check)
-     2. Read prices from save (check) 
-     3. Need some sort of notation for indifference or utility. (check)
-     4. Now need to calculate utilities! (check)
-     5. Find supply-demand intersection. (check) 
-     6. Execute trades. (check) 
-     7. Short-term debt. (check)
-     8. Display prices on GUI. (check)
+   - Forest
+   - Mine
+   - Close the loop: Make Village consume the food it gets (and have effects on birth/death rate)
+   - Restore clearing of land
+   - Normalisation
+   - Ending of contracts
+   - MilUnits as EconActors
+   - Dilution of capital
+   - Decay of goods
    - Trade
+   - Forced labour
+   - Taxation
+   - Player interaction
  * Sieges
  * Command points
  
-Thoughts:
- Who owns the land? King, local noble, farmers? 
- Farmers will work their own land, but must be paid or forced to work others'. 
- Same for other production - need a framework. 
- Econ sequence:
-  Village produces labour
-  Deliver forced labour to overlords (feudal dues) 
-  Deliver contract labour in exchange for goods
-  Farmlands (and others) decide how much labour they need
-  Owners set supply/demand curves for labour
-  Hold market
-  Run production
-  Deliver goods to owners
-  Money/goods taxation
-  Consume/invest  
-  Renegotiate contracts and dues
 
- It is necessary to create this "already in motion". 
- Is it steady-state? Balancing needed.
- Player should be able to interact with this! Set bids, offers, investment. Taxation!
  
 

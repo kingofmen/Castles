@@ -18,7 +18,7 @@ GoodsHolder::GoodsHolder (const GoodsHolder& other)
 }
 
 void GoodsHolder::clear () {
-  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     tradeGoods[**tg] = 0;
   }
 }
@@ -38,6 +38,7 @@ void GoodsHolder::setAmounts (const GoodsHolder& gh) {
 EconActor::EconActor ()
   : Numbered<EconActor>()
   , GoodsHolder()
+  , owner(0)
 {}
 
 EconActor::~EconActor () {}
@@ -61,10 +62,17 @@ void ContractInfo::execute () const {
   source->deliverGoods(tradeGood, -amountWanted);
 }
 
-double EconActor::extendCredit (EconActor const* const applicant) {
+double EconActor::availableCredit (EconActor const* const applicant) {
+  if ((isOwnedBy(applicant)) || (applicant->isOwnedBy(this))) return 1e6;  
   static const double maxCredit = 100;
   double amountAvailable = maxCredit - borrowers[applicant];
   if (amountAvailable < 0) return 0;
+  return amountAvailable;
+}
+
+double EconActor::extendCredit (EconActor const* const applicant, double amountWanted) {
+  double amountAvailable = min(availableCredit(applicant), amountWanted);
+  if (amountAvailable <= 0) return 0;
   borrowers[applicant] += amountAvailable;
   return amountAvailable;
 }

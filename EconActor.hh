@@ -33,8 +33,9 @@ public:
   double       getAmount    (unsigned int idx) const {return tradeGoods[idx];}
   double       getAmount    (TradeGood const* const tg) const {return tradeGoods[*tg];}
   void         deliverGoods (TradeGood const* const tg, double amount) {tradeGoods[*tg] += amount;}
+  void         setAmount    (TradeGood const* const tg, double amount) {tradeGoods[*tg] = amount;}
   void         setAmounts   (GoodsHolder const* const gh);
-  void         setAmounts   (const GoodsHolder& gh);  
+  void         setAmounts   (const GoodsHolder& gh);
 private:
   vector<double> tradeGoods;
 };
@@ -66,15 +67,20 @@ public:
   EconActor ();
   ~EconActor ();
 
-  double extendCredit (EconActor const* const applicant);
+  double availableCredit (EconActor const* const applicant);
+  double extendCredit (EconActor const* const applicant, double amountWanted);
   void getPaid (EconActor* const payer, double amount);
   virtual double produceForContract (TradeGood const* const tg, double amount) {amount = min(amount, getAmount(tg)); deliverGoods(tg, -amount); return amount;}
-
+  EconActor* getEconOwner () const {return owner;}
+  bool isOwnedBy (EconActor const* const cand) const {return cand == owner;}
+  void setEconOwner (EconActor* ea) {owner = ea;}
+  
   virtual void getBids      (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {}
   static void clear () {Numbered<EconActor>::clear();}
   static void unitTests ();
   
 protected:
+  EconActor* owner;
 
 private:
   vector<ContractInfo*> obligations;

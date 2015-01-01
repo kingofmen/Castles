@@ -325,8 +325,10 @@ double Village::adjustedMortality (int age, bool male) const {
 }
 
 double Village::produceForContract (TradeGood const* const tg, double amount) {
+  if (amount < 0) throw string("Cannot produce negative amount");
   if (tg == TradeGood::Labor) {
-    amount = min(amount, production() - workedThisTurn);
+    amount = min(amount, production());
+    if (amount < 0) throw string("Cannot work more than production");    
     workedThisTurn += amount;
     return amount;
   }
@@ -427,13 +429,11 @@ Farmland::Farmland (Farmland* other)
 Farmland::Farmer::Farmer ()
   : Mirrorable<Farmland::Farmer>()
   , fields(NumStatus, 0)
-  , owner(0)
 {}
 
 Farmland::Farmer::Farmer (Farmer* other)
   : Mirrorable<Farmland::Farmer>(other)
   , fields(NumStatus, 0)
-  , owner(0)
 {}
 
 void Farmland::Farmer::setMirrorState () {
@@ -460,7 +460,6 @@ void Farmland::Farmer::getBids (const GoodsHolder& prices, vector<MarketBid*>& b
     // TODO: Query village about whether to do it
     // anyway as subsistence agriculture. 
   }
-
   for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
     if (capital[**tg] < 0.00001) continue;
     double laborSaving = laborNeeded * (1 - marginalCapFactor((*tg), getAmount(*tg)));
@@ -673,19 +672,19 @@ void Farmland::devastate (int devastation) {
 
 void Farmland::endOfTurn () {
   BOOST_FOREACH(Farmer* farmer, farmers) farmer->workFields();
-  countTotals(); 
+  countTotals();
 }
 
 void Farmland::delivery (EconActor* target, TradeGood const* const good, double amount) {
   unsigned int divs = 0; 
   for (int i = 0; i < numOwners; ++i) {
-    if (target == farmers[i]->owner) ++divs;
+    if (farmers[i]->isOwnedBy(target)) ++divs;
   }
 
   if (0 == divs) return;
   amount /= divs; 
   for (int i = 0; i < numOwners; ++i) {
-    if (target != farmers[i]->owner) continue;
+    if (!farmers[i]->isOwnedBy(target)) continue;
     farmers[i]->deliverGoods(good, amount);
   }
 }
@@ -738,8 +737,8 @@ void Village::eatFood () {
 void Farmland::setDefaultOwner (EconActor* o) {
   if (!o) return;
   for (int i = 0; i < numOwners; ++i) {
-    if (farmers[i]->owner) continue;
-    farmers[i]->owner = o;
+    if (farmers[i]->getEconOwner()) continue;
+    farmers[i]->setEconOwner(o);
   }
 }
 
@@ -839,9 +838,9 @@ void Farmland::Farmer::workFields () {
     
     harvest = min(fields[Ripe1], (int) floor(availableLabour / (_labourToReap * capFactor)));
     availableLabour -= harvest * _labourToReap * capFactor;
-    owner->deliverGoods(output, _cropsFrom1 * harvest); 
+    owner->deliverGoods(output, _cropsFrom1 * harvest);
     fields[Ripe1] -= harvest;
-    fields[Ended] += harvest;      
+    fields[Ended] += harvest;
 
     break;
   }
