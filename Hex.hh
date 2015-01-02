@@ -19,7 +19,6 @@ class Player;
 class Vertex;
 class Line;
 
-
 class Hex : public Mirrorable<Hex>, public Named<Hex>, public Iterable<Hex>, public Market {
   friend class Mirrorable<Hex>;
   friend class StaticInitialiser;
@@ -62,6 +61,7 @@ public:
   int                    recruit (Player* forhim, MilUnitTemplate const* const recruitType, MilUnit* target, Outcome out);
   void                   setLine (Direction dir, Line* l);
   void                   setFarm (Farmland* f);
+  void                   setForest (Forest* f);  
   void                   setGraphicsFarm (Farmland* f);
   void                   setGraphicsVillage (Village* v);
   void                   setVillage (Village* v);
@@ -87,6 +87,7 @@ private:
   Player* owner;
   HexGraphicsInfo* graphicsInfo;
   Farmland* farms;
+  Forest* forest;
   Village* village;
   Castle* castle;
   int arableLand;

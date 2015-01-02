@@ -419,7 +419,7 @@ void HexGraphicsInfo::generateShapes () {
     default:
     case Ocean:
     case Mountain: break;
-    case Forest: numTrees += deesix.roll() - 1;
+    case Wooded: numTrees += deesix.roll() - 1;
     case Hill: numTrees += deesix.roll() - 1;
     case Plain: numTrees += deesix.roll() - 1;
       break;

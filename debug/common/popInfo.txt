@@ -21,14 +21,14 @@ pop_needs = {
 }
 
 farmland = {
-  labourToSow   = 20;
-  labourToPlow  = 100;
-  labourToClear = 1000;
-  labourToWeed  = 50;
-  labourToReap  = 100;
-  cropsFrom3    = 700;
-  cropsFrom2    = 600;
-  cropsFrom1    = 500;
+  labourToSow   = 20
+  labourToPlow  = 100
+  labourToClear = 1000
+  labourToWeed  = 50
+  labourToReap  = 100
+  cropsFrom3    = 700
+  cropsFrom2    = 600
+  cropsFrom1    = 500
 
   capital = {
     wood = 0.1
@@ -37,6 +37,17 @@ farmland = {
   output = food 
 }
 
+forest = {
+  labourToTend    = 5
+  labourToHarvest = 50
+  labourToClear   = 250
+  amountOfWood = { 0 0 1 2 5 10 25 50 100 250 }
+
+  capital = {
+    iron = 0.1
+  }
+  output = wood
+}
 
 femaleFert = { 
   0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 

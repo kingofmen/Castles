@@ -107,7 +107,7 @@ TerrainType Hex::getType (char typ) {
   switch (typ) {
   case 'o': return Ocean;
   case 'm': return Mountain;
-  case 'f': return Forest;
+  case 'f': return Wooded;
   case 'p': return Plain;
   case 'h': return Hill;
   default: return NoTerrain; 
@@ -244,6 +244,12 @@ void Hex::setFarm (Farmland* f) {
     village->setFarm(farms);
   }
   setGraphicsFarm(f);
+} 
+
+void Hex::setForest (Forest* f) {
+  forest = f;
+  forest->setMarket(this);
+  if (village) forest->setDefaultOwner(village);
 } 
 
 void Hex::setGraphicsFarm (Farmland* f) {

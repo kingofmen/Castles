@@ -20,7 +20,18 @@ Next gameplay iteration (thoughts, not all to be implemented):
  * Raid/tribute/battle mapmode 
  * Three-resource economy
    - Forest
+     . Internal (check)
+     . Initialisation (check)
+     . Read from save (check)
+     . Write to save
+     . Unit tests
+   - Unify Forest and Farmland
    - Mine
+     . Internal
+     . Initialisation
+     . Read from save
+     . Write to save
+     . Unit tests
    - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
    - Restore clearing of land
    - Normalisation

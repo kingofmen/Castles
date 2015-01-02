@@ -141,7 +141,7 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   initialiseMaslowHierarchy(popInfo->safeGetObject("pop_needs")); 
   Castle::siegeModifier = popInfo->safeGetFloat("siegeModifier", Castle::siegeModifier);
 
-  Object* farmInfo = popInfo->getNeededObject("farmland"); 
+  Object* farmInfo          = popInfo->getNeededObject("farmland"); 
   Farmland::_labourToSow    = farmInfo->safeGetInt("labourToSow",    Farmland::_labourToSow);
   Farmland::_labourToPlow   = farmInfo->safeGetInt("labourToPlow",   Farmland::_labourToPlow);
   Farmland::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmland::_labourToClear);
@@ -151,9 +151,33 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Farmland::_cropsFrom2     = farmInfo->safeGetInt("cropsFrom2",     Farmland::_cropsFrom2);
   Farmland::_cropsFrom1     = farmInfo->safeGetInt("cropsFrom1",     Farmland::_cropsFrom1);
   Farmland::output          = TradeGood::getByName(farmInfo->safeGetString("output", "food"));
-
+  if (!Farmland::output) throw string("No output specified for Farmland");  
   Object* farmCap = farmInfo->getNeededObject("capital");
   readCapitalForIndustry(farmCap, Industry<Farmland::Farmer>::capital);
+
+  Object* forestInfo       = popInfo->getNeededObject("forest");
+  Forest::_labourToTend    = forestInfo->safeGetInt("labourToTend", Forest::_labourToTend);
+  Forest::_labourToHarvest = forestInfo->safeGetInt("labourToHarvest", Forest::_labourToHarvest);
+  Forest::_labourToClear   = forestInfo->safeGetInt("labourToClear", Forest::_labourToClear);
+  Forest::output           = TradeGood::getByName(forestInfo->safeGetString("output", "wood"));
+  Object* amountOfWood     = forestInfo->getNeededObject("amountOfWood");
+  Forest::_amountOfWood.clear();
+  Forest::_amountOfWood.push_back(0);
+  Forest::_amountOfWood.push_back(0);
+  Forest::_amountOfWood.push_back(1);
+  Forest::_amountOfWood.push_back(2);
+  Forest::_amountOfWood.push_back(5);
+  Forest::_amountOfWood.push_back(10);
+  Forest::_amountOfWood.push_back(25);
+  Forest::_amountOfWood.push_back(50);
+  Forest::_amountOfWood.push_back(100);
+  Forest::_amountOfWood.push_back(250);
+  for (int i = 0; i < amountOfWood->numTokens(); ++i) {
+    Forest::_amountOfWood[i] = amountOfWood->tokenAsInt(i);
+  }
+  if (!Forest::output) throw string("No output specified for Forest");
+  Object* forestCap = forestInfo->getNeededObject("capital");
+  readCapitalForIndustry(forestCap, Industry<Forest::Forester>::capital);
   
   Object* femf = popInfo->safeGetObject("femaleFert");
   assert(femf);
@@ -271,6 +295,7 @@ void StaticInitialiser::initialiseGoods (Object* gInfo) {
   }
 
   Industry<Farmland::Farmer>::capital = new double[TradeGood::numTypes()];
+  Industry<Forest::Forester>::capital = new double[TradeGood::numTypes()];  
 }
 
 void StaticInitialiser::initialiseGraphics (Object* gInfo) {
@@ -400,7 +425,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
 
   Object* fInfo = hInfo->safeGetObject("village");
   if (fInfo) {
-    Village* village = StaticInitialiser::buildVillage(fInfo);
+    Village* village = buildVillage(fInfo);
     initialiseBuilding(village, fInfo);
     if (owner) village->setOwner(owner);
     hex->setVillage(village);
@@ -408,12 +433,21 @@ void StaticInitialiser::buildHex (Object* hInfo) {
 
   fInfo = hInfo->safeGetObject("farmland");
   if (fInfo) {
-    Farmland* farms = StaticInitialiser::buildFarm(fInfo);
+    Farmland* farms = buildFarm(fInfo);
     initialiseBuilding(farms, fInfo);
     if (owner) farms->setOwner(owner);
     hex->setFarm(farms);
   }
 
+  
+  fInfo = hInfo->safeGetObject("forest");
+  if (fInfo) {
+    Forest* forest = buildForest(fInfo);
+    initialiseBuilding(forest, fInfo);
+    if (owner) forest->setOwner(owner);
+    //hex->setForest(forest);
+  }
+  
   //initialiseMarket(hex, hInfo->getNeededObject("prices"));
 }
 
@@ -462,6 +496,41 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
     ret->farmers[i]->owner                   = owner ? (owner->numTokens() >= i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
   }
   ret->countTotals();
+  
+  return ret;
+}
+
+
+Forest* StaticInitialiser::buildForest (Object* fInfo) {
+  Forest* ret = new Forest();
+
+  Object* wild    = fInfo->safeGetObject("wild");
+  Object* clear   = fInfo->safeGetObject("cleared");
+  Object* plant   = fInfo->safeGetObject("planted");
+  Object* scrub   = fInfo->safeGetObject("scrubby");
+  Object* sapling = fInfo->safeGetObject("sapling");
+  Object* young   = fInfo->safeGetObject("young");
+  Object* grown   = fInfo->safeGetObject("grown");
+  Object* mature  = fInfo->safeGetObject("mature");
+  Object* mighty  = fInfo->safeGetObject("mighty");
+  Object* huge    = fInfo->safeGetObject("huge");
+  Object* climax  = fInfo->safeGetObject("climax");
+  Object* owner   = fInfo->safeGetObject("owner");
+  
+  for (int i = 0; i < Forest::numOwners; ++i) {
+    ret->foresters[i]->groves[Forest::Wild]     = wild    ? (wild->numTokens()    >= i ? wild->tokenAsInt(i)    : 0) : 0;
+    ret->foresters[i]->groves[Forest::Clear]    = clear   ? (clear->numTokens()   >= i ? clear->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[Forest::Planted]  = plant   ? (plant->numTokens()   >= i ? plant->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[Forest::Scrub]    = scrub   ? (scrub->numTokens()   >= i ? scrub->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[Forest::Saplings] = sapling ? (sapling->numTokens() >= i ? sapling->tokenAsInt(i) : 0) : 0;
+    ret->foresters[i]->groves[Forest::Young]    = young   ? (young->numTokens()   >= i ? young->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[Forest::Grown]    = grown   ? (grown->numTokens()   >= i ? grown->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[Forest::Mature]   = mature  ? (mature->numTokens()  >= i ? mature->tokenAsInt(i)  : 0) : 0;
+    ret->foresters[i]->groves[Forest::Mighty]   = mighty  ? (mighty->numTokens()  >= i ? mighty->tokenAsInt(i)  : 0) : 0;
+    ret->foresters[i]->groves[Forest::Huge]     = huge    ? (huge->numTokens()    >= i ? huge->tokenAsInt(i)    : 0) : 0;
+    ret->foresters[i]->groves[Forest::Climax]   = climax  ? (climax->numTokens()  >= i ? climax->tokenAsInt(i)  : 0) : 0;
+    ret->foresters[i]->owner                    = owner   ? (owner->numTokens()   >= i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
+  }
   
   return ret;
 }

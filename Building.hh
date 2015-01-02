@@ -174,7 +174,7 @@ public:
   Farmland ();
   ~Farmland ();
 
-  enum FieldStatus {Clear = 0, Ready, Sowed, Ripe1, Ripe2, Ripe3, Ended, NumStatus}; 
+  enum FieldStatus {Clear = 0, Ready, Sowed, Ripe1, Ripe2, Ripe3, Ended, NumStatus};
 
   void setMarket (Market* market) {BOOST_FOREACH(Farmer* farmer, farmers) {market->registerParticipant(farmer);}}
   void devastate (int devastation);
@@ -198,7 +198,7 @@ public:
   
 private:
   class Farmer : public EconActor, public Industry<Farmland::Farmer>, public Mirrorable<Farmland::Farmer> {
-    friend class Mirrorable<Farmland::Farmer>;    
+    friend class Mirrorable<Farmland::Farmer>;
   public:
     Farmer ();
     ~Farmer ();
@@ -231,15 +231,54 @@ private:
   static TradeGood const* output;
 };
 
-class Forest : public Building, public Industry<Forest>, public Mirrorable<Forest> {
+class Forest : public Building, public Mirrorable<Forest> {
   friend class StaticInitialiser;
+  friend class Mirrorable<Forest>;
 public:
   Forest ();
   ~Forest ();
 
+  enum ForestStatus {Clear = 0, Planted, Scrub, Saplings, Young, Grown, Mature, Mighty, Huge, Climax, Wild, NumStatus};
+
+  virtual void endOfTurn ();
+  void setDefaultOwner (EconActor* o);
+  void setMarket (Market* market) {BOOST_FOREACH(Forester* forester, foresters) {market->registerParticipant(forester);}}
+  virtual void setMirrorState ();
+
+  static void unitTests ();
+  
   static const int numOwners = 10;
 private:
+  class Forester : public EconActor, public Industry<Forester>, public Mirrorable<Forester> {
+    friend class Mirrorable<Forester>;
+  public:
+    Forester ();
+    ~Forester ();
+    virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
+    virtual double produceForContract (TradeGood const* const tg, double amount);
+    virtual void setMirrorState ();
+    void unitTests ();
+    void workGroves ();
+
+    vector<int> groves;
+    int yearsSinceLastTick;
+    int tendedGroves;
+    ForestStatus minStatusToHarvest;
+  private:
+    Forester(Forester* other);
+    int    getForestArea () const;
+    double getNeededLabour () const;
+    int    getTendedArea () const;
+    double expectedOutput () const;
+  };
+ 
   Forest (Forest* other);
+  vector<Forester*> foresters;
+  static vector<int> _amountOfWood;
+  static int _labourToTend;    // Ensure forest doesn't go wild.
+  static int _labourToHarvest; // Extract wood, make clear.
+  static int _labourToClear;   // Go from wild to clear.
+  static TradeGood const* output;
 };
 
 #endif

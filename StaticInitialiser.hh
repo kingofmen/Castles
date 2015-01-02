@@ -3,6 +3,7 @@
 
 class Object; 
 class Farmland;
+class Forest;
 class Village; 
 class MilUnit;
 class MilUnitTemplate; 
@@ -27,7 +28,6 @@ public:
   static void      initialiseGraphics (Object* gInfo);
   static void      initialiseMarket (Market* market, Object* pInfo);
   static void      initialiseMaslowHierarchy (Object* popNeeds); 
-  static Farmland* buildFarm (Object* fInfo);
   static void      buildHex (Object* hInfo);
   static void      buildMilitia (Village* target, Object* mInfo);  
   static MilUnit*  buildMilUnit (Object* mInfo);
@@ -48,6 +48,9 @@ public:
 
   
 private:
+  static Farmland* buildFarm (Object* fInfo);
+  static Forest*   buildForest (Object* fInfo);  
+  
   static void readGoodsHolder (Object* goodsObject, GoodsHolder& goods);
   static void addShadows (QGLFramebufferObject* fbo, GLuint texture); 
   static void createCalculator (Object* info, Action::Calculator* ret);

@@ -17,7 +17,7 @@ class HexGraphicsInfo;
 class Vertex;
 class Line; 
 
-enum TerrainType {Mountain = 0, Hill, Plain, Forest, Ocean, NoTerrain}; 
+enum TerrainType {Mountain = 0, Hill, Plain, Wooded, Ocean, NoTerrain}; 
 
 
 class GraphicsInfo {

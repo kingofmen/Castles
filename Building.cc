@@ -32,6 +32,12 @@ int Farmland::_cropsFrom2     = 500;
 int Farmland::_cropsFrom1     = 100;
 TradeGood const* Farmland::output = 0;
 
+int Forest::_labourToTend    = 5;
+int Forest::_labourToHarvest = 50;
+int Forest::_labourToClear   = 250;
+vector<int> Forest::_amountOfWood;
+TradeGood const* Forest::output = 0;
+
 Castle::Castle (Hex* dat, Line* lin) 
   : Mirrorable<Castle>()
   , support(dat)
@@ -632,137 +638,6 @@ void Farmland::Farmer::unitTests () {
   capital = oldCapital;
 }
 
-void Village::setMirrorState () {
-  women.setMirrorState();
-  males.setMirrorState();
-  milTrad->setMirrorState();
-  mirror->milTrad = milTrad->getMirror();
-  mirror->foodMortalityModifier = foodMortalityModifier; 
-  mirror->setOwner(getOwner());
-  mirror->setAmounts(this);
-  if (farm) mirror->farm = farm->getMirror();
-  // Farm mirror state set by Hex.
-}
-
-void Farmland::setMirrorState () {
-  mirror->setOwner(getOwner());
-  mirror->farmers.clear();
-  BOOST_FOREACH(Farmer* farmer, farmers) {
-    farmer->setMirrorState();
-    mirror->farmers.push_back(farmer->getMirror());
-  }
-}
-
-double Village::production () const {
-  double ret = 0;
-  for (int i = 0; i < AgeTracker::maxAge; ++i) {
-    ret += (males.getPop(i) + femaleProduction*women.getPop(i)) * products[i]; 
-  }
-
-  ret -= milTrad->getRequiredWork();
-  ret -= workedThisTurn;
-  return ret;
-}
-
-double Village::consumption () const {
-  double ret = 0;
-  for (int i = 0; i < AgeTracker::maxAge; ++i) {
-    ret += consume[i]*(males.getPop(i) + femaleConsumption*women.getPop(i));
-  }
-  return ret; 
-}
-
-void Farmland::devastate (int devastation) {
-  while (devastation > 0) {
-    int target = rand() % numOwners;
-    if      (farmers[target]->fields[Ripe3] > 0) {farmers[target]->fields[Ripe3]--; farmers[target]->fields[Ripe2]++;}
-    else if (farmers[target]->fields[Ripe2] > 0) {farmers[target]->fields[Ripe2]--; farmers[target]->fields[Ripe1]++;}
-    else if (farmers[target]->fields[Ripe1] > 0) {farmers[target]->fields[Ripe1]--; farmers[target]->fields[Ready]++;}
-    devastation--;
-  }
-}
-
-void Farmland::endOfTurn () {
-  BOOST_FOREACH(Farmer* farmer, farmers) farmer->workFields();
-  countTotals();
-}
-
-void Farmland::delivery (EconActor* target, TradeGood const* const good, double amount) {
-  unsigned int divs = 0; 
-  for (int i = 0; i < numOwners; ++i) {
-    if (farmers[i]->isOwnedBy(target)) ++divs;
-  }
-
-  if (0 == divs) return;
-  amount /= divs; 
-  for (int i = 0; i < numOwners; ++i) {
-    if (!farmers[i]->isOwnedBy(target)) continue;
-    farmers[i]->deliverGoods(good, amount);
-  }
-}
-
-double Farmland::Farmer::getNeededLabour () const {
-  // Returns the amount of labour needed to tend the
-  // fields, on the assumption that the necessary labour
-  // will be spread over the remaining turns in the season. 
-
-  Calendar::Season currSeason = Calendar::getCurrentSeason();
-  if (Calendar::Winter == currSeason) return 0;
-  
-  double ret = 0;
-  switch (currSeason) {
-  default:
-  case Calendar::Spring:
-    // In spring we clear new fields, plow and sow existing ones.
-    // Fields move from Clear to Ready to Sowed.
-    ret += fields[Ready] * _labourToSow;
-    ret += fields[Clear] * (_labourToPlow + _labourToSow);
-    break;
-
-  case Calendar::Summer:
-    // Weeding is special: It is not done once and finished,
-    // like plowing, sowing, and harvesting. It must be re-done
-    // each turn. So, avoid the div-by-turns-remaining below.
-    return (fields[Sowed] + fields[Ripe1] + fields[Ripe2] + fields[Ripe3]) * _labourToWeed * capitalFactor(*this);
-      
-  case Calendar::Autumn:
-    // All reaping is equal. 
-    ret += (fields[Ripe1] + fields[Ripe2] + fields[Ripe3]) * _labourToReap;
-    break; 
-  }
-
-  ret *= capitalFactor(*this);
-  ret /= Calendar::turnsToNextSeason();
-  return ret; 
-}
-
-void Village::eatFood () {
-  double consumptionFactor = consumption();
-  for (vector<MaslowLevel>::iterator level = maslowLevels.begin(); level != maslowLevels.end(); ++level) {
-    bool canGetLevel = true;
-    for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
-      if (amountNeeded < getAmount(*tg)) continue;
-      canGetLevel = false;
-      break;
-    }
-    if (!canGetLevel) break;
-    for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
-      deliverGoods((*tg), -amountNeeded);
-    }
-    foodMortalityModifier = (*level).mortalityModifier;
-  }
-}
-
-void Farmland::setDefaultOwner (EconActor* o) {
-  if (!o) return;
-  for (int i = 0; i < numOwners; ++i) {
-    if (farmers[i]->getEconOwner()) continue;
-    farmers[i]->setEconOwner(o);
-  }
-}
-
 void Farmland::Farmer::workFields () {  
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   double availableLabour = getAmount(TradeGood::Labor);
@@ -870,6 +745,326 @@ void Farmland::Farmer::workFields () {
   double usedLabour = availableLabour - getAmount(TradeGood::Labor);
   deliverGoods(TradeGood::Labor, usedLabour);
   if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workFields");
+}
+
+double Farmland::Farmer::getNeededLabour () const {
+  // Returns the amount of labour needed to tend the
+  // fields, on the assumption that the necessary labour
+  // will be spread over the remaining turns in the season. 
+
+  Calendar::Season currSeason = Calendar::getCurrentSeason();
+  if (Calendar::Winter == currSeason) return 0;
+  
+  double ret = 0;
+  switch (currSeason) {
+  default:
+  case Calendar::Spring:
+    // In spring we clear new fields, plow and sow existing ones.
+    // Fields move from Clear to Ready to Sowed.
+    ret += fields[Ready] * _labourToSow;
+    ret += fields[Clear] * (_labourToPlow + _labourToSow);
+    break;
+
+  case Calendar::Summer:
+    // Weeding is special: It is not done once and finished,
+    // like plowing, sowing, and harvesting. It must be re-done
+    // each turn. So, avoid the div-by-turns-remaining below.
+    return (fields[Sowed] + fields[Ripe1] + fields[Ripe2] + fields[Ripe3]) * _labourToWeed * capitalFactor(*this);
+      
+  case Calendar::Autumn:
+    // All reaping is equal. 
+    ret += (fields[Ripe1] + fields[Ripe2] + fields[Ripe3]) * _labourToReap;
+    break; 
+  }
+
+  ret *= capitalFactor(*this);
+  ret /= Calendar::turnsToNextSeason();
+  return ret; 
+}
+
+Forest::Forest ()
+  : Building()
+  , Mirrorable<Forest>()
+{
+  for (int j = 0; j < numOwners; ++j) {
+    foresters.push_back(new Forester());
+  }
+}
+
+Forest::Forest (Forest* other)
+  : Building()
+  , Mirrorable<Forest>(other)
+{}
+
+Forest::~Forest () {
+  BOOST_FOREACH(Forester* forester, foresters) {
+    forester->destroyIfReal();
+  }
+}
+
+Forest::Forester::Forester ()
+  : Mirrorable<Forest::Forester>()
+  , groves(NumStatus, 0)
+  , yearsSinceLastTick(0)
+  , tendedGroves(0)
+  , minStatusToHarvest(Huge)
+{}
+
+Forest::Forester::Forester (Forester* other)
+  : Mirrorable<Forest::Forester>(other)
+  , groves(NumStatus, 0)
+  , yearsSinceLastTick(0)
+  , tendedGroves(0)    
+  , minStatusToHarvest(Huge)
+{}
+
+void Forest::Forester::setMirrorState () {
+  mirror->owner = owner;
+  for (unsigned int i = 0; i < groves.size(); ++i) mirror->groves[i] = groves[i];
+  mirror->yearsSinceLastTick = yearsSinceLastTick;
+}
+
+Forest::Forester::~Forester () {}
+
+void Forest::Forester::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
+  // Goal is to maximise profit. Calculate how much labor we need to get in the harvest;
+  // if the price of the expected food is more, bid for enough labor to do this turn's work.
+  // If there is money left over, bid for equipment to reduce the amount of labor needed
+  // next turn, provided the net-present-value of the reduction is higher than the cost
+  // of the machinery.
+
+  double laborNeeded = getNeededLabour() - getAmount(TradeGood::Labor);
+  double expectedProduction = expectedOutput();
+  if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction) {
+    bidlist.push_back(new MarketBid(TradeGood::Labor, laborNeeded, this));
+  }
+  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+    if (capital[**tg] < 0.00001) continue;
+    double laborSaving = laborNeeded * (1 - marginalCapFactor((*tg), getAmount(*tg)));
+    // Assuming discount rate of 10%. Present value of amount x every period to infinity is (x/r) with r the interest rate.
+    // TODO: Take decay into account. Variable discount rate?
+    double npv = laborSaving * prices.getAmount(TradeGood::Labor) * 10;
+    if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this));
+  }
+}
+
+double Forest::Forester::expectedOutput () const {
+  double ret = 0;
+  for (int i = Climax; i >= minStatusToHarvest; --i) {
+    ret += groves[i] * _amountOfWood[i];
+  }
+  return ret;
+}
+
+double Forest::Forester::produceForContract (TradeGood const* const tg, double amount) {
+  return owner->produceForContract(tg, amount);
+}
+
+void Forest::unitTests () {
+
+}
+
+void Forest::Forester::unitTests () {
+  // Note that this is not static, it's run on a particular Forester.
+}
+
+double Forest::Forester::getNeededLabour () const {
+  Calendar::Season currSeason = Calendar::getCurrentSeason();
+  if (Calendar::Winter == currSeason) return 0;
+  
+  double ret = getTendedArea() * _labourToTend;
+  for (int i = Climax; i >= minStatusToHarvest; --i) {
+    ret += groves[i] * _labourToHarvest;
+  }
+
+  ret *= capitalFactor(*this);
+  return ret; 
+}
+
+void Forest::Forester::workGroves () {  
+  Calendar::Season currSeason = Calendar::getCurrentSeason();
+
+  if (currSeason == Calendar::Winter) {
+    if (++yearsSinceLastTick >= 5) {
+      groves[Climax]    += groves[Huge];
+      groves[Huge]       = groves[Mighty];
+      groves[Mighty]     = groves[Mature];
+      groves[Mature]     = groves[Grown];
+      groves[Grown]      = groves[Young];
+      groves[Young]      = groves[Saplings];
+      groves[Saplings]   = groves[Scrub];
+      groves[Scrub]      = groves[Planted];
+      groves[Planted]    = groves[Clear];
+      groves[Clear]      = 0;
+      yearsSinceLastTick = 0;
+      int wildening = getTendedArea() - tendedGroves;
+      groves[Wild] += wildening;
+      int target = Climax;
+      while (wildening > 0) {
+	groves[target--]--;
+	wildening--;
+	if (target < Clear) target = Climax;
+      }
+      tendedGroves = 0;
+    }
+    return;
+  }
+
+  double availableLabour = getAmount(TradeGood::Labor);
+  double capFactor = capitalFactor(*this);
+  
+  // First priority: Ensure tended land doesn't go wild.
+  int grovesToTend = getTendedArea() - tendedGroves;
+  if (grovesToTend > 0) {
+    int tended = (int) floor(min(availableLabour, grovesToTend * _labourToTend * capFactor) / grovesToTend);
+    grovesToTend += tended;
+    availableLabour -= tended * _labourToTend * capFactor;
+  }
+  for (int i = Climax; i >= minStatusToHarvest; --i) {
+    int chopped = (int) floor(min(0.0 + groves[i], availableLabour / (_labourToHarvest * capFactor)));
+    availableLabour -= chopped * _labourToHarvest * capFactor;
+    groves[i] -= chopped;
+    owner->deliverGoods(output, chopped * _amountOfWood[i]);
+    if (availableLabour < _labourToHarvest*capFactor) break;
+  }
+  
+  double usedLabour = availableLabour - getAmount(TradeGood::Labor);
+  deliverGoods(TradeGood::Labor, usedLabour);
+  if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workGroves");
+}
+
+int Forest::Forester::getTendedArea () const {
+  return (groves[Clear] +
+	  groves[Planted] +
+	  groves[Scrub] +
+	  groves[Saplings] +
+	  groves[Young] +
+	  groves[Grown] +
+	  groves[Mature] +
+	  groves[Mighty] +
+	  groves[Huge] +
+	  groves[Climax]);
+}
+
+int Forest::Forester::getForestArea () const {
+  return getTendedArea() + groves[Wild];
+}
+
+void Forest::setMirrorState () {
+  mirror->setOwner(getOwner());
+  mirror->foresters.clear();
+  BOOST_FOREACH(Forester* forester, foresters) {
+    forester->setMirrorState();
+    mirror->foresters.push_back(forester->getMirror());
+  }
+}
+
+void Village::setMirrorState () {
+  women.setMirrorState();
+  males.setMirrorState();
+  milTrad->setMirrorState();
+  mirror->milTrad = milTrad->getMirror();
+  mirror->foodMortalityModifier = foodMortalityModifier; 
+  mirror->setOwner(getOwner());
+  mirror->setAmounts(this);
+  if (farm) mirror->farm = farm->getMirror();
+  // Farm mirror state set by Hex.
+}
+
+void Farmland::setMirrorState () {
+  mirror->setOwner(getOwner());
+  mirror->farmers.clear();
+  BOOST_FOREACH(Farmer* farmer, farmers) {
+    farmer->setMirrorState();
+    mirror->farmers.push_back(farmer->getMirror());
+  }
+}
+
+double Village::production () const {
+  double ret = 0;
+  for (int i = 0; i < AgeTracker::maxAge; ++i) {
+    ret += (males.getPop(i) + femaleProduction*women.getPop(i)) * products[i]; 
+  }
+
+  ret -= milTrad->getRequiredWork();
+  ret -= workedThisTurn;
+  return ret;
+}
+
+double Village::consumption () const {
+  double ret = 0;
+  for (int i = 0; i < AgeTracker::maxAge; ++i) {
+    ret += consume[i]*(males.getPop(i) + femaleConsumption*women.getPop(i));
+  }
+  return ret; 
+}
+
+void Farmland::devastate (int devastation) {
+  while (devastation > 0) {
+    int target = rand() % numOwners;
+    if      (farmers[target]->fields[Ripe3] > 0) {farmers[target]->fields[Ripe3]--; farmers[target]->fields[Ripe2]++;}
+    else if (farmers[target]->fields[Ripe2] > 0) {farmers[target]->fields[Ripe2]--; farmers[target]->fields[Ripe1]++;}
+    else if (farmers[target]->fields[Ripe1] > 0) {farmers[target]->fields[Ripe1]--; farmers[target]->fields[Ready]++;}
+    devastation--;
+  }
+}
+
+void Farmland::endOfTurn () {
+  BOOST_FOREACH(Farmer* farmer, farmers) farmer->workFields();
+  countTotals();
+}
+
+void Farmland::delivery (EconActor* target, TradeGood const* const good, double amount) {
+  unsigned int divs = 0; 
+  for (int i = 0; i < numOwners; ++i) {
+    if (farmers[i]->isOwnedBy(target)) ++divs;
+  }
+
+  if (0 == divs) return;
+  amount /= divs; 
+  for (int i = 0; i < numOwners; ++i) {
+    if (!farmers[i]->isOwnedBy(target)) continue;
+    farmers[i]->deliverGoods(good, amount);
+  }
+}
+
+void Village::eatFood () {
+  double consumptionFactor = consumption();
+  for (vector<MaslowLevel>::iterator level = maslowLevels.begin(); level != maslowLevels.end(); ++level) {
+    bool canGetLevel = true;
+    for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      if (amountNeeded < getAmount(*tg)) continue;
+      canGetLevel = false;
+      break;
+    }
+    if (!canGetLevel) break;
+    for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      deliverGoods((*tg), -amountNeeded);
+    }
+    foodMortalityModifier = (*level).mortalityModifier;
+  }
+}
+
+void Farmland::setDefaultOwner (EconActor* o) {
+  if (!o) return;
+  for (int i = 0; i < numOwners; ++i) {
+    if (farmers[i]->getEconOwner()) continue;
+    farmers[i]->setEconOwner(o);
+  }
+}
+
+void Forest::setDefaultOwner (EconActor* o) {
+  if (!o) return;
+  for (int i = 0; i < numOwners; ++i) {
+    if (foresters[i]->getEconOwner()) continue;
+    foresters[i]->setEconOwner(o);
+  }
+}
+
+void Forest::endOfTurn () {
+  BOOST_FOREACH(Forester* forester, foresters) forester->workGroves();
 }
 
 void Farmland::countTotals () {
