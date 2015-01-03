@@ -17,6 +17,35 @@ class Line;
 class Player;
 class Farmland; 
 
+template<class T> class Industry {
+  friend class StaticInitialiser;
+
+public:
+  // Return the reduction in required labor if we had one additional unit.
+  double marginalCapFactor (TradeGood const* const tg, double currentAmount) const {
+    return capFactor(capital[*tg], 1+currentAmount) / capFactor(capital[*tg], currentAmount);
+  }
+  
+  double capitalFactor (const GoodsHolder& capitalToUse, int dilution = 1) const {
+    double ret = 1;
+    for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+      ret *= capFactor(capital[**tg], capitalToUse.getAmount(*tg)/dilution);
+    }
+    return ret;
+  }
+
+protected:
+  // Capital reduces the amount of labour required by factor (1 - x log (N+1)). This array stores x. 
+  static double* capital;
+
+private:
+  double capFactor (double reductionConstant, double goodAmount) const {
+    return 1 - reductionConstant * log(1 + goodAmount);
+  }
+}; 
+
+template<class T> double* Industry<T>::capital; 
+
 class Building {
   friend class StaticInitialiser; 
 public: 
