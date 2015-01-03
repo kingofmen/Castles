@@ -252,20 +252,19 @@ private:
   class Forester : public EconActor, public Industry<Forester>, public Mirrorable<Forester> {
     friend class Mirrorable<Forester>;
   public:
-    Forester ();
+    Forester (Forest* b);
     ~Forester ();
     virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
     virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
-    void workGroves ();
+    void workGroves (bool tick);
 
     vector<int> groves;
-    int yearsSinceLastTick;
     int tendedGroves;
-    ForestStatus minStatusToHarvest;
   private:
     Forester(Forester* other);
+    Forest* boss;
     int    getForestArea () const;
     double getNeededLabour () const;
     int    getTendedArea () const;
@@ -274,6 +273,9 @@ private:
  
   Forest (Forest* other);
   vector<Forester*> foresters;
+  int yearsSinceLastTick;
+  ForestStatus minStatusToHarvest;
+  
   static vector<int> _amountOfWood;
   static int _labourToTend;    // Ensure forest doesn't go wild.
   static int _labourToHarvest; // Extract wood, make clear.

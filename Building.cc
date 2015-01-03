@@ -787,13 +787,15 @@ Forest::Forest ()
   , Mirrorable<Forest>()
 {
   for (int j = 0; j < numOwners; ++j) {
-    foresters.push_back(new Forester());
+    foresters.push_back(new Forester(this));
   }
 }
 
 Forest::Forest (Forest* other)
   : Building()
   , Mirrorable<Forest>(other)
+  , yearsSinceLastTick(0)    
+  , minStatusToHarvest(Huge)    
 {}
 
 Forest::~Forest () {
@@ -802,26 +804,22 @@ Forest::~Forest () {
   }
 }
 
-Forest::Forester::Forester ()
+Forest::Forester::Forester (Forest* b)
   : Mirrorable<Forest::Forester>()
   , groves(NumStatus, 0)
-  , yearsSinceLastTick(0)
   , tendedGroves(0)
-  , minStatusToHarvest(Huge)
+  , boss(b)
 {}
 
 Forest::Forester::Forester (Forester* other)
   : Mirrorable<Forest::Forester>(other)
   , groves(NumStatus, 0)
-  , yearsSinceLastTick(0)
-  , tendedGroves(0)    
-  , minStatusToHarvest(Huge)
 {}
 
 void Forest::Forester::setMirrorState () {
   mirror->owner = owner;
   for (unsigned int i = 0; i < groves.size(); ++i) mirror->groves[i] = groves[i];
-  mirror->yearsSinceLastTick = yearsSinceLastTick;
+  mirror->boss = boss->getMirror();
 }
 
 Forest::Forester::~Forester () {}
@@ -850,7 +848,7 @@ void Forest::Forester::getBids (const GoodsHolder& prices, vector<MarketBid*>& b
 
 double Forest::Forester::expectedOutput () const {
   double ret = 0;
-  for (int i = Climax; i >= minStatusToHarvest; --i) {
+  for (int i = Climax; i >= boss->minStatusToHarvest; --i) {
     ret += groves[i] * _amountOfWood[i];
   }
   return ret;
@@ -873,7 +871,7 @@ double Forest::Forester::getNeededLabour () const {
   if (Calendar::Winter == currSeason) return 0;
   
   double ret = getTendedArea() * _labourToTend;
-  for (int i = Climax; i >= minStatusToHarvest; --i) {
+  for (int i = Climax; i >= boss->minStatusToHarvest; --i) {
     ret += groves[i] * _labourToHarvest;
   }
 
@@ -881,32 +879,27 @@ double Forest::Forester::getNeededLabour () const {
   return ret; 
 }
 
-void Forest::Forester::workGroves () {  
-  Calendar::Season currSeason = Calendar::getCurrentSeason();
-
-  if (currSeason == Calendar::Winter) {
-    if (++yearsSinceLastTick >= 5) {
-      groves[Climax]    += groves[Huge];
-      groves[Huge]       = groves[Mighty];
-      groves[Mighty]     = groves[Mature];
-      groves[Mature]     = groves[Grown];
-      groves[Grown]      = groves[Young];
-      groves[Young]      = groves[Saplings];
-      groves[Saplings]   = groves[Scrub];
-      groves[Scrub]      = groves[Planted];
-      groves[Planted]    = groves[Clear];
-      groves[Clear]      = 0;
-      yearsSinceLastTick = 0;
-      int wildening = getTendedArea() - tendedGroves;
-      groves[Wild] += wildening;
-      int target = Climax;
-      while (wildening > 0) {
-	groves[target--]--;
-	wildening--;
-	if (target < Clear) target = Climax;
-      }
-      tendedGroves = 0;
+void Forest::Forester::workGroves (bool tick) {
+  if (tick) {
+    groves[Climax]    += groves[Huge];
+    groves[Huge]       = groves[Mighty];
+    groves[Mighty]     = groves[Mature];
+    groves[Mature]     = groves[Grown];
+    groves[Grown]      = groves[Young];
+    groves[Young]      = groves[Saplings];
+    groves[Saplings]   = groves[Scrub];
+    groves[Scrub]      = groves[Planted];
+    groves[Planted]    = groves[Clear];
+    groves[Clear]      = 0;
+    int wildening = getTendedArea() - tendedGroves;
+    groves[Wild] += wildening;
+    int target = Climax;
+    while (wildening > 0) {
+      groves[target--]--;
+      wildening--;
+      if (target < Clear) target = Climax;
     }
+    tendedGroves = 0;
     return;
   }
 
@@ -920,7 +913,7 @@ void Forest::Forester::workGroves () {
     grovesToTend += tended;
     availableLabour -= tended * _labourToTend * capFactor;
   }
-  for (int i = Climax; i >= minStatusToHarvest; --i) {
+  for (int i = Climax; i >= boss->minStatusToHarvest; --i) {
     int chopped = (int) floor(min(0.0 + groves[i], availableLabour / (_labourToHarvest * capFactor)));
     availableLabour -= chopped * _labourToHarvest * capFactor;
     groves[i] -= chopped;
@@ -1064,7 +1057,15 @@ void Forest::setDefaultOwner (EconActor* o) {
 }
 
 void Forest::endOfTurn () {
-  BOOST_FOREACH(Forester* forester, foresters) forester->workGroves();
+  bool tick = false;
+  if (Calendar::Winter == Calendar::getCurrentSeason()) {
+    ++yearsSinceLastTick;
+    if (yearsSinceLastTick >= 5) {
+      yearsSinceLastTick = 0;
+      tick = true;
+    }
+  }
+  BOOST_FOREACH(Forester* forester, foresters) forester->workGroves(tick);
 }
 
 void Farmland::countTotals () {

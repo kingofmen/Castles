@@ -445,7 +445,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     Forest* forest = buildForest(fInfo);
     initialiseBuilding(forest, fInfo);
     if (owner) forest->setOwner(owner);
-    //hex->setForest(forest);
+    hex->setForest(forest);
   }
   
   //initialiseMarket(hex, hInfo->getNeededObject("prices"));
@@ -531,6 +531,9 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
     ret->foresters[i]->groves[Forest::Climax]   = climax  ? (climax->numTokens()  >= i ? climax->tokenAsInt(i)  : 0) : 0;
     ret->foresters[i]->owner                    = owner   ? (owner->numTokens()   >= i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
   }
+
+  ret->yearsSinceLastTick = fInfo->safeGetInt("yearsSinceLastTick");
+  ret->minStatusToHarvest = Forest::Huge;
   
   return ret;
 }
@@ -1335,8 +1338,49 @@ void StaticInitialiser::writeGameToFile (string fname) {
 	owner->addToList((int) farm->farmers[i]->owner->getIdx());
       }
     }
-  }
 
+    Forest* forest = (*hex)->forest;
+    if (forest) {
+      Object* forestInfo = new Object("forest");
+      hexInfo->setValue(forestInfo);
+
+      map<Forest::ForestStatus, Object*> statuses;
+      statuses[Forest::Wild]     = new Object("wild");
+      statuses[Forest::Clear]    = new Object("cleared");
+      statuses[Forest::Planted]  = new Object("planted");
+      statuses[Forest::Scrub]    = new Object("scrubby");
+      statuses[Forest::Saplings] = new Object("sapling");
+      statuses[Forest::Young]    = new Object("young");
+      statuses[Forest::Grown]    = new Object("grown");
+      statuses[Forest::Mature]   = new Object("mature");
+      statuses[Forest::Mighty]   = new Object("mighty");
+      statuses[Forest::Huge]     = new Object("huge");
+      statuses[Forest::Climax]   = new Object("climax");
+      
+      for (map<Forest::ForestStatus, Object*>::iterator status = statuses.begin(); status != statuses.end(); ++status) {
+	(*status).second->setObjList(true);
+	for (int i = 0; i < Forest::numOwners; ++i) {
+	  (*status).second->addToList(forest->foresters[i]->groves[(*status).first]);
+	}
+	forestInfo->setValue((*status).second);
+      }
+      Object* owner = new Object("owner");
+      owner->setObjList(true);
+      forestInfo->setValue(owner);
+      for (int i = 0; i < Forest::numOwners; ++i) {
+	owner->addToList((int) forest->foresters[i]->owner->getIdx());
+      }
+      Object* tended = new Object("tended");
+      tended->setObjList(true);
+      forestInfo->setValue(tended);
+      for (int i = 0; i < Forest::numOwners; ++i) {
+	tended->addToList((int) forest->foresters[i]->tendedGroves);
+      }
+      forestInfo->setLeaf("yearsSinceLastTick", forest->yearsSinceLastTick);
+      forestInfo->setLeaf("minStatusToHarvest", Forest::Huge);
+    }
+  }
+  
   for (Vertex::Iterator vtx = Vertex::start(); vtx != Vertex::final(); ++vtx) {
     if (0 == (*vtx)->numUnits()) continue;
     MilUnit* unit = (*vtx)->getUnit(0); 
