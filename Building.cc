@@ -561,10 +561,6 @@ void Farmland::Farmer::unitTests () {
   prices.deliverGoods(output, 1);
   getBids(prices, bidlist);
   
-  if (2 != bidlist.size()) {
-    sprintf(errorMessage, "Expected to make 2 bids, got %i", bidlist.size());
-    throw string(errorMessage);
-  }
   bool foundLabour = false;
   bool foundCapGood = false;
   BOOST_FOREACH(MarketBid* mb, bidlist) {
@@ -859,11 +855,142 @@ double Forest::Forester::produceForContract (TradeGood const* const tg, double a
 }
 
 void Forest::unitTests () {
+  if (!output) throw string("Forest output has not been set.");
+  Forest testForest;
+  if ((int) testForest.foresters.size() != numOwners) {
+    char errorMessage[500];
+    sprintf(errorMessage, "Forest should have %i Foresters, has %i", numOwners, testForest.foresters.size());
+    throw string(errorMessage);
+  }
 
+  testForest.minStatusToHarvest = Mature;
+  testForest.foresters[0]->unitTests();
 }
 
 void Forest::Forester::unitTests () {
   // Note that this is not static, it's run on a particular Forester.
+  char errorMessage[500];  
+  double* oldCapital = capital;
+  capital = new double[TradeGood::numTypes()];
+  TradeGood const* testCapGood = 0;
+  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+    capital[**tg] = 0;
+    if ((*tg) == output) continue;
+    if (testCapGood) continue;
+    testCapGood = (*tg);
+    capital[**tg] = 0.1;
+  }
+
+  Calendar::newYearBegins();
+  groves[Clear] = 100;
+  groves[Huge] = 100;
+  double laborNeeded = getNeededLabour();
+  if (laborNeeded <= 0) {
+    sprintf(errorMessage, "Expected to need positive amount of labor, but found %f", laborNeeded);
+    throw string(errorMessage);
+  }
+
+  deliverGoods(testCapGood, 1);
+  double laborNeededWithCapital = getNeededLabour();
+  if (laborNeededWithCapital >= laborNeeded) {
+    sprintf(errorMessage,
+	    "With capital %f of %s, should require less than %f labour, but need %f",
+	    getAmount(testCapGood),
+	    testCapGood->getName().c_str(),
+	    laborNeeded,
+	    laborNeededWithCapital);
+    throw string(errorMessage);
+  }
+  deliverGoods(testCapGood, -1);
+
+  // Set labour so we need 300 of it. Saving about 7% of that means we should bid
+  // for capital if the capital price is below 210.
+  int oldTendLabour = _labourToTend;
+  int oldHarvestLabour = _labourToHarvest;
+  _labourToTend = 1;
+  _labourToHarvest = 1;
+  laborNeeded = getNeededLabour();
+  GoodsHolder prices;
+  vector<MarketBid*> bidlist;
+  prices.deliverGoods(TradeGood::Labor, 1);
+  prices.deliverGoods(testCapGood, 1);
+  prices.deliverGoods(output, 1);
+  getBids(prices, bidlist);
+  
+  bool foundLabour = false;
+  bool foundCapGood = false;
+  BOOST_FOREACH(MarketBid* mb, bidlist) {
+    if (mb->tradeGood == TradeGood::Labor) {
+      foundLabour = true;
+      if (fabs(mb->amountToBuy - 300) > 0.1) {
+	sprintf(errorMessage, "Expected to buy 300 %s, bid is for %f", TradeGood::Labor->getName().c_str(), mb->amountToBuy);
+	throw string(errorMessage);
+      }
+    }
+    else if (mb->tradeGood == testCapGood) {
+      foundCapGood = true;
+      if (mb->amountToBuy <= 0) {
+	sprintf(errorMessage, "Expected to buy %s, but am selling", testCapGood->getName().c_str());
+	throw string(errorMessage);
+      }
+    }
+    else {
+      sprintf(errorMessage,
+	      "Expected to bid on %s and %s, but got bid for %f %s (capital %f price %f) %i %i %f %p %p",
+	      TradeGood::Labor->getName().c_str(),
+	      testCapGood->getName().c_str(),
+	      mb->amountToBuy,
+	      mb->tradeGood->getName().c_str(),
+	      capital[*(mb->tradeGood)],
+	      prices.getAmount(mb->tradeGood),
+	      mb->tradeGood->getIdx(),
+	      testCapGood->getIdx(),
+	      capital[*testCapGood],
+	      capital,
+	      oldCapital);
+      throw string(errorMessage);
+    }
+  }
+  if (!foundLabour) {
+    sprintf(errorMessage,
+	    "Expected to buy %s, no bid found (%f %f)",
+	    TradeGood::Labor->getName().c_str(),
+	    expectedOutput(),
+	    getNeededLabour());
+    throw string(errorMessage);
+  }
+  if (!foundCapGood) {
+    sprintf(errorMessage, "Expected to buy %s, no bid found", testCapGood->getName().c_str());
+    throw string(errorMessage);
+  }
+
+  owner = this;
+  tendedGroves = getTendedArea();
+  tendedGroves -= 10;
+  workGroves(true);
+  if ((groves[Clear] > 0) || (groves[Huge] > 0) || (groves[Climax] != 95) || (groves[Planted] != 95) || (groves[Wild] != 10)) {
+    sprintf(errorMessage,
+	    "Expected (Clear, Huge, Climax, Planted, Wild) to be (%i %i %i %i %i), got (%i %i %i %i %i)",
+	    0, 0, 95, 95, 10,
+	    groves[Clear],
+	    groves[Huge],
+	    groves[Climax],
+	    groves[Planted],
+	    groves[Wild]);
+    throw string(errorMessage);
+  }
+
+  deliverGoods(TradeGood::Labor, getNeededLabour());
+  //for (int i = Clear; i < NumStatus; ++i) Logger::logStream(DebugStartup) << "(" << groves[i] << " " << _amountOfWood[i] << ") ";
+  Logger::logStream(DebugStartup) << Calendar::toString() << " " << getNeededLabour() << "\n";
+  workGroves(false);
+  if (0.01 > getAmount(output)) throw string("Expected to have some wood after workGroves");
+  
+  delete[] capital;
+  _labourToTend = oldTendLabour;
+  _labourToHarvest = oldHarvestLabour;
+  capital = oldCapital;
+
 }
 
 double Forest::Forester::getNeededLabour () const {
@@ -895,9 +1022,11 @@ void Forest::Forester::workGroves (bool tick) {
     groves[Wild] += wildening;
     int target = Climax;
     while (wildening > 0) {
-      groves[target--]--;
-      wildening--;
-      if (target < Clear) target = Climax;
+      if (0 < groves[target]) {
+	groves[target]--;
+	wildening--;
+      }
+      if (--target < Clear) target = Climax;
     }
     tendedGroves = 0;
     return;
@@ -909,12 +1038,12 @@ void Forest::Forester::workGroves (bool tick) {
   // First priority: Ensure tended land doesn't go wild.
   int grovesToTend = getTendedArea() - tendedGroves;
   if (grovesToTend > 0) {
-    int tended = (int) floor(min(availableLabour, grovesToTend * _labourToTend * capFactor) / grovesToTend);
-    grovesToTend += tended;
+    int tended = min((int) floor(availableLabour / (_labourToTend * capFactor)), grovesToTend);
+    tendedGroves += tended;
     availableLabour -= tended * _labourToTend * capFactor;
   }
   for (int i = Climax; i >= boss->minStatusToHarvest; --i) {
-    int chopped = (int) floor(min(0.0 + groves[i], availableLabour / (_labourToHarvest * capFactor)));
+    int chopped = min((int) floor(availableLabour / (_labourToHarvest * capFactor)), groves[i]);
     availableLabour -= chopped * _labourToHarvest * capFactor;
     groves[i] -= chopped;
     owner->deliverGoods(output, chopped * _amountOfWood[i]);

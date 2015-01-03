@@ -24,7 +24,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Initialisation (check)
      . Read from save (check)
      . Write to save (check)
-     . Unit tests
+     . Unit tests (check)
    - Unify Forest and Farmland
    - Mine
      . Internal
