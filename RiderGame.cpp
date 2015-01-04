@@ -377,10 +377,11 @@ void WarfareGame::unitTests (string fname) {
   callTestFunction("Running a turn", function<void()>(bind(&WarfareGame::endOfTurn, WarfareGame::currGame)));
   callTestFunction(string("Writing to file") + savename, function<void()>(bind(&StaticInitialiser::writeGameToFile, savename)));
   callTestFunction(string("Loading from savegame again ") + fname, function<void()>(bind(&WarfareGame::createGame, savename)));
-  callTestFunction("Market", &Market::unitTests);
-  callTestFunction("Village", &Village::unitTests);
+  callTestFunction("Market",   &Market::unitTests);
+  callTestFunction("Village",  &Village::unitTests);
   callTestFunction("Farmland", &Farmland::unitTests);
-  callTestFunction("Forest", &Forest::unitTests);
+  callTestFunction("Forest",   &Forest::unitTests);
+  callTestFunction("Mine",     &Mine::unitTests);
 
   Logger::logStream(DebugStartup) << passed << " of " << tests << " tests passed.\n";
 }

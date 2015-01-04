@@ -25,13 +25,13 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Read from save (check)
      . Write to save (check)
      . Unit tests (check)
-   - Unify Forest and Farmland
+   - Unify Forest and Farmland (check, as far as it goes)
    - Mine
-     . Internal
-     . Initialisation
+     . Internal (check)
+     . Initialisation (check)
      . Read from save
      . Write to save
-     . Unit tests
+     . Unit tests (check)
    - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
    - Restore clearing of land
    - Normalisation

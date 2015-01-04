@@ -49,6 +49,35 @@ forest = {
   output = wood
 }
 
+mine = {
+  status = {
+    name = surface
+    requiredLabour = 10
+  }
+  status = {
+    name = easy
+    requiredLabour = 25
+  }
+  status = {
+    name = medium
+    requiredLabour = 50
+  }
+  status = {
+    name = deep
+    requiredLabour = 100
+  }
+  status = {
+    name = modern
+    requiredLabour = 1000
+  }
+
+  capital = {
+    iron = 0.1
+  }
+  output = iron
+  amount = 50
+}
+
 femaleFert = { 
   0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 
   0.00 0.00 0.00 0.00 0.00 0.33 0.33 0.33 0.33 0.33

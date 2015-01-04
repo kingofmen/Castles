@@ -55,7 +55,7 @@ private:
   static void addShadows (QGLFramebufferObject* fbo, GLuint texture); 
   static void createCalculator (Object* info, Action::Calculator* ret);
   static double interpolate (double xfrac, double yfrac, int width, int height, double* heightMap); 
-  static void readCapitalForIndustry (Object* capObject, double* capitalEffect);
+  static void readCapitalForIndustry (Object* capObject, double** capitalEffect);
   static void writeEconActorIntoObject (EconActor* econ, Object* info);
   
   static int defaultUnitPriority;

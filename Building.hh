@@ -93,8 +93,7 @@ public:
   void assignLand (int amount) {assignedLand += amount; if (0 > assignedLand) assignedLand = 0;}
   double getAvailableSupplies () const {return supplies;}   
 
-  static const int numOwners = 10;
-  
+  static const int numOwners = 10;  
 protected:
   double supplies; 
   
@@ -341,6 +340,50 @@ private:
   static int _labourToTend;    // Ensure forest doesn't go wild.
   static int _labourToHarvest; // Extract wood, make clear.
   static int _labourToClear;   // Go from wild to clear.
+};
+
+class Mine : public Building, public Mirrorable<Mine> {
+  friend class StaticInitialiser;
+  friend class Mirrorable<Mine>;
+public:
+  Mine ();
+  ~Mine ();
+
+  struct MineStatus : public Enumerable<MineStatus> {
+    friend class StaticInitialiser;
+    MineStatus (string n, int rl, bool lastOne = false);
+    ~MineStatus ();
+    int requiredLabour;
+  };
+
+  virtual void endOfTurn ();
+  void setDefaultOwner (EconActor* o);
+  void setMarket (Market* market) {BOOST_FOREACH(Miner* miner, miners) {market->registerParticipant(miner);}}
+  virtual void setMirrorState ();
+
+  static void unitTests ();
+  
+private:
+  class Miner : public Industry<Miner>, public Mirrorable<Miner> {
+    friend class Mirrorable<Miner>;
+  public:
+    Miner ();
+    ~Miner ();
+    double expectedOutput () const;      
+    double getNeededLabour () const;
+    virtual double produceForContract (TradeGood const* const tg, double amount);
+    virtual void setMirrorState ();
+    void unitTests ();
+    void workShafts ();
+
+    vector<int> shafts;
+  private:
+    Miner(Miner* other);
+  };
+ 
+  Mine (Mine* other);
+  vector<Miner*> miners;
+  static int _amountOfIron;
 };
 
 #endif

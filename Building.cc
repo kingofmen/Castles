@@ -36,6 +36,10 @@ int Forest::_labourToHarvest = 50;
 int Forest::_labourToClear   = 250;
 vector<int> Forest::_amountOfWood;
 
+int Mine::_amountOfIron = 50;
+
+char errorMessage[500];
+
 Castle::Castle (Hex* dat, Line* lin) 
   : Mirrorable<Castle>()
   , support(dat)
@@ -473,7 +477,6 @@ void Farmland::unitTests () {
   Farmland testFarm;
   // Stupidest imaginable test, but did actually catch a problem, so...
   if ((int) testFarm.farmers.size() != numOwners) {
-    char errorMessage[500];
     sprintf(errorMessage, "Farm should have %i Farmers, has %i", numOwners, testFarm.farmers.size());
     throw string(errorMessage);
   }
@@ -484,7 +487,6 @@ void Farmland::unitTests () {
 void Farmland::Farmer::unitTests () {
   if (!output) throw string("Farm output has not been set.");  
   // Note that this is not static, it's run on a particular Farmer.
-  char errorMessage[500];  
   double* oldCapital = capital;
   capital = new double[TradeGood::numTypes()];
   TradeGood const* testCapGood = 0;
@@ -810,7 +812,6 @@ double Forest::Forester::produceForContract (TradeGood const* const tg, double a
 void Forest::unitTests () {
   Forest testForest;
   if ((int) testForest.foresters.size() != numOwners) {
-    char errorMessage[500];
     sprintf(errorMessage, "Forest should have %i Foresters, has %i", numOwners, testForest.foresters.size());
     throw string(errorMessage);
   }
@@ -822,7 +823,6 @@ void Forest::unitTests () {
 void Forest::Forester::unitTests () {
   if (!output) throw string("Forest output has not been set.");  
   // Note that this is not static, it's run on a particular Forester.
-  char errorMessage[500];  
   double* oldCapital = capital;
   capital = new double[TradeGood::numTypes()];
   TradeGood const* testCapGood = 0;
@@ -1207,3 +1207,221 @@ int Village::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit*
   return recruited; 
 }
 
+Mine::Mine ()
+  : Building()
+  , Mirrorable<Mine>()
+{
+  for (int j = 0; j < numOwners; ++j) {
+    miners.push_back(new Miner());
+  }
+}
+
+Mine::Mine (Mine* other)
+  : Building()
+  , Mirrorable<Mine>(other)
+{}
+
+Mine::~Mine () {
+  BOOST_FOREACH(Miner* miner, miners) {
+    miner->destroyIfReal();
+  }
+}
+
+Mine::Miner::Miner ()
+  : Industry<Miner>(this)
+  , Mirrorable<Miner>()
+  , shafts(MineStatus::numTypes(), 0)
+{}
+
+Mine::Miner::Miner (Miner* other)
+  : Industry<Miner>(this)
+  , Mirrorable<Mine::Miner>(other)
+  , shafts(MineStatus::numTypes(), 0)
+{}
+
+void Mine::Miner::setMirrorState () {
+  mirror->owner = owner;
+  for (unsigned int i = 0; i < shafts.size(); ++i) mirror->shafts[i] = shafts[i];
+}
+
+Mine::Miner::~Miner () {}
+
+Mine::MineStatus::MineStatus (string n, int rl, bool lastOne)
+  : Enumerable<MineStatus>(this, n, lastOne)
+  , requiredLabour(rl)
+{}
+
+Mine::MineStatus::~MineStatus () {}
+
+void Mine::endOfTurn () {
+  BOOST_FOREACH(Miner* miner, miners) miner->workShafts();
+}
+
+double Mine::Miner::expectedOutput () const {
+  return _amountOfIron;
+}
+
+double Mine::Miner::produceForContract (TradeGood const* const tg, double amount) {
+  return owner->produceForContract(tg, amount);
+}
+
+void Mine::unitTests () {
+  if (3 > MineStatus::numTypes()) {
+    sprintf(errorMessage, "Expected at least 3 MineStatus entries, got %i", MineStatus::numTypes());
+    throw string(errorMessage);
+  }
+
+  
+  Mine testMine;
+  if ((int) testMine.miners.size() != numOwners) {
+    sprintf(errorMessage, "Mine should have %i Miners, has %i", numOwners, testMine.miners.size());
+    throw string(errorMessage);
+  }
+  testMine.miners[0]->unitTests();
+}
+
+void Mine::Miner::unitTests () {
+  if (!output) throw string("Mine output has not been set.");  
+  // Note that this is not static, it's run on a particular Miner.
+  double* oldCapital = capital;
+  capital = new double[TradeGood::numTypes()];
+  TradeGood const* testCapGood = 0;
+  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+    capital[**tg] = 0;
+    if (testCapGood) continue;
+    testCapGood = (*tg);
+    capital[**tg] = 0.1;
+  }
+
+  MineStatus::Iter msi = MineStatus::start();
+  MineStatus* status = (*msi);
+  shafts[*status] = 100;
+  double laborNeeded = getNeededLabour();
+  if (laborNeeded <= 0) {
+    sprintf(errorMessage, "Expected to need positive amount of labor, but found %f", laborNeeded);
+    throw string(errorMessage);
+  }
+
+  deliverGoods(testCapGood, 1);
+  double laborNeededWithCapital = getNeededLabour();
+  if (laborNeededWithCapital >= laborNeeded) {
+    sprintf(errorMessage,
+	    "With capital %f of %s, should require less than %f labour, but need %f",
+	    getAmount(testCapGood),
+	    testCapGood->getName().c_str(),
+	    laborNeeded,
+	    laborNeededWithCapital);
+    throw string(errorMessage);
+  }
+  deliverGoods(testCapGood, -1);
+
+  laborNeeded = getNeededLabour();
+  GoodsHolder prices;
+  vector<MarketBid*> bidlist;
+  prices.deliverGoods(TradeGood::Labor, 1);
+  prices.deliverGoods(testCapGood, 1);
+  prices.deliverGoods(output, 1);
+  getBids(prices, bidlist);
+  
+  bool foundLabour = false;
+  bool foundCapGood = false;
+  BOOST_FOREACH(MarketBid* mb, bidlist) {
+    if (mb->tradeGood == TradeGood::Labor) {
+      foundLabour = true;
+      if (fabs(mb->amountToBuy - status->requiredLabour) > 0.1) {
+	sprintf(errorMessage, "Expected to buy %i %s, bid is for %f", status->requiredLabour, TradeGood::Labor->getName().c_str(), mb->amountToBuy);
+	throw string(errorMessage);
+      }
+    }
+    else if (mb->tradeGood == testCapGood) {
+      foundCapGood = true;
+      if (mb->amountToBuy <= 0) {
+	sprintf(errorMessage, "Expected to buy %s, but am selling", testCapGood->getName().c_str());
+	throw string(errorMessage);
+      }
+    }
+    else {
+      sprintf(errorMessage,
+	      "Expected to bid on %s and %s, but got bid for %f %s (capital %f price %f) %i %i %f %p %p",
+	      TradeGood::Labor->getName().c_str(),
+	      testCapGood->getName().c_str(),
+	      mb->amountToBuy,
+	      mb->tradeGood->getName().c_str(),
+	      capital[*(mb->tradeGood)],
+	      prices.getAmount(mb->tradeGood),
+	      mb->tradeGood->getIdx(),
+	      testCapGood->getIdx(),
+	      capital[*testCapGood],
+	      capital,
+	      oldCapital);
+      throw string(errorMessage);
+    }
+  }
+  if (!foundLabour) {
+    sprintf(errorMessage,
+	    "Expected to buy %s, no bid found (%f %f)",
+	    TradeGood::Labor->getName().c_str(),
+	    expectedOutput(),
+	    getNeededLabour());
+    throw string(errorMessage);
+  }
+  if (!foundCapGood) {
+    sprintf(errorMessage, "Expected to buy %s, no bid found", testCapGood->getName().c_str());
+    throw string(errorMessage);
+  }
+
+  owner = this;
+  deliverGoods(TradeGood::Labor, laborNeeded);
+  workShafts();
+  if (shafts[*status] != 99) {
+    sprintf(errorMessage,
+	    "Expected %s to be 99, got %i",
+	    status->getName().c_str(),
+	    shafts[*status]);
+    throw string(errorMessage);
+  }
+
+  if (0.01 > getAmount(output)) throw string("Expected to have some iron after workShafts");
+  
+  delete[] capital;
+  capital = oldCapital;
+}
+
+double Mine::Miner::getNeededLabour () const {
+  double ret = 0;
+  for (MineStatus::Iter ms = MineStatus::start(); ms != MineStatus::final(); ++ms) {
+    if (0 == shafts[**ms]) continue;
+    ret = (*ms)->requiredLabour;
+    break;
+  }
+
+  ret *= capitalFactor(*this);
+  return ret; 
+}
+
+void Mine::Miner::workShafts () {
+  double availableLabour = getAmount(TradeGood::Labor);
+  double capFactor = capitalFactor(*this);
+
+  for (MineStatus::Iter ms = MineStatus::start(); ms != MineStatus::final(); ++ms) {
+    if (0 == shafts[**ms]) continue;
+    if (availableLabour < (*ms)->requiredLabour * capFactor) break;
+    availableLabour -= (*ms)->requiredLabour * capFactor;
+    owner->deliverGoods(output, _amountOfIron);
+    shafts[**ms]--;
+    break;
+  }
+
+  double usedLabour = availableLabour - getAmount(TradeGood::Labor);
+  deliverGoods(TradeGood::Labor, usedLabour);
+  if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workShafts");
+}
+
+void Mine::setMirrorState () {
+  mirror->setOwner(getOwner());
+  mirror->miners.clear();
+  BOOST_FOREACH(Miner* miner, miners) {
+    miner->setMirrorState();
+    mirror->miners.push_back(miner->getMirror());
+  }
+}
