@@ -150,8 +150,8 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Farmland::_cropsFrom3     = farmInfo->safeGetInt("cropsFrom3",     Farmland::_cropsFrom3);
   Farmland::_cropsFrom2     = farmInfo->safeGetInt("cropsFrom2",     Farmland::_cropsFrom2);
   Farmland::_cropsFrom1     = farmInfo->safeGetInt("cropsFrom1",     Farmland::_cropsFrom1);
-  Farmland::output          = TradeGood::getByName(farmInfo->safeGetString("output", "food"));
-  if (!Farmland::output) throw string("No output specified for Farmland");  
+  Farmland::Farmer::output          = TradeGood::getByName(farmInfo->safeGetString("output", "food"));
+  if (!Farmland::Farmer::output) throw string("No output specified for Farmer");
   Object* farmCap = farmInfo->getNeededObject("capital");
   readCapitalForIndustry(farmCap, Industry<Farmland::Farmer>::capital);
 
@@ -159,7 +159,7 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Forest::_labourToTend    = forestInfo->safeGetInt("labourToTend", Forest::_labourToTend);
   Forest::_labourToHarvest = forestInfo->safeGetInt("labourToHarvest", Forest::_labourToHarvest);
   Forest::_labourToClear   = forestInfo->safeGetInt("labourToClear", Forest::_labourToClear);
-  Forest::output           = TradeGood::getByName(forestInfo->safeGetString("output", "wood"));
+  Forest::Forester::output = TradeGood::getByName(forestInfo->safeGetString("output", "wood"));
   Object* amountOfWood     = forestInfo->getNeededObject("amountOfWood");
   Forest::_amountOfWood.clear();
   Forest::_amountOfWood.push_back(0);
@@ -175,7 +175,7 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   for (int i = 0; i < amountOfWood->numTokens(); ++i) {
     Forest::_amountOfWood[i] = amountOfWood->tokenAsInt(i);
   }
-  if (!Forest::output) throw string("No output specified for Forest");
+  if (!Forest::Forester::output) throw string("No output specified for Forester");
   Object* forestCap = forestInfo->getNeededObject("capital");
   readCapitalForIndustry(forestCap, Industry<Forest::Forester>::capital);
   

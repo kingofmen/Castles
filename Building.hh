@@ -17,10 +17,40 @@ class Line;
 class Player;
 class Farmland; 
 
-template<class T> class Industry {
+template<class T> class Industry : public EconActor {
   friend class StaticInitialiser;
 
 public:
+  Industry (T* ind) : EconActor(), industry(ind) {}
+  
+  virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
+    // Goal is to maximise profit. Calculate how much labor we need to get in the harvest;
+    // if the price of the expected food is more, bid for enough labor to do this turn's work.
+    // If there is money left over, bid for equipment to reduce the amount of labor needed
+    // next turn, provided the net-present-value of the reduction is higher than the cost
+    // of the machinery.
+    
+    double laborNeeded = industry->getNeededLabour() - getAmount(TradeGood::Labor);
+    double expectedProduction = industry->expectedOutput();
+    if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction) {
+      bidlist.push_back(new MarketBid(TradeGood::Labor, laborNeeded, this));
+    }
+    else {
+      // This industry cannot be economically worked.
+      // TODO: Query owner about whether to do it
+      // anyway for "subsistence agriculture" or other
+      // non-economic benefit.
+    }
+    for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+      if (capital[**tg] < 0.00001) continue;
+      double laborSaving = laborNeeded * (1 - marginalCapFactor((*tg), getAmount(*tg)));
+      // Assuming discount rate of 10%. Present value of amount x every period to infinity is (x/r) with r the interest rate.
+      // TODO: Take decay into account. Variable discount rate?
+      double npv = laborSaving * prices.getAmount(TradeGood::Labor) * 10;
+      if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this));
+    }
+  }
+  
   // Return the reduction in required labor if we had one additional unit.
   double marginalCapFactor (TradeGood const* const tg, double currentAmount) const {
     return capFactor(capital[*tg], 1+currentAmount) / capFactor(capital[*tg], currentAmount);
@@ -33,18 +63,22 @@ public:
     }
     return ret;
   }
-
+  
 protected:
   // Capital reduces the amount of labour required by factor (1 - x log (N+1)). This array stores x. 
   static double* capital;
-
+  static TradeGood const* output;
+  
 private:
+  T* industry;
+  
   double capFactor (double reductionConstant, double goodAmount) const {
     return 1 - reductionConstant * log(1 + goodAmount);
   }
 }; 
 
-template<class T> double* Industry<T>::capital; 
+template<class T> double* Industry<T>::capital = 0;
+template<class T> TradeGood const* Industry<T>::output = 0;
 
 class Building {
   friend class StaticInitialiser; 
@@ -59,6 +93,8 @@ public:
   void assignLand (int amount) {assignedLand += amount; if (0 > assignedLand) assignedLand = 0;}
   double getAvailableSupplies () const {return supplies;}   
 
+  static const int numOwners = 10;
+  
 protected:
   double supplies; 
   
@@ -226,12 +262,13 @@ public:
   static const int numOwners = 10; 
   
 private:
-  class Farmer : public EconActor, public Industry<Farmland::Farmer>, public Mirrorable<Farmland::Farmer> {
+  class Farmer : public Industry<Farmland::Farmer>, public Mirrorable<Farmland::Farmer> {
     friend class Mirrorable<Farmland::Farmer>;
   public:
     Farmer ();
     ~Farmer ();
-    virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
+    double expectedOutput () const;
+    double getNeededLabour () const;
     virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
@@ -240,8 +277,6 @@ private:
     vector<int> fields;
   private:
     Farmer(Farmer* other);
-    double getNeededLabour () const;
-    double expectedOutput () const;
   };
 
   Farmland (Farmland* other);
@@ -257,7 +292,6 @@ private:
   static int _cropsFrom3;
   static int _cropsFrom2;
   static int _cropsFrom1;
-  static TradeGood const* output;
 };
 
 class Forest : public Building, public Mirrorable<Forest> {
@@ -276,14 +310,14 @@ public:
 
   static void unitTests ();
   
-  static const int numOwners = 10;
 private:
-  class Forester : public EconActor, public Industry<Forester>, public Mirrorable<Forester> {
+  class Forester : public Industry<Forester>, public Mirrorable<Forester> {
     friend class Mirrorable<Forester>;
   public:
     Forester (Forest* b);
     ~Forester ();
-    virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
+    double expectedOutput () const;      
+    double getNeededLabour () const;
     virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
@@ -295,9 +329,7 @@ private:
     Forester(Forester* other);
     Forest* boss;
     int    getForestArea () const;
-    double getNeededLabour () const;
     int    getTendedArea () const;
-    double expectedOutput () const;
   };
  
   Forest (Forest* other);
@@ -309,7 +341,6 @@ private:
   static int _labourToTend;    // Ensure forest doesn't go wild.
   static int _labourToHarvest; // Extract wood, make clear.
   static int _labourToClear;   // Go from wild to clear.
-  static TradeGood const* output;
 };
 
 #endif

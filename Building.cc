@@ -30,13 +30,11 @@ int Farmland::_labourToReap   = 10;
 int Farmland::_cropsFrom3     = 1000;
 int Farmland::_cropsFrom2     = 500;
 int Farmland::_cropsFrom1     = 100;
-TradeGood const* Farmland::output = 0;
 
 int Forest::_labourToTend    = 5;
 int Forest::_labourToHarvest = 50;
 int Forest::_labourToClear   = 250;
 vector<int> Forest::_amountOfWood;
-TradeGood const* Forest::output = 0;
 
 Castle::Castle (Hex* dat, Line* lin) 
   : Mirrorable<Castle>()
@@ -445,12 +443,14 @@ Farmland::Farmland (Farmland* other)
 {}
 
 Farmland::Farmer::Farmer ()
-  : Mirrorable<Farmland::Farmer>()
+  : Industry<Farmer>(this)
+  , Mirrorable<Farmland::Farmer>()
   , fields(NumStatus, 0)
 {}
 
 Farmland::Farmer::Farmer (Farmer* other)
-  : Mirrorable<Farmland::Farmer>(other)
+  : Industry<Farmer>(this)
+  , Mirrorable<Farmland::Farmer>(other)
   , fields(NumStatus, 0)
 {}
 
@@ -461,33 +461,6 @@ void Farmland::Farmer::setMirrorState () {
 
 Farmland::Farmer::~Farmer () {}
 
-void Farmland::Farmer::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
-  // Goal is to maximise profit. Calculate how much labor we need to get in the harvest;
-  // if the price of the expected food is more, bid for enough labor to do this turn's work.
-  // If there is money left over, bid for equipment to reduce the amount of labor needed
-  // next turn, provided the net-present-value of the reduction is higher than the cost
-  // of the machinery.
-
-  double laborNeeded = getNeededLabour() - getAmount(TradeGood::Labor);
-  double expectedProduction = expectedOutput();
-  if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction) {
-    bidlist.push_back(new MarketBid(TradeGood::Labor, laborNeeded, this));
-  }
-  else {
-    // These fields cannot be economically worked.
-    // TODO: Query village about whether to do it
-    // anyway as subsistence agriculture. 
-  }
-  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-    if (capital[**tg] < 0.00001) continue;
-    double laborSaving = laborNeeded * (1 - marginalCapFactor((*tg), getAmount(*tg)));
-    // Assuming discount rate of 10%. Present value of amount x every period to infinity is (x/r) with r the interest rate.
-    // TODO: Take decay into account. Variable discount rate?
-    double npv = laborSaving * prices.getAmount(TradeGood::Labor) * 10;
-    if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this));
-  }
-}
-
 double Farmland::Farmer::expectedOutput () const {
   return _cropsFrom3 * (fields[Clear] + fields[Ready] + fields[Sowed] + fields[Ripe1] + fields[Ripe2] + fields[Ripe3]);
 }
@@ -497,7 +470,6 @@ double Farmland::Farmer::produceForContract (TradeGood const* const tg, double a
 }
 
 void Farmland::unitTests () {
-  if (!output) throw string("Farm output has not been set.");
   Farmland testFarm;
   // Stupidest imaginable test, but did actually catch a problem, so...
   if ((int) testFarm.farmers.size() != numOwners) {
@@ -510,6 +482,7 @@ void Farmland::unitTests () {
 }
 
 void Farmland::Farmer::unitTests () {
+  if (!output) throw string("Farm output has not been set.");  
   // Note that this is not static, it's run on a particular Farmer.
   char errorMessage[500];  
   double* oldCapital = capital;
@@ -801,14 +774,16 @@ Forest::~Forest () {
 }
 
 Forest::Forester::Forester (Forest* b)
-  : Mirrorable<Forest::Forester>()
+  : Industry<Forester>(this)
+  , Mirrorable<Forest::Forester>()
   , groves(NumStatus, 0)
   , tendedGroves(0)
   , boss(b)
 {}
 
 Forest::Forester::Forester (Forester* other)
-  : Mirrorable<Forest::Forester>(other)
+  : Industry<Forester>(this)
+  , Mirrorable<Forest::Forester>(other)
   , groves(NumStatus, 0)
 {}
 
@@ -819,28 +794,6 @@ void Forest::Forester::setMirrorState () {
 }
 
 Forest::Forester::~Forester () {}
-
-void Forest::Forester::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
-  // Goal is to maximise profit. Calculate how much labor we need to get in the harvest;
-  // if the price of the expected food is more, bid for enough labor to do this turn's work.
-  // If there is money left over, bid for equipment to reduce the amount of labor needed
-  // next turn, provided the net-present-value of the reduction is higher than the cost
-  // of the machinery.
-
-  double laborNeeded = getNeededLabour() - getAmount(TradeGood::Labor);
-  double expectedProduction = expectedOutput();
-  if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction) {
-    bidlist.push_back(new MarketBid(TradeGood::Labor, laborNeeded, this));
-  }
-  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-    if (capital[**tg] < 0.00001) continue;
-    double laborSaving = laborNeeded * (1 - marginalCapFactor((*tg), getAmount(*tg)));
-    // Assuming discount rate of 10%. Present value of amount x every period to infinity is (x/r) with r the interest rate.
-    // TODO: Take decay into account. Variable discount rate?
-    double npv = laborSaving * prices.getAmount(TradeGood::Labor) * 10;
-    if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this));
-  }
-}
 
 double Forest::Forester::expectedOutput () const {
   double ret = 0;
@@ -855,7 +808,6 @@ double Forest::Forester::produceForContract (TradeGood const* const tg, double a
 }
 
 void Forest::unitTests () {
-  if (!output) throw string("Forest output has not been set.");
   Forest testForest;
   if ((int) testForest.foresters.size() != numOwners) {
     char errorMessage[500];
@@ -868,6 +820,7 @@ void Forest::unitTests () {
 }
 
 void Forest::Forester::unitTests () {
+  if (!output) throw string("Forest output has not been set.");  
   // Note that this is not static, it's run on a particular Forester.
   char errorMessage[500];  
   double* oldCapital = capital;
@@ -1123,7 +1076,7 @@ double Village::consumption () const {
 
 void Farmland::devastate (int devastation) {
   while (devastation > 0) {
-    int target = rand() % numOwners;
+    int target = rand() % farmers.size();
     if      (farmers[target]->fields[Ripe3] > 0) {farmers[target]->fields[Ripe3]--; farmers[target]->fields[Ripe2]++;}
     else if (farmers[target]->fields[Ripe2] > 0) {farmers[target]->fields[Ripe2]--; farmers[target]->fields[Ripe1]++;}
     else if (farmers[target]->fields[Ripe1] > 0) {farmers[target]->fields[Ripe1]--; farmers[target]->fields[Ready]++;}
@@ -1137,16 +1090,16 @@ void Farmland::endOfTurn () {
 }
 
 void Farmland::delivery (EconActor* target, TradeGood const* const good, double amount) {
-  unsigned int divs = 0; 
-  for (int i = 0; i < numOwners; ++i) {
-    if (farmers[i]->isOwnedBy(target)) ++divs;
+  unsigned int divs = 0;
+  BOOST_FOREACH(Farmer* farmer, farmers) {
+    if (farmer->isOwnedBy(target)) ++divs;
   }
 
   if (0 == divs) return;
-  amount /= divs; 
-  for (int i = 0; i < numOwners; ++i) {
-    if (!farmers[i]->isOwnedBy(target)) continue;
-    farmers[i]->deliverGoods(good, amount);
+  amount /= divs;
+  BOOST_FOREACH(Farmer* farmer, farmers) {  
+    if (!farmer->isOwnedBy(target)) continue;
+    farmer->deliverGoods(good, amount);
   }
 }
 
@@ -1171,17 +1124,17 @@ void Village::eatFood () {
 
 void Farmland::setDefaultOwner (EconActor* o) {
   if (!o) return;
-  for (int i = 0; i < numOwners; ++i) {
-    if (farmers[i]->getEconOwner()) continue;
-    farmers[i]->setEconOwner(o);
+  BOOST_FOREACH(Farmer* farmer, farmers) {  
+    if (farmer->getEconOwner()) continue;
+    farmer->setEconOwner(o);
   }
 }
 
 void Forest::setDefaultOwner (EconActor* o) {
   if (!o) return;
-  for (int i = 0; i < numOwners; ++i) {
-    if (foresters[i]->getEconOwner()) continue;
-    foresters[i]->setEconOwner(o);
+  BOOST_FOREACH(Forester* forester, foresters) {
+    if (forester->getEconOwner()) continue;
+    forester->setEconOwner(o);
   }
 }
 
@@ -1198,25 +1151,24 @@ void Forest::endOfTurn () {
 }
 
 void Farmland::countTotals () {
-  totalFields[Clear] = farmers[0]->fields[Clear];
-  totalFields[Ready] = farmers[0]->fields[Ready];
-  totalFields[Sowed] = farmers[0]->fields[Sowed];
-  totalFields[Ripe1] = farmers[0]->fields[Ripe1];
-  totalFields[Ripe2] = farmers[0]->fields[Ripe2];
-  totalFields[Ripe3] = farmers[0]->fields[Ripe3];
-  totalFields[Ended] = farmers[0]->fields[Ended];
-  
-  for (int i = 1; i < numOwners; ++i) {
-    totalFields[Clear] += farmers[i]->fields[Clear];
-    totalFields[Ready] += farmers[i]->fields[Ready];
-    totalFields[Sowed] += farmers[i]->fields[Sowed];
-    totalFields[Ripe1] += farmers[i]->fields[Ripe1];
-    totalFields[Ripe2] += farmers[i]->fields[Ripe2];
-    totalFields[Ripe3] += farmers[i]->fields[Ripe3];
-    totalFields[Ended] += farmers[i]->fields[Ended];
+  totalFields[Clear] = 0;
+  totalFields[Ready] = 0;
+  totalFields[Sowed] = 0;
+  totalFields[Ripe1] = 0;
+  totalFields[Ripe2] = 0;
+  totalFields[Ripe3] = 0;
+  totalFields[Ended] = 0;
+
+  BOOST_FOREACH(Farmer* farmer, farmers) {
+    totalFields[Clear] += farmer->fields[Clear];
+    totalFields[Ready] += farmer->fields[Ready];
+    totalFields[Sowed] += farmer->fields[Sowed];
+    totalFields[Ripe1] += farmer->fields[Ripe1];
+    totalFields[Ripe2] += farmer->fields[Ripe2];
+    totalFields[Ripe3] += farmer->fields[Ripe3];
+    totalFields[Ended] += farmer->fields[Ended];
   }
 }
-
 
 int Village::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll) {
   double luckModifier = 1.0;
@@ -1254,3 +1206,4 @@ int Village::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit*
 
   return recruited; 
 }
+
