@@ -29,7 +29,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Mine
      . Internal (check)
      . Initialisation (check)
-     . Read from save
+     . Read from save (check)
      . Write to save
      . Unit tests (check)
    - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)

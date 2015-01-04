@@ -49,7 +49,8 @@ public:
   
 private:
   static Farmland* buildFarm (Object* fInfo);
-  static Forest*   buildForest (Object* fInfo);  
+  static Forest*   buildForest (Object* fInfo);
+  static Mine*     buildMine (Object* mInfo);  
   
   static void readGoodsHolder (Object* goodsObject, GoodsHolder& goods);
   static void addShadows (QGLFramebufferObject* fbo, GLuint texture); 

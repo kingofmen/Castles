@@ -64,6 +64,7 @@ public:
   void                   setForest (Forest* f);  
   void                   setGraphicsFarm (Farmland* f);
   void                   setGraphicsVillage (Village* v);
+  void                   setMine (Mine* m);  
   void                   setVillage (Village* v);
   virtual void           setMirrorState ();
 
@@ -88,6 +89,7 @@ private:
   HexGraphicsInfo* graphicsInfo;
   Farmland* farms;
   Forest* forest;
+  Mine* mine;
   Village* village;
   Castle* castle;
   int arableLand;

@@ -57,6 +57,7 @@ Hex::Hex (int x, int y, TerrainType t)
   , graphicsInfo(0)        
   , farms(0)
   , forest(0)
+  , mine(0)
   , village(0)
   , castle(0)
 {
@@ -78,7 +79,8 @@ Hex::Hex (Hex* other)
   , owner(0)
   , graphicsInfo(0)
   , farms(0)
-  , forest(0)    
+  , forest(0)
+  , mine(0)
   , village(0)
   , castle(0)    
 {}
@@ -93,6 +95,8 @@ void Hex::initialise () {
 
 Hex::~Hex () {
   if (farms) farms->destroyIfReal();
+  if (forest) forest->destroyIfReal();
+  if (mine) mine->destroyIfReal();
   if (village) village->destroyIfReal();
 }
 
@@ -252,7 +256,7 @@ void Hex::setForest (Forest* f) {
   forest = f;
   forest->setMarket(this);
   if (village) forest->setDefaultOwner(village);
-} 
+}
 
 void Hex::setGraphicsFarm (Farmland* f) {
   if (graphicsInfo) graphicsInfo->setFarm(new FarmGraphicsInfo(f)); 
@@ -260,6 +264,12 @@ void Hex::setGraphicsFarm (Farmland* f) {
 
 void Hex::setGraphicsVillage (Village* f) {
   if (graphicsInfo) graphicsInfo->setVillage(new VillageGraphicsInfo(f)); 
+}
+
+void Hex::setMine (Mine* m) {
+  mine = m;
+  mine->setMarket(this);
+  if (village) mine->setDefaultOwner(village);
 }
 
 void Hex::setVillage (Village* f) {
@@ -458,7 +468,9 @@ void Hex::endOfTurn () {
   // Farms buy labor and tools.
   holdMarket();
   // Use them to work the fields, and perhaps deliver food to owners.
-  if (farms) farms->endOfTurn();
+  if (farms)  farms-> endOfTurn();
+  if (forest) forest->endOfTurn();
+  if (mine)   mine->  endOfTurn();
   // Who then consume.
   if (village) village->endOfTurn();
 }
@@ -648,21 +660,37 @@ void Hex::setMirrorState () {
   
   if (farms) {
     farms->setMirrorState();
-    mirror->farms = farms->Mirrorable<Farmland>::getMirror();
+    mirror->farms = farms->getMirror();
   }
   else {
-    if (mirror->farms) delete mirror->farms->Mirrorable<Farmland>::getReal(); 
+    if (mirror->farms) delete mirror->farms->getReal(); 
     mirror->farms = 0; 
   }
   if (village) {
     village->setMirrorState();
-    mirror->village = village->Mirrorable<Village>::getMirror();
+    mirror->village = village->getMirror();
   }
   else {
-    if (mirror->village) delete mirror->village->Mirrorable<Village>::getReal(); 
+    if (mirror->village) delete mirror->village->getReal(); 
     mirror->village = 0; 
   }
-  if (castle) mirror->castle = castle->Mirrorable<Castle>::getMirror();
+  if (forest) {
+    forest->setMirrorState();
+    mirror->forest = forest->getMirror();
+  }
+  else {
+    if (mirror->forest) delete mirror->forest->getReal();
+    mirror->forest = 0;
+  }
+  if (mine) {
+    mine->setMirrorState();
+    mirror->mine = mine->getMirror();
+  }
+  else {
+    if (mirror->mine) delete mirror->mine->getReal();
+    mirror->mine = 0;
+  }
+  if (castle) mirror->castle = castle->getMirror();
   else mirror->castle = 0;
 }
 

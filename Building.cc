@@ -1239,6 +1239,14 @@ Mine::Miner::Miner (Miner* other)
   , shafts(MineStatus::numTypes(), 0)
 {}
 
+void Mine::setDefaultOwner (EconActor* o) {
+  if (!o) return;
+  BOOST_FOREACH(Miner* miner, miners) {  
+    if (miner->getEconOwner()) continue;
+    miner->setEconOwner(o);
+  }
+}
+
 void Mine::Miner::setMirrorState () {
   mirror->owner = owner;
   for (unsigned int i = 0; i < shafts.size(); ++i) mirror->shafts[i] = shafts[i];

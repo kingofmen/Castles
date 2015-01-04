@@ -455,7 +455,6 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     hex->setFarm(farms);
   }
 
-  
   fInfo = hInfo->safeGetObject("forest");
   if (fInfo) {
     Forest* forest = buildForest(fInfo);
@@ -463,7 +462,15 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     if (owner) forest->setOwner(owner);
     hex->setForest(forest);
   }
-  
+
+  fInfo = hInfo->safeGetObject("mine");
+  if (fInfo) {
+    Mine* mine = buildMine(fInfo);
+    initialiseBuilding(mine, fInfo);
+    if (owner) mine->setOwner(owner);
+    hex->setMine(mine);
+  }
+
   //initialiseMarket(hex, hInfo->getNeededObject("prices"));
 }
 
@@ -552,6 +559,20 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
   ret->minStatusToHarvest = Forest::Huge;
   
   return ret;
+}
+
+Mine* StaticInitialiser::buildMine (Object* mInfo) {
+  Mine* ret = new Mine();
+  for (Mine::MineStatus::Iter ms = Mine::MineStatus::start(); ms != Mine::MineStatus::final(); ++ms) {
+    Object* status = mInfo->getNeededObject((*ms)->getName());
+    for (int i = 0; i < Mine::numOwners; ++i) {  
+      ret->miners[i]->shafts[i] = (status->numTokens() >= i ? status->tokenAsInt(i) : 0);
+    }
+  }
+  Object* owner = mInfo->getNeededObject("owner");
+  for (int i = 0; i < Mine::numOwners; ++i) {
+    ret->miners[i]->owner = (owner->numTokens() >= i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0);
+  }
 }
 
 void StaticInitialiser::buildMilitia (Village* target, Object* mInfo) {
