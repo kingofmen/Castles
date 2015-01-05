@@ -192,10 +192,11 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   if (!Mine::Miner::output) throw string("No output specified for Miner");
   Object* mineCap = mineInfo->getNeededObject("capital");
   readCapitalForIndustry(mineCap, &Industry<Mine::Miner>::capital);
-  Mine::MineStatus::clear();
+  Enumerable<Mine::MineStatus>::clear();
   objvec statuses = mineInfo->getValue("status");
   for (unsigned int i = 0; i < statuses.size(); ++i) {
     Mine::MineStatus* stat = new Mine::MineStatus(statuses[i]->safeGetString("name", "nameNotFound"), statuses[i]->safeGetInt("requiredLabour", 10), (i+1) == statuses.size());
+    stat = 0; //Quiet, compiler
   }
   
   Object* femf = popInfo->safeGetObject("femaleFert");
@@ -464,13 +465,14 @@ void StaticInitialiser::buildHex (Object* hInfo) {
   }
 
   fInfo = hInfo->safeGetObject("mine");
+
   if (fInfo) {
     Mine* mine = buildMine(fInfo);
     initialiseBuilding(mine, fInfo);
     if (owner) mine->setOwner(owner);
     hex->setMine(mine);
   }
-
+  
   //initialiseMarket(hex, hInfo->getNeededObject("prices"));
 }
 
@@ -509,14 +511,14 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Object* owner = fInfo->safeGetObject("owner");  
   
   for (int i = 0; i < Farmland::numOwners; ++i) {
-    ret->farmers[i]->fields[Farmland::Clear] = clear ? (clear->numTokens() >= i ? clear->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Ready] = ready ? (ready->numTokens() >= i ? ready->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Sowed] = sowed ? (sowed->numTokens() >= i ? sowed->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Ripe1] = ripe1 ? (ripe1->numTokens() >= i ? ripe1->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Ripe2] = ripe2 ? (ripe2->numTokens() >= i ? ripe2->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Ripe3] = ripe3 ? (ripe3->numTokens() >= i ? ripe3->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Ended] = ended ? (ended->numTokens() >= i ? ended->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->owner                   = owner ? (owner->numTokens() >= i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Clear] = clear ? (clear->numTokens() > i ? clear->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Ready] = ready ? (ready->numTokens() > i ? ready->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Sowed] = sowed ? (sowed->numTokens() > i ? sowed->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Ripe1] = ripe1 ? (ripe1->numTokens() > i ? ripe1->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Ripe2] = ripe2 ? (ripe2->numTokens() > i ? ripe2->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Ripe3] = ripe3 ? (ripe3->numTokens() > i ? ripe3->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->fields[Farmland::Ended] = ended ? (ended->numTokens() > i ? ended->tokenAsInt(i) : 0) : 0;
+    ret->farmers[i]->owner                   = owner ? (owner->numTokens() > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
   }
   ret->countTotals();
   
@@ -541,18 +543,18 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
   Object* owner   = fInfo->safeGetObject("owner");
   
   for (int i = 0; i < Forest::numOwners; ++i) {
-    ret->foresters[i]->groves[Forest::Wild]     = wild    ? (wild->numTokens()    >= i ? wild->tokenAsInt(i)    : 0) : 0;
-    ret->foresters[i]->groves[Forest::Clear]    = clear   ? (clear->numTokens()   >= i ? clear->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[Forest::Planted]  = plant   ? (plant->numTokens()   >= i ? plant->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[Forest::Scrub]    = scrub   ? (scrub->numTokens()   >= i ? scrub->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[Forest::Saplings] = sapling ? (sapling->numTokens() >= i ? sapling->tokenAsInt(i) : 0) : 0;
-    ret->foresters[i]->groves[Forest::Young]    = young   ? (young->numTokens()   >= i ? young->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[Forest::Grown]    = grown   ? (grown->numTokens()   >= i ? grown->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[Forest::Mature]   = mature  ? (mature->numTokens()  >= i ? mature->tokenAsInt(i)  : 0) : 0;
-    ret->foresters[i]->groves[Forest::Mighty]   = mighty  ? (mighty->numTokens()  >= i ? mighty->tokenAsInt(i)  : 0) : 0;
-    ret->foresters[i]->groves[Forest::Huge]     = huge    ? (huge->numTokens()    >= i ? huge->tokenAsInt(i)    : 0) : 0;
-    ret->foresters[i]->groves[Forest::Climax]   = climax  ? (climax->numTokens()  >= i ? climax->tokenAsInt(i)  : 0) : 0;
-    ret->foresters[i]->owner                    = owner   ? (owner->numTokens()   >= i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
+    ret->foresters[i]->groves[Forest::Wild]     = wild    ? (wild->numTokens()    > i ? wild->tokenAsInt(i)    : 0) : 0;
+    ret->foresters[i]->groves[Forest::Clear]    = clear   ? (clear->numTokens()   > i ? clear->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[Forest::Planted]  = plant   ? (plant->numTokens()   > i ? plant->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[Forest::Scrub]    = scrub   ? (scrub->numTokens()   > i ? scrub->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[Forest::Saplings] = sapling ? (sapling->numTokens() > i ? sapling->tokenAsInt(i) : 0) : 0;
+    ret->foresters[i]->groves[Forest::Young]    = young   ? (young->numTokens()   > i ? young->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[Forest::Grown]    = grown   ? (grown->numTokens()   > i ? grown->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[Forest::Mature]   = mature  ? (mature->numTokens()  > i ? mature->tokenAsInt(i)  : 0) : 0;
+    ret->foresters[i]->groves[Forest::Mighty]   = mighty  ? (mighty->numTokens()  > i ? mighty->tokenAsInt(i)  : 0) : 0;
+    ret->foresters[i]->groves[Forest::Huge]     = huge    ? (huge->numTokens()    > i ? huge->tokenAsInt(i)    : 0) : 0;
+    ret->foresters[i]->groves[Forest::Climax]   = climax  ? (climax->numTokens()  > i ? climax->tokenAsInt(i)  : 0) : 0;
+    ret->foresters[i]->owner                    = owner   ? (owner->numTokens()   > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
   }
 
   ret->yearsSinceLastTick = fInfo->safeGetInt("yearsSinceLastTick");
@@ -563,16 +565,19 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
 
 Mine* StaticInitialiser::buildMine (Object* mInfo) {
   Mine* ret = new Mine();
+
   for (Mine::MineStatus::Iter ms = Mine::MineStatus::start(); ms != Mine::MineStatus::final(); ++ms) {
     Object* status = mInfo->getNeededObject((*ms)->getName());
     for (int i = 0; i < Mine::numOwners; ++i) {  
-      ret->miners[i]->shafts[i] = (status->numTokens() >= i ? status->tokenAsInt(i) : 0);
+      ret->miners[i]->shafts[**ms] = (status->numTokens() > i ? status->tokenAsInt(i) : 0);
     }
   }
   Object* owner = mInfo->getNeededObject("owner");
   for (int i = 0; i < Mine::numOwners; ++i) {
-    ret->miners[i]->owner = (owner->numTokens() >= i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0);
+    ret->miners[i]->owner = (owner->numTokens() > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0);
   }
+  
+  return ret;
 }
 
 void StaticInitialiser::buildMilitia (Village* target, Object* mInfo) {
@@ -1415,6 +1420,26 @@ void StaticInitialiser::writeGameToFile (string fname) {
       }
       forestInfo->setLeaf("yearsSinceLastTick", forest->yearsSinceLastTick);
       forestInfo->setLeaf("minStatusToHarvest", Forest::Huge);
+    }
+
+    Mine* mine = (*hex)->mine;
+    if (mine) {
+      Object* mineInfo = new Object("mine");
+      hexInfo->setValue(mineInfo);
+      for (Mine::MineStatus::Iter ms = Mine::MineStatus::start(); ms != Mine::MineStatus::final(); ++ms) {
+	Object* statusInfo = new Object((*ms)->getName());
+	mineInfo->setValue(statusInfo);
+	statusInfo->setObjList(true);
+	for (int i = 0; i < Mine::numOwners; ++i) {
+	  statusInfo->addToList(mine->miners[i]->shafts[**ms]);
+	}
+      }
+      Object* owner = new Object("owner");
+      mineInfo->setValue(owner);
+      owner->setObjList(true);
+      for (int i = 0; i < Mine::numOwners; ++i) {
+	owner->addToList((int) mine->miners[i]->owner->getIdx());
+      }
     }
   }
   

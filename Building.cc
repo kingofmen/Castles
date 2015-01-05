@@ -135,7 +135,6 @@ void Castle::recruit (Outcome out) {
   if (!recruitType) recruitType = *(MilUnitTemplate::begin());
   MilUnit* target = (garrison.size() > 0 ? garrison[0] : new MilUnit());
   int newSoldiers = support->recruit(getOwner(), recruitType, target, out);
-  //if (isReal()) Logger::logStream(Logger::Debug) << "Recruited " << newSoldiers << " " << recruitType->name << "\n"; 
   if (0 == garrison.size()) {
     if (0 == newSoldiers) delete target;
     else {
@@ -934,8 +933,6 @@ void Forest::Forester::unitTests () {
   }
 
   deliverGoods(TradeGood::Labor, getNeededLabour());
-  //for (int i = Clear; i < NumStatus; ++i) Logger::logStream(DebugStartup) << "(" << groves[i] << " " << _amountOfWood[i] << ") ";
-  Logger::logStream(DebugStartup) << Calendar::toString() << " " << getNeededLabour() << "\n";
   workGroves(false);
   if (0.01 > getAmount(output)) throw string("Expected to have some wood after workGroves");
   
@@ -1278,7 +1275,6 @@ void Mine::unitTests () {
     sprintf(errorMessage, "Expected at least 3 MineStatus entries, got %i", MineStatus::numTypes());
     throw string(errorMessage);
   }
-
   
   Mine testMine;
   if ((int) testMine.miners.size() != numOwners) {

@@ -30,7 +30,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Internal (check)
      . Initialisation (check)
      . Read from save (check)
-     . Write to save
+     . Write to save (check)
      . Unit tests (check)
    - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
    - Restore clearing of land

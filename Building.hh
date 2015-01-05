@@ -368,7 +368,7 @@ private:
     friend class Mirrorable<Miner>;
   public:
     Miner ();
-    ~Miner ();
+    virtual ~Miner ();
     double expectedOutput () const;      
     double getNeededLabour () const;
     virtual double produceForContract (TradeGood const* const tg, double amount);
