@@ -29,45 +29,54 @@ public:
     // If there is money left over, bid for equipment to reduce the amount of labor needed
     // next turn, provided the net-present-value of the reduction is higher than the cost
     // of the machinery.
+
     
     double laborNeeded = industry->getNeededLabour() - getAmount(TradeGood::Labor);
     double expectedProduction = industry->expectedOutput();
-    if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction) {
-      bidlist.push_back(new MarketBid(TradeGood::Labor, laborNeeded, this));
+    double totalToBuy = 0;
+    for (vector<double>::iterator margin = marginalOutputs.begin(); margin != marginalOutputs.end(); ++margin) {
+      if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction * (*margin)) {
+	totalToBuy += laborNeeded;
+      }
+      else {
+	// This is where we no longer make a profit.
+	// TODO: Query owner about whether to do it
+	// anyway for "subsistence agriculture" or other
+	// non-economic benefit.
+	break;
+      }
     }
-    else {
-      // This industry cannot be economically worked.
-      // TODO: Query owner about whether to do it
-      // anyway for "subsistence agriculture" or other
-      // non-economic benefit.
-    }
+    bidlist.push_back(new MarketBid(TradeGood::Labor, totalToBuy, this));
+    
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-      if (capital[**tg] < 0.00001) continue;
-      double laborSaving = laborNeeded * (1 - marginalCapFactor((*tg), getAmount(*tg)));
+      if (capital->getAmount(*tg) < 0.00001) continue;
+      double laborSaving = totalToBuy * (1 - marginalCapFactor((*tg), getAmount(*tg)));
       // Assuming discount rate of 10%. Present value of amount x every period to infinity is (x/r) with r the interest rate.
       // TODO: Take decay into account. Variable discount rate?
       double npv = laborSaving * prices.getAmount(TradeGood::Labor) * 10;
       if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this));
     }
+    
   }
   
   // Return the reduction in required labor if we had one additional unit.
   double marginalCapFactor (TradeGood const* const tg, double currentAmount) const {
-    return capFactor(capital[*tg], 1+currentAmount) / capFactor(capital[*tg], currentAmount);
+    return capFactor(capital->getAmount(tg), 1+currentAmount) / capFactor(capital->getAmount(tg), currentAmount);
   }
   
   double capitalFactor (const GoodsHolder& capitalToUse, int dilution = 1) const {
     double ret = 1;
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-      ret *= capFactor(capital[**tg], capitalToUse.getAmount(*tg)/dilution);
+      ret *= capFactor(capital->getAmount(*tg), capitalToUse.getAmount(*tg)/dilution);
     }
     return ret;
   }
   
 protected:
   // Capital reduces the amount of labour required by factor (1 - x log (N+1)). This array stores x. 
-  static double* capital;
+  static GoodsHolder* capital;
   static TradeGood const* output;
+  static vector<double> marginalOutputs;
   
 private:
   T* industry;
@@ -75,10 +84,11 @@ private:
   double capFactor (double reductionConstant, double goodAmount) const {
     return 1 - reductionConstant * log(1 + goodAmount);
   }
-}; 
+};
 
-template<class T> double* Industry<T>::capital = 0;
+template<class T> GoodsHolder* Industry<T>::capital = 0;
 template<class T> TradeGood const* Industry<T>::output = 0;
+template<class T> vector<double> Industry<T>::marginalOutputs;
 
 class Building {
   friend class StaticInitialiser; 

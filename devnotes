@@ -33,6 +33,12 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Write to save (check)
      . Unit tests (check)
    - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
+   - Get rid of old supplies stuff
+   - Margin effects
+   - Include Castle and MilUnit
+   - Make Markets exist in Vertexes - share between Hexes!
+   - Discount rate on Maslow levels, eg do I prefer level 2 now and 0 tomorrow, or 1 both days? Also, seasonal awareness.
+   - More GUI insight for testing purposes
    - Restore clearing of land
    - Normalisation
    - Ending of contracts

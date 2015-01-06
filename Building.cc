@@ -486,15 +486,14 @@ void Farmland::unitTests () {
 void Farmland::Farmer::unitTests () {
   if (!output) throw string("Farm output has not been set.");  
   // Note that this is not static, it's run on a particular Farmer.
-  double* oldCapital = capital;
-  capital = new double[TradeGood::numTypes()];
+  GoodsHolder oldCapital(*capital);
+  capital->clear();
   TradeGood const* testCapGood = 0;
   for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-    capital[**tg] = 0;
     if ((*tg) == output) continue;
-    if (testCapGood) continue;
     testCapGood = (*tg);
-    capital[**tg] = 0.1;
+    capital->setAmount((*tg), 0.1);
+    break;
   }
 
   Calendar::newYearBegins();
@@ -554,18 +553,16 @@ void Farmland::Farmer::unitTests () {
     }
     else {
       sprintf(errorMessage,
-	      "Expected to bid on %s and %s, but got bid for %f %s (capital %f price %f) %i %i %f %p %p",
+	      "Expected to bid on %s and %s, but got bid for %f %s (capital %f price %f) %i %i %f",
 	      TradeGood::Labor->getName().c_str(),
 	      testCapGood->getName().c_str(),
 	      mb->amountToBuy,
 	      mb->tradeGood->getName().c_str(),
-	      capital[*(mb->tradeGood)],
+	      capital->getAmount(mb->tradeGood),
 	      prices.getAmount(mb->tradeGood),
 	      mb->tradeGood->getIdx(),
 	      testCapGood->getIdx(),
-	      capital[*testCapGood],
-	      capital,
-	      oldCapital);
+	      capital->getAmount(testCapGood));
       throw string(errorMessage);
     }
   }
@@ -602,10 +599,9 @@ void Farmland::Farmer::unitTests () {
   }
   Calendar::newYearBegins();
   
-  delete[] capital;
   _labourToSow = oldLabourToSow;
   _labourToPlow = oldLabourToPlow;
-  capital = oldCapital;
+  capital->setAmounts(oldCapital);
 }
 
 void Farmland::Farmer::workFields () {  
@@ -820,17 +816,17 @@ void Forest::unitTests () {
 }
 
 void Forest::Forester::unitTests () {
+  if (1 != marginalOutputs.size()) throw string("Wrong output size");
   if (!output) throw string("Forest output has not been set.");  
   // Note that this is not static, it's run on a particular Forester.
-  double* oldCapital = capital;
-  capital = new double[TradeGood::numTypes()];
+  GoodsHolder oldCapital(*capital);
+  capital->clear();
   TradeGood const* testCapGood = 0;
   for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-    capital[**tg] = 0;
     if ((*tg) == output) continue;
-    if (testCapGood) continue;
     testCapGood = (*tg);
-    capital[**tg] = 0.1;
+    capital->setAmount((*tg), 0.1);
+    break;
   }
 
   Calendar::newYearBegins();
@@ -888,18 +884,16 @@ void Forest::Forester::unitTests () {
     }
     else {
       sprintf(errorMessage,
-	      "Expected to bid on %s and %s, but got bid for %f %s (capital %f price %f) %i %i %f %p %p",
+	      "Expected to bid on %s and %s, but got bid for %f %s (capital %f price %f) %i %i %f",
 	      TradeGood::Labor->getName().c_str(),
 	      testCapGood->getName().c_str(),
 	      mb->amountToBuy,
 	      mb->tradeGood->getName().c_str(),
-	      capital[*(mb->tradeGood)],
+	      capital->getAmount(mb->tradeGood),
 	      prices.getAmount(mb->tradeGood),
 	      mb->tradeGood->getIdx(),
 	      testCapGood->getIdx(),
-	      capital[*testCapGood],
-	      capital,
-	      oldCapital);
+	      capital->getAmount(testCapGood));
       throw string(errorMessage);
     }
   }
@@ -936,11 +930,9 @@ void Forest::Forester::unitTests () {
   workGroves(false);
   if (0.01 > getAmount(output)) throw string("Expected to have some wood after workGroves");
   
-  delete[] capital;
   _labourToTend = oldTendLabour;
   _labourToHarvest = oldHarvestLabour;
-  capital = oldCapital;
-
+  capital->setAmounts(oldCapital);
 }
 
 double Forest::Forester::getNeededLabour () const {
@@ -1287,14 +1279,13 @@ void Mine::unitTests () {
 void Mine::Miner::unitTests () {
   if (!output) throw string("Mine output has not been set.");  
   // Note that this is not static, it's run on a particular Miner.
-  double* oldCapital = capital;
-  capital = new double[TradeGood::numTypes()];
+  GoodsHolder oldCapital(*capital);
   TradeGood const* testCapGood = 0;
+  capital->clear();
   for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-    capital[**tg] = 0;
-    if (testCapGood) continue;
     testCapGood = (*tg);
-    capital[**tg] = 0.1;
+    capital->setAmount((*tg), 0.1);
+    break;
   }
 
   MineStatus::Iter msi = MineStatus::start();
@@ -1346,18 +1337,16 @@ void Mine::Miner::unitTests () {
     }
     else {
       sprintf(errorMessage,
-	      "Expected to bid on %s and %s, but got bid for %f %s (capital %f price %f) %i %i %f %p %p",
+	      "Expected to bid on %s and %s, but got bid for %f %s (capital %f price %f) %i %i %f",
 	      TradeGood::Labor->getName().c_str(),
 	      testCapGood->getName().c_str(),
 	      mb->amountToBuy,
 	      mb->tradeGood->getName().c_str(),
-	      capital[*(mb->tradeGood)],
+	      capital->getAmount(mb->tradeGood),
 	      prices.getAmount(mb->tradeGood),
 	      mb->tradeGood->getIdx(),
 	      testCapGood->getIdx(),
-	      capital[*testCapGood],
-	      capital,
-	      oldCapital);
+	      capital->getAmount(testCapGood));
       throw string(errorMessage);
     }
   }
@@ -1387,8 +1376,7 @@ void Mine::Miner::unitTests () {
 
   if (0.01 > getAmount(output)) throw string("Expected to have some iron after workShafts");
   
-  delete[] capital;
-  capital = oldCapital;
+  capital->setAmounts(oldCapital);
 }
 
 double Mine::Miner::getNeededLabour () const {

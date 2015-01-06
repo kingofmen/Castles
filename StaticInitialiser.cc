@@ -22,6 +22,13 @@ int StaticInitialiser::defaultUnitPriority = 4;
 ThreeDSprite* makeSprite (Object* info); 
 map<MilUnitTemplate*, Object*> milUnitSpriteObjectMap;
 
+void readGoodsHolder (Object* goodsObject, GoodsHolder& goods) {
+  goods.clear();
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {    
+    goods.deliverGoods((*tg), goodsObject->safeGetFloat((*tg)->getName()));
+  }
+}
+
 void StaticInitialiser::createCalculator (Object* info, Action::Calculator* ret) {
   if (!info) throw string("Expected info object to create calculator, got null.");
   assert(info);
@@ -123,23 +130,14 @@ void StaticInitialiser::graphicsInitialisation () {
   }
 }
 
-void StaticInitialiser::readCapitalForIndustry (Object* capObject, double** capitalEffect) {
-  if (*capitalEffect) delete (*capitalEffect);
-  (*capitalEffect) = new double[TradeGood::numTypes()];
-  /*
-  Industry<Farmland::Farmer>::capital = new double[TradeGood::numTypes()];
-  Industry<Forest::Forester>::capital = new double[TradeGood::numTypes()];
-  Industry<Mine::Miner>::capital      = new double[TradeGood::numTypes()];  
-  */
-  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
-    (*capitalEffect)[**tg] = capObject->safeGetFloat((*tg)->getName());
-  }
-}
-
-void StaticInitialiser::readGoodsHolder (Object* goodsObject, GoodsHolder& goods) {
-  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {    
-    goods.deliverGoods((*tg), goodsObject->safeGetFloat((*tg)->getName()));
-  }
+template<class T> void StaticInitialiser::initialiseIndustry(Object* industryObject) {
+  T::output = TradeGood::getByName(industryObject->safeGetString("output", "nosuchbeast"));
+  if (!T::output) throw string("No output specified for industry");
+  T::capital = new GoodsHolder();
+  Object* capInfo = industryObject->getNeededObject("capital");
+  readGoodsHolder(capInfo, *(T::capital));
+  T::marginalOutputs.clear();
+  T::marginalOutputs.push_back(1);
 }
 
 void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
@@ -157,16 +155,12 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Farmland::_cropsFrom3     = farmInfo->safeGetInt("cropsFrom3",     Farmland::_cropsFrom3);
   Farmland::_cropsFrom2     = farmInfo->safeGetInt("cropsFrom2",     Farmland::_cropsFrom2);
   Farmland::_cropsFrom1     = farmInfo->safeGetInt("cropsFrom1",     Farmland::_cropsFrom1);
-  Farmland::Farmer::output          = TradeGood::getByName(farmInfo->safeGetString("output", "food"));
-  if (!Farmland::Farmer::output) throw string("No output specified for Farmer");
-  Object* farmCap = farmInfo->getNeededObject("capital");
-  readCapitalForIndustry(farmCap, &Industry<Farmland::Farmer>::capital);
-
+  initialiseIndustry<Farmland::Farmer>(farmInfo);
+  
   Object* forestInfo       = popInfo->getNeededObject("forest");
   Forest::_labourToTend    = forestInfo->safeGetInt("labourToTend", Forest::_labourToTend);
   Forest::_labourToHarvest = forestInfo->safeGetInt("labourToHarvest", Forest::_labourToHarvest);
   Forest::_labourToClear   = forestInfo->safeGetInt("labourToClear", Forest::_labourToClear);
-  Forest::Forester::output = TradeGood::getByName(forestInfo->safeGetString("output", "wood"));
   Object* amountOfWood     = forestInfo->getNeededObject("amountOfWood");
   Forest::_amountOfWood.clear();
   Forest::_amountOfWood.push_back(0);
@@ -182,16 +176,11 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   for (int i = 0; i < amountOfWood->numTokens(); ++i) {
     Forest::_amountOfWood[i] = amountOfWood->tokenAsInt(i);
   }
-  if (!Forest::Forester::output) throw string("No output specified for Forester");
-  Object* forestCap = forestInfo->getNeededObject("capital");
-  readCapitalForIndustry(forestCap, &Industry<Forest::Forester>::capital);
-
+  initialiseIndustry<Forest::Forester>(forestInfo);
+  
   Object* mineInfo       = popInfo->getNeededObject("mine");
   Mine::_amountOfIron    = mineInfo->safeGetInt("amount", Mine::_amountOfIron);
-  Mine::Miner::output = TradeGood::getByName(mineInfo->safeGetString("output", "iron"));
-  if (!Mine::Miner::output) throw string("No output specified for Miner");
-  Object* mineCap = mineInfo->getNeededObject("capital");
-  readCapitalForIndustry(mineCap, &Industry<Mine::Miner>::capital);
+  initialiseIndustry<Mine::Miner>(mineInfo);
   Enumerable<Mine::MineStatus>::clear();
   objvec statuses = mineInfo->getValue("status");
   for (unsigned int i = 0; i < statuses.size(); ++i) {
