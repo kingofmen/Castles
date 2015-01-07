@@ -136,8 +136,6 @@ template<class T> void StaticInitialiser::initialiseIndustry(Object* industryObj
   T::capital = new GoodsHolder();
   Object* capInfo = industryObject->getNeededObject("capital");
   readGoodsHolder(capInfo, *(T::capital));
-  T::marginalOutputs.clear();
-  T::marginalOutputs.push_back(1);
 }
 
 void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {

@@ -21,7 +21,7 @@ template<class T> class Industry : public EconActor {
   friend class StaticInitialiser;
 
 public:
-  Industry (T* ind) : EconActor(), industry(ind) {}
+  Industry (T* ind, double md = 1) : EconActor(), industry(ind), marginalDecline(md) {}
   
   virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
     // Goal is to maximise profit. Calculate how much labor we need to get in the harvest;
@@ -29,14 +29,15 @@ public:
     // If there is money left over, bid for equipment to reduce the amount of labor needed
     // next turn, provided the net-present-value of the reduction is higher than the cost
     // of the machinery.
-
-    
-    double laborNeeded = industry->getNeededLabour() - getAmount(TradeGood::Labor);
-    double expectedProduction = industry->expectedOutput();
-    double totalToBuy = 0;
-    for (vector<double>::iterator margin = marginalOutputs.begin(); margin != marginalOutputs.end(); ++margin) {
-      if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction * (*margin)) {
+   
+    double laborNeeded = industry->getLabourPerBlock();
+    double expectedProduction = industry->outputPerBlock();
+    double totalToBuy = 0 - getAmount(TradeGood::Labor);
+    double marginFactor = 1;
+    for (int i = 0; i < industry->numBlocks(); ++i) {
+      if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction * marginFactor) {
 	totalToBuy += laborNeeded;
+	marginFactor *= marginalDecline;
       }
       else {
 	// This is where we no longer make a profit.
@@ -46,7 +47,7 @@ public:
 	break;
       }
     }
-    bidlist.push_back(new MarketBid(TradeGood::Labor, totalToBuy, this));
+    if (0 < totalToBuy) bidlist.push_back(new MarketBid(TradeGood::Labor, totalToBuy, this));
     
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
       if (capital->getAmount(*tg) < 0.00001) continue;
@@ -73,10 +74,13 @@ public:
   }
   
 protected:
+  virtual int numBlocks() = 0;
+  
+  double marginalDecline;
+  
   // Capital reduces the amount of labour required by factor (1 - x log (N+1)). This array stores x. 
   static GoodsHolder* capital;
   static TradeGood const* output;
-  static vector<double> marginalOutputs;
   
 private:
   T* industry;
@@ -88,7 +92,6 @@ private:
 
 template<class T> GoodsHolder* Industry<T>::capital = 0;
 template<class T> TradeGood const* Industry<T>::output = 0;
-template<class T> vector<double> Industry<T>::marginalOutputs;
 
 class Building {
   friend class StaticInitialiser; 
@@ -271,13 +274,14 @@ public:
   static const int numOwners = 10; 
   
 private:
-  class Farmer : public Industry<Farmland::Farmer>, public Mirrorable<Farmland::Farmer> {
-    friend class Mirrorable<Farmland::Farmer>;
+  class Farmer : public Industry<Farmer>, public Mirrorable<Farmer> {
+    friend class Mirrorable<Farmer>;
   public:
     Farmer ();
     ~Farmer ();
-    double expectedOutput () const;
-    double getNeededLabour () const;
+    double outputPerBlock () const;
+    double getLabourPerBlock () const;
+    virtual int numBlocks () {return 1;}
     virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
@@ -325,8 +329,9 @@ private:
   public:
     Forester (Forest* b);
     ~Forester ();
-    double expectedOutput () const;      
-    double getNeededLabour () const;
+    double outputPerBlock () const; 
+    double getLabourPerBlock () const;
+    virtual int numBlocks () {return 1;}
     virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
@@ -379,8 +384,9 @@ private:
   public:
     Miner ();
     virtual ~Miner ();
-    double expectedOutput () const;      
-    double getNeededLabour () const;
+    double outputPerBlock () const; 
+    double getLabourPerBlock () const;
+    virtual int numBlocks () {return 1;}
     virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
