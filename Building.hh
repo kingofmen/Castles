@@ -21,7 +21,7 @@ template<class T> class Industry : public EconActor {
   friend class StaticInitialiser;
 
 public:
-  Industry (T* ind, double md = 1) : EconActor(), industry(ind), marginalDecline(md) {}
+  Industry (T* ind, double md = 1) : EconActor(), industry(ind) {}
   
   virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
     // Goal is to maximise profit. Calculate how much labor we need to get in the harvest;
@@ -33,6 +33,7 @@ public:
     double laborNeeded = industry->getLabourPerBlock();
     double expectedProduction = industry->outputPerBlock();
     double totalToBuy = 0 - getAmount(TradeGood::Labor);
+    double marginalDecline = industry->getMarginFactor();
     double marginFactor = 1;
     for (int i = 0; i < industry->numBlocks(); ++i) {
       if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction * marginFactor) {
@@ -74,9 +75,8 @@ public:
   }
   
 protected:
-  virtual int numBlocks() = 0;
-  
-  double marginalDecline;
+  virtual int numBlocks() const = 0;
+  virtual double getMarginFactor () const = 0;
   
   // Capital reduces the amount of labour required by factor (1 - x log (N+1)). This array stores x. 
   static GoodsHolder* capital;
@@ -96,7 +96,7 @@ template<class T> TradeGood const* Industry<T>::output = 0;
 class Building {
   friend class StaticInitialiser; 
 public: 
-  Building () : owner(0) {}
+  Building (double mf = 1) : marginFactor(mf), supplies(0), owner(0) {}
   ~Building () {}
   
   virtual void endOfTurn () = 0; 
@@ -108,6 +108,7 @@ public:
 
   static const int numOwners = 10;  
 protected:
+  double marginFactor;
   double supplies; 
   
 private:
@@ -277,11 +278,12 @@ private:
   class Farmer : public Industry<Farmer>, public Mirrorable<Farmer> {
     friend class Mirrorable<Farmer>;
   public:
-    Farmer ();
+    Farmer (Farmland* b);
     ~Farmer ();
     double outputPerBlock () const;
     double getLabourPerBlock () const;
-    virtual int numBlocks () {return 1;}
+    virtual int numBlocks () const {return 1;}
+    virtual double getMarginFactor () const {return boss->marginFactor;}
     virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
@@ -290,6 +292,7 @@ private:
     vector<int> fields;
   private:
     Farmer(Farmer* other);
+    Farmland* boss;
   };
 
   Farmland (Farmland* other);
@@ -331,7 +334,8 @@ private:
     ~Forester ();
     double outputPerBlock () const; 
     double getLabourPerBlock () const;
-    virtual int numBlocks () {return 1;}
+    virtual int numBlocks () const {return 1;}
+    virtual double getMarginFactor () const {return boss->marginFactor;}
     virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
@@ -382,11 +386,12 @@ private:
   class Miner : public Industry<Miner>, public Mirrorable<Miner> {
     friend class Mirrorable<Miner>;
   public:
-    Miner ();
-    virtual ~Miner ();
+    Miner (Mine* m);
+    ~Miner ();
     double outputPerBlock () const; 
     double getLabourPerBlock () const;
-    virtual int numBlocks () {return 1;}
+    virtual double getMarginFactor () const {return mine->marginFactor;}
+    virtual int numBlocks () const {return mine->veinsPerMiner;}
     virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
@@ -395,10 +400,13 @@ private:
     vector<int> shafts;
   private:
     Miner(Miner* other);
+
+    Mine* mine;
   };
  
   Mine (Mine* other);
   vector<Miner*> miners;
+  int veinsPerMiner;
   static int _amountOfIron;
 };
 

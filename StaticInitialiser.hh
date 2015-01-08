@@ -57,6 +57,7 @@ private:
   static void createCalculator (Object* info, Action::Calculator* ret);
   static double interpolate (double xfrac, double yfrac, int width, int height, double* heightMap); 
   static void writeEconActorIntoObject (EconActor* econ, Object* info);
+  static void writeBuilding (Object* bInfo, Building* build);
   
   static int defaultUnitPriority;
 }; 

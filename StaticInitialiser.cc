@@ -399,7 +399,13 @@ Vertex* findVertex (Object* info, Hex* hex) {
 }
 
 void StaticInitialiser::initialiseBuilding (Building* build, Object* info) {
-  build->supplies = info->safeGetFloat("supplies", 0); 
+  build->supplies = info->safeGetFloat("supplies", 0);
+  build->marginFactor = info->safeGetFloat("marginalDecline", build->marginFactor);
+}
+
+void StaticInitialiser::writeBuilding (Object* bInfo, Building* build) {
+  bInfo->setLeaf("supplies", build->supplies);
+  bInfo->setLeaf("marginalDecline", build->marginFactor);
 }
 
 void StaticInitialiser::buildHex (Object* hInfo) {
@@ -563,7 +569,8 @@ Mine* StaticInitialiser::buildMine (Object* mInfo) {
   for (int i = 0; i < Mine::numOwners; ++i) {
     ret->miners[i]->owner = (owner->numTokens() > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0);
   }
-  
+
+  ret->veinsPerMiner = mInfo->safeGetInt("veinsPerShaft", ret->veinsPerMiner);
   return ret;
 }
 
@@ -1344,6 +1351,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
     Farmland* farm = (*hex)->getFarm();
     if (farm) {
       Object* farmInfo = new Object("farmland");
+      writeBuilding(farmInfo, farm);
       hexInfo->setValue(farmInfo);
       map<Farmland::FieldStatus, Object*> statuses;
       statuses[Farmland::Clear] = new Object("clear");
@@ -1371,6 +1379,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
     Forest* forest = (*hex)->forest;
     if (forest) {
       Object* forestInfo = new Object("forest");
+      writeBuilding(forestInfo, forest);
       hexInfo->setValue(forestInfo);
 
       map<Forest::ForestStatus, Object*> statuses;
@@ -1412,6 +1421,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
     Mine* mine = (*hex)->mine;
     if (mine) {
       Object* mineInfo = new Object("mine");
+      writeBuilding(mineInfo, mine);
       hexInfo->setValue(mineInfo);
       for (Mine::MineStatus::Iter ms = Mine::MineStatus::start(); ms != Mine::MineStatus::final(); ++ms) {
 	Object* statusInfo = new Object((*ms)->getName());
@@ -1427,6 +1437,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       for (int i = 0; i < Mine::numOwners; ++i) {
 	owner->addToList((int) mine->miners[i]->owner->getIdx());
       }
+      mineInfo->setLeaf("veinsPerShaft", mine->veinsPerMiner);
     }
   }
   

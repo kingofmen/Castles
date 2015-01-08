@@ -35,14 +35,16 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Write and read in save:
      . Market prices
      . Contracts
-     . Marginal declines
+     . Marginal declines (check)
      . Block sizes
    - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
    - Get rid of old supplies stuff
+   - Make Farmland and Forest statuses enums
    - Margin effects
      . Block sizes in production
      . Block calculations
-     . Marginal declines in production
+     . Marginal declines in production (check)
+   - The EconActor owner of Farmer, etc, is not mirrored. So if you do a workFoo, the *real* owner gets the output. Problem.
    - Include Castle and MilUnit
    - Make Markets exist in Vertexes - share between Hexes!
    - Discount rate on Maslow levels, eg do I prefer level 2 now and 0 tomorrow, or 1 both days? Also, seasonal awareness.

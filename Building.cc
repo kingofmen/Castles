@@ -183,7 +183,8 @@ Village::Village ()
 }
 
 Village::Village (Village* other)
-  : Mirrorable<Village>(other)
+  : Building()
+  , Mirrorable<Village>(other)
   , milTrad(0)
   , foodMortalityModifier(1)
   , farm(0)    
@@ -424,11 +425,11 @@ MilUnit* Village::raiseMilitia () {
 }
 
 Farmland::Farmland () 
-  : Building()
+  : Building(1)
   , Mirrorable<Farmland>()
 {
   for (int j = 0; j < numOwners; ++j) {
-    farmers.push_back(new Farmer());
+    farmers.push_back(new Farmer(this));
   }
   for (int i = 0; i < NumStatus; ++i) {
     totalFields[i] = 0;
@@ -442,13 +443,15 @@ Farmland::~Farmland () {
 }
 
 Farmland::Farmland (Farmland* other)
-  : Mirrorable<Farmland>(other)
+  : Building(1)
+  , Mirrorable<Farmland>(other)
 {}
 
-Farmland::Farmer::Farmer ()
+Farmland::Farmer::Farmer (Farmland* b)
   : Industry<Farmer>(this)
   , Mirrorable<Farmland::Farmer>()
   , fields(NumStatus, 0)
+  , boss(b)
 {}
 
 Farmland::Farmer::Farmer (Farmer* other)
@@ -460,6 +463,7 @@ Farmland::Farmer::Farmer (Farmer* other)
 void Farmland::Farmer::setMirrorState () {
   mirror->owner = owner;
   for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
+  mirror->boss = boss->getMirror();
 }
 
 Farmland::Farmer::~Farmer () {}
@@ -749,7 +753,7 @@ double Farmland::Farmer::getLabourPerBlock () const {
 }
 
 Forest::Forest ()
-  : Building()
+  : Building(1)
   , Mirrorable<Forest>()
 {
   for (int j = 0; j < numOwners; ++j) {
@@ -758,7 +762,7 @@ Forest::Forest ()
 }
 
 Forest::Forest (Forest* other)
-  : Building()
+  : Building(1)
   , Mirrorable<Forest>(other)
   , yearsSinceLastTick(0)    
   , minStatusToHarvest(Huge)    
@@ -1196,16 +1200,17 @@ int Village::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit*
 }
 
 Mine::Mine ()
-  : Building()
+  : Building(1)
   , Mirrorable<Mine>()
+  , veinsPerMiner(1)
 {
   for (int j = 0; j < numOwners; ++j) {
-    miners.push_back(new Miner());
+    miners.push_back(new Miner(this));
   }
 }
 
 Mine::Mine (Mine* other)
-  : Building()
+  : Building(1)
   , Mirrorable<Mine>(other)
 {}
 
@@ -1215,10 +1220,11 @@ Mine::~Mine () {
   }
 }
 
-Mine::Miner::Miner ()
+Mine::Miner::Miner (Mine* m)
   : Industry<Miner>(this)
   , Mirrorable<Miner>()
   , shafts(MineStatus::numTypes(), 0)
+  , mine(m)
 {}
 
 Mine::Miner::Miner (Miner* other)
@@ -1238,6 +1244,7 @@ void Mine::setDefaultOwner (EconActor* o) {
 void Mine::Miner::setMirrorState () {
   mirror->owner = owner;
   for (unsigned int i = 0; i < shafts.size(); ++i) mirror->shafts[i] = shafts[i];
+  mirror->mine = mine->getMirror();
 }
 
 Mine::Miner::~Miner () {}
@@ -1317,11 +1324,11 @@ void Mine::Miner::unitTests () {
   prices.deliverGoods(output, 1);
   getBids(prices, bidlist);
   
-  bool foundLabour = false;
+  double foundLabour = 0;
   bool foundCapGood = false;
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if (mb->tradeGood == TradeGood::Labor) {
-      foundLabour = true;
+      foundLabour += mb->amountToBuy;
       if (fabs(mb->amountToBuy - status->requiredLabour) > 0.1) {
 	sprintf(errorMessage, "Expected to buy %i %s, bid is for %f", status->requiredLabour, TradeGood::Labor->getName().c_str(), mb->amountToBuy);
 	throw string(errorMessage);
@@ -1349,6 +1356,7 @@ void Mine::Miner::unitTests () {
       throw string(errorMessage);
     }
   }
+
   if (!foundLabour) {
     sprintf(errorMessage,
 	    "Expected to buy %s, no bid found (%f %f)",
@@ -1357,6 +1365,7 @@ void Mine::Miner::unitTests () {
 	    getLabourPerBlock());
     throw string(errorMessage);
   }
+
   if (!foundCapGood) {
     sprintf(errorMessage, "Expected to buy %s, no bid found", testCapGood->getName().c_str());
     throw string(errorMessage);
@@ -1374,6 +1383,34 @@ void Mine::Miner::unitTests () {
   }
 
   if (0.01 > getAmount(output)) throw string("Expected to have some iron after workShafts");
+
+  // Check that, with marginal production of zero, we get the same labor bid.
+  mine->veinsPerMiner = 2;
+  mine->marginFactor = 0;
+  bidlist.clear();
+  getBids(prices, bidlist);
+  double newFoundLabour = 0;
+  BOOST_FOREACH(MarketBid* mb, bidlist) {
+    if (mb->tradeGood == TradeGood::Labor) newFoundLabour += mb->amountToBuy;
+  }
+  if (fabs(foundLabour - newFoundLabour) > 0.1) {
+    sprintf(errorMessage, "With zero margin, expected to buy %f, but got %f", foundLabour, newFoundLabour);
+    throw string(errorMessage);
+  }
+
+  // With no marginal decline, should buy twice as much.
+  mine->marginFactor = 1;
+  bidlist.clear();
+  getBids(prices, bidlist);
+  newFoundLabour = 0;
+  BOOST_FOREACH(MarketBid* mb, bidlist) {
+    if (mb->tradeGood == TradeGood::Labor) newFoundLabour += mb->amountToBuy;
+  }
+  if (fabs(mine->veinsPerMiner*foundLabour - newFoundLabour) > 0.1) {
+    sprintf(errorMessage, "With margin, 1 expected to buy %f, but got %f", mine->veinsPerMiner*foundLabour, newFoundLabour);
+    throw string(errorMessage);
+  }
+  
   
   capital->setAmounts(oldCapital);
 }
