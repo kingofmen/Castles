@@ -44,6 +44,8 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Block sizes in production
      . Block calculations
      . Marginal declines in production (check)
+   - Allow maintenance in addition to production
+   - Read Forest minStatus from save, write to save, let owner set.
    - The EconActor owner of Farmer, etc, is not mirrored. So if you do a workFoo, the *real* owner gets the output. Problem.
    - Include Castle and MilUnit
    - Make Markets exist in Vertexes - share between Hexes!

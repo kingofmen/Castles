@@ -31,11 +31,11 @@ public:
     // of the machinery.
    
     double laborNeeded = industry->getLabourPerBlock();
-    double expectedProduction = industry->outputPerBlock();
     double totalToBuy = 0 - getAmount(TradeGood::Labor);
     double marginalDecline = industry->getMarginFactor();
     double marginFactor = 1;
     for (int i = 0; i < industry->numBlocks(); ++i) {
+      double expectedProduction = industry->outputOfBlock(i);
       if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction * marginFactor) {
 	totalToBuy += laborNeeded;
 	marginFactor *= marginalDecline;
@@ -48,8 +48,15 @@ public:
 	break;
       }
     }
-    if (0 < totalToBuy) bidlist.push_back(new MarketBid(TradeGood::Labor, totalToBuy, this));
+
     
+    double neededForMaintenance = industry->labourForMaintenance();
+    if (prices.getAmount(TradeGood::Labor) * neededForMaintenance < prices.getAmount(output) * industry->lossFromNoMaintenance()) {
+      totalToBuy += neededForMaintenance;
+    }
+    
+    if (0 < totalToBuy) bidlist.push_back(new MarketBid(TradeGood::Labor, totalToBuy, this));
+
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
       if (capital->getAmount(*tg) < 0.00001) continue;
       double laborSaving = totalToBuy * (1 - marginalCapFactor((*tg), getAmount(*tg)));
@@ -75,8 +82,10 @@ public:
   }
   
 protected:
-  virtual int numBlocks() const = 0;
   virtual double getMarginFactor () const = 0;
+  virtual double labourForMaintenance () const {return 0;}
+  virtual double lossFromNoMaintenance () const {return 0;}
+  virtual int numBlocks() const = 0;
   
   // Capital reduces the amount of labour required by factor (1 - x log (N+1)). This array stores x. 
   static GoodsHolder* capital;
@@ -280,7 +289,7 @@ private:
   public:
     Farmer (Farmland* b);
     ~Farmer ();
-    double outputPerBlock () const;
+    double outputOfBlock (int b) const;
     double getLabourPerBlock () const;
     virtual int numBlocks () const {return 1;}
     virtual double getMarginFactor () const {return boss->marginFactor;}
@@ -332,10 +341,12 @@ private:
   public:
     Forester (Forest* b);
     ~Forester ();
-    double outputPerBlock () const; 
+    double outputOfBlock (int b) const; 
     double getLabourPerBlock () const;
-    virtual int numBlocks () const {return 1;}
     virtual double getMarginFactor () const {return boss->marginFactor;}
+    virtual double labourForMaintenance () const;
+    virtual double lossFromNoMaintenance () const;
+    virtual int numBlocks () const;
     virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
@@ -354,6 +365,7 @@ private:
   vector<Forester*> foresters;
   int yearsSinceLastTick;
   ForestStatus minStatusToHarvest;
+  int blockSize;
   
   static vector<int> _amountOfWood;
   static int _labourToTend;    // Ensure forest doesn't go wild.
@@ -388,7 +400,7 @@ private:
   public:
     Miner (Mine* m);
     ~Miner ();
-    double outputPerBlock () const; 
+    double outputOfBlock (int b) const; 
     double getLabourPerBlock () const;
     virtual double getMarginFactor () const {return mine->marginFactor;}
     virtual int numBlocks () const {return mine->veinsPerMiner;}

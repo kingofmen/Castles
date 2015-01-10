@@ -551,6 +551,7 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
   }
 
   ret->yearsSinceLastTick = fInfo->safeGetInt("yearsSinceLastTick");
+  ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
   ret->minStatusToHarvest = Forest::Huge;
   
   return ret;
@@ -1415,6 +1416,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
 	tended->addToList((int) forest->foresters[i]->tendedGroves);
       }
       forestInfo->setLeaf("yearsSinceLastTick", forest->yearsSinceLastTick);
+      forestInfo->setLeaf("blockSize", forest->blockSize);
       forestInfo->setLeaf("minStatusToHarvest", Forest::Huge);
     }
 
