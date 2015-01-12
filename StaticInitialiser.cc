@@ -367,6 +367,7 @@ void StaticInitialiser::initialiseMaslowHierarchy (Object* popNeeds) {
     Village::MaslowLevel current;
     readGoodsHolder((*level), current);
     current.mortalityModifier = (*level)->safeGetFloat("mortality", 1.0);
+    current.maxWorkFraction = (*level)->safeGetFloat("max_work_fraction", 1.0);
     Village::maslowLevels.push_back(current);
   }
 }
@@ -514,6 +515,7 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
     ret->farmers[i]->owner                   = owner ? (owner->numTokens() > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
   }
   ret->countTotals();
+  ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
   
   return ret;
 }
@@ -1375,6 +1377,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       for (int i = 0; i < Farmland::numOwners; ++i) {
 	owner->addToList((int) farm->farmers[i]->owner->getIdx());
       }
+      farmInfo->setLeaf("blockSize", farm->blockSize);
     }
 
     Forest* forest = (*hex)->forest;

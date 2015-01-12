@@ -39,15 +39,16 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Block sizes
    - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
    - Get rid of old supplies stuff
+   - Fix Schlemiel in Farmland fillBlock
    - Make Farmland and Forest statuses enums
-   - Margin effects
-     . Block sizes in production
-     . Block calculations
+   - Margin effects (check)
+     . Block sizes in production (check)
+     . Block calculations (check)
      . Marginal declines in production (check)
-   - Allow maintenance in addition to production
+   - Allow maintenance in addition to production (check)
    - Read Forest minStatus from save, write to save, let owner set.
    - The EconActor owner of Farmer, etc, is not mirrored. So if you do a workFoo, the *real* owner gets the output. Problem.
-   - Include Castle and MilUnit
+   - Castle as EconActor
    - Make Markets exist in Vertexes - share between Hexes!
    - Discount rate on Maslow levels, eg do I prefer level 2 now and 0 tomorrow, or 1 both days? Also, seasonal awareness.
    - More GUI insight for testing purposes

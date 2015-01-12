@@ -4,19 +4,89 @@ goods = { food iron wood }
 
 pop_needs = {
   level = {
-    food = 2
-    mortality = 1.1
-  }
-  level = {
-    wood = 1
-    iron = 1
-    food = 1
-    labor = 0.1
+    food = 0.2
     mortality = 1.0
+    max_work_fraction = 1
   }
   level = {
-    labor = 1
-    mortality = 0.9
+    food = 0.2
+    mortality = 0.995
+    max_work_fraction = 0.99
+  }
+  level = {
+    food = 0.2
+    mortality = 0.99
+    max_work_fraction = 0.98
+  }
+  level = {
+    food = 0.2
+    mortality = 0.98
+    max_work_fraction = 0.97
+  }
+  level = {
+    food = 0.2
+    mortality = 0.97
+    max_work_fraction = 0.95
+  }
+  level = {
+    food = 0.2
+    mortality = 0.96
+    max_work_fraction = 0.94
+  }
+  level = {
+    food = 0.2
+    mortality = 0.95
+    max_work_fraction = 0.93
+  }
+  level = {
+    food = 0.2
+    mortality = 0.94
+    max_work_fraction = 0.92
+  }
+  level = {
+    food = 0.2
+    mortality = 0.93
+    max_work_fraction = 0.91
+  }
+  level = {
+    food = 0.2
+    mortality = 0.92
+    max_work_fraction = 0.90
+  }
+  level = {
+    wood = 0.2
+    iron = 0.2
+    food = 0.2
+    mortality = 0.91
+    max_work_fraction = 0.90
+  }
+  level = {
+    wood = 0.2
+    iron = 0.2
+    food = 0.2
+    mortality = 0.91
+    max_work_fraction = 0.85
+  }
+  level = {
+    wood = 0.2
+    iron = 0.2
+    food = 0.2
+    mortality = 0.90
+    max_work_fraction = 0.70
+  }
+  level = {
+    wood = 0.2
+    iron = 0.2
+    food = 0.2
+    mortality = 0.90
+    max_work_fraction = 0.65
+  }
+  level = {
+    wood = 0.2
+    iron = 0.2
+    food = 0.2
+    mortality = 0.90
+    max_work_fraction = 0.60
   }
 }
 

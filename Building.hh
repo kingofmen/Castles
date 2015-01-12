@@ -30,11 +30,11 @@ public:
     // next turn, provided the net-present-value of the reduction is higher than the cost
     // of the machinery.
    
-    double laborNeeded = industry->getLabourPerBlock();
     double totalToBuy = 0 - getAmount(TradeGood::Labor);
     double marginalDecline = industry->getMarginFactor();
     double marginFactor = 1;
     for (int i = 0; i < industry->numBlocks(); ++i) {
+      double laborNeeded = industry->getLabourForBlock(i);
       double expectedProduction = industry->outputOfBlock(i);
       if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction * marginFactor) {
 	totalToBuy += laborNeeded;
@@ -65,7 +65,6 @@ public:
       double npv = laborSaving * prices.getAmount(TradeGood::Labor) * 10;
       if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this));
     }
-    
   }
   
   // Return the reduction in required labor if we had one additional unit.
@@ -226,8 +225,9 @@ protected:
   Farmland* farm; 
 
   struct MaslowLevel : public GoodsHolder {
-    MaslowLevel () : GoodsHolder(), mortalityModifier(1.0) {}
+    MaslowLevel () : GoodsHolder(), mortalityModifier(1.0), maxWorkFraction(1.0) {}
     double mortalityModifier;
+    double maxWorkFraction;
   };
   
   static vector<MaslowLevel> maslowLevels;
@@ -290,8 +290,8 @@ private:
     Farmer (Farmland* b);
     ~Farmer ();
     double outputOfBlock (int b) const;
-    double getLabourPerBlock () const;
-    virtual int numBlocks () const {return 1;}
+    double getLabourForBlock (int block) const;
+    virtual int numBlocks () const;
     virtual double getMarginFactor () const {return boss->marginFactor;}
     virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
@@ -301,6 +301,7 @@ private:
     vector<int> fields;
   private:
     Farmer(Farmer* other);
+    void fillBlock (int block, vector<int>& theBlock) const;
     Farmland* boss;
   };
 
@@ -308,6 +309,7 @@ private:
   void countTotals ();
   int totalFields[NumStatus]; // Sum over farmers.
   vector<Farmer*> farmers;
+  int blockSize;
   
   static int _labourToSow;
   static int _labourToPlow;
@@ -342,7 +344,7 @@ private:
     Forester (Forest* b);
     ~Forester ();
     double outputOfBlock (int b) const; 
-    double getLabourPerBlock () const;
+    double getLabourForBlock (int block) const;
     virtual double getMarginFactor () const {return boss->marginFactor;}
     virtual double labourForMaintenance () const;
     virtual double lossFromNoMaintenance () const;
@@ -401,7 +403,7 @@ private:
     Miner (Mine* m);
     ~Miner ();
     double outputOfBlock (int b) const; 
-    double getLabourPerBlock () const;
+    double getLabourForBlock (int block) const;
     virtual double getMarginFactor () const {return mine->marginFactor;}
     virtual int numBlocks () const {return mine->veinsPerMiner;}
     virtual double produceForContract (TradeGood const* const tg, double amount);
