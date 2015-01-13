@@ -292,5 +292,6 @@ private:
 };
 
 #define REMOVE(from, dis) from.erase(find(from.begin(), from.end(), dis))
+void throwFormatted (const char* format, ...);
 
 #endif

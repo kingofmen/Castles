@@ -244,6 +244,7 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
     
     if (!canGetLevel) break;
 
+    amountToBuy.deliverGoods(TradeGood::Labor, -labourNeeded);
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
       double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
       double reserve = getAmount(*tg) - reserveUsed.getAmount(*tg);
@@ -253,10 +254,7 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
 	amountNeeded -= reserve;
       }      
       if (amountNeeded < 0.001) continue;
-      moneyNeeded = prices.getAmount(*tg) * amountNeeded;
-      double laborNeeded = moneyNeeded / prices.getAmount(TradeGood::Labor);
       amountToBuy.deliverGoods((*tg), amountNeeded);
-      amountToBuy.deliverGoods(TradeGood::Labor, -laborNeeded);
     }
   }
 
@@ -285,10 +283,46 @@ void Village::unitTests () {
 
   double labor = testVillage.produceForContract(TradeGood::Labor, 100);
   if (fabs(labor - 100) > 0.1) {
-    char number[500];
-    sprintf(number, "Village should have produced 100 labor, got %f", labor);    
-    throw string(number);
+    sprintf(errorMessage, "Village should have produced 100 labor, got %f", labor);    
+    throw string(errorMessage);
   }
+
+  // Testing that increasing labour prices produce more labour.
+  Village testVillage2;
+  testVillage2.males.addPop(100, 20);
+  double oldConsume = consume[20];
+  consume[20] = 1;
+  vector<MaslowLevel> backupLevels = maslowLevels;
+  maslowLevels.clear();
+  maslowLevels.push_back(MaslowLevel(1.0, 0.50));
+  maslowLevels.push_back(MaslowLevel(1.0, 0.45));
+  TradeGood const* theGood = *(TradeGood::exLaborStart());
+  maslowLevels[0].setAmount(theGood, 0.1);
+  maslowLevels[1].setAmount(theGood, 0.1);
+  prices.clear();
+  prices.setAmount(TradeGood::Labor, 1);
+  prices.setAmount(theGood, 5);
+  // Buying 0.2 food now costs 1 labour. The village should be unwilling
+  // to make that trade because the maximum for the second level is 0.45.
+  bidlist.clear();
+  testVillage2.getBids(prices, bidlist);
+  if (2 != bidlist.size()) throwFormatted("Expected 2 bids, got %i", bidlist.size());
+  double labourBought = 0;
+  BOOST_FOREACH(MarketBid* mb, bidlist) if (mb->tradeGood == TradeGood::Labor) labourBought += mb->amountToBuy;
+  // Minus one from selling
+  double labourExpected = -1 * (maslowLevels[0].getAmount(theGood) * testVillage2.consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
+  if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected to buy %f labour, but bought %f", labourExpected, labourBought);
+
+  prices.setAmount(TradeGood::Labor, 2);
+  // Now the trade should be accepted.
+  bidlist.clear();
+  testVillage2.getBids(prices, bidlist);
+  if (2 != bidlist.size()) throwFormatted("Expected 2 bids (second time), got %i", bidlist.size());
+  labourBought = 0;
+  BOOST_FOREACH(MarketBid* mb, bidlist) if (mb->tradeGood == TradeGood::Labor) labourBought += mb->amountToBuy;
+  labourExpected = -1 * ((maslowLevels[0].getAmount(theGood) + maslowLevels[1].getAmount(theGood)) * testVillage2.consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
+  if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected (second time) to buy %f labour, but bought %f", labourExpected, labourBought);
+  consume[20] = oldConsume;
 }
 
 const MilUnitGraphicsInfo* Village::getMilitiaGraphics () const {

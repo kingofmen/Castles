@@ -226,6 +226,7 @@ protected:
 
   struct MaslowLevel : public GoodsHolder {
     MaslowLevel () : GoodsHolder(), mortalityModifier(1.0), maxWorkFraction(1.0) {}
+    MaslowLevel (double mm, double mwf) : GoodsHolder(), mortalityModifier(mm), maxWorkFraction(mwf) {}
     double mortalityModifier;
     double maxWorkFraction;
   };

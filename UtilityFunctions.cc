@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include "MilUnit.hh"
+#include <stdarg.h>
 
 char strbuffer[1000]; 
 const doublet doublet::zero(0, 0);
@@ -312,4 +313,13 @@ int MilStrength::getTotalStrength () const {
     total += getUnitTypeAmount(*m);
   }
   return total;
+}
+
+void throwFormatted (const char* format, ...) {
+  static char errorMessage[1000];
+  va_list arglist;
+  va_start(arglist, format);
+  vsprintf(errorMessage, format, arglist);
+  va_end(arglist);
+  throw string(errorMessage);
 }
