@@ -112,7 +112,7 @@ void Market::adjustPrices (vector<MarketBid*>& notMatched) {
     // otherwise linear, but never larger than 25%.
     ratio *= 0.1;
     if (ratio > 0.25) ratio = 0.25;
-    if (demand.getAmount(*tg) < 0) ratio *= -1; // More sellers than buyers, reduce price.
+    if (demand.getAmount(*tg) < 0) ratio *= -0.9; // More sellers than buyers, reduce price. Prices are sticky downwards!
     prices.deliverGoods((*tg), ratio * prices.getAmount(*tg));
   } 
 }
@@ -193,9 +193,7 @@ void Market::unitTests () {
   public:
     Labourer (TradeGood const* const tg) : EconActor(), food(tg) {}
     virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
-      //double ratio = prices.getAmount(food) / prices.getAmount(TradeGood::Labor);
       double labourToSell = prices.getAmount(TradeGood::Labor);
-      //if (ratio < 2.5) labourToSell = 0.5*(10 + sqrt(100 - 40*ratio));
       bidlist.push_back(new MarketBid(TradeGood::Labor, -labourToSell, this));
       double expectedWages = labourToSell * prices.getAmount(TradeGood::Labor);
       double foodToBuy = expectedWages / prices.getAmount(food);
@@ -224,7 +222,6 @@ void Market::unitTests () {
   testMarket.registerParticipant(&foodProducer);
 
   vector<pair<double, double> > initialPricePairs;
-  //initialPricePairs.push_back(pair<double, double>(1, 1.9444));
   initialPricePairs.push_back(pair<double, double>(5, 5));
   initialPricePairs.push_back(pair<double, double>(4, 4));
   initialPricePairs.push_back(pair<double, double>(6, 6));
