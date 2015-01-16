@@ -265,31 +265,36 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   }
 }
 
+Village* Village::getTestVillage (int pop) {
+  Village* testVillage = new Village();
+  testVillage->males.addPop(pop, 20);
+  return testVillage;
+}
+
 void Village::unitTests () {
-  Village testVillage;
-  testVillage.males.addPop(1000, 20); // 1000 20-year-old males... wonder what they do for entertainment?
+  Village* testVillage = getTestVillage(1000); // 1000 20-year-old males... wonder what they do for entertainment?
   GoodsHolder prices;
   vector<MarketBid*> bidlist;
   prices.deliverGoods(TradeGood::Labor, 1);
   for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
     prices.deliverGoods((*tg), 0.25);
   }
-  testVillage.getBids(prices, bidlist);
+  testVillage->getBids(prices, bidlist);
   if (0 == bidlist.size()) throw string("Village should have made at least one bid.");
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if ((mb->tradeGood == TradeGood::Labor) && (mb->amountToBuy > 0)) throw string("Should be selling, not buying, labor.");
     else if ((mb->tradeGood != TradeGood::Labor) && (mb->amountToBuy < 0)) throw string("Should be buying, not selling, ") + mb->tradeGood->getName();
   }
 
-  double labor = testVillage.produceForContract(TradeGood::Labor, 100);
+  double labor = testVillage->produceForContract(TradeGood::Labor, 100);
   if (fabs(labor - 100) > 0.1) {
     sprintf(errorMessage, "Village should have produced 100 labor, got %f", labor);    
     throw string(errorMessage);
   }
+  delete testVillage;
 
   // Testing that increasing labour prices produce more labour.
-  Village testVillage2;
-  testVillage2.males.addPop(100, 20);
+  testVillage = getTestVillage(100);
   double oldConsume = consume[20];
   consume[20] = 1;
   vector<MaslowLevel> backupLevels = maslowLevels;
@@ -305,24 +310,25 @@ void Village::unitTests () {
   // Buying 0.2 food now costs 1 labour. The village should be unwilling
   // to make that trade because the maximum for the second level is 0.45.
   bidlist.clear();
-  testVillage2.getBids(prices, bidlist);
+  testVillage->getBids(prices, bidlist);
   if (2 != bidlist.size()) throwFormatted("Expected 2 bids, got %i", bidlist.size());
   double labourBought = 0;
   BOOST_FOREACH(MarketBid* mb, bidlist) if (mb->tradeGood == TradeGood::Labor) labourBought += mb->amountToBuy;
   // Minus one from selling
-  double labourExpected = -1 * (maslowLevels[0].getAmount(theGood) * testVillage2.consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
+  double labourExpected = -1 * (maslowLevels[0].getAmount(theGood) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
   if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected to buy %f labour, but bought %f", labourExpected, labourBought);
 
   prices.setAmount(TradeGood::Labor, 2);
   // Now the trade should be accepted.
   bidlist.clear();
-  testVillage2.getBids(prices, bidlist);
+  testVillage->getBids(prices, bidlist);
   if (2 != bidlist.size()) throwFormatted("Expected 2 bids (second time), got %i", bidlist.size());
   labourBought = 0;
   BOOST_FOREACH(MarketBid* mb, bidlist) if (mb->tradeGood == TradeGood::Labor) labourBought += mb->amountToBuy;
-  labourExpected = -1 * ((maslowLevels[0].getAmount(theGood) + maslowLevels[1].getAmount(theGood)) * testVillage2.consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
+  labourExpected = -1 * ((maslowLevels[0].getAmount(theGood) + maslowLevels[1].getAmount(theGood)) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
   if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected (second time) to buy %f labour, but bought %f", labourExpected, labourBought);
   consume[20] = oldConsume;
+  delete testVillage;
 }
 
 const MilUnitGraphicsInfo* Village::getMilitiaGraphics () const {
@@ -522,15 +528,28 @@ double Farmland::Farmer::produceForContract (TradeGood const* const tg, double a
   return owner->produceForContract(tg, amount);
 }
 
+Farmland* Farmland::getTestFarm (int numFields) {
+  Farmland* testFarm = new Farmland();
+  testFarm->farmers[0]->fields[Clear] = numFields;
+  return testFarm;
+}
+
+void Farmland::overrideConstantsForUnitTests (int lts, int ltp, int ltw, int ltr) {
+  _labourToSow  = lts;
+  _labourToPlow = ltp;
+  _labourToWeed = ltw;
+  _labourToReap = ltr;
+}
+
 void Farmland::unitTests () {
-  Farmland testFarm;
+  Farmland* testFarm = getTestFarm();
   // Stupidest imaginable test, but did actually catch a problem, so...
-  if ((int) testFarm.farmers.size() != numOwners) {
-    sprintf(errorMessage, "Farm should have %i Farmers, has %i", numOwners, testFarm.farmers.size());
+  if ((int) testFarm->farmers.size() != numOwners) {
+    sprintf(errorMessage, "Farm should have %i Farmers, has %i", numOwners, testFarm->farmers.size());
     throw string(errorMessage);
   }
 
-  testFarm.farmers[0]->unitTests();
+  testFarm->farmers[0]->unitTests();
 }
 
 int Farmland::Farmer::numBlocks () const {

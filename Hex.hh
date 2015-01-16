@@ -73,6 +73,7 @@ public:
   static Hex* getHex (int x, int y);
   static void clear ();
   static void createHex (int x, int y, TerrainType t);
+  static void unitTests ();
 
 private:
   Hex (int x, int y, TerrainType t);

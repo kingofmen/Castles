@@ -694,6 +694,16 @@ void Hex::setMirrorState () {
   else mirror->castle = 0;
 }
 
+void Hex::unitTests () {
+  // Test that production goes and food eventually
+  // gets to the village.
+  Hex* testHex = new Hex(1000, 1000, Plain);
+  Village* testVillage = Village::getTestVillage(1000);
+  testHex->setVillage(testVillage);  
+  Farmland* testFarm = Farmland::getTestFarm(30);
+  testHex->setFarm(testFarm);
+}
+
 bool Hex::colonise (Line* lin, MilUnit* unit, Outcome out) {
   // Sanity checks 
   if (!unit) return false;

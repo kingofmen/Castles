@@ -56,35 +56,34 @@ pop_needs = {
   level = {
     wood = 0.2
     iron = 0.2
-    food = 0.2
+    food = 0.1
     mortality = 0.91
     max_work_fraction = 0.90
   }
   level = {
     wood = 0.2
     iron = 0.2
-    food = 0.2
+    food = 0.1
     mortality = 0.91
     max_work_fraction = 0.85
   }
   level = {
     wood = 0.2
     iron = 0.2
-    food = 0.2
+    food = 0.1
     mortality = 0.90
     max_work_fraction = 0.70
   }
   level = {
     wood = 0.2
     iron = 0.2
-    food = 0.2
+    food = 0.1
     mortality = 0.90
     max_work_fraction = 0.65
   }
   level = {
-    wood = 0.2
-    iron = 0.2
-    food = 0.2
+    wood = 0.1
+    iron = 0.1
     mortality = 0.90
     max_work_fraction = 0.60
   }

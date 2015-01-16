@@ -382,6 +382,7 @@ void WarfareGame::unitTests (string fname) {
   callTestFunction("Farmland", &Farmland::unitTests);
   callTestFunction("Forest",   &Forest::unitTests);
   callTestFunction("Mine",     &Mine::unitTests);
+  callTestFunction("Hex",      &Hex::unitTests);
 
   Logger::logStream(DebugStartup) << passed << " of " << tests << " tests passed.\n";
 }

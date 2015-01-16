@@ -215,6 +215,7 @@ public:
   void updateMaxPop () const {maxPopulation = max(maxPopulation, getTotalPopulation());} 
   void setFarm (Farmland* f) {farm = f;} 
 
+  static Village* getTestVillage (int pop);
   static void unitTests ();
   
 protected: 
@@ -280,6 +281,8 @@ public:
       totalFields[Ripe3] +
       totalFields[Ended];}
 
+  static Farmland* getTestFarm (int numFields = 0);
+  static void overrideConstantsForUnitTests (int lts, int ltp, int ltw, int ltr);
   static void unitTests ();
   
   static const int numOwners = 10; 

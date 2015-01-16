@@ -36,7 +36,8 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Market prices
      . Contracts
      . Marginal declines (check)
-     . Block sizes
+     . Block sizes (check)
+   - Industries should offer their outputs for sale.
    - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
    - Get rid of old supplies stuff
    - Fix Schlemiel in Farmland fillBlock
