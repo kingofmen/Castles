@@ -17,8 +17,9 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Tribute
    - Self-castling
  * Supply line interference
- * Raid/tribute/battle mapmode 
+ * Raid/tribute/battle mapmode
  * Three-resource economy
+   - Change producers to be regular EconActors who sell their goods, but supply owners with money.
    - Forest
      . Internal (check)
      . Initialisation (check)

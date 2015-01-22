@@ -29,15 +29,19 @@ public:
     // If there is money left over, bid for equipment to reduce the amount of labor needed
     // next turn, provided the net-present-value of the reduction is higher than the cost
     // of the machinery.
-   
+
+    double totalExpectedProduction = 0;
     double totalToBuy = 0 - getAmount(TradeGood::Labor);
     double marginalDecline = industry->getMarginFactor();
     double marginFactor = 1;
     for (int i = 0; i < industry->numBlocks(); ++i) {
       double laborNeeded = industry->getLabourForBlock(i);
-      double expectedProduction = industry->outputOfBlock(i);
-      if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction * marginFactor) {
+      double expectedProduction = industry->outputOfBlock(i) * marginFactor * inverseProductionTime;
+      // This is approximate - it assumes that the same amount of labour
+      // will be needed in every step of the production cycle.
+      if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction) {
 	totalToBuy += laborNeeded;
+	totalExpectedProduction += expectedProduction;
 	marginFactor *= marginalDecline;
       }
       else {
@@ -49,7 +53,6 @@ public:
       }
     }
 
-    
     double neededForMaintenance = industry->labourForMaintenance();
     if (prices.getAmount(TradeGood::Labor) * neededForMaintenance < prices.getAmount(output) * industry->lossFromNoMaintenance()) {
       totalToBuy += neededForMaintenance;
@@ -65,6 +68,22 @@ public:
       double npv = laborSaving * prices.getAmount(TradeGood::Labor) * 10;
       if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this));
     }
+
+    // Decide how much output to sell. On average, sell the inverse
+    // of the length of the production cycle, thus keeping the output
+    // constant. But sell more at higher prices. Expect that in the
+    // long run we will sell at a 5% profit; make today's sale proportional
+    // to the ratio of current profit to that expected five percent.
+
+    if (1 > getAmount(output)) return;
+    double expectedOutputPerLabour = totalExpectedProduction / (1 + totalToBuy);
+    double profitPerLabour = expectedOutputPerLabour * prices.getAmount(output) - prices.getAmount(TradeGood::Labor);
+    if (profitPerLabour < 0) return; // Don't sell at a loss.
+    double profitPercentage = profitPerLabour / prices.getAmount(TradeGood::Labor);
+    static const double inverseLongTermPercentage = 20; // Adjustable?
+    profitPercentage *= inverseLongTermPercentage;
+    double fractionToSell = min(1.0, inverseProductionTime * profitPercentage);
+    bidlist.push_back(new MarketBid(output, -fractionToSell * getAmount(output), this));
   }
   
   // Return the reduction in required labor if we had one additional unit.
@@ -96,10 +115,13 @@ private:
   double capFactor (double reductionConstant, double goodAmount) const {
     return 1 - reductionConstant * log(1 + goodAmount);
   }
+
+  static double inverseProductionTime;
 };
 
 template<class T> GoodsHolder* Industry<T>::capital = 0;
 template<class T> TradeGood const* Industry<T>::output = 0;
+template<class T> double Industry<T>::inverseProductionTime = 1;
 
 class Building {
   friend class StaticInitialiser; 

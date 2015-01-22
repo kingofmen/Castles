@@ -136,6 +136,7 @@ template<class T> void StaticInitialiser::initialiseIndustry(Object* industryObj
   T::capital = new GoodsHolder();
   Object* capInfo = industryObject->getNeededObject("capital");
   readGoodsHolder(capInfo, *(T::capital));
+  T::inverseProductionTime = 1.0 / industryObject->safeGetInt("productionCycle", 1);
 }
 
 void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {

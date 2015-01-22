@@ -328,6 +328,7 @@ void Village::unitTests () {
   labourExpected = -1 * ((maslowLevels[0].getAmount(theGood) + maslowLevels[1].getAmount(theGood)) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
   if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected (second time) to buy %f labour, but bought %f", labourExpected, labourBought);
   consume[20] = oldConsume;
+
   delete testVillage;
 }
 
@@ -577,22 +578,15 @@ void Farmland::Farmer::unitTests () {
   Calendar::newYearBegins();
   fields[Clear] = 1400;
   double laborNeeded = getLabourForBlock(0);
-  if (laborNeeded <= 0) {
-    sprintf(errorMessage, "Expected to need positive amount of labor, but found %f", laborNeeded);
-    throw string(errorMessage);
-  }
+  if (laborNeeded <= 0) throwFormatted("Expected to need positive amount of labor, but found %f", laborNeeded);
 
   deliverGoods(testCapGood, 1);
   double laborNeededWithCapital = getLabourForBlock(0);
-  if (laborNeededWithCapital >= laborNeeded) {
-    sprintf(errorMessage,
-	    "With capital %f of %s, should require less than %f labour, but need %f",
-	    getAmount(testCapGood),
-	    testCapGood->getName().c_str(),
-	    laborNeeded,
-	    laborNeededWithCapital);
-    throw string(errorMessage);
-  }
+  if (laborNeededWithCapital >= laborNeeded) throwFormatted("With capital %f of %s, should require less than %f labour, but need %f",
+							    getAmount(testCapGood),
+							    testCapGood->getName().c_str(),
+							    laborNeeded,
+							    laborNeededWithCapital);
   deliverGoods(testCapGood, -1);
 
   // This makes us need 100 labour per Spring turn on 1400 clear fields, if capital is zero.
@@ -607,52 +601,56 @@ void Farmland::Farmer::unitTests () {
   laborNeeded = 0;
   for (int i = 0; i < numBlocks(); ++i) laborNeeded = getLabourForBlock(i);
   GoodsHolder prices;
-  vector<MarketBid*> bidlist;
-  prices.deliverGoods(TradeGood::Labor, 1);
+  vector<MarketBid*> bidlist; 
+  // Expect to produce 1400 * 700 / 42 food per turn, using 100 labour;
+  // that's 233.3 output per labour. So price of 210 is 10% profit.
+  prices.deliverGoods(TradeGood::Labor, 210);
   prices.deliverGoods(testCapGood, 1);
   prices.deliverGoods(output, 1);
+  deliverGoods(output, 100);
   getBids(prices, bidlist);
   
-  bool foundLabour = false;
-  bool foundCapGood = false;
+  double foundLabour = 0;
+  double foundCapGood = 0;
+  double foundOutput = 0;
   BOOST_FOREACH(MarketBid* mb, bidlist) {
-    if (mb->tradeGood == TradeGood::Labor) {
-      foundLabour = true;
-      if (fabs(mb->amountToBuy - 100) > 0.1) {
-	sprintf(errorMessage, "Expected to buy 100 %s, bid is for %f", TradeGood::Labor->getName().c_str(), mb->amountToBuy);
-	throw string(errorMessage);
-      }
-    }
-    else if (mb->tradeGood == testCapGood) {
-      foundCapGood = true;
-      if (mb->amountToBuy <= 0) {
-	sprintf(errorMessage, "Expected to buy %s, but am selling", testCapGood->getName().c_str());
-	throw string(errorMessage);
-      }
-    }
-    else {
-      sprintf(errorMessage,
-	      "Expected to bid on %s and %s, but got bid for %f %s (capital %f price %f) %i %i %f",
-	      TradeGood::Labor->getName().c_str(),
-	      testCapGood->getName().c_str(),
-	      mb->amountToBuy,
-	      mb->tradeGood->getName().c_str(),
-	      capital->getAmount(mb->tradeGood),
-	      prices.getAmount(mb->tradeGood),
-	      mb->tradeGood->getIdx(),
-	      testCapGood->getIdx(),
-	      capital->getAmount(testCapGood));
-      throw string(errorMessage);
-    }
+    if (mb->tradeGood == TradeGood::Labor) foundLabour += mb->amountToBuy;
+    else if (mb->tradeGood == testCapGood) foundCapGood += mb->amountToBuy;
+    else if (mb->tradeGood == output) foundOutput += mb->amountToBuy;
+    else throwFormatted("Expected to bid on %s and %s and to sell %s, but got bid for %f %s (capital %f price %f) %i %i %f",
+			TradeGood::Labor->getName().c_str(),
+			testCapGood->getName().c_str(),
+			output->getName().c_str(),
+			mb->amountToBuy,
+			mb->tradeGood->getName().c_str(),
+			capital->getAmount(mb->tradeGood),
+			prices.getAmount(mb->tradeGood),
+			mb->tradeGood->getIdx(),
+			testCapGood->getIdx(),
+			capital->getAmount(testCapGood));
   }
-  if (!foundLabour) {
-    sprintf(errorMessage, "Expected to buy %s, no bid found", TradeGood::Labor->getName().c_str());
-    throw string(errorMessage);
+  if (foundLabour <= 0) throwFormatted("Expected to buy %s, found", TradeGood::Labor->getName().c_str(), foundLabour);
+  if (foundCapGood <= 0) throwFormatted("Expected to buy %s,found", testCapGood->getName().c_str(), foundCapGood);
+  if (foundOutput >= -1) throwFormatted("Expected to sell at least one %s, found %f", output->getName().c_str(), foundOutput);
+  if (foundOutput < -5) throwFormatted("Did not expect to sell more than 5 units, found %f", foundOutput);
+
+  // Reduce the profit, check that we sell less.
+  prices.setAmount(TradeGood::Labor, 220);
+  bidlist.clear();
+  getBids(prices, bidlist);
+  double secondFoundOutput = 0;
+  foundLabour = 0;
+  foundCapGood = 0;
+  BOOST_FOREACH(MarketBid* mb, bidlist) {
+    if (mb->tradeGood == TradeGood::Labor) foundLabour += mb->amountToBuy;
+    else if (mb->tradeGood == testCapGood) foundCapGood += mb->amountToBuy;
+    else if (mb->tradeGood == output) foundOutput += mb->amountToBuy;
   }
-  if (!foundCapGood) {
-    sprintf(errorMessage, "Expected to buy %s, no bid found", testCapGood->getName().c_str());
-    throw string(errorMessage);
-  }
+  if (foundLabour <= 0) throwFormatted("Expected (again) to buy %s, found", TradeGood::Labor->getName().c_str(), foundLabour);
+  if (foundCapGood <= 0) throwFormatted("Expected (again) to buy %s,found", testCapGood->getName().c_str(), foundCapGood);
+  if (fabs(secondFoundOutput) >= fabs(foundOutput)) throwFormatted("Profit decrease should lead to lower bid offer, found %f -> %f", foundOutput, secondFoundOutput);
+  
+  deliverGoods(output, -100);
 
   owner = this;
   int canonicalBlocks = numBlocks();
@@ -817,8 +815,8 @@ void Farmland::Farmer::workFields () {
     
     // Fallow acreage grows over.
     fields[Clear] = fields[Ended];
-    fields[Ended] = 0; 
-    break; 
+    fields[Ended] = 0;
+    break;
 
   case Calendar::Spring:
     // In spring we clear new fields, plow and sow existing ones.
@@ -920,7 +918,7 @@ void Farmland::Farmer::workFields () {
     fields[Ripe1] -= harvest;
     fields[Ended] += harvest;
 
-    owner->deliverGoods(output, totalHarvested);
+    deliverGoods(output, totalHarvested);
     break;
   }
   } // Not a typo, ends switch.
@@ -1335,7 +1333,7 @@ void Forest::Forester::workGroves (bool tick) {
       if (availableLabour < _labourToHarvest*capFactor) break;
     }
   }
-  owner->deliverGoods(output, totalChopped);
+  deliverGoods(output, totalChopped);
   
   double usedLabour = availableLabour - getAmount(TradeGood::Labor);
   deliverGoods(TradeGood::Labor, usedLabour);
@@ -1702,30 +1700,16 @@ void Mine::Miner::unitTests () {
     }
   }
 
-  if (!foundLabour) {
-    sprintf(errorMessage,
-	    "Expected to buy %s, no bid found (%f %f)",
-	    TradeGood::Labor->getName().c_str(),
-	    outputOfBlock(0),
-	    getLabourForBlock(0));
-    throw string(errorMessage);
-  }
-
-  if (!foundCapGood) {
-    sprintf(errorMessage, "Expected to buy %s, no bid found", testCapGood->getName().c_str());
-    throw string(errorMessage);
-  }
+  if (0.1 > foundLabour) throwFormatted("Expected to buy %s, no bid found (%f %f)",
+					TradeGood::Labor->getName().c_str(),
+					outputOfBlock(0),
+					getLabourForBlock(0));
+  if (!foundCapGood) throwFormatted("Expected to buy %s, no bid found", testCapGood->getName().c_str());
 
   owner = this;
   deliverGoods(TradeGood::Labor, laborNeeded);
   workShafts();
-  if (shafts[*status] != 99) {
-    sprintf(errorMessage,
-	    "Expected %s to be 99, got %i",
-	    status->getName().c_str(),
-	    shafts[*status]);
-    throw string(errorMessage);
-  }
+  if (shafts[*status] != 99) throwFormatted("Expected %s to be 99, got %i", status->getName().c_str(), shafts[*status]);
 
   double productionOne = getAmount(output);
   if (0.01 > productionOne) throw string("Expected to have some iron after workShafts");
@@ -1812,7 +1796,7 @@ void Mine::Miner::workShafts () {
     for (int i = 0; i < numBlocks(); ++i) {
       if (availableLabour < (*ms)->requiredLabour * capFactor) break;
       availableLabour -= (*ms)->requiredLabour * capFactor;
-      owner->deliverGoods(output, _amountOfIron * decline);
+      deliverGoods(output, _amountOfIron * decline);
       if (0 == --shafts[**ms]) break;
       decline *= getMarginFactor();
     }

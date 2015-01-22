@@ -103,7 +103,8 @@ farmland = {
     wood = 0.1
   }  
 
-  output = food 
+  output = food
+  productionCycle = 42
 }
 
 forest = {
@@ -116,6 +117,7 @@ forest = {
     iron = 0.1
   }
   output = wood
+  productionCycle = 1
 }
 
 mine = {
@@ -145,6 +147,7 @@ mine = {
   }
   output = iron
   amount = 50
+  productionCycle = 1
 }
 
 femaleFert = { 
