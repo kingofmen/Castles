@@ -1,4 +1,5 @@
 #include "EconActor.hh"
+#include "Calendar.hh"
 #include "StructUtils.hh"
 #include "Logger.hh" 
 #include <cassert>
@@ -62,26 +63,42 @@ void ContractInfo::execute () const {
   source->deliverGoods(tradeGood, -amountWanted);
 }
 
-double EconActor::availableCredit (EconActor const* const applicant) {
+double EconActor::availableCredit (EconActor* const applicant) const {
   if ((isOwnedBy(applicant)) || (applicant->isOwnedBy(this))) return 1e6;  
   static const double maxCredit = 100;
-  double amountAvailable = maxCredit - borrowers[applicant];
+  double amountAvailable = maxCredit - borrowers.find(applicant)->second;
   if (amountAvailable < 0) return 0;
   return amountAvailable;
 }
 
-double EconActor::extendCredit (EconActor const* const applicant, double amountWanted) {
+void EconActor::dunAndPay () {
+  for (map<EconActor* const, double>::iterator borrower = borrowers.begin(); borrower != borrowers.end(); ++borrower) {
+    EconActor* const victim = (*borrower).first;
+    double amountToPay = min((*borrower).second, 0.5*victim->getAmount(TradeGood::Money));
+    getPaid(victim, amountToPay);
+  }
+
+  if ((Calendar::Winter == Calendar::getCurrentSeason()) && (owner)) {
+    double amountToPay = 0.5 * getAmount(TradeGood::Money);
+    owner->deliverGoods(TradeGood::Money, amountToPay);
+    deliverGoods(TradeGood::Money, -amountToPay);
+  }
+}
+
+double EconActor::extendCredit (EconActor* const applicant, double amountWanted) {
   double amountAvailable = min(availableCredit(applicant), amountWanted);
   if (amountAvailable <= 0) return 0;
-  borrowers[applicant] += amountAvailable;
+  borrowers.at(applicant) += amountAvailable;
   return amountAvailable;
 }
 
 void EconActor::getPaid (EconActor* const payer, double amount) {
   deliverGoods(TradeGood::Money, amount);
   payer->deliverGoods(TradeGood::Money, -amount);
-  borrowers[payer] -= amount;
-  if (borrowers[payer] < 0) borrowers[payer] = 0;
+  if (borrowers[payer] > 0) {
+    borrowers[payer] -= amount;
+    if (borrowers[payer] < 0) borrowers[payer] = 0;
+  }
 }
 
 TradeGood::TradeGood (string n, bool lastOne)

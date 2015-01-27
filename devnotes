@@ -19,7 +19,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
  * Supply line interference
  * Raid/tribute/battle mapmode
  * Three-resource economy
-   - Change producers to be regular EconActors who sell their goods, but supply owners with money.
+   - Change producers to be regular EconActors who sell their goods, but supply owners with money. (check)
    - Forest
      . Internal (check)
      . Initialisation (check)

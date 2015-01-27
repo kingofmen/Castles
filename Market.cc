@@ -50,6 +50,7 @@ void Market::holdMarket () {
   makeContracts(bidlist, notMatched);
   adjustPrices(notMatched);
   BOOST_FOREACH(MarketBid* mb, notMatched) delete mb;
+  BOOST_FOREACH(EconActor* ea, participants) ea->dunAndPay();
 }
 
 void Market::makeContracts (vector<MarketBid*>& bids, vector<MarketBid*>& notMatched) {

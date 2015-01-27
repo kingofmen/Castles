@@ -67,8 +67,9 @@ public:
   EconActor ();
   ~EconActor ();
 
-  double availableCredit (EconActor const* const applicant);
-  double extendCredit (EconActor const* const applicant, double amountWanted);
+  double availableCredit (EconActor* const applicant) const;
+  void dunAndPay ();
+  double extendCredit (EconActor* const applicant, double amountWanted);
   void getPaid (EconActor* const payer, double amount);
   virtual double produceForContract (TradeGood const* const tg, double amount) {amount = min(amount, getAmount(tg)); deliverGoods(tg, -amount); return amount;}
   EconActor* getEconOwner () const {return owner;}
@@ -84,7 +85,7 @@ protected:
 
 private:
   vector<ContractInfo*> obligations;
-  map<EconActor const* const, double> borrowers;
+  map<EconActor*, double> borrowers;
 };
 
 #endif 
