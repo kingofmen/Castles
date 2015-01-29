@@ -22,7 +22,8 @@ public:
   
   void endOfTurn ();
   static void unitComparison (string fname);
-  static void unitTests (string fname); 
+  static void unitTests (string fname);
+  static void functionalTests (string fname);
   static void updateGreatestMilStrength ();    
   
 private:

@@ -88,7 +88,7 @@ void EconActor::dunAndPay () {
 double EconActor::extendCredit (EconActor* const applicant, double amountWanted) {
   double amountAvailable = min(availableCredit(applicant), amountWanted);
   if (amountAvailable <= 0) return 0;
-  borrowers.at(applicant) += amountAvailable;
+  borrowers[applicant] += amountAvailable;
   return amountAvailable;
 }
 

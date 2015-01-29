@@ -645,7 +645,7 @@ int main (int argc, char** argv) {
   FileLog debugfile("startDebugLog");
   QObject::connect(&(Logger::logStream(DebugStartup)), SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
 
-  if ((argc > 2) && (2 == atoi(argv[2]))) {
+  if (argc > 2) {
     QObject::connect(&(Logger::logStream(Logger::Debug)),   SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
     QObject::connect(&(Logger::logStream(Logger::Trace)),   SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
     QObject::connect(&(Logger::logStream(Logger::Game)),    SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
@@ -654,7 +654,8 @@ int main (int argc, char** argv) {
     for (int i = DebugGeneral; i < NumDebugs; ++i) {
       QObject::connect(&(Logger::logStream(i)), SIGNAL(message(QString)), &debugfile, SLOT(message(QString)));
     }
-    WarfareGame::unitTests(argv[1]);
+    if (2 == atoi(argv[2])) WarfareGame::unitTests(argv[1]);
+    else if (3 == atoi(argv[2])) WarfareGame::functionalTests(argv[1]);
     return 0; 
   }
   

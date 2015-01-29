@@ -359,7 +359,7 @@ void callTestFunction (string testName, function<void()> fcn) {
   }
   catch (string problem) {
     Logger::logStream(DebugStartup) << "Failed with error " << problem << "\n";
-  }  
+  }
 }
 
 void callTestFunction (string testName, void (*fPtr) ()) {
@@ -385,6 +385,15 @@ void WarfareGame::unitTests (string fname) {
   callTestFunction("Hex",      &Hex::unitTests);
 
   Logger::logStream(DebugStartup) << passed << " of " << tests << " tests passed.\n";
+}
+
+void WarfareGame::functionalTests (string fname) {
+  callTestFunction(string("Creating game from file") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
+  Hex* testHex = Hex::getHex(0, 0);
+  while (Calendar::Summer != Calendar::getCurrentSeason()) {
+    testHex->endOfTurn();
+    Calendar::newWeekBegins();
+  }
 }
 
 void WarfareGame::updateGreatestMilStrength() {
