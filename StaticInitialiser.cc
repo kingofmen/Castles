@@ -24,6 +24,7 @@ map<MilUnitTemplate*, Object*> milUnitSpriteObjectMap;
 
 void readGoodsHolder (Object* goodsObject, GoodsHolder& goods) {
   goods.clear();
+  if (!goodsObject) return;
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {    
     goods.deliverGoods((*tg), goodsObject->safeGetFloat((*tg)->getName()));
   }
@@ -285,6 +286,8 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
     contract->source = econ;
     econ->obligations.push_back(contract);
   }
+
+  readGoodsHolder(info->safeGetObject("goods"), *econ);
 }
 
 inline int heightMapWidth (int zoneSide) {
@@ -504,8 +507,11 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Object* ripe3 = fInfo->safeGetObject("ripe3");
   Object* ended = fInfo->safeGetObject("ended");
   Object* owner = fInfo->safeGetObject("owner");  
-  
+
+  objvec workers = fInfo->getValue("worker");
+  if (workers.size() < Farmland::numOwners) throwFormatted("Expected %i worker objects, found %i", Farmland::numOwners, workers.size());
   for (int i = 0; i < Farmland::numOwners; ++i) {
+    initialiseEcon(ret->farmers[i], workers[i]);
     ret->farmers[i]->fields[Farmland::Clear] = clear ? (clear->numTokens() > i ? clear->tokenAsInt(i) : 0) : 0;
     ret->farmers[i]->fields[Farmland::Ready] = ready ? (ready->numTokens() > i ? ready->tokenAsInt(i) : 0) : 0;
     ret->farmers[i]->fields[Farmland::Sowed] = sowed ? (sowed->numTokens() > i ? sowed->tokenAsInt(i) : 0) : 0;
@@ -685,14 +691,14 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
 Village* StaticInitialiser::buildVillage (Object* fInfo) {
   Village* ret = new Village();
   Object* males = fInfo->safeGetObject("males");
-  Object* females = fInfo->safeGetObject("females"); 
+  Object* females = fInfo->safeGetObject("females");
   readAgeTrackerFromObject(ret->males, males);
   readAgeTrackerFromObject(ret->women, females);
-  ret->updateMaxPop(); 
+  ret->updateMaxPop();
 
   buildMilitia(ret, fInfo->safeGetObject("militiaUnits"));
   initialiseEcon(ret, fInfo);
-  return ret; 
+  return ret;
 }
 
 void StaticInitialiser::createPlayer (Object* info) {
