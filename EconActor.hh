@@ -84,11 +84,10 @@ protected:
   void registerSale (TradeGood const* const tg, double amount) {soldThisTurn.deliverGoods(tg, amount);}
   
   EconActor* owner;
-
+  GoodsHolder soldThisTurn;
 private:
   vector<ContractInfo*> obligations;
   map<EconActor*, double> borrowers;
-  GoodsHolder soldThisTurn;
 };
 
 #endif 

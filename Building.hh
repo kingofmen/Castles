@@ -83,7 +83,10 @@ public:
     static const double inverseLongTermPercentage = 20; // Adjustable?
     profitPercentage *= inverseLongTermPercentage;
     double fractionToSell = min(1.0, inverseProductionTime * profitPercentage);
-    bidlist.push_back(new MarketBid(output, -fractionToSell * getAmount(output), this));
+    fractionToSell *= getAmount(output);
+    fractionToSell -= soldThisTurn.getAmount(output);
+    if (1 > fractionToSell) return;
+    bidlist.push_back(new MarketBid(output, -fractionToSell, this));
   }
   
   // Return the reduction in required labor if we had one additional unit.

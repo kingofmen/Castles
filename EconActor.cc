@@ -78,6 +78,8 @@ void EconActor::dunAndPay () {
     getPaid(victim, amountToPay);
   }
 
+  soldThisTurn.clear();
+  
   if ((Calendar::Winter == Calendar::getCurrentSeason()) && (owner)) {
     double amountToPay = 0.5 * getAmount(TradeGood::Money);
     owner->deliverGoods(TradeGood::Money, amountToPay);
