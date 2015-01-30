@@ -45,7 +45,6 @@ public:
   static void      writeGameToFile (string fname);
   static void      writeAgeInfoToObject (AgeTracker& age, Object* obj, int skip = 0);  
   static void      writeUnitToObject (MilUnit* unit, Object* obj);
-
   
 private:
   static Farmland* buildFarm (Object* fInfo);
@@ -55,7 +54,8 @@ private:
     
   static void addShadows (QGLFramebufferObject* fbo, GLuint texture); 
   static void createCalculator (Object* info, Action::Calculator* ret);
-  static double interpolate (double xfrac, double yfrac, int width, int height, double* heightMap); 
+  static double interpolate (double xfrac, double yfrac, int width, int height, double* heightMap);
+  static void writeGoodsHolderIntoObject (const GoodsHolder& goodsHolder, Object* info);
   static void writeEconActorIntoObject (EconActor* econ, Object* info);
   static void writeBuilding (Object* bInfo, Building* build);
   

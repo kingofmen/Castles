@@ -101,6 +101,13 @@ void EconActor::getPaid (EconActor* const payer, double amount) {
   }
 }
 
+double EconActor::produceForContract (TradeGood const* const tg, double amount) {
+  amount = min(amount, getAmount(tg));
+  deliverGoods(tg, -amount);
+  registerSale(tg, amount);
+  return amount;
+}
+
 TradeGood::TradeGood (string n, bool lastOne)
   : Enumerable<const TradeGood>(this, n, lastOne)
 {}

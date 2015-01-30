@@ -71,7 +71,7 @@ public:
   void dunAndPay ();
   double extendCredit (EconActor* const applicant, double amountWanted);
   void getPaid (EconActor* const payer, double amount);
-  virtual double produceForContract (TradeGood const* const tg, double amount) {amount = min(amount, getAmount(tg)); deliverGoods(tg, -amount); return amount;}
+  virtual double produceForContract (TradeGood const* const tg, double amount);
   EconActor* getEconOwner () const {return owner;}
   bool isOwnedBy (EconActor const* const cand) const {return cand == owner;}
   void setEconOwner (EconActor* ea) {owner = ea;}
@@ -81,11 +81,14 @@ public:
   static void unitTests ();
   
 protected:
+  void registerSale (TradeGood const* const tg, double amount) {soldThisTurn.deliverGoods(tg, amount);}
+  
   EconActor* owner;
 
 private:
   vector<ContractInfo*> obligations;
   map<EconActor*, double> borrowers;
+  GoodsHolder soldThisTurn;
 };
 
 #endif 

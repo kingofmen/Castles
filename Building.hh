@@ -319,7 +319,6 @@ private:
     double getLabourForBlock (int block) const;
     virtual int numBlocks () const;
     virtual double getMarginFactor () const {return boss->marginFactor;}
-    virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
     void workFields ();
@@ -375,7 +374,6 @@ private:
     virtual double labourForMaintenance () const;
     virtual double lossFromNoMaintenance () const;
     virtual int numBlocks () const;
-    virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
     void workGroves (bool tick);
@@ -432,7 +430,6 @@ private:
     double getLabourForBlock (int block) const;
     virtual double getMarginFactor () const {return mine->marginFactor;}
     virtual int numBlocks () const {return mine->veinsPerMiner;}
-    virtual double produceForContract (TradeGood const* const tg, double amount);
     virtual void setMirrorState ();
     void unitTests ();
     void workShafts ();

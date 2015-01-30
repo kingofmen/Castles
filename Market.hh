@@ -36,8 +36,10 @@ public:
   void holdMarket ();
   void registerParticipant (EconActor* ea);
   void unRegisterParticipant (EconActor* ea);
-  double getPrice (TradeGood const* const tg) {return prices.getAmount(tg);}
-  
+  double getDemand (TradeGood const* const tg) const {return demand.getAmount(tg);}
+  double getPrice  (TradeGood const* const tg) const {return prices.getAmount(tg);}
+  double getVolume (TradeGood const* const tg) const {return volume.getAmount(tg);}
+
   static void unitTests ();
 private:
   void makeContracts(vector<MarketBid*>& bids, vector<MarketBid*>& notMatched);

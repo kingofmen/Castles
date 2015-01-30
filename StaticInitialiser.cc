@@ -264,10 +264,7 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
     Logger::logStream(DebugStartup) << "Bad econ id " << id << " " << info << " already exists.\n";
     assert(!EconActor::getByIndex(id)); 
   }
-  econ->setIdx(id); 
-  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
-    econ->deliverGoods(*tg, info->safeGetFloat((*tg)->getName()));
-  }
+  econ->setIdx(id);
 
   static map<Object*, ContractInfo*> unFilled;
   objvec toRemove;
@@ -1258,8 +1255,12 @@ void StaticInitialiser::writeAgeInfoToObject (AgeTracker& age, Object* obj, int 
 
 void StaticInitialiser::writeEconActorIntoObject (EconActor* econ, Object* info) {
   info->setLeaf("id", econ->getIdx());
+  writeGoodsHolderIntoObject(*econ, info->getNeededObject("goods"));
+}
+
+void StaticInitialiser::writeGoodsHolderIntoObject (const GoodsHolder& goodsHolder, Object* info) {
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
-    double amount = econ->getAmount(*tg);
+    double amount = goodsHolder.getAmount(*tg);
     if (fabs(amount) < 0.001) continue;
     string gname = (*tg)->getName();
     info->setLeaf(gname, amount); 
@@ -1363,6 +1364,11 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* farmInfo = new Object("farmland");
       writeBuilding(farmInfo, farm);
       hexInfo->setValue(farmInfo);
+      for (int i = 0; i < Farmland::numOwners; ++i) {
+	Object* worker = new Object("worker");
+	farmInfo->setValue(worker);
+	writeEconActorIntoObject(farm->farmers[i], worker);
+      }
       map<Farmland::FieldStatus, Object*> statuses;
       statuses[Farmland::Clear] = new Object("clear");
       statuses[Farmland::Ready] = new Object("ready");
@@ -1392,6 +1398,11 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* forestInfo = new Object("forest");
       writeBuilding(forestInfo, forest);
       hexInfo->setValue(forestInfo);
+      for (int i = 0; i < Forest::numOwners; ++i) {
+	Object* worker = new Object("worker");
+	forestInfo->setValue(worker);
+	writeEconActorIntoObject(forest->foresters[i], worker);
+      }
 
       map<Forest::ForestStatus, Object*> statuses;
       statuses[Forest::Wild]     = new Object("wild");
@@ -1435,6 +1446,12 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* mineInfo = new Object("mine");
       writeBuilding(mineInfo, mine);
       hexInfo->setValue(mineInfo);
+      for (int i = 0; i < Mine::numOwners; ++i) {
+	Object* worker = new Object("worker");
+	mineInfo->setValue(worker);
+	writeEconActorIntoObject(mine->miners[i], worker);
+      }
+
       for (Mine::MineStatus::Iter ms = Mine::MineStatus::start(); ms != Mine::MineStatus::final(); ++ms) {
 	Object* statusInfo = new Object((*ms)->getName());
 	mineInfo->setValue(statusInfo);

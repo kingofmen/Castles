@@ -525,10 +525,6 @@ double Farmland::Farmer::outputOfBlock (int block) const {
   return _cropsFrom3 * boss->blockSize;
 }
 
-double Farmland::Farmer::produceForContract (TradeGood const* const tg, double amount) {
-  return owner->produceForContract(tg, amount);
-}
-
 Farmland* Farmland::getTestFarm (int numFields) {
   Farmland* testFarm = new Farmland();
   testFarm->farmers[0]->fields[Clear] = numFields;
@@ -1053,10 +1049,6 @@ double Forest::Forester::outputOfBlock (int block) const {
     counted += groves[i];
   }
   return 0;
-}
-
-double Forest::Forester::produceForContract (TradeGood const* const tg, double amount) {
-  return owner->produceForContract(tg, amount);
 }
 
 void Forest::unitTests () {
@@ -1605,10 +1597,6 @@ void Mine::endOfTurn () {
 
 double Mine::Miner::outputOfBlock (int block) const {
   return _amountOfIron;
-}
-
-double Mine::Miner::produceForContract (TradeGood const* const tg, double amount) {
-  return owner->produceForContract(tg, amount);
 }
 
 void Mine::unitTests () {
