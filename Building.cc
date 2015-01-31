@@ -308,7 +308,7 @@ void Village::unitTests () {
   consume[20] = 1;
   vector<MaslowLevel*> backupLevels = maslowLevels;
   maslowLevels.clear();
-  maslowLevels.push_back(new MaslowLevel(1.0, 0.50));
+  maslowLevels.push_back(new MaslowLevel(1.0, 0.501)); // Get a tolerance issue if I use 0.5 exactly; (50 / 100) > 0.5.
   maslowLevels.push_back(new MaslowLevel(1.0, 0.45));
   TradeGood const* theGood = *(TradeGood::exLaborStart());
   maslowLevels[0]->setAmount(theGood, 0.1);
