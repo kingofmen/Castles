@@ -247,7 +247,7 @@ protected:
   AgeTracker males;
   AgeTracker women; 
   MilitiaTradition* milTrad;
-  double foodMortalityModifier; 
+  unsigned int consumptionLevel;
   Farmland* farm; 
 
   struct MaslowLevel : public GoodsHolder {

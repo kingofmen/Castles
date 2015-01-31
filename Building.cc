@@ -175,7 +175,7 @@ Village::Village ()
   : Building()
   , Mirrorable<Village>()
   , milTrad(0)
-  , foodMortalityModifier(1)
+  , consumptionLevel(0)
   , farm(0)
   , workedThisTurn(0)
 {
@@ -186,8 +186,9 @@ Village::Village (Village* other)
   : Building()
   , Mirrorable<Village>(other)
   , milTrad(0)
-  , foodMortalityModifier(1)
-  , farm(0)    
+  , consumptionLevel(0)
+  , farm(0)
+  , workedThisTurn(0)
 {}
 
 Village::~Village () {
@@ -389,8 +390,8 @@ void MilitiaTradition::setMirrorState () {
 
 double Village::adjustedMortality (int age, bool male) const {
   // Mortality per week. The arrays store per year, so divide by weeks in a year.
-  if (male) return baseMaleMortality[age]*foodMortalityModifier*Calendar::inverseYearLength;
-  return baseFemaleMortality[age]*foodMortalityModifier*Calendar::inverseYearLength;
+  if (male) return baseMaleMortality[age]*maslowLevels[consumptionLevel].mortalityModifier*Calendar::inverseYearLength;
+  return baseFemaleMortality[age]*maslowLevels[consumptionLevel].mortalityModifier*Calendar::inverseYearLength;
 }
 
 double Village::produceForContract (TradeGood const* const tg, double amount) {
@@ -1365,7 +1366,7 @@ void Village::setMirrorState () {
   males.setMirrorState();
   milTrad->setMirrorState();
   mirror->milTrad = milTrad->getMirror();
-  mirror->foodMortalityModifier = foodMortalityModifier; 
+  mirror->consumptionLevel = consumptionLevel;
   mirror->setOwner(getOwner());
   mirror->setAmounts(this);
   // Building mirror states set by Hex.  
@@ -1432,20 +1433,21 @@ void Farmland::delivery (EconActor* target, TradeGood const* const good, double 
 
 void Village::eatFood () {
   double consumptionFactor = consumption();
-  for (vector<MaslowLevel>::iterator level = maslowLevels.begin(); level != maslowLevels.end(); ++level) {
+  consumptionLevel = 0;
+  for (unsigned int i = 0; i < maslowLevels.size(); ++i) {
     bool canGetLevel = true;
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      double amountNeeded = maslowLevels[i].getAmount(*tg) * consumptionFactor;
       if (amountNeeded < getAmount(*tg)) continue;
       canGetLevel = false;
       break;
     }
     if (!canGetLevel) break;
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      double amountNeeded = maslowLevels[i].getAmount(*tg) * consumptionFactor;
       deliverGoods((*tg), -amountNeeded);
     }
-    foodMortalityModifier = (*level).mortalityModifier;
+    consumptionLevel = i;
   }
 }
 
