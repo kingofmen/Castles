@@ -7,51 +7,61 @@ pop_needs = {
     food = 0.2
     mortality = 1.0
     max_work_fraction = 1
+    name = "Famine"
   }
   level = {
     food = 0.2
     mortality = 0.995
     max_work_fraction = 0.99
+    name = "Starving"
   }
   level = {
     food = 0.2
     mortality = 0.99
     max_work_fraction = 0.98
+    name = "Half starved"
   }
   level = {
     food = 0.2
     mortality = 0.98
     max_work_fraction = 0.97
+    name = "Malnourished"
   }
   level = {
     food = 0.2
     mortality = 0.97
     max_work_fraction = 0.95
+    name = "Hungry"
   }
   level = {
     food = 0.2
     mortality = 0.96
     max_work_fraction = 0.94
+    name = "Barely fed"
   }
   level = {
     food = 0.2
     mortality = 0.95
     max_work_fraction = 0.93
+    name = "Adequate"
   }
   level = {
     food = 0.2
     mortality = 0.94
     max_work_fraction = 0.92
+    name = "Meat on Sundays"
   }
   level = {
     food = 0.2
     mortality = 0.93
     max_work_fraction = 0.91
+    name = "Well fed"
   }
   level = {
     food = 0.2
     mortality = 0.92
     max_work_fraction = 0.90
+    name = "Stocky"
   }
   level = {
     wood = 0.2
@@ -59,6 +69,7 @@ pop_needs = {
     food = 0.1
     mortality = 0.91
     max_work_fraction = 0.90
+    name = "One chair"
   }
   level = {
     wood = 0.2
@@ -66,6 +77,7 @@ pop_needs = {
     food = 0.1
     mortality = 0.91
     max_work_fraction = 0.85
+    name = "Two chairs"
   }
   level = {
     wood = 0.2
@@ -73,6 +85,7 @@ pop_needs = {
     food = 0.1
     mortality = 0.90
     max_work_fraction = 0.70
+    name = "Prosperous"
   }
   level = {
     wood = 0.2
@@ -80,12 +93,14 @@ pop_needs = {
     food = 0.1
     mortality = 0.90
     max_work_fraction = 0.65
+    name = "Well off"
   }
   level = {
     wood = 0.1
     iron = 0.1
     mortality = 0.90
     max_work_fraction = 0.60
+    name = "Wealthy"
   }
 }
 

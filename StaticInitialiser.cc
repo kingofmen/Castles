@@ -364,11 +364,14 @@ void StaticInitialiser::initialiseMaslowHierarchy (Object* popNeeds) {
   objvec levels = popNeeds->getValue("level");
 
   Village::maslowLevels.clear();
+  int counter = 1;
   for (objiter level = levels.begin(); level != levels.end(); ++level) {
     Village::MaslowLevel current;
     readGoodsHolder((*level), current);
     current.mortalityModifier = (*level)->safeGetFloat("mortality", 1.0);
     current.maxWorkFraction = (*level)->safeGetFloat("max_work_fraction", 1.0);
+    sprintf(strbuffer, "\"Goods level %i\"", counter++);
+    current.name = remQuotes((*level)->safeGetString("name", strbuffer));
     Village::maslowLevels.push_back(current);
   }
 }

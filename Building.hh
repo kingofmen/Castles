@@ -255,6 +255,7 @@ protected:
     MaslowLevel (double mm, double mwf) : GoodsHolder(), mortalityModifier(mm), maxWorkFraction(mwf) {}
     double mortalityModifier;
     double maxWorkFraction;
+    string name;
   };
   
   static vector<MaslowLevel> maslowLevels;
