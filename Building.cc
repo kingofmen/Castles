@@ -20,7 +20,7 @@ double Village::femaleConsumption = 0.90;
 double Village::femaleSurplusEffect = -2.0;
 double Village::femaleSurplusZero = 1.0;
 double Castle::siegeModifier = 10; 
-vector<Village::MaslowLevel> Village::maslowLevels;
+vector<Village::MaslowLevel*> Village::maslowLevels;
 
 int Farmland::_labourToSow    = 1;
 int Farmland::_labourToPlow   = 10;
@@ -175,8 +175,8 @@ Village::Village ()
   : Building()
   , Mirrorable<Village>()
   , milTrad(0)
-  , consumptionLevel(0)
   , farm(0)
+  , consumptionLevel(maslowLevels[0])
   , workedThisTurn(0)
 {
   milTrad = new MilitiaTradition();
@@ -186,8 +186,8 @@ Village::Village (Village* other)
   : Building()
   , Mirrorable<Village>(other)
   , milTrad(0)
-  , consumptionLevel(0)
   , farm(0)
+  , consumptionLevel(maslowLevels[0])
   , workedThisTurn(0)
 {}
 
@@ -210,12 +210,14 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   double inverseTotalLabour = 1.0 / laborAvailable;
   GoodsHolder amountToBuy;
   GoodsHolder reserveUsed;
-  for (vector<MaslowLevel>::iterator level = maslowLevels.begin(); level != maslowLevels.end(); ++level) {
+  expectedConsumptionLevel = 0;
+  stopReason = "max consumption";
+  BOOST_FOREACH(MaslowLevel const* level, maslowLevels) {
     double moneyNeeded = 0;
     bool canGetLevel = true;
     double labourNeeded = 0;
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      double amountNeeded = level->getAmount(*tg) * consumptionFactor;
       double reserve = getAmount(*tg) - reserveUsed.getAmount(*tg);
       if (reserve > 0) {
 	reserve = min(amountNeeded, reserve);
@@ -225,6 +227,7 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
       if (TradeGood::Labor == (*tg)) {
 	// Deal with labour specially since we produce it and presumably don't need to buy.
 	if (amountNeeded > laborAvailable) {
+	  stopReason = "not enough labour";
 	  canGetLevel = false;
 	  break;
 	}
@@ -237,17 +240,21 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
       moneyNeeded += prices.getAmount(*tg) * amountNeeded;
       if (moneyNeeded > moneyAvailable + laborAvailable*prices.getAmount(TradeGood::Labor)) {
 	canGetLevel = false;
+	stopReason = (*tg)->getName() + " too expensive";
 	break;
       }
       else labourNeeded += moneyNeeded / prices.getAmount(TradeGood::Labor);
     }
-    if (labourNeeded * inverseTotalLabour > (*level).maxWorkFraction) canGetLevel = false;
+    if (labourNeeded * inverseTotalLabour > level->maxWorkFraction) {
+      canGetLevel = false;
+      stopReason = "too much work";
+    }
     
     if (!canGetLevel) break;
 
     amountToBuy.deliverGoods(TradeGood::Labor, -labourNeeded);
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = (*level).getAmount(*tg) * consumptionFactor;
+      double amountNeeded = level->getAmount(*tg) * consumptionFactor;
       double reserve = getAmount(*tg) - reserveUsed.getAmount(*tg);
       if (reserve > 0) {
 	reserve = min(amountNeeded, reserve);
@@ -257,6 +264,7 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
       if (amountNeeded < 0.001) continue;
       amountToBuy.deliverGoods((*tg), amountNeeded);
     }
+    expectedConsumptionLevel = level;
   }
 
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
@@ -298,36 +306,43 @@ void Village::unitTests () {
   testVillage = getTestVillage(100);
   double oldConsume = consume[20];
   consume[20] = 1;
-  vector<MaslowLevel> backupLevels = maslowLevels;
+  vector<MaslowLevel*> backupLevels = maslowLevels;
   maslowLevels.clear();
-  maslowLevels.push_back(MaslowLevel(1.0, 0.50));
-  maslowLevels.push_back(MaslowLevel(1.0, 0.45));
+  maslowLevels.push_back(new MaslowLevel(1.0, 0.50));
+  maslowLevels.push_back(new MaslowLevel(1.0, 0.45));
   TradeGood const* theGood = *(TradeGood::exLaborStart());
-  maslowLevels[0].setAmount(theGood, 0.1);
-  maslowLevels[1].setAmount(theGood, 0.1);
+  maslowLevels[0]->setAmount(theGood, 0.1);
+  maslowLevels[1]->setAmount(theGood, 0.1);
   prices.clear();
   prices.setAmount(TradeGood::Labor, 1);
   prices.setAmount(theGood, 5);
   // Buying 0.2 food now costs 1 labour. The village should be unwilling
   // to make that trade because the maximum for the second level is 0.45.
+  // It should still buy the first level, however.
   bidlist.clear();
   testVillage->getBids(prices, bidlist);
-  if (2 != bidlist.size()) throwFormatted("Expected 2 bids, got %i", bidlist.size());
+  if (2 != bidlist.size()) throwFormatted("Expected 2 bids, got %i, reason %s", bidlist.size(), testVillage->stopReason.c_str());
   double labourBought = 0;
   BOOST_FOREACH(MarketBid* mb, bidlist) if (mb->tradeGood == TradeGood::Labor) labourBought += mb->amountToBuy;
   // Minus one from selling
-  double labourExpected = -1 * (maslowLevels[0].getAmount(theGood) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
-  if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected to buy %f labour, but bought %f", labourExpected, labourBought);
+  double labourExpected = -1 * (maslowLevels[0]->getAmount(theGood) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
+  if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected to buy %f labour, but bought %f, reason %s",
+								  labourExpected,
+								  labourBought,
+								  testVillage->stopReason.c_str());
 
   prices.setAmount(TradeGood::Labor, 2);
-  // Now the trade should be accepted.
+  // Now the full trade, both levels, should be accepted.
   bidlist.clear();
   testVillage->getBids(prices, bidlist);
-  if (2 != bidlist.size()) throwFormatted("Expected 2 bids (second time), got %i", bidlist.size());
+  if (2 != bidlist.size()) throwFormatted("Expected 2 bids (second time), got %i, reason %s", bidlist.size(), testVillage->stopReason.c_str());
   labourBought = 0;
   BOOST_FOREACH(MarketBid* mb, bidlist) if (mb->tradeGood == TradeGood::Labor) labourBought += mb->amountToBuy;
-  labourExpected = -1 * ((maslowLevels[0].getAmount(theGood) + maslowLevels[1].getAmount(theGood)) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
-  if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected (second time) to buy %f labour, but bought %f", labourExpected, labourBought);
+  labourExpected = -1 * ((maslowLevels[0]->getAmount(theGood) + maslowLevels[1]->getAmount(theGood)) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
+  if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected (second time) to buy %f labour, but bought %f, reason %s",
+								  labourExpected,
+								  labourBought,
+								  testVillage->stopReason.c_str());
   consume[20] = oldConsume;
 
   delete testVillage;
@@ -390,8 +405,9 @@ void MilitiaTradition::setMirrorState () {
 
 double Village::adjustedMortality (int age, bool male) const {
   // Mortality per week. The arrays store per year, so divide by weeks in a year.
-  if (male) return baseMaleMortality[age]*maslowLevels[consumptionLevel].mortalityModifier*Calendar::inverseYearLength;
-  return baseFemaleMortality[age]*maslowLevels[consumptionLevel].mortalityModifier*Calendar::inverseYearLength;
+  double mortMod = consumptionLevel ? consumptionLevel->mortalityModifier : 1.5;
+  if (male) return baseMaleMortality[age] * mortMod * Calendar::inverseYearLength;
+  return baseFemaleMortality[age] * mortMod * Calendar::inverseYearLength;
 }
 
 double Village::produceForContract (TradeGood const* const tg, double amount) {
@@ -1434,20 +1450,20 @@ void Farmland::delivery (EconActor* target, TradeGood const* const good, double 
 void Village::eatFood () {
   double consumptionFactor = consumption();
   consumptionLevel = 0;
-  for (unsigned int i = 0; i < maslowLevels.size(); ++i) {
+  BOOST_FOREACH(MaslowLevel const* level, maslowLevels) {
     bool canGetLevel = true;
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = maslowLevels[i].getAmount(*tg) * consumptionFactor;
+      double amountNeeded = level->getAmount(*tg) * consumptionFactor;
       if (amountNeeded < getAmount(*tg)) continue;
       canGetLevel = false;
       break;
     }
     if (!canGetLevel) break;
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = maslowLevels[i].getAmount(*tg) * consumptionFactor;
+      double amountNeeded = level->getAmount(*tg) * consumptionFactor;
       deliverGoods((*tg), -amountNeeded);
     }
-    consumptionLevel = i;
+    consumptionLevel = level;
   }
 }
 

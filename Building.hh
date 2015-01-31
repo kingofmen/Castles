@@ -247,7 +247,6 @@ protected:
   AgeTracker males;
   AgeTracker women; 
   MilitiaTradition* milTrad;
-  unsigned int consumptionLevel;
   Farmland* farm; 
 
   struct MaslowLevel : public GoodsHolder {
@@ -257,8 +256,11 @@ protected:
     double maxWorkFraction;
     string name;
   };
+
+  MaslowLevel const* consumptionLevel;
+  MaslowLevel const* expectedConsumptionLevel;
   
-  static vector<MaslowLevel> maslowLevels;
+  static vector<MaslowLevel*> maslowLevels;
   static vector<double> products;
   static vector<double> consume;
   static vector<double> recruitChance;   
@@ -274,6 +276,7 @@ private:
   void eatFood ();
 
   double workedThisTurn;
+  string stopReason;
   static int maxPopulation; 
   static vector<double> baseMaleMortality;
   static vector<double> baseFemaleMortality;

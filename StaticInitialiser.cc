@@ -366,12 +366,12 @@ void StaticInitialiser::initialiseMaslowHierarchy (Object* popNeeds) {
   Village::maslowLevels.clear();
   int counter = 1;
   for (objiter level = levels.begin(); level != levels.end(); ++level) {
-    Village::MaslowLevel current;
-    readGoodsHolder((*level), current);
-    current.mortalityModifier = (*level)->safeGetFloat("mortality", 1.0);
-    current.maxWorkFraction = (*level)->safeGetFloat("max_work_fraction", 1.0);
+    Village::MaslowLevel* current = new Village::MaslowLevel();
+    readGoodsHolder((*level), *current);
+    current->mortalityModifier = (*level)->safeGetFloat("mortality", 1.0);
+    current->maxWorkFraction = (*level)->safeGetFloat("max_work_fraction", 1.0);
     sprintf(strbuffer, "\"Goods level %i\"", counter++);
-    current.name = remQuotes((*level)->safeGetString("name", strbuffer));
+    current->name = remQuotes((*level)->safeGetString("name", strbuffer));
     Village::maslowLevels.push_back(current);
   }
 }
@@ -509,7 +509,7 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Object* owner = fInfo->safeGetObject("owner");  
 
   objvec workers = fInfo->getValue("worker");
-  if (workers.size() < Farmland::numOwners) throwFormatted("Expected %i worker objects, found %i", Farmland::numOwners, workers.size());
+  if ((int) workers.size() < Farmland::numOwners) throwFormatted("Expected %i worker objects, found %i", Farmland::numOwners, workers.size());
   for (int i = 0; i < Farmland::numOwners; ++i) {
     initialiseEcon(ret->farmers[i], workers[i]);
     ret->farmers[i]->fields[Farmland::Clear] = clear ? (clear->numTokens() > i ? clear->tokenAsInt(i) : 0) : 0;
