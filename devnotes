@@ -34,7 +34,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Write to save (check)
      . Unit tests (check)
    - Write and read in save:
-     . Market prices
+     . Market prices (check)
      . Contracts
      . Marginal declines (check)
      . Block sizes (check)

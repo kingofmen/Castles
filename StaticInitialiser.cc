@@ -1349,6 +1349,8 @@ void StaticInitialiser::writeGameToFile (string fname) {
       */
     }
 
+    writeGoodsHolderIntoObject((*hex)->prices, hexInfo->getNeededObject("prices"));
+
     Village* village = (*hex)->getVillage();
     if (village) {
       Object* villageInfo = new Object("village");
