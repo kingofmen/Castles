@@ -29,6 +29,7 @@ struct MarketContract {
 
 class Market {
   friend class HexGraphicsInfo;
+  friend class StaticInitialiser;
 public:
   Market ();
   ~Market () {}

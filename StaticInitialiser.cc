@@ -438,6 +438,9 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     initialiseEcon(castle, cinfo);
   }
 
+  Object* priceInfo = hInfo->safeGetObject("prices");
+  readGoodsHolder(priceInfo, hex->prices);
+  
   Object* fInfo = hInfo->safeGetObject("village");
   if (fInfo) {
     Village* village = buildVillage(fInfo);

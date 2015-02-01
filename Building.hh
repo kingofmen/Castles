@@ -234,12 +234,12 @@ public:
   double production () const;
   virtual void setMirrorState ();  
   void increaseTradition (MilUnitTemplate const* target = 0) {milTrad->increaseTradition(target);} 
-  
+  string getBidStatus () const;
   int getMilitiaDrill () {return milTrad ? milTrad->getDrill() : 0;}
   int getMilitiaStrength (MilUnitTemplate const* const dat) {return milTrad ? milTrad->getStrength(dat) : 0;} 
   void updateMaxPop () const {maxPopulation = max(maxPopulation, getTotalPopulation());} 
   void setFarm (Farmland* f) {farm = f;} 
-
+  
   static Village* getTestVillage (int pop);
   static void unitTests ();
   

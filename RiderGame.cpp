@@ -393,8 +393,13 @@ void WarfareGame::functionalTests (string fname) {
   while (Calendar::Winter != Calendar::getCurrentSeason()) {
     Logger::logStream(DebugStartup) << Calendar::toString() << "\n";
     testHex->endOfTurn();
+    Logger::logStream(DebugStartup) << testHex->getVillage()->getBidStatus() << "\n";
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-      Logger::logStream(DebugStartup) << (*tg)->getName() << " " << testHex->getPrice(*tg) << " " << testHex->getDemand(*tg) << " " << testHex->getVolume(*tg) << "\n";
+      Logger::logStream(DebugStartup) << (*tg)->getName()        << " "
+				      << testHex->getPrice(*tg)  << " "
+				      << testHex->getDemand(*tg) << " "
+				      << testHex->getVolume(*tg) << " "
+				      << "\n";
     }
     Calendar::newWeekBegins();
   }

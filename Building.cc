@@ -348,6 +348,12 @@ void Village::unitTests () {
   delete testVillage;
 }
 
+string Village::getBidStatus () const {
+  return (consumptionLevel ? consumptionLevel->name : "none") + " "
+    +    (expectedConsumptionLevel ? expectedConsumptionLevel->name : "none") + " "
+    +    stopReason;
+}
+
 const MilUnitGraphicsInfo* Village::getMilitiaGraphics () const {
   return milTrad ? milTrad->militia->getGraphicsInfo() : 0;
 }
@@ -1454,7 +1460,7 @@ void Village::eatFood () {
     bool canGetLevel = true;
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
       double amountNeeded = level->getAmount(*tg) * consumptionFactor;
-      if (amountNeeded < getAmount(*tg)) continue;
+      if (amountNeeded <= getAmount(*tg)) continue;
       canGetLevel = false;
       break;
     }
