@@ -8,6 +8,7 @@
 using namespace std; 
 class EconActor; 
 class MarketBid;
+class MarketContract;
 
 class TradeGood : public Enumerable<const TradeGood> {
   friend class StaticInitialiser; 
@@ -36,6 +37,9 @@ public:
   void         setAmount    (TradeGood const* const tg, double amount) {tradeGoods[*tg] = amount;}
   void         setAmounts   (GoodsHolder const* const gh);
   void         setAmounts   (const GoodsHolder& gh);
+
+  void operator-= (const GoodsHolder& other);
+  void operator+= (const GoodsHolder& other);
 private:
   vector<double> tradeGoods;
 };
@@ -71,9 +75,11 @@ public:
   void dunAndPay ();
   double extendCredit (EconActor* const applicant, double amountWanted);
   void getPaid (EconActor* const payer, double amount);
+  double getPromised (TradeGood const* const tg) {return promisedToDeliver.getAmount(tg);}
   virtual double produceForContract (TradeGood const* const tg, double amount);
   EconActor* getEconOwner () const {return owner;}
   bool isOwnedBy (EconActor const* const cand) const {return cand == owner;}
+  void registerContract (MarketContract const* const contract);
   void setEconOwner (EconActor* ea) {owner = ea;}
   
   virtual void getBids      (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {}
@@ -85,6 +91,7 @@ protected:
   
   EconActor* owner;
   GoodsHolder soldThisTurn;
+  GoodsHolder promisedToDeliver;
 private:
   vector<ContractInfo*> obligations;
   map<EconActor*, double> borrowers;

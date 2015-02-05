@@ -36,6 +36,18 @@ void GoodsHolder::setAmounts (const GoodsHolder& gh) {
   }
 }
 
+void GoodsHolder::operator+= (const GoodsHolder& other) {
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    tradeGoods[**tg] += other.tradeGoods[**tg];
+  }
+}
+
+void GoodsHolder::operator-= (const GoodsHolder& other) {
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    tradeGoods[**tg] -= other.tradeGoods[**tg];
+  }
+}
+
 EconActor::EconActor ()
   : Numbered<EconActor>()
   , GoodsHolder()
