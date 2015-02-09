@@ -57,7 +57,9 @@ public:
     if (prices.getAmount(TradeGood::Labor) * neededForMaintenance < prices.getAmount(output) * industry->lossFromNoMaintenance()) {
       totalToBuy += neededForMaintenance;
     }
-    
+    totalToBuy += soldThisTurn.getAmount(TradeGood::Labor); // Should be zero, but whatever
+    totalToBuy += promisedToDeliver.getAmount(TradeGood::Labor); // Will usually be negative for industries.
+
     if (0 < totalToBuy) bidlist.push_back(new MarketBid(TradeGood::Labor, totalToBuy, this));
 
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
@@ -74,10 +76,11 @@ public:
     // constant. But sell more at higher prices. Expect that in the
     // long run we will sell at a 5% profit; make today's sale proportional
     // to the ratio of current profit to that expected five percent.
-
+    //Logger::logStream(DebugStartup) << "Reserve " << getAmount(output) << " " << output->getName() << "\n";
     if (1 > getAmount(output)) return;
     double expectedOutputPerLabour = totalExpectedProduction / (1 + totalToBuy);
     double profitPerLabour = expectedOutputPerLabour * prices.getAmount(output) - prices.getAmount(TradeGood::Labor);
+    //Logger::logStream(DebugStartup) << "  Per labour " << expectedOutputPerLabour << " " << profitPerLabour << "\n";
     if (profitPerLabour < 0) return; // Don't sell at a loss.
     double profitPercentage = profitPerLabour / prices.getAmount(TradeGood::Labor);
     static const double inverseLongTermPercentage = 20; // Adjustable?
@@ -86,6 +89,7 @@ public:
     fractionToSell *= getAmount(output);
     fractionToSell -= soldThisTurn.getAmount(output);
     if (1 > fractionToSell) return;
+    //Logger::logStream(DebugStartup) << "  Selling " << fractionToSell << " " << profitPercentage << "\n";
     bidlist.push_back(new MarketBid(output, -fractionToSell, this));
   }
   

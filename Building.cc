@@ -202,75 +202,72 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   // for enough labor to buy the last level we can
   // completely cover, and buy bids to get us that
   // level.
-
-  double moneyAvailable     = getAmount(TradeGood::Money);
+  GoodsHolder resources(*this);
+  double labourAvailable = production();
+  resources.deliverGoods(TradeGood::Labor, labourAvailable);
+  resources -= promisedToDeliver;
+  resources.setAmount(TradeGood::Money, 0.5 * resources.getAmount(TradeGood::Money));
+  double inverseTotalLabour = 1.0 / labourAvailable;
   double consumptionFactor  = consumption();
-  double laborAvailable     = production();
-  if (0.001 > laborAvailable) return;
-  double inverseTotalLabour = 1.0 / laborAvailable;
-  GoodsHolder amountToBuy;
+
   GoodsHolder reserveUsed;
+  GoodsHolder totalToBuy;
   expectedConsumptionLevel = 0;
   stopReason = "max consumption";
   BOOST_FOREACH(MaslowLevel const* level, maslowLevels) {
-    double moneyNeeded = 0;
     bool canGetLevel = true;
-    double labourNeeded = 0;
+    GoodsHolder amountToBuy;
+    double labourThisLevel = 0;
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
       double amountNeeded = level->getAmount(*tg) * consumptionFactor;
-      double reserve = getAmount(*tg) - reserveUsed.getAmount(*tg);
-      if (reserve > 0) {
-	reserve = min(amountNeeded, reserve);
-	amountNeeded -= reserve;
+      if (amountNeeded < resources.getAmount(*tg)) {
+	resources.deliverGoods((*tg), -amountNeeded);
+	continue;
       }
-      if (amountNeeded < 0.001) continue;
-      if (TradeGood::Labor == (*tg)) {
-	// Deal with labour specially since we produce it and presumably don't need to buy.
-	if (amountNeeded > laborAvailable) {
-	  stopReason = "not enough labour";
-	  canGetLevel = false;
-	  break;
-	}
-	else {
-	  laborAvailable -= amountNeeded;
-	  labourNeeded += amountNeeded;
-	  continue;
-	}
+      else {
+	amountNeeded -= resources.getAmount(*tg);
+	resources.setAmount((*tg), 0);
       }
-      moneyNeeded += prices.getAmount(*tg) * amountNeeded;
-      if (moneyNeeded > moneyAvailable + laborAvailable*prices.getAmount(TradeGood::Labor)) {
+
+      // We don't have enough on hand; can we buy?
+      double totalPrice = amountNeeded * prices.getAmount(*tg);
+      if (totalPrice < resources.getAmount(TradeGood::Money)) {
+	amountToBuy.deliverGoods((*tg), amountNeeded);
+	resources.deliverGoods(TradeGood::Money, -totalPrice);
+	continue;
+      }
+      else {
+	totalPrice -= resources.getAmount(TradeGood::Money);
+	resources.setAmount(TradeGood::Money, 0);
+      }
+
+      // What if we work for it?
+      double labourNeeded = totalPrice / prices.getAmount(TradeGood::Labor);
+      if (labourNeeded > resources.getAmount(TradeGood::Labor)) {
+	// No, we can't do it.
 	canGetLevel = false;
 	stopReason = (*tg)->getName() + " too expensive";
 	break;
       }
-      else labourNeeded += moneyNeeded / prices.getAmount(TradeGood::Labor);
-    }
-    if (labourNeeded * inverseTotalLabour > level->maxWorkFraction) {
-      canGetLevel = false;
-      stopReason = "too much work";
+      if ((labourThisLevel + labourNeeded) * inverseTotalLabour > level->maxWorkFraction) {
+	canGetLevel = false;
+	stopReason = "too much work";
+	break;
+      }
+      labourThisLevel += labourNeeded;
+      resources.deliverGoods(TradeGood::Labor, -labourNeeded);
+      amountToBuy.deliverGoods((*tg), amountNeeded);
     }
     
     if (!canGetLevel) break;
-
-    amountToBuy.deliverGoods(TradeGood::Labor, -labourNeeded);
-    for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = level->getAmount(*tg) * consumptionFactor;
-      double reserve = getAmount(*tg) - reserveUsed.getAmount(*tg);
-      if (reserve > 0) {
-	reserve = min(amountNeeded, reserve);
-	reserveUsed.deliverGoods((*tg), reserve);
-	amountNeeded -= reserve;
-      }      
-      if (amountNeeded < 0.001) continue;
-      amountToBuy.deliverGoods((*tg), amountNeeded);
-    }
+    totalToBuy += amountToBuy;
+    totalToBuy.deliverGoods(TradeGood::Labor, -labourThisLevel);
     expectedConsumptionLevel = level;
   }
 
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-    double amount = amountToBuy.getAmount(*tg);
-    if (fabs(amount) < 1) continue;
-    bidlist.push_back(new MarketBid((*tg), amount, this));
+    if (0.1 > fabs(totalToBuy.getAmount(*tg))) continue;
+    bidlist.push_back(new MarketBid((*tg), totalToBuy.getAmount(*tg), this));
   }
 }
 
@@ -322,14 +319,22 @@ void Village::unitTests () {
   bidlist.clear();
   testVillage->getBids(prices, bidlist);
   if (2 != bidlist.size()) throwFormatted("Expected 2 bids, got %i, reason %s", bidlist.size(), testVillage->stopReason.c_str());
-  double labourBought = 0;
-  BOOST_FOREACH(MarketBid* mb, bidlist) if (mb->tradeGood == TradeGood::Labor) labourBought += mb->amountToBuy;
+  GoodsHolder theBids;
+  BOOST_FOREACH(MarketBid* mb, bidlist) theBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
   // Minus one from selling
-  double labourExpected = -1 * (maslowLevels[0]->getAmount(theGood) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
+  double labourExpected = -1 * (maslowLevels[0]->getAmount(theGood) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor);
+  double labourBought = theBids.getAmount(TradeGood::Labor);
   if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected to buy %f labour, but bought %f, reason %s",
 								  labourExpected,
 								  labourBought,
 								  testVillage->stopReason.c_str());
+  double foodExpected = maslowLevels[0]->getAmount(theGood) * testVillage->consumption();
+  double foodBought = theBids.getAmount(theGood);
+  if (0.001 < fabs(foodExpected - foodBought)) throwFormatted("Expected to buy %i %s, but bought %f, reason %s",
+							      foodExpected,
+							      theGood->getName().c_str(),
+							      foodBought,
+							      testVillage->stopReason.c_str());
 
   prices.setAmount(TradeGood::Labor, 2);
   // Now the full trade, both levels, should be accepted.
@@ -343,8 +348,32 @@ void Village::unitTests () {
 								  labourExpected,
 								  labourBought,
 								  testVillage->stopReason.c_str());
-  consume[20] = oldConsume;
 
+  TradeGood const* nextGood = *(TradeGood::exLaborStart()+1);
+  maslowLevels[0]->setAmount(nextGood, 0.1);
+  
+  prices.setAmount(nextGood, 0.01); // Tiny price so it can easily buy
+  bidlist.clear();
+  testVillage->getBids(prices, bidlist);
+  if (3 != bidlist.size()) throwFormatted("Expected 3 bids (third time), got %i, reason %s", bidlist.size(), testVillage->stopReason.c_str());
+  theBids.clear();
+  BOOST_FOREACH(MarketBid* mb, bidlist) theBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
+  double woodExpected = maslowLevels[0]->getAmount(nextGood) * testVillage->consumption();
+  double woodBought = theBids.getAmount(nextGood);
+  if (0.001 < fabs(woodExpected - woodBought)) throwFormatted("Expected to buy %f %s, but bought %f, reason %s",
+							      woodExpected,
+							      nextGood->getName().c_str(),
+							      woodBought,
+							      testVillage->stopReason.c_str());
+
+  // Jack up price of second good so it will stop from "too much work".
+  prices.setAmount(nextGood, 10.0);
+  bidlist.clear();
+  testVillage->getBids(prices, bidlist);
+  if (0 != bidlist.size()) throwFormatted("Expected 0 bids (fourth time), got %i, reason %s", bidlist.size(), testVillage->stopReason.c_str());
+  if (testVillage->stopReason != "too much work") throwFormatted("Expected too much work, got %s", testVillage->stopReason.c_str());
+  
+  consume[20] = oldConsume;
   delete testVillage;
 }
 
