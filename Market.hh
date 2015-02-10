@@ -14,7 +14,8 @@ struct MarketBid {
 
 struct MarketContract {
   MarketContract (MarketBid* one, MarketBid* two, double p);
-  
+  ~MarketContract ();
+
   void   clear ();
   double execute ();
   void   pay ();
@@ -43,6 +44,7 @@ public:
 
   static void unitTests ();
 private:
+  void executeContracts ();
   void makeContracts(vector<MarketBid*>& bids, vector<MarketBid*>& notMatched);
   void adjustPrices(vector<MarketBid*>& notMatched);
   

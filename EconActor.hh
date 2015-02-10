@@ -81,6 +81,7 @@ public:
   bool isOwnedBy (EconActor const* const cand) const {return cand == owner;}
   void registerContract (MarketContract const* const contract);
   void setEconOwner (EconActor* ea) {owner = ea;}
+  void unregisterContract (MarketContract const* const contract);
   
   virtual void getBids      (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {}
   static void clear () {Numbered<EconActor>::clear();}

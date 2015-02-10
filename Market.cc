@@ -30,7 +30,7 @@ Market::Market () {
   }
 }
 
-void Market::holdMarket () {
+void Market::executeContracts () {
   volume.clear();
   BOOST_FOREACH(MarketContract* mc, contracts) mc->clear();
   while (true) {
@@ -43,11 +43,14 @@ void Market::holdMarket () {
     if (0.001 > traded) break;
   }
   BOOST_FOREACH(MarketContract* mc, contracts) mc->pay();
+}
 
+void Market::holdMarket () {
   vector<MarketBid*> bidlist;
   vector<MarketBid*> notMatched;
   BOOST_FOREACH(EconActor* ea, participants) ea->getBids(prices, bidlist);
   makeContracts(bidlist, notMatched);
+  executeContracts();
   adjustPrices(notMatched);
   BOOST_FOREACH(MarketBid* mb, notMatched) delete mb;
   BOOST_FOREACH(EconActor* ea, participants) ea->dunAndPay();
@@ -83,7 +86,6 @@ void Market::makeContracts (vector<MarketBid*>& bids, vector<MarketBid*>& notMat
     }
 
     MarketContract* contract = new MarketContract(toMatch, match, prices.getAmount(toMatch->tradeGood));
-    volume.deliverGoods(toMatch->tradeGood, contract->amount);
     contracts.push_back(contract);
     toMatch->amountToBuy += match->amountToBuy;
     delete match;
@@ -200,6 +202,7 @@ void Market::unitTests () {
       double foodToBuy = expectedWages / prices.getAmount(food);
       bidlist.push_back(new MarketBid(food, foodToBuy, this));
     }
+    virtual double produceForContract (TradeGood const* const tg, double amount) {if (tg == TradeGood::Labor) return amount; return 0;}
   private:
     TradeGood const* food;
   };
@@ -212,6 +215,7 @@ void Market::unitTests () {
       double foodToSell = labourToBuy;
       bidlist.push_back(new MarketBid(output, -foodToSell, this));
     }
+    virtual double produceForContract (TradeGood const* const tg, double amount) {if (tg == output) return amount; return 0;}
   private:
     TradeGood const* output;
   };
@@ -234,6 +238,7 @@ void Market::unitTests () {
   for (vector<pair<double, double> >::iterator currPrices = initialPricePairs.begin(); currPrices != initialPricePairs.end(); ++currPrices) {
     testMarket.prices.setAmount(TradeGood::Labor, (*currPrices).first);
     testMarket.prices.setAmount(food, (*currPrices).second);
+
     for (int i = 0; i < 25; ++i) {
       double oldLabourPrice = testMarket.prices.getAmount(TradeGood::Labor);
       double oldFoodPrice = testMarket.prices.getAmount(food);
@@ -242,20 +247,33 @@ void Market::unitTests () {
       testMarket.demand.clear();
       
       testMarket.holdMarket();
+      if (testMarket.volume.getAmount(food) < 0.01) throwFormatted("With prices (%f, %f), iteration %i had tiny volume %f for %s",
+								   (*currPrices).first,
+								   (*currPrices).second,
+								   i,
+								   testMarket.volume.getAmount(food),
+								   food->getName().c_str());
+      if (testMarket.volume.getAmount(TradeGood::Labor) < 0.01) throwFormatted("With prices (%f, %f), iteration %i had tiny volume %f for labour",
+									       (*currPrices).first,
+									       (*currPrices).second,
+									       i,
+									       testMarket.volume.getAmount(TradeGood::Labor));
       double newLabourPrice = testMarket.prices.getAmount(TradeGood::Labor);
       double newFoodPrice = testMarket.prices.getAmount(food);
       double oldEqDistance = fabs(oldLabourPrice - 5)/oldLabourPrice + fabs(oldFoodPrice - 5)/oldFoodPrice;
       double newEqDistance = fabs(newLabourPrice - 5)/newLabourPrice + fabs(newFoodPrice - 5)/newFoodPrice;
       // Allow a small amount of slop because our production
       // functions are really weird.
-      if (oldEqDistance < 0.85*newEqDistance) throwFormatted("Prices from (%f, %f) %i moved away from equilibrium: Labour %f -> %f, food %f -> %f",
+      if (oldEqDistance < 0.85*newEqDistance) throwFormatted("Prices from (%f, %f) %i moved away from equilibrium: Labour %f -> %f, food %f -> %f, %f %f",
 							     (*currPrices).first,
 							     (*currPrices).second,
 							     i,
 							     oldLabourPrice,
 							     newLabourPrice,
 							     oldFoodPrice,
-							     newFoodPrice);
+							     newFoodPrice,
+							     testMarket.volume.getAmount(TradeGood::Labor),
+							     testMarket.volume.getAmount(food));
     }
   }
 }
@@ -285,5 +303,11 @@ MarketContract::MarketContract (MarketBid* one, MarketBid* two, double p)
     recipient = two->bidder;
     producer = one->bidder;
   }
+  recipient->registerContract(this);
+  producer->registerContract(this);
 }
 
+MarketContract::~MarketContract () {
+  recipient->unregisterContract(this);
+  producer->unregisterContract(this);
+}

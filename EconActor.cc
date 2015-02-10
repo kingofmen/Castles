@@ -1,5 +1,6 @@
 #include "EconActor.hh"
 #include "Calendar.hh"
+#include "Market.hh"
 #include "StructUtils.hh"
 #include "Logger.hh" 
 #include <cassert>
@@ -120,6 +121,22 @@ double EconActor::produceForContract (TradeGood const* const tg, double amount) 
   deliverGoods(tg, -amount);
   registerSale(tg, amount);
   return amount;
+}
+
+void EconActor::registerContract (MarketContract const* const contract) {
+  double sign = 0;
+  if (contract->recipient == this) sign = -1;
+  else if (contract->producer == this) sign = 1;
+  promisedToDeliver.deliverGoods(contract->tradeGood, sign*contract->amount);
+  promisedToDeliver.deliverGoods(TradeGood::Money, -sign * contract->amount * contract->price);
+}
+
+void EconActor::unregisterContract (MarketContract const* const contract) {
+  double sign = 0;
+  if (contract->recipient == this) sign = 1;
+  else if (contract->producer == this) sign = -1;
+  promisedToDeliver.deliverGoods(contract->tradeGood, sign*contract->amount);
+  promisedToDeliver.deliverGoods(TradeGood::Money, -sign * contract->amount * contract->price);
 }
 
 TradeGood::TradeGood (string n, bool lastOne)
