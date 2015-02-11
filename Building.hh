@@ -80,16 +80,23 @@ public:
     if (1 > getAmount(output)) return;
     double expectedOutputPerLabour = totalExpectedProduction / (1 + totalToBuy);
     double profitPerLabour = expectedOutputPerLabour * prices.getAmount(output) - prices.getAmount(TradeGood::Labor);
-    //Logger::logStream(DebugStartup) << "  Per labour " << expectedOutputPerLabour << " " << profitPerLabour << "\n";
+    /*Logger::logStream(DebugStartup) << "  Per labour " << expectedOutputPerLabour << " " << profitPerLabour << " "
+				    << prices.getAmount(output) << " "
+				    << prices.getAmount(TradeGood::Labor)
+				    << "\n";*/
     if (profitPerLabour < 0) return; // Don't sell at a loss.
     double profitPercentage = profitPerLabour / prices.getAmount(TradeGood::Labor);
     static const double inverseLongTermPercentage = 20; // Adjustable?
+
     profitPercentage *= inverseLongTermPercentage;
-    double fractionToSell = min(1.0, inverseProductionTime * profitPercentage);
+    // Should equal 1 when profitPercentage is 5%, approach 3 (make adjustable?) asymptotically upwards, and 0 downwards.
+    double fractionToSell = 1 + (profitPercentage > 1 ? 2 : 1) * atan(profitPercentage) * M_2_PI;
+    fractionToSell *= inverseProductionTime;
     fractionToSell *= getAmount(output);
     fractionToSell -= soldThisTurn.getAmount(output);
+    fractionToSell -= promisedToDeliver.getAmount(output);
     if (1 > fractionToSell) return;
-    //Logger::logStream(DebugStartup) << "  Selling " << fractionToSell << " " << profitPercentage << "\n";
+    //Logger::logStream(DebugStartup) << "  Selling " << fractionToSell << " " << profitPercentage << " " << inverseProductionTime << " " << getAmount(output) << " " << soldThisTurn.getAmount(output) << "\n";
     bidlist.push_back(new MarketBid(output, -fractionToSell, this));
   }
   
@@ -303,6 +310,7 @@ public:
   virtual void endOfTurn ();  
   void setDefaultOwner (EconActor* o); 
   virtual void setMirrorState ();
+  double getAmount (TradeGood const* const tg) {double ret = 0; BOOST_FOREACH(Farmer* f, farmers) ret += f->getAmount(tg); return ret;}
   int getFieldStatus (int s) {return totalFields[s];}
   void delivery (EconActor* target, TradeGood const* const good, double amount);
   int getTotalFields () const {return

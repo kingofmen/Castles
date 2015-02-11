@@ -646,8 +646,6 @@ void Farmland::Farmer::unitTests () {
   int oldLabourToPlow = _labourToPlow;
   _labourToSow = 0;
   _labourToPlow = 1;
-  laborNeeded = 0;
-  for (int i = 0; i < numBlocks(); ++i) laborNeeded = getLabourForBlock(i);
   GoodsHolder prices;
   vector<MarketBid*> bidlist; 
   // Expect to produce 1400 * 700 / 42 food per turn, using 100 labour;
@@ -680,7 +678,8 @@ void Farmland::Farmer::unitTests () {
   if (foundLabour <= 0) throwFormatted("Expected to buy %s, found", TradeGood::Labor->getName().c_str(), foundLabour);
   if (foundCapGood <= 0) throwFormatted("Expected to buy %s,found", testCapGood->getName().c_str(), foundCapGood);
   if (foundOutput >= -1) throwFormatted("Expected to sell at least one %s, found %f", output->getName().c_str(), foundOutput);
-  if (foundOutput < -5) throwFormatted("Did not expect to sell more than 5 units, found %f", foundOutput);
+  // 7.14 is three forty-twoths of the reserve of 100 - the amount we approach asymptotically as profit goes to infinity.
+  if (foundOutput < -7.14) throwFormatted("Did not expect to sell more than 7.14 units, found %f", foundOutput);
 
   // Reduce the profit, check that we sell less.
   prices.setAmount(TradeGood::Labor, 220);
@@ -1489,7 +1488,8 @@ void Village::eatFood () {
     bool canGetLevel = true;
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
       double amountNeeded = level->getAmount(*tg) * consumptionFactor;
-      if (amountNeeded <= getAmount(*tg)) continue;
+      if (amountNeeded < 1e-6) continue;
+      if (amountNeeded <= getAmount(*tg) + 0.0001) continue;
       canGetLevel = false;
       break;
     }

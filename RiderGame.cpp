@@ -399,6 +399,7 @@ void WarfareGame::functionalTests (string fname) {
 				      << testHex->getPrice(*tg)  << " "
 				      << testHex->getDemand(*tg) << " "
 				      << testHex->getVolume(*tg) << " "
+				      << testHex->getFarm()->getAmount(*tg) << " "
 				      << "\n";
     }
     Calendar::newWeekBegins();
