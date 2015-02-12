@@ -546,8 +546,11 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
   Object* huge    = fInfo->safeGetObject("huge");
   Object* climax  = fInfo->safeGetObject("climax");
   Object* owner   = fInfo->safeGetObject("owner");
-  
+
+  objvec workers = fInfo->getValue("worker");
+  if ((int) workers.size() < Forest::numOwners) throwFormatted("Expected %i worker objects, found %i", Forest::numOwners, workers.size());
   for (int i = 0; i < Forest::numOwners; ++i) {
+    initialiseEcon(ret->foresters[i], workers[i]);
     ret->foresters[i]->groves[Forest::Wild]     = wild    ? (wild->numTokens()    > i ? wild->tokenAsInt(i)    : 0) : 0;
     ret->foresters[i]->groves[Forest::Clear]    = clear   ? (clear->numTokens()   > i ? clear->tokenAsInt(i)   : 0) : 0;
     ret->foresters[i]->groves[Forest::Planted]  = plant   ? (plant->numTokens()   > i ? plant->tokenAsInt(i)   : 0) : 0;
@@ -579,7 +582,10 @@ Mine* StaticInitialiser::buildMine (Object* mInfo) {
     }
   }
   Object* owner = mInfo->getNeededObject("owner");
+  objvec workers = mInfo->getValue("worker");
+  if ((int) workers.size() < Mine::numOwners) throwFormatted("Expected %i worker objects, found %i", Mine::numOwners, workers.size());
   for (int i = 0; i < Mine::numOwners; ++i) {
+    initialiseEcon(ret->miners[i], workers[i]);
     ret->miners[i]->owner = (owner->numTokens() > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0);
   }
 
