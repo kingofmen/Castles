@@ -60,7 +60,7 @@ public:
     totalToBuy += soldThisTurn.getAmount(TradeGood::Labor); // Should be zero, but whatever
     totalToBuy += promisedToDeliver.getAmount(TradeGood::Labor); // Will usually be negative for industries.
 
-    if (0 < totalToBuy) bidlist.push_back(new MarketBid(TradeGood::Labor, totalToBuy, this));
+    if (0 < totalToBuy) bidlist.push_back(new MarketBid(TradeGood::Labor, totalToBuy, this, 1));
 
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
       if (capital->getAmount(*tg) < 0.00001) continue;
@@ -68,7 +68,7 @@ public:
       // Assuming discount rate of 10%. Present value of amount x every period to infinity is (x/r) with r the interest rate.
       // TODO: Take decay into account. Variable discount rate?
       double npv = laborSaving * prices.getAmount(TradeGood::Labor) * 10;
-      if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this));
+      if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this, 1));
     }
 
     // Decide how much output to sell. On average, sell the inverse
@@ -97,7 +97,7 @@ public:
     fractionToSell -= promisedToDeliver.getAmount(output);
     if (1 > fractionToSell) return;
     //Logger::logStream(DebugStartup) << "  Selling " << fractionToSell << " " << profitPercentage << " " << inverseProductionTime << " " << getAmount(output) << " " << soldThisTurn.getAmount(output) << "\n";
-    bidlist.push_back(new MarketBid(output, -fractionToSell, this));
+    bidlist.push_back(new MarketBid(output, -fractionToSell, this, 1));
   }
   
   // Return the reduction in required labor if we had one additional unit.

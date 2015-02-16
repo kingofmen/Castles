@@ -390,6 +390,7 @@ void WarfareGame::unitTests (string fname) {
 void WarfareGame::functionalTests (string fname) {
   callTestFunction(string("Creating game from file") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
   Hex* testHex = Hex::getHex(0, 0);
+  int counter = 0;
   while (Calendar::Winter != Calendar::getCurrentSeason()) {
     Logger::logStream(DebugStartup) << Calendar::toString() << "\n";
     testHex->endOfTurn();
@@ -403,6 +404,8 @@ void WarfareGame::functionalTests (string fname) {
 				      << "\n";
     }
     Calendar::newWeekBegins();
+    counter++;
+    //if (counter > 1) break;
   }
 }
 

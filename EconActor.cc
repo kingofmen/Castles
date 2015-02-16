@@ -77,7 +77,7 @@ void ContractInfo::execute () const {
 }
 
 double EconActor::availableCredit (EconActor* const applicant) const {
-  if ((isOwnedBy(applicant)) || (applicant->isOwnedBy(this))) return 1e6;  
+  if ((isOwnedBy(applicant)) || (applicant->isOwnedBy(this))) return 1e7;
   static const double maxCredit = 100;
   double amountAvailable = maxCredit - borrowers.find(applicant)->second;
   if (amountAvailable < 0) return 0;
@@ -118,6 +118,7 @@ void EconActor::getPaid (EconActor* const payer, double amount) {
 
 double EconActor::produceForContract (TradeGood const* const tg, double amount) {
   amount = min(amount, getAmount(tg));
+  Logger::logStream(DebugStartup) << getIdx() << " delivering " << amount << " " << getAmount(tg) << "\n";
   deliverGoods(tg, -amount);
   registerSale(tg, amount);
   return amount;

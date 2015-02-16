@@ -5,19 +5,21 @@
 #include "UtilityFunctions.hh"
 
 struct MarketBid {
-  MarketBid(TradeGood const* tg, double atb, EconActor* b) : tradeGood(tg), amountToBuy(atb), bidder(b) {}
+  MarketBid(TradeGood const* tg, double atb, EconActor* b, unsigned int d = 1) : tradeGood(tg), amountToBuy(atb), bidder(b), duration(d) {}
   
   TradeGood const* tradeGood;
   double amountToBuy;
   EconActor* bidder;
+  unsigned int duration;
 };
 
 struct MarketContract {
-  MarketContract (MarketBid* one, MarketBid* two, double p);
+  MarketContract (MarketBid* one, MarketBid* two, double p, unsigned int duration);
   ~MarketContract ();
 
   void   clear ();
   double execute ();
+  bool   isValid () const {return ((remainingTime > 0) && (accumulatedMissing < amount));}
   void   pay ();
 
   EconActor* recipient;
@@ -25,7 +27,9 @@ struct MarketContract {
   const TradeGood* tradeGood;
   double amount;
   double delivered;
-  double price;  
+  double price;
+  unsigned int remainingTime;
+  double accumulatedMissing;
 };
 
 class Market {
