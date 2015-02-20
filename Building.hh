@@ -30,10 +30,12 @@ public:
     // next turn, provided the net-present-value of the reduction is higher than the cost
     // of the machinery.
 
-    double totalExpectedProduction = 0;
+    static const double inverseExpectedRatio = 0.2;
+
     double totalToBuy = 0 - getAmount(TradeGood::Labor);
     double marginalDecline = industry->getMarginFactor();
     double marginFactor = 1;
+    double marginalLabourRatio = 0;
     for (int i = 0; i < industry->numBlocks(); ++i) {
       double laborNeeded = industry->getLabourForBlock(i);
       double expectedProduction = industry->outputOfBlock(i) * marginFactor * inverseProductionTime;
@@ -41,8 +43,10 @@ public:
       // will be needed in every step of the production cycle.
       if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction) {
 	totalToBuy += laborNeeded;
-	totalExpectedProduction += expectedProduction;
 	marginFactor *= marginalDecline;
+	// If we cannot produce anything, we need zero labour
+	// so this gives infinity. That's ok, atan(inf) is defined.
+	marginalLabourRatio = expectedProduction / laborNeeded;
       }
       else {
 	// This is where we no longer make a profit.
@@ -52,6 +56,15 @@ public:
 	break;
       }
     }
+
+    Logger::logStream(DebugStartup) << getIdx()
+				    << " needs " << totalToBuy << " "
+				    << soldThisTurn.getAmount(TradeGood::Labor) << " "
+				    << promisedToDeliver.getAmount(TradeGood::Labor) << " "
+				    << industry->labourForMaintenance() << " "
+				    << getAmount(TradeGood::Labor) << " "
+				    << industry->numBlocks() << " "
+				    << "\n";
 
     double neededForMaintenance = industry->labourForMaintenance();
     if (prices.getAmount(TradeGood::Labor) * neededForMaintenance < prices.getAmount(output) * industry->lossFromNoMaintenance()) {
@@ -74,29 +87,21 @@ public:
     // Decide how much output to sell. On average, sell the inverse
     // of the length of the production cycle, thus keeping the output
     // constant. But sell more at higher prices. Expect that in the
-    // long run we will sell at a 5% profit; make today's sale proportional
-    // to the ratio of current profit to that expected five percent.
-    //Logger::logStream(DebugStartup) << "Reserve " << getAmount(output) << " " << output->getName() << "\n";
+    // long run, there will be a particular marginal ratio of labour
+    // to food; when the current marginal ratio is higher (we are getting
+    // more food per labour) then the price of food is low, so reduce
+    // sales; and vice-versa.
     if (1 > getAmount(output)) return;
-    double expectedOutputPerLabour = totalExpectedProduction / (1 + totalToBuy);
-    double profitPerLabour = expectedOutputPerLabour * prices.getAmount(output) - prices.getAmount(TradeGood::Labor);
-    /*Logger::logStream(DebugStartup) << "  Per labour " << expectedOutputPerLabour << " " << profitPerLabour << " "
-				    << prices.getAmount(output) << " "
-				    << prices.getAmount(TradeGood::Labor)
-				    << "\n";*/
-    if (profitPerLabour < 0) return; // Don't sell at a loss.
-    double profitPercentage = profitPerLabour / prices.getAmount(TradeGood::Labor);
-    static const double inverseLongTermPercentage = 20; // Adjustable?
+    marginalLabourRatio *= inverseExpectedRatio;
 
-    profitPercentage *= inverseLongTermPercentage;
-    // Should equal 1 when profitPercentage is 5%, approach 3 (make adjustable?) asymptotically upwards, and 0 downwards.
-    double fractionToSell = 1 + (profitPercentage > 1 ? 2 : 1) * atan(profitPercentage) * M_2_PI;
+    // Should equal 1 when ratio is 1, approach 3 (make adjustable?) asymptotically upwards, and 0 downwards.
+    double fractionToSell = 1 + (marginalLabourRatio >= 1 ? 2 : 1) * atan(marginalLabourRatio) * M_2_PI;
     fractionToSell *= inverseProductionTime;
     fractionToSell *= getAmount(output);
     fractionToSell -= soldThisTurn.getAmount(output);
     fractionToSell -= promisedToDeliver.getAmount(output);
     if (1 > fractionToSell) return;
-    //Logger::logStream(DebugStartup) << "  Selling " << fractionToSell << " " << profitPercentage << " " << inverseProductionTime << " " << getAmount(output) << " " << soldThisTurn.getAmount(output) << "\n";
+    Logger::logStream(DebugStartup) << "  Selling " << fractionToSell << " " << marginalLabourRatio << " " << inverseProductionTime << " " << getAmount(output) << " " << soldThisTurn.getAmount(output) << "\n";
     bidlist.push_back(new MarketBid(output, -fractionToSell, this, 1));
   }
   

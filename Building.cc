@@ -245,6 +245,12 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
       double labourNeeded = totalPrice / prices.getAmount(TradeGood::Labor);
       if (labourNeeded > resources.getAmount(TradeGood::Labor)) {
 	// No, we can't do it.
+	Logger::logStream(DebugStartup) << getIdx() << " needs " << amountNeeded << " "
+					<< (*tg)->getName() << " costing "
+					<< totalPrice << " giving labour "
+					<< labourNeeded << " but has only "
+					<< resources.getAmount(TradeGood::Labor)
+					<< "\n";
 	canGetLevel = false;
 	stopReason = (*tg)->getName() + " too expensive";
 	break;
