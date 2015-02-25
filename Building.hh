@@ -416,6 +416,7 @@ private:
   int yearsSinceLastTick;
   ForestStatus minStatusToHarvest;
   int blockSize;
+  int workableBlocks;
   
   static vector<int> _amountOfWood;
   static int _labourToTend;    // Ensure forest doesn't go wild.

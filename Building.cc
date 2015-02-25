@@ -1051,6 +1051,7 @@ Forest::Forest ()
   , yearsSinceLastTick(0)    
   , minStatusToHarvest(Huge)    
   , blockSize(1)
+  , workableBlocks(3)
 {
   for (int j = 0; j < numOwners; ++j) {
     foresters.push_back(new Forester(this));
@@ -1063,6 +1064,7 @@ Forest::Forest (Forest* other)
   , yearsSinceLastTick(0)    
   , minStatusToHarvest(Huge)
   , blockSize(other->blockSize)
+  , workableBlocks(other->workableBlocks)
 {}
 
 Forest::~Forest () {
@@ -1155,6 +1157,7 @@ void Forest::Forester::unitTests () {
   }
   deliverGoods(testCapGood, -1);
 
+  boss->workableBlocks = 100;
   // Set labour so we need 300 of it. Saving about 7% of that means we should bid
   // for capital if the capital price is below 210.
   int oldTendLabour = _labourToTend;
@@ -1326,7 +1329,7 @@ int Forest::Forester::numBlocks () const {
   }
 
   ret /= boss->blockSize;
-  return ret; 
+  return min(ret, boss->workableBlocks);
 
 }
 
@@ -1369,6 +1372,7 @@ void Forest::Forester::workGroves (bool tick) {
   double decline = 1;
   double totalChopped = 0;
   int blockCounter = 0;
+  int numBlocksWorked = 0;
   for (int i = Climax; i >= boss->minStatusToHarvest; --i) {
     if (availableLabour < _labourToHarvest*capFactor) break;
     while (0 < groves[i]) {
@@ -1378,6 +1382,7 @@ void Forest::Forester::workGroves (bool tick) {
       
       if (++blockCounter >= boss->blockSize) {
 	blockCounter = 0;
+	if (++numBlocksWorked >= boss->workableBlocks) break;
 	decline *= getMarginFactor();
       }
       if (availableLabour < _labourToHarvest*capFactor) break;

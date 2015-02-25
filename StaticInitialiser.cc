@@ -232,7 +232,7 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
     lastProd = curr;
 
     curr = (cons->numTokens() > i ? atof(cons->getToken(i).c_str()) : lastCons);
-    Village::consume[i] = curr;
+    Village::consume[i] = curr * 0.25;
     lastCons = curr;
 
     curr = (recr->numTokens() > i ? atof(recr->getToken(i).c_str()) : lastRecr);
