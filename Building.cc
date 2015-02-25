@@ -1300,7 +1300,7 @@ double Forest::Forester::getLabourForBlock (int block) const {
 double Forest::Forester::labourForMaintenance () const {
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter == currSeason) return 0;
-  return _labourToTend * getTendedArea() * capitalFactor(*this);
+  return _labourToTend * max(getTendedArea() - tendedGroves, 0) * capitalFactor(*this);
 }
 
 double Forest::Forester::lossFromNoMaintenance () const {

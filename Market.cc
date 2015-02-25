@@ -42,13 +42,13 @@ void Market::executeContracts () {
     BOOST_FOREACH(MarketContract* mc, contracts) {
       double currTrade = mc->execute();
       traded += currTrade;
-      
+      /*
       Logger::logStream(DebugStartup) << "Moved " << currTrade << " "
 				      << mc->tradeGood->getName() << " from "
 				      << mc->producer->getIdx() << " to "
 				      << mc->recipient->getIdx() << " "
 				      <<"\n";
-      
+      */
       volume.deliverGoods(mc->tradeGood, currTrade);
     }
     if (0.001 > traded) break;

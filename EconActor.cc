@@ -118,7 +118,6 @@ void EconActor::getPaid (EconActor* const payer, double amount) {
 
 double EconActor::produceForContract (TradeGood const* const tg, double amount) {
   amount = min(amount, getAmount(tg));
-  Logger::logStream(DebugStartup) << getIdx() << " delivering " << amount << " " << getAmount(tg) << "\n";
   deliverGoods(tg, -amount);
   registerSale(tg, amount);
   return amount;
