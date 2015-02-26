@@ -63,6 +63,7 @@ void Market::holdMarket () {
   makeContracts(bidlist, notMatched);
   executeContracts();
   adjustPrices(notMatched);
+  normalisePrices();
   BOOST_FOREACH(MarketBid* mb, notMatched) delete mb;
   BOOST_FOREACH(EconActor* ea, participants) ea->dunAndPay();
   vector<MarketContract*>::iterator new_end = remove_if(contracts, !bind(&MarketContract::isValid, _1));
@@ -106,6 +107,13 @@ void Market::makeContracts (vector<MarketBid*>& bids, vector<MarketBid*>& notMat
     delete match;
     if (fabs(toMatch->amountToBuy) < 0.1) delete toMatch;
     else bids.push_back(toMatch);
+  }
+}
+
+void Market::normalisePrices () {
+  double normFactor = 10.0 / prices.getAmount(TradeGood::Labor);
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    prices.setAmount((*tg), prices.getAmount(*tg) * normFactor);
   }
 }
 
@@ -226,7 +234,7 @@ void Market::unitTests () {
   public:
     FoodProducer (TradeGood const* const tg) : EconActor(), output(tg) {}
     virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
-      double labourToBuy = 10 - prices.getAmount(TradeGood::Labor);
+      double labourToBuy = 20 - prices.getAmount(TradeGood::Labor);
       bidlist.push_back(new MarketBid(TradeGood::Labor, labourToBuy, this, 1));
       double foodToSell = labourToBuy;
       bidlist.push_back(new MarketBid(output, -foodToSell, this, 1));
@@ -243,14 +251,12 @@ void Market::unitTests () {
   testMarket.registerParticipant(&foodProducer);
 
   vector<pair<double, double> > initialPricePairs;
-  initialPricePairs.push_back(pair<double, double>(5, 5));
-  initialPricePairs.push_back(pair<double, double>(4, 4));
-  initialPricePairs.push_back(pair<double, double>(6, 6));
-  initialPricePairs.push_back(pair<double, double>(4, 6));
-  initialPricePairs.push_back(pair<double, double>(1, 4));
-  initialPricePairs.push_back(pair<double, double>(1, 9));
-  initialPricePairs.push_back(pair<double, double>(1, 1));
-  initialPricePairs.push_back(pair<double, double>(5, 4));
+  initialPricePairs.push_back(pair<double, double>(10, 10));
+  initialPricePairs.push_back(pair<double, double>(10, 15));
+  initialPricePairs.push_back(pair<double, double>(10, 40));
+  initialPricePairs.push_back(pair<double, double>(10, 90));
+  initialPricePairs.push_back(pair<double, double>(10, 8));
+  initialPricePairs.push_back(pair<double, double>(10, 1));
   for (vector<pair<double, double> >::iterator currPrices = initialPricePairs.begin(); currPrices != initialPricePairs.end(); ++currPrices) {
     testMarket.prices.setAmount(TradeGood::Labor, (*currPrices).first);
     testMarket.prices.setAmount(food, (*currPrices).second);
@@ -276,8 +282,8 @@ void Market::unitTests () {
 									       testMarket.volume.getAmount(TradeGood::Labor));
       double newLabourPrice = testMarket.prices.getAmount(TradeGood::Labor);
       double newFoodPrice = testMarket.prices.getAmount(food);
-      double oldEqDistance = fabs(oldLabourPrice - 5)/oldLabourPrice + fabs(oldFoodPrice - 5)/oldFoodPrice;
-      double newEqDistance = fabs(newLabourPrice - 5)/newLabourPrice + fabs(newFoodPrice - 5)/newFoodPrice;
+      double oldEqDistance = fabs(oldLabourPrice - 10)/oldLabourPrice + fabs(oldFoodPrice - 10)/oldFoodPrice;
+      double newEqDistance = fabs(newLabourPrice - 10)/newLabourPrice + fabs(newFoodPrice - 10)/newFoodPrice;
       // Allow a small amount of slop because our production
       // functions are really weird.
       if (oldEqDistance < 0.85*newEqDistance) throwFormatted("Prices from (%f, %f) %i moved away from equilibrium: Labour %f -> %f, food %f -> %f, %f %f",

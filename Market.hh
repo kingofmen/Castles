@@ -48,9 +48,10 @@ public:
 
   static void unitTests ();
 private:
+  void adjustPrices(vector<MarketBid*>& notMatched);
   void executeContracts ();
   void makeContracts(vector<MarketBid*>& bids, vector<MarketBid*>& notMatched);
-  void adjustPrices(vector<MarketBid*>& notMatched);
+  void normalisePrices ();
   
   GoodsHolder prices;
   GoodsHolder volume;
