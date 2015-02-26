@@ -21,9 +21,12 @@ public:
 
   static Iter exMoneyStart() {Iter r = start();      return ++r;}
   static Iter exLaborStart() {Iter r = start(); ++r; return ++r;}
-  
+
+  double getStickiness () const {return stickiness;}
+
 private:
   static void initialise ();
+  double stickiness;
 }; 
 
 struct GoodsHolder {

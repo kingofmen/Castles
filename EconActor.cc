@@ -141,6 +141,7 @@ void EconActor::unregisterContract (MarketContract const* const contract) {
 
 TradeGood::TradeGood (string n, bool lastOne)
   : Enumerable<const TradeGood>(this, n, lastOne)
+  , stickiness(0.2)
 {}
 
 TradeGood::~TradeGood () {}

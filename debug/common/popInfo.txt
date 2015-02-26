@@ -1,6 +1,23 @@
 siegeModifier = 10 
 
-goods = { food iron wood }
+goods = {
+  labour = {
+    stickiness = 0.8
+    decay = 1
+  }
+  food = {
+    stickiness = 0.2
+    decay = 0.1
+  }
+  iron = {
+    stickiness = 0.2
+    decay = 0.01
+  }
+  wood = {
+    stickiness = 0.2
+    decay = 0.05
+  }
+}
 
 pop_needs = {
   level = {

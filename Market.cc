@@ -130,7 +130,7 @@ void Market::adjustPrices (vector<MarketBid*>& notMatched) {
     // otherwise linear, but never larger than 25%.
     ratio *= 0.1;
     if (ratio > 0.25) ratio = 0.25;
-    if (demand.getAmount(*tg) < 0) ratio *= -0.9; // More sellers than buyers, reduce price. Prices are sticky downwards!
+    if (demand.getAmount(*tg) < 0) ratio *= ((*tg)->getStickiness() - 1); // More sellers than buyers, reduce price. Prices are sticky downwards!
     prices.deliverGoods((*tg), ratio * prices.getAmount(*tg));
   } 
 }

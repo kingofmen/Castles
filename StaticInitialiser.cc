@@ -297,9 +297,13 @@ inline int heightMapHeight (int zoneSide) {
 
 void StaticInitialiser::initialiseGoods (Object* gInfo) {
   TradeGood::initialise();
-  
-  for (int i = 0; i < gInfo->numTokens(); ++i) {
-    new TradeGood(gInfo->getToken(i), (i+1) == gInfo->numTokens()); 
+
+  objvec goods = gInfo->getLeaves();
+  for (objiter go = goods.begin(); go != goods.end(); ++go) {
+    string goodName = (*go)->getKey();
+    TradeGood* tradeGood = (TradeGood*) TradeGood::Labor;
+    if (goodName != tradeGood->getName()) tradeGood = new TradeGood(goodName, (*go) == goods.back());
+    tradeGood->stickiness = (*go)->safeGetFloat("stickiness", tradeGood->stickiness);
   }
 }
 
