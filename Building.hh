@@ -36,17 +36,18 @@ public:
     double marginalDecline = industry->getMarginFactor();
     double marginFactor = 1;
     double marginalLabourRatio = 0;
+    double fullCycleLabour = 0;
     for (int i = 0; i < industry->numBlocks(); ++i) {
-      double laborNeeded = industry->getLabourForBlock(i);
+      double laborNeeded = industry->getLabourForBlock(i, fullCycleLabour);
       double expectedProduction = industry->outputOfBlock(i) * marginFactor * inverseProductionTime;
       // This is approximate - it assumes that the same amount of labour
       // will be needed in every step of the production cycle.
-      if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction) {
+      if (prices.getAmount(TradeGood::Labor) * fullCycleLabour < prices.getAmount(output) * expectedProduction) {
 	totalToBuy += laborNeeded;
 	marginFactor *= marginalDecline;
 	// If we cannot produce anything, we need zero labour
 	// so this gives infinity. That's ok, atan(inf) is defined.
-	marginalLabourRatio = expectedProduction / laborNeeded;
+	marginalLabourRatio = expectedProduction / fullCycleLabour;
       }
       else {
 	// This is where we no longer make a profit.
@@ -340,7 +341,7 @@ private:
     Farmer (Farmland* b);
     ~Farmer ();
     double outputOfBlock (int b) const;
-    double getLabourForBlock (int block) const;
+    double getLabourForBlock (int block, double& prodCycleLabour) const;
     virtual int numBlocks () const;
     virtual double getMarginFactor () const {return boss->marginFactor;}
     virtual void setMirrorState ();
@@ -393,7 +394,7 @@ private:
     Forester (Forest* b);
     ~Forester ();
     double outputOfBlock (int b) const; 
-    double getLabourForBlock (int block) const;
+    double getLabourForBlock (int block, double& prodCycleLabour) const;
     virtual double getMarginFactor () const {return boss->marginFactor;}
     virtual double labourForMaintenance () const;
     virtual double lossFromNoMaintenance () const;
@@ -452,7 +453,7 @@ private:
     Miner (Mine* m);
     ~Miner ();
     double outputOfBlock (int b) const; 
-    double getLabourForBlock (int block) const;
+    double getLabourForBlock (int block, double& prodCycleLabour) const;
     virtual double getMarginFactor () const {return mine->marginFactor;}
     virtual int numBlocks () const {return mine->veinsPerMiner;}
     virtual void setMirrorState ();
