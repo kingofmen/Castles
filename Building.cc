@@ -652,8 +652,12 @@ void Farmland::Farmer::unitTests () {
   // it is above.
   int oldLabourToSow = _labourToSow;
   int oldLabourToPlow = _labourToPlow;
+  int oldLabourToWeed = _labourToWeed;
+  int oldLabourToReap = _labourToReap;
   _labourToSow = 0;
   _labourToPlow = 1;
+  _labourToWeed = 0;
+  _labourToReap = 0;
   GoodsHolder prices;
   vector<MarketBid*> bidlist; 
   // Expect to produce 1400 * 700 / 42 food per turn, using 100 labour;
@@ -683,8 +687,8 @@ void Farmland::Farmer::unitTests () {
 			testCapGood->getIdx(),
 			capital->getAmount(testCapGood));
   }
-  if (foundLabour <= 0) throwFormatted("Expected to buy %s, found", TradeGood::Labor->getName().c_str(), foundLabour);
-  if (foundCapGood <= 0) throwFormatted("Expected to buy %s,found", testCapGood->getName().c_str(), foundCapGood);
+  if (foundLabour <= 0) throwFormatted("Expected to buy %s, found %f", TradeGood::Labor->getName().c_str(), foundLabour);
+  if (foundCapGood <= 0) throwFormatted("Expected to buy %s,found %f", testCapGood->getName().c_str(), foundCapGood);
   if (foundOutput >= -1) throwFormatted("Expected to sell at least one %s, found %f", output->getName().c_str(), foundOutput);
   // 7.143 is three forty-twoths of the reserve of 100 - the amount we approach asymptotically as profit goes to infinity.
   if (foundOutput < -7.143) throwFormatted("Did not expect to sell more than 7.143 units, found %f", foundOutput);
@@ -848,6 +852,8 @@ void Farmland::Farmer::unitTests () {
   Calendar::newYearBegins();
   _labourToSow = oldLabourToSow;
   _labourToPlow = oldLabourToPlow;
+  _labourToWeed = oldLabourToWeed;
+  _labourToReap = oldLabourToReap;
   capital->setAmounts(oldCapital);
 }
 
@@ -1015,7 +1021,7 @@ double Farmland::Farmer::getLabourForBlock (int block, double& prodCycleLabour) 
 
   vector<int> theBlock(NumStatus, 0);
   fillBlock(block, theBlock);
-  
+
   double ret = 0;
   switch (currSeason) {
   default:
@@ -1024,26 +1030,35 @@ double Farmland::Farmer::getLabourForBlock (int block, double& prodCycleLabour) 
     // Fields move from Clear to Ready to Sowed.
     ret += theBlock[Ready] * _labourToSow;
     ret += theBlock[Clear] * (_labourToPlow + _labourToSow);
+    // A full season of weeding - assume that all the fields will be sowed.
+    prodCycleLabour = ret + (theBlock[Ready] + theBlock[Clear] + theBlock[Sowed]) * _labourToWeed * Calendar::turnsPerSeason();
+    // And assume that they all reach reaping.
+    prodCycleLabour += (theBlock[Ready] + theBlock[Clear] + theBlock[Sowed]) * _labourToReap;
+    ret /= Calendar::turnsToNextSeason();
     break;
 
   case Calendar::Summer:
     // Weeding is special: It is not done once and finished,
     // like plowing, sowing, and harvesting. It must be re-done
-    // each turn. So, avoid the div-by-turns-remaining below.
-    return (theBlock[Sowed] + theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3]) * _labourToWeed * capitalFactor(*this);
+    // each turn. 
+    ret = (theBlock[Sowed] + theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3]) * _labourToWeed;
+    prodCycleLabour = ret * Calendar::turnsToNextSeason() + (theBlock[Sowed] + theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3]) * _labourToReap;
+    break;
       
   case Calendar::Autumn:
     // All reaping is equal. 
     ret += (theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3]) * _labourToReap;
+    prodCycleLabour = ret;
+    ret /= Calendar::turnsToNextSeason();
     break; 
   }
 
   ret *= capitalFactor(*this);
-  ret /= Calendar::turnsToNextSeason();
+  prodCycleLabour *= capitalFactor(*this);
+  
   // Account for roundoff error, so we don't fail to do a task taking 100 labour
   // because it occurred in the last block and we ended up with 99.9999.
   ret += 0.00001;
-  prodCycleLabour = ret;
   return ret; 
 }
 

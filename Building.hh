@@ -39,14 +39,10 @@ public:
     double fullCycleLabour = 0;
     for (int i = 0; i < industry->numBlocks(); ++i) {
       double laborNeeded = industry->getLabourForBlock(i, fullCycleLabour);
-      double expectedProduction = industry->outputOfBlock(i) * marginFactor * inverseProductionTime;
-      // This is approximate - it assumes that the same amount of labour
-      // will be needed in every step of the production cycle.
+      double expectedProduction = industry->outputOfBlock(i) * marginFactor;
       if (prices.getAmount(TradeGood::Labor) * fullCycleLabour < prices.getAmount(output) * expectedProduction) {
 	totalToBuy += laborNeeded;
 	marginFactor *= marginalDecline;
-	// If we cannot produce anything, we need zero labour
-	// so this gives infinity. That's ok, atan(inf) is defined.
 	marginalLabourRatio = expectedProduction / fullCycleLabour;
       }
       else {
@@ -65,6 +61,7 @@ public:
 				    << industry->labourForMaintenance() << " "
 				    << getAmount(TradeGood::Labor) << " "
 				    << industry->numBlocks() << " "
+				    << fullCycleLabour << " "
 				    << "\n";
 
     double neededForMaintenance = industry->labourForMaintenance();
