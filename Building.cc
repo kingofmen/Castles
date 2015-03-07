@@ -713,6 +713,9 @@ void Farmland::Farmer::unitTests () {
 
   owner = this;
   int canonicalBlocks = numBlocks();
+  // Avoid div-by-zero issue.
+  _labourToReap = 1;
+  _labourToWeed = 0;
   while (Calendar::getCurrentSeason() != Calendar::Winter) {
     int currentBlocks = numBlocks();
     if (currentBlocks != canonicalBlocks) {
