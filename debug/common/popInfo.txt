@@ -17,7 +17,7 @@ goods = {
     stickiness = 0.2
     decay = 0.001
     consumption = 0.05
-    capital = 0.001
+    capital = 0.01
   }
   wood = {
     stickiness = 0.2

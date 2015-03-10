@@ -26,7 +26,10 @@ public:
 
 private:
   static void initialise ();
-  double stickiness;
+  double stickiness;   // Ratio of maximum price drop to maximum price rise.
+  double decay;        // Fractional storage loss per turn.
+  double consumption;  // Amount lost when used for consumption.
+  double capital;      // Amount lost when used for capital.
 }; 
 
 struct GoodsHolder {

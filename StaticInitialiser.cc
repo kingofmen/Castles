@@ -303,8 +303,16 @@ void StaticInitialiser::initialiseGoods (Object* gInfo) {
     string goodName = (*go)->getKey();
     TradeGood* tradeGood = (TradeGood*) TradeGood::Labor;
     if (goodName != tradeGood->getName()) tradeGood = new TradeGood(goodName, (*go) == goods.back());
-    tradeGood->stickiness = (*go)->safeGetFloat("stickiness", tradeGood->stickiness);
+    tradeGood->stickiness  = (*go)->safeGetFloat("stickiness",  tradeGood->stickiness);
+    tradeGood->decay       = (*go)->safeGetFloat("decay",       tradeGood->decay);
+    tradeGood->consumption = (*go)->safeGetFloat("consumption", tradeGood->consumption);
+    tradeGood->capital     = (*go)->safeGetFloat("capital",     tradeGood->capital);
   }
+
+  TradeGood* laborForHardcodedValues = (TradeGood*) TradeGood::Labor;
+  laborForHardcodedValues->decay       = 1.0;
+  laborForHardcodedValues->consumption = 1.0;
+  laborForHardcodedValues->capital     = 1.0;
 }
 
 void StaticInitialiser::initialiseGraphics (Object* gInfo) {
