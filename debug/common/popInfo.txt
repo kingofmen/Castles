@@ -4,18 +4,26 @@ goods = {
   labour = {
     stickiness = 0.8
     decay = 1
+    consumption = 1
+    capital = 1
   }
   food = {
     stickiness = 0.2
     decay = 0.1
+    consumption = 1
+    capital = 1
   }
   iron = {
     stickiness = 0.2
-    decay = 0.01
+    decay = 0.001
+    consumption = 0.05
+    capital = 0.001
   }
   wood = {
     stickiness = 0.2
     decay = 0.05
+    consumption = 0.25
+    capital = 0.05
   }
 }
 
@@ -125,15 +133,15 @@ farmland = {
   labourToSow   = 20
   labourToPlow  = 100
   labourToClear = 1000
-  labourToWeed  = 50
+  labourToWeed  = 25
   labourToReap  = 100
-  cropsFrom3    = 700
-  cropsFrom2    = 600
+  cropsFrom3    = 1000
+  cropsFrom2    = 750
   cropsFrom1    = 500
 
   capital = {
     wood = 0.1
-  }  
+  }
 
   output = food
   productionCycle = 42

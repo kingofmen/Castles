@@ -32,7 +32,7 @@ public:
 
     static const double inverseExpectedRatio = 0.2;
 
-    double totalToBuy = 0 - getAmount(TradeGood::Labor);
+    double totalToBuy = 0;
     double marginalDecline = industry->getMarginFactor();
     double marginFactor = 1;
     double marginalLabourRatio = 0;
@@ -62,13 +62,16 @@ public:
 				    << getAmount(TradeGood::Labor) << " "
 				    << industry->numBlocks() << " "
 				    << fullCycleLabour << " "
+				    << industry->getLabourForBlock(0, fullCycleLabour) << " "
+				    << industry->outputOfBlock(0) << " "
 				    << "\n";
-
+    
     double neededForMaintenance = industry->labourForMaintenance();
     if (prices.getAmount(TradeGood::Labor) * neededForMaintenance < prices.getAmount(output) * industry->lossFromNoMaintenance()) {
       totalToBuy += neededForMaintenance;
     }
     totalToBuy += soldThisTurn.getAmount(TradeGood::Labor); // Should be zero, but whatever
+    totalToBuy -= getAmount(TradeGood::Labor); // Should also be zero
     totalToBuy += promisedToDeliver.getAmount(TradeGood::Labor); // Will usually be negative for industries.
 
     if (0 < totalToBuy) bidlist.push_back(new MarketBid(TradeGood::Labor, totalToBuy, this, 1));

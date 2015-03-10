@@ -41,6 +41,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
    - Get rid of old supplies stuff
    - Fix Schlemiel in Farmland fillBlock
+   - Make farms buy labour for integer number of fields
    - Make Farmland and Forest statuses enums
    - Margin effects (check)
      . Block sizes in production (check)
