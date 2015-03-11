@@ -106,24 +106,17 @@ public:
     bidlist.push_back(new MarketBid(output, -fractionToSell, this, 1));
   }
   
-  // Return the reduction in required labor if we had one additional unit.
-  double marginalCapFactor (TradeGood const* const tg, double currentAmount) const {
-    return capFactor(capital->getAmount(tg), 1+currentAmount) / capFactor(capital->getAmount(tg), currentAmount);
-  }
-  
-  double capitalFactor (const GoodsHolder& capitalToUse, int dilution = 1) const {
+  double capitalFactor (const GoodsHolder& capitalToUse) const {
     double ret = 1;
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-      ret *= capFactor(capital->getAmount(*tg), capitalToUse.getAmount(*tg)/dilution);
+      ret *= capFactor(capital->getAmount(*tg), capitalToUse.getAmount(*tg)/industry->getCapitalSize());
     }
     return ret;
   }
   
 protected:
-  virtual double getMarginFactor () const = 0;
   virtual double labourForMaintenance () const {return 0;}
   virtual double lossFromNoMaintenance () const {return 0;}
-  virtual int numBlocks() const = 0;
   
   // Capital reduces the amount of labour required by factor (1 - x log (N+1)). This array stores x. 
   static GoodsHolder* capital;
@@ -131,9 +124,15 @@ protected:
   
 private:
   T* industry;
-  
+
   double capFactor (double reductionConstant, double goodAmount) const {
     return max(0.001, 1 - reductionConstant * log(1 + goodAmount));
+  }
+
+  // Return the reduction in required labor if we had one additional unit.
+  double marginalCapFactor (TradeGood const* const tg, double currentAmount) const {
+    double dilution = 1.0 / industry->getCapitalSize();
+    return capFactor(capital->getAmount(tg), (1+currentAmount)*dilution) / capFactor(capital->getAmount(tg), currentAmount*dilution);
   }
 
   static double inverseProductionTime;
@@ -341,9 +340,10 @@ private:
     Farmer (Farmland* b);
     ~Farmer ();
     double outputOfBlock (int b) const;
+    double getCapitalSize () const;
     double getLabourForBlock (int block, double& prodCycleLabour) const;
-    virtual int numBlocks () const;
-    virtual double getMarginFactor () const {return boss->marginFactor;}
+    int numBlocks () const;
+    double getMarginFactor () const {return boss->marginFactor;}
     virtual void setMirrorState ();
     void unitTests ();
     void workFields ();
@@ -393,12 +393,13 @@ private:
   public:
     Forester (Forest* b);
     ~Forester ();
-    double outputOfBlock (int b) const; 
+    double outputOfBlock (int b) const;
+    double getCapitalSize () const;
     double getLabourForBlock (int block, double& prodCycleLabour) const;
-    virtual double getMarginFactor () const {return boss->marginFactor;}
+    double getMarginFactor () const {return boss->marginFactor;}
     virtual double labourForMaintenance () const;
     virtual double lossFromNoMaintenance () const;
-    virtual int numBlocks () const;
+    int numBlocks () const;
     virtual void setMirrorState ();
     void unitTests ();
     void workGroves (bool tick);
@@ -452,10 +453,11 @@ private:
   public:
     Miner (Mine* m);
     ~Miner ();
-    double outputOfBlock (int b) const; 
+    double outputOfBlock (int b) const;
+    double getCapitalSize () const;
     double getLabourForBlock (int block, double& prodCycleLabour) const;
-    virtual double getMarginFactor () const {return mine->marginFactor;}
-    virtual int numBlocks () const {return mine->veinsPerMiner;}
+    double getMarginFactor () const {return mine->marginFactor;}
+    int numBlocks () const {return mine->veinsPerMiner;}
     virtual void setMirrorState ();
     void unitTests ();
     void workShafts ();

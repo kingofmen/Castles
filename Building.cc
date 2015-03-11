@@ -1014,6 +1014,10 @@ void Farmland::Farmer::fillBlock (int block, vector<int>& theBlock) const {
   }
 }
 
+double Farmland::Farmer::getCapitalSize () const {
+  return numBlocks() * boss->blockSize;
+}
+
 double Farmland::Farmer::getLabourForBlock (int block, double& prodCycleLabour) const {
   // Returns the amount of labour needed to tend the
   // fields, on the assumption that the necessary labour
@@ -1417,6 +1421,10 @@ void Forest::Forester::workGroves (bool tick) {
   if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workGroves");
 }
 
+double Forest::Forester::getCapitalSize () const {
+  return numBlocks() * boss->blockSize;
+}
+
 int Forest::Forester::getTendedArea () const {
   return (groves[Clear] +
 	  groves[Planted] +
@@ -1680,6 +1688,10 @@ Mine::MineStatus::~MineStatus () {}
 
 void Mine::endOfTurn () {
   BOOST_FOREACH(Miner* miner, miners) miner->workShafts();
+}
+
+double Mine::Miner::getCapitalSize () const {
+  return numBlocks() * mine->veinsPerMiner;
 }
 
 double Mine::Miner::outputOfBlock (int block) const {
