@@ -51,6 +51,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Read Forest minStatus from save, write to save, let owner set.
    - The EconActor owner of Farmer, etc, is not mirrored. So if you do a workFoo, the *real* owner gets the output. Problem.
    - Castle as EconActor
+   - Threshold effect on capital
    - Make Markets exist in Vertexes - share between Hexes!
    - Discount rate on Maslow levels, eg do I prefer level 2 now and 0 tomorrow, or 1 both days? Also, seasonal awareness.
    - More GUI insight for testing purposes

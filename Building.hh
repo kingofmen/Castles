@@ -133,7 +133,7 @@ private:
   T* industry;
   
   double capFactor (double reductionConstant, double goodAmount) const {
-    return 1 - reductionConstant * log(1 + goodAmount);
+    return max(0.001, 1 - reductionConstant * log(1 + goodAmount));
   }
 
   static double inverseProductionTime;
