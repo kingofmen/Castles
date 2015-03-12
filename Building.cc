@@ -448,7 +448,6 @@ double Village::produceForContract (TradeGood const* const tg, double amount) {
   if (amount < 0) throw string("Cannot produce negative amount");
   if (tg == TradeGood::Labor) {
     amount = min(amount, production());
-    Logger::logStream(DebugStartup) << getIdx() << " working " << amount << " " << production() << " " << workedThisTurn << "\n";
     if (amount < 0) throw string("Cannot work more than production");    
     workedThisTurn += amount;
     return amount;

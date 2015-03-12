@@ -1,0 +1,218 @@
+week = 0 
+priorityLevels = { 0.1 0.25 0.50 0.75 1.0 1.1 1.25 1.5 2.0 3.0 }
+defaultPriority = 4 
+
+faction = {
+  name = adri 
+  displayname = "Player 1"
+  human = yes
+  red = 163
+  green = 73
+  blue = 164
+  id = 0
+}
+faction = {
+  name = assa
+  displayname = "Player 2"
+  human = no
+  red = 63
+  green = 72
+  blue = 204
+  id = 1
+} 
+
+currentplayer = adri 
+
+hexgrid = {
+  x = 1
+  y = 2
+}
+
+hexinfo = {
+  x = 0
+  y = 0
+  player = adri
+  castle = {
+    id = 2
+    goods = {
+      food = 5750
+      money = 100
+    }
+    pos = SouthEast
+  }
+ 
+  prices = {
+    labour = 8
+    food   = 8
+    iron   = 5
+    wood   = 5
+  }
+
+  village = {
+    id = 3
+    males = { 
+      1000 750 600 540 535 535 534 534 533 533
+      532 532 531 531 530 530 530 530 530 530
+      529 528 527 526 525 525 524 524 523 523 
+      522 521 520 519 518 516 515 513 512 510 
+      508 505 503 500 498 495 493 490 488 485 
+      480 475 470 465 460 450 438 426 414 400 
+      380 360 340 320 300 285 270 255 240 225 
+      212 200 186 180 164 148 133 121 110 93 }
+    females = { 
+     1000 750 600 540 535 535 534 534 533 533
+      532 532 531 531 530 530 530 530 530 530
+      529 528 527 526 525 525 524 524 523 523 
+      522 521 520 519 518 516 515 513 512 510 
+      508 505 503 500 498 495 493 490 488 485 
+      480 475 470 465 460 450 438 426 414 400 
+      380 360 340 320 300 285 270 255 240 225 
+      212 200 186 180 164 148 133 121 110 93 }
+    militiaUnits = {
+      militia = 5
+      drill_level = 1 
+    }
+    goods = { money = 100000 }
+  }
+  farmland = { 
+    worker = { goods = { money = 10000 food = 125000 } id = 6 }
+    worker = { goods = { money = 10000 food = 125000 } id = 7 }
+    worker = { goods = { money = 10000 food = 125000 } id = 8 }
+    worker = { goods = { money = 10000 food = 125000 } id = 9 }
+    worker = { goods = { money = 10000 food = 125000 } id = 10 }
+    worker = { goods = { money = 10000 food = 125000 } id = 11 }
+    worker = { goods = { money = 10000 food = 125000 } id = 12 }
+    worker = { goods = { money = 10000 food = 125000 } id = 13 }
+    worker = { goods = { money = 10000 food = 125000 } id = 14 }
+    worker = { goods = { money = 10000 food = 125000 } id = 15 }
+
+    clear = { 100 100 100 100 100 100 100 100 100 100 } 
+    ready = { 0 0 0 0 0 0 0 0 0 0 } 
+    sowed =  { 0 0 0 0 0 0 0 0 0 0 } 
+    ripe1 =  { 0 0 0 0 0 0 0 0 0 0 } 
+    ripe2 =  { 0 0 0 0 0 0 0 0 0 0 } 
+    ripe3 =  { 0 0 0 0 0 0 0 0 0 0 } 
+    ended = { 0 0 0 0 0 0 0 0 0 0 } 
+    owner = { 3 3 3 3 3 3 3 3 3 3 }
+  }
+  forest = {
+    worker = { goods = { money = 10000 wood = 150 } id = 16 }
+    worker = { goods = { money = 10000 wood = 150 } id = 17 }
+    worker = { goods = { money = 10000 wood = 150 } id = 18 }
+    worker = { goods = { money = 10000 wood = 150 } id = 19 }
+    worker = { goods = { money = 10000 wood = 150 } id = 20 }
+    worker = { goods = { money = 10000 wood = 150 } id = 21 }
+    worker = { goods = { money = 10000 wood = 150 } id = 22 }
+    worker = { goods = { money = 10000 wood = 150 } id = 23 }
+    worker = { goods = { money = 10000 wood = 150 } id = 24 }
+    worker = { goods = { money = 10000 wood = 150 } id = 25 }
+    wild    = { 100 75 23 100 100 34 89 100 28 89 }
+    cleared = { 0  10 0  0  0  10 0  0  0  0  }
+    planted = { 0  0  0  10 0  0  0  0  0  0  }
+    scrubby = { 0  0  0  0  0  0  0  0  10 0  }
+    sapling = { 0  0  0  10 0  0  0  0  0  10 }
+    young   = { 0  0  10 0  0  0  0  0  0  0  }
+    grown   = { 0  0  0  0  0  10 0  0  0  0  }
+    mature  = { 0  0  0  0  0  0  0  0  10 0  }
+    mighty  = { 0  0  0  0  0  0  0  10 0  0  }
+    huge    = { 0  25 0  0  0  0  0  0  10 0  }
+    climax  = { 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000  }
+    owner   = { 3 3 3 3 3 3 3 3 3 3 }
+    tended  = { 0 0 0 0 0 0 0 0 0 0 }
+    yearsSinceLastTick = 0
+    minStatusToHarvest = climax
+  }
+  mine = {
+    worker = { goods = { money = 10000 iron = 150 } id = 26 }
+    worker = { goods = { money = 10000 iron = 150 } id = 27 }
+    worker = { goods = { money = 10000 iron = 150 } id = 28 }
+    worker = { goods = { money = 10000 iron = 150 } id = 29 }
+    worker = { goods = { money = 10000 iron = 150 } id = 30 }
+    worker = { goods = { money = 10000 iron = 150 } id = 31 }
+    worker = { goods = { money = 10000 iron = 150 } id = 32 }
+    worker = { goods = { money = 10000 iron = 150 } id = 33 }
+    worker = { goods = { money = 10000 iron = 150 } id = 34 }
+    worker = { goods = { money = 10000 iron = 150 } id = 35 }
+    surface = { 1000000 0 0 0 0 0 0 0 0 0 }
+    easy    = { 1000000 0 0 0 0 0 0 0 0 0 }
+    medium  = { 10000000 0 0 0 0 0 0 0 0 0 }
+    deep    = { 100000000 0 0 0 0 0 0 0 0 0 }
+    modern  = { 1000000000 0 0 0 0 0 0 0 0 0 }
+    owner   = { 3 3 3 3 3 3 3 3 3 3 }
+  }
+}
+
+hexinfo = {
+  x = 0
+  y = 1
+  player = assa 
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  castle = {
+    id = 4
+    pos = NorthWest
+    goods = {
+      food = 6000 
+      money = 100
+    }
+    taxes = {
+      amount = 6000
+      type = fixed 
+    }
+  } 
+  village = {
+    id = 5
+    males = { 
+     1000 750 600 540 535 535 534 534 533 533
+      532 532 531 531 530 530 530 530 530 530
+      529 528 527 526 525 525 524 524 523 523 
+      522 521 520 519 518 516 515 513 512 510 
+      508 505 503 500 498 495 493 490 488 485 
+      480 475 470 465 460 450 438 426 414 400 
+      380 360 340 320 300 285 270 255 240 225 
+      212 200 186 180 164 148 133 121 110 93 }
+    females = { 
+     1000 750 600 540 535 535 534 534 533 533
+      532 532 531 531 530 530 530 530 530 530
+      529 528 527 526 525 525 524 524 523 523 
+      522 521 520 519 518 516 515 513 512 510 
+      508 505 503 500 498 495 493 490 488 485 
+      480 475 470 465 460 450 438 426 414 400 
+      380 360 340 320 300 285 270 255 240 225 
+      212 200 186 180 164 148 133 121 110 93 }
+    militiaUnits = {
+      militia = 5
+    }
+    goods = {
+      food = 600000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { } id = 36 }
+    worker = { goods = { } id = 37 }
+    worker = { goods = { } id = 38 }
+    worker = { goods = { } id = 39 }
+    worker = { goods = { } id = 40 }
+    worker = { goods = { } id = 41 }
+    worker = { goods = { } id = 42 }
+    worker = { goods = { } id = 43 }
+    worker = { goods = { } id = 44 }
+    worker = { goods = { } id = 45 }
+
+    clear = { 100 100 100 100 100 100 100 100 100 100 } 
+    ready = { 0 0 0 0 0 0 0 0 0 0 } 
+    sowed = { 0 0 0 0 0 0 0 0 0 0 } 
+    ripe1 = { 0 0 0 0 0 0 0 0 0 0 } 
+    ripe2 = { 0 0 0 0 0 0 0 0 0 0 } 
+    ripe3 = { 0 0 0 0 0 0 0 0 0 0 } 
+    ended = { 0 0 0 0 0 0 0 0 0 0 } 
+    owner = { 5 5 5 5 4 4 4 1 1 1 }
+  }
+}
+
+

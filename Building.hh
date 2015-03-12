@@ -53,7 +53,7 @@ public:
 	break;
       }
     }
-
+    /*
     Logger::logStream(DebugStartup) << getIdx()
 				    << " needs " << totalToBuy << " "
 				    << soldThisTurn.getAmount(TradeGood::Labor) << " "
@@ -65,7 +65,7 @@ public:
 				    << industry->getLabourForBlock(0, fullCycleLabour) << " "
 				    << industry->outputOfBlock(0) << " "
 				    << "\n";
-    
+    */
     double neededForMaintenance = industry->labourForMaintenance();
     if (prices.getAmount(TradeGood::Labor) * neededForMaintenance < prices.getAmount(output) * industry->lossFromNoMaintenance()) {
       totalToBuy += neededForMaintenance;
@@ -82,7 +82,7 @@ public:
       // Assuming discount rate of 10%. Present value of amount x every period to infinity is (x/r) with r the interest rate.
       // TODO: Take decay into account. Variable discount rate?
       double npv = laborSaving * prices.getAmount(TradeGood::Labor) * 10;
-      if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this, 1));
+      if (npv > prices.getAmount(*tg) * industry->getCapitalSize()) bidlist.push_back(new MarketBid((*tg), industry->getCapitalSize(), this, 1));
     }
 
     // Decide how much output to sell. On average, sell the inverse
@@ -102,7 +102,7 @@ public:
     fractionToSell -= soldThisTurn.getAmount(output);
     fractionToSell -= promisedToDeliver.getAmount(output);
     if (1 > fractionToSell) return;
-    Logger::logStream(DebugStartup) << "  Selling " << fractionToSell << " " << marginalLabourRatio << " " << inverseProductionTime << " " << getAmount(output) << " " << soldThisTurn.getAmount(output) << "\n";
+    //Logger::logStream(DebugStartup) << "  Selling " << fractionToSell << " " << marginalLabourRatio << " " << inverseProductionTime << " " << getAmount(output) << " " << soldThisTurn.getAmount(output) << "\n";
     bidlist.push_back(new MarketBid(output, -fractionToSell, this, 1));
   }
   
@@ -132,7 +132,7 @@ private:
   // Return the reduction in required labor if we had one additional unit.
   double marginalCapFactor (TradeGood const* const tg, double currentAmount) const {
     double dilution = 1.0 / industry->getCapitalSize();
-    return capFactor(capital->getAmount(tg), (1+currentAmount)*dilution) / capFactor(capital->getAmount(tg), currentAmount*dilution);
+    return capFactor(capital->getAmount(tg), (industry->getCapitalSize()+currentAmount)*dilution) / capFactor(capital->getAmount(tg), currentAmount*dilution);
   }
 
   static double inverseProductionTime;
