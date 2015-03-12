@@ -131,7 +131,6 @@ MilUnit* Castle::removeUnit (MilUnit* dat) {
 }
 
 void Castle::recruit (Outcome out) {
-  Logger::logStream(DebugStartup) << "Recruiting: " << this << " " << (void*) &recruitType << " " << (void*) recruitType << "\n"; 
   if (!recruitType) recruitType = *(MilUnitTemplate::begin());
   MilUnit* target = (garrison.size() > 0 ? garrison[0] : new MilUnit());
   int newSoldiers = support->recruit(getOwner(), recruitType, target, out);
@@ -206,7 +205,7 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   double labourAvailable = production();
   resources.deliverGoods(TradeGood::Labor, labourAvailable);
   resources -= promisedToDeliver;
-  resources.setAmount(TradeGood::Money, 0.5 * resources.getAmount(TradeGood::Money));
+  resources.setAmount(TradeGood::Money, 0.5 * getAmount(TradeGood::Money));
   double inverseTotalLabour = 1.0 / labourAvailable;
   double consumptionFactor  = consumption();
 
@@ -245,12 +244,6 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
       double labourNeeded = totalPrice / prices.getAmount(TradeGood::Labor);
       if (labourNeeded > resources.getAmount(TradeGood::Labor)) {
 	// No, we can't do it.
-	Logger::logStream(DebugStartup) << getIdx() << " needs " << amountNeeded << " "
-					<< (*tg)->getName() << " costing "
-					<< totalPrice << " giving labour "
-					<< labourNeeded << " but has only "
-					<< resources.getAmount(TradeGood::Labor)
-					<< "\n";
 	canGetLevel = false;
 	stopReason = (*tg)->getName() + " too expensive";
 	break;
