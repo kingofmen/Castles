@@ -228,36 +228,32 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
 	resources.setAmount((*tg), 0);
       }
 
-      // We don't have enough on hand; can we buy?
+      // Use labour before cash to avoid too-wealthy-to-work problem.
       double totalPrice = amountNeeded * prices.getAmount(*tg);
+      double labourNeeded = totalPrice / prices.getAmount(TradeGood::Labor);
+      if (labourNeeded > resources.getAmount(TradeGood::Labor)) {
+	stopReason = (*tg)->getName() + " too expensive";
+      }
+      else if ((labourThisLevel + labourNeeded) * inverseTotalLabour > level->maxWorkFraction) {
+	stopReason = "too much work";
+      }
+      else {
+	labourThisLevel += labourNeeded;
+	resources.deliverGoods(TradeGood::Labor, -labourNeeded);
+	amountToBuy.deliverGoods((*tg), amountNeeded);
+	continue;
+      }
+
+      // Can't or won't work for it; try cash.
       if (totalPrice < resources.getAmount(TradeGood::Money)) {
 	amountToBuy.deliverGoods((*tg), amountNeeded);
 	resources.deliverGoods(TradeGood::Money, -totalPrice);
-	continue;
       }
       else {
-	totalPrice -= resources.getAmount(TradeGood::Money);
-	resources.setAmount(TradeGood::Money, 0);
-      }
-
-      // What if we work for it?
-      double labourNeeded = totalPrice / prices.getAmount(TradeGood::Labor);
-      if (labourNeeded > resources.getAmount(TradeGood::Labor)) {
-	// No, we can't do it.
 	canGetLevel = false;
-	stopReason = (*tg)->getName() + " too expensive";
-	break;
       }
-      if ((labourThisLevel + labourNeeded) * inverseTotalLabour > level->maxWorkFraction) {
-	canGetLevel = false;
-	stopReason = "too much work";
-	break;
-      }
-      labourThisLevel += labourNeeded;
-      resources.deliverGoods(TradeGood::Labor, -labourNeeded);
-      amountToBuy.deliverGoods((*tg), amountNeeded);
     }
-    
+
     if (!canGetLevel) break;
     totalToBuy += amountToBuy;
     totalToBuy.deliverGoods(TradeGood::Labor, -labourThisLevel);
