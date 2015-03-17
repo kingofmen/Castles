@@ -852,7 +852,6 @@ void Farmland::Farmer::workFields () {
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   double availableLabour = getAmount(TradeGood::Labor);
   double capFactor = capitalFactor(*this);
-
   switch (currSeason) {
   default:
   case Calendar::Winter:
@@ -971,6 +970,7 @@ void Farmland::Farmer::workFields () {
     fields[Ended] += harvest;
 
     deliverGoods(output, totalHarvested);
+    boss->produced += totalHarvested;
     break;
   }
   } // Not a typo, ends switch.
@@ -1493,6 +1493,7 @@ void Farmland::devastate (int devastation) {
 }
 
 void Farmland::endOfTurn () {
+  produced = 0;
   BOOST_FOREACH(Farmer* farmer, farmers) farmer->workFields();
   countTotals();
 }
@@ -1558,6 +1559,27 @@ void Forest::endOfTurn () {
     }
   }
   BOOST_FOREACH(Forester* forester, foresters) forester->workGroves(tick);
+}
+
+double Farmland::expectedProduction () const {
+  double ret = 0;
+  BOOST_FOREACH(Farmer* farmer, farmers) {
+    double margin = 1;
+    for (int i = 0; i < farmer->numBlocks(); ++i) {
+      ret += farmer->outputOfBlock(i) * margin;
+      margin *= marginFactor;
+    }
+  }
+  return ret;
+}
+
+double Farmland::possibleProductionThisTurn () const {
+  if (Calendar::Autumn != Calendar::getCurrentSeason()) return 0;
+  double ret = 0;
+  BOOST_FOREACH(Farmer* farmer, farmers) {
+    ret += farmer->fields[Ripe1] * _cropsFrom1 + farmer->fields[Ripe2] * _cropsFrom2 + farmer->fields[Ripe3] * _cropsFrom3;
+  }
+  return ret;
 }
 
 void Farmland::countTotals () {

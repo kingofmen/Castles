@@ -221,6 +221,19 @@ string outcomeToString (Outcome out) {
   return "This cannot happen"; 
 }
 
+doublet calcMeanAndSigma (vector<double>& data) {
+  if (0 == data.size()) return doublet(0, 0);
+  double mean = 0;
+  double meanSq = 0;
+  for (vector<double>::iterator i = data.begin(); i != data.end(); ++i) {
+    mean += (*i);
+    meanSq += (*i) * (*i);
+  }
+  mean /= data.size();
+  meanSq /= data.size();
+  return doublet(mean, sqrt(meanSq  - mean * mean));
+}
+
 DieRoll::DieRoll (int d, int f) 
  : dice(d)
  , faces(f)

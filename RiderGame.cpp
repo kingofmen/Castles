@@ -391,22 +391,40 @@ void WarfareGame::functionalTests (string fname) {
   callTestFunction(string("Creating game from file") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
   Hex* testHex = Hex::getHex(0, 0);
   int counter = 0;
+  vector<double> labourUsed;
+  vector<double> labourAvailable;
+  vector<double> employment;
+  map<TradeGood const*, vector<double> > goodsPrices;
+  double foodProduced = 0;
   while (Calendar::Winter != Calendar::getCurrentSeason()) {
     Logger::logStream(DebugStartup) << Calendar::toString() << "\n";
+    labourAvailable.push_back(testHex->getVillage()->production());
     testHex->endOfTurn();
     Logger::logStream(DebugStartup) << testHex->getVillage()->getBidStatus() << "\n";
+    labourUsed.push_back(testHex->getVolume(TradeGood::Labor));
+    employment.push_back(labourUsed.back() / labourAvailable.back());
+    foodProduced += testHex->getFarm()->producedThisTurn();
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+      goodsPrices[*tg].push_back(testHex->getPrice(*tg));
       Logger::logStream(DebugStartup) << (*tg)->getName()        << " "
 				      << testHex->getPrice(*tg)  << " "
 				      << testHex->getDemand(*tg) << " "
 				      << testHex->getVolume(*tg) << " "
-				      << testHex->getFarm()->getAmount(*tg) << " "
 				      << "\n";
     }
     Calendar::newWeekBegins();
     counter++;
     //if (counter > 1) break;
   }
+  doublet labourInfo = calcMeanAndSigma(labourUsed);
+  Logger::logStream(DebugStartup) << "Work done : " << labourInfo.x() << " +- " << labourInfo.y() << "\n";
+  labourInfo = calcMeanAndSigma(employment);
+  Logger::logStream(DebugStartup) << "Employment: " << labourInfo.x() << " +- " << labourInfo.y() << "\n";
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    doublet curr = calcMeanAndSigma(goodsPrices[*tg]);
+    Logger::logStream(DebugStartup) << "Price of " << (*tg)->getName() << ": " << curr.x() << " +- " << curr.y() << "\n";
+  }
+  Logger::logStream(DebugStartup) << "Food produced: " << foodProduced << "\n";
 }
 
 void WarfareGame::updateGreatestMilStrength() {
