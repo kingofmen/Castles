@@ -41,10 +41,14 @@ public:
 
   void holdMarket ();
   void registerParticipant (EconActor* ea);
+  void registerProduction  (TradeGood const* tg, double amount) {produced.deliverGoods(tg, amount);}
+  void registerConsumption (TradeGood const* tg, double amount) {consumed.deliverGoods(tg, amount);}
   void unRegisterParticipant (EconActor* ea);
-  double getDemand (TradeGood const* const tg) const {return demand.getAmount(tg);}
-  double getPrice  (TradeGood const* const tg) const {return prices.getAmount(tg);}
-  double getVolume (TradeGood const* const tg) const {return volume.getAmount(tg);}
+  double getConsumed (TradeGood const* const tg) const {return consumed.getAmount(tg);}
+  double getDemand   (TradeGood const* const tg) const {return demand.getAmount(tg);}
+  double getPrice    (TradeGood const* const tg) const {return prices.getAmount(tg);}
+  double getProduced (TradeGood const* const tg) const {return produced.getAmount(tg);}
+  double getVolume   (TradeGood const* const tg) const {return volume.getAmount(tg);}
 
   static void unitTests ();
 private:
@@ -56,6 +60,8 @@ private:
   GoodsHolder prices;
   GoodsHolder volume;
   GoodsHolder demand;
+  GoodsHolder produced;
+  GoodsHolder consumed;
   vector<MarketContract*> contracts;
   vector<EconActor*> participants;
 };

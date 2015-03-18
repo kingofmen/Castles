@@ -6,7 +6,8 @@
 #include <cmath>
 #include "UtilityFunctions.hh"
 using namespace std; 
-class EconActor; 
+class EconActor;
+class Market;
 class MarketBid;
 class MarketContract;
 
@@ -23,7 +24,8 @@ public:
   static Iter exLaborStart() {Iter r = start(); ++r; return ++r;}
 
   double getStickiness () const {return stickiness;}
-
+  double getConsumption () const {return consumption;}
+  
 private:
   static void initialise ();
   double stickiness;   // Ratio of maximum price drop to maximum price rise.
@@ -95,10 +97,13 @@ public:
   
 protected:
   void registerSale (TradeGood const* const tg, double amount) {soldThisTurn.deliverGoods(tg, amount);}
+  void produce (TradeGood const* const tg, double amount);
+  void consume (TradeGood const* const tg, double amount);
   
   EconActor* owner;
   GoodsHolder soldThisTurn;
   GoodsHolder promisedToDeliver;
+  Market* theMarket;
 private:
   vector<ContractInfo*> obligations;
   map<EconActor*, double> borrowers;

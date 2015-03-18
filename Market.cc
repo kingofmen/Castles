@@ -57,6 +57,8 @@ void Market::executeContracts () {
 }
 
 void Market::holdMarket () {
+  consumed.clear();
+  produced.clear();
   vector<MarketBid*> bidlist;
   vector<MarketBid*> notMatched;
   BOOST_FOREACH(EconActor* ea, participants) ea->getBids(prices, bidlist);
@@ -303,12 +305,14 @@ void Market::unitTests () {
 void Market::registerParticipant (EconActor* ea) {
   if (find(participants.begin(), participants.end(), ea) != participants.end()) return;
   participants.push_back(ea);
+  ea->theMarket = this;
 }
 
 void Market::unRegisterParticipant (EconActor* ea) {
   vector<EconActor*>::iterator p = find(participants.begin(), participants.end(), ea);
   if (p == participants.end()) return;
   participants.erase(p);
+  ea->theMarket = 0;
 }
 
 

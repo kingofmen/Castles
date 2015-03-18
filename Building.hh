@@ -145,7 +145,7 @@ template<class T> double Industry<T>::inverseProductionTime = 1;
 class Building {
   friend class StaticInitialiser; 
 public: 
-  Building (double mf = 1) : marginFactor(mf), produced(0), supplies(0), owner(0) {}
+  Building (double mf = 1) : marginFactor(mf), supplies(0), owner(0) {}
   ~Building () {}
   
   virtual void endOfTurn () = 0; 
@@ -157,13 +157,11 @@ public:
 
   // For use in statistics.
   virtual double expectedProduction () const {return 0;}
-  virtual double producedThisTurn () const {return produced;}
   virtual double possibleProductionThisTurn () const {return 0;}
 
   static const int numOwners = 10;  
 protected:
   double marginFactor;
-  double produced;
   double supplies; 
   
 private:

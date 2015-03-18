@@ -395,7 +395,8 @@ void WarfareGame::functionalTests (string fname) {
   vector<double> labourAvailable;
   vector<double> employment;
   map<TradeGood const*, vector<double> > goodsPrices;
-  double foodProduced = 0;
+  map<TradeGood const*, double> consumed;
+  map<TradeGood const*, double> produced;
   while (Calendar::Winter != Calendar::getCurrentSeason()) {
     Logger::logStream(DebugStartup) << Calendar::toString() << "\n";
     labourAvailable.push_back(testHex->getVillage()->production());
@@ -403,9 +404,10 @@ void WarfareGame::functionalTests (string fname) {
     Logger::logStream(DebugStartup) << testHex->getVillage()->getBidStatus() << "\n";
     labourUsed.push_back(testHex->getVolume(TradeGood::Labor));
     employment.push_back(labourUsed.back() / labourAvailable.back());
-    foodProduced += testHex->getFarm()->producedThisTurn();
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
       goodsPrices[*tg].push_back(testHex->getPrice(*tg));
+      produced[*tg] += testHex->getProduced(*tg);
+      consumed[*tg] += testHex->getConsumed(*tg);
       Logger::logStream(DebugStartup) << (*tg)->getName()        << " "
 				      << testHex->getPrice(*tg)  << " "
 				      << testHex->getDemand(*tg) << " "
@@ -420,11 +422,16 @@ void WarfareGame::functionalTests (string fname) {
   Logger::logStream(DebugStartup) << "Work done : " << labourInfo.x() << " +- " << labourInfo.y() << "\n";
   labourInfo = calcMeanAndSigma(employment);
   Logger::logStream(DebugStartup) << "Employment: " << labourInfo.x() << " +- " << labourInfo.y() << "\n";
+  Logger::logStream(DebugStartup) << "Prices:\n";
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     doublet curr = calcMeanAndSigma(goodsPrices[*tg]);
-    Logger::logStream(DebugStartup) << "Price of " << (*tg)->getName() << ": " << curr.x() << " +- " << curr.y() << "\n";
+    Logger::logStream(DebugStartup) << "  " << (*tg)->getName() << ": " << curr.x() << " +- " << curr.y() << "\n";
   }
-  Logger::logStream(DebugStartup) << "Food produced: " << foodProduced << "\n";
+  Logger::logStream(DebugStartup) << "Production and consumption:\n";
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    Logger::logStream(DebugStartup) << "  " << (*tg)->getName() << ": " << produced[*tg] << ", " << consumed[*tg] << "\n";
+  }
+
 }
 
 void WarfareGame::updateGreatestMilStrength() {

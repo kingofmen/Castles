@@ -969,8 +969,7 @@ void Farmland::Farmer::workFields () {
     fields[Ripe1] -= harvest;
     fields[Ended] += harvest;
 
-    deliverGoods(output, totalHarvested);
-    boss->produced += totalHarvested;
+    produce(output, totalHarvested);
     break;
   }
   } // Not a typo, ends switch.
@@ -1402,8 +1401,8 @@ void Forest::Forester::workGroves (bool tick) {
       if (availableLabour < _labourToHarvest*capFactor) break;
     }
   }
-  deliverGoods(output, totalChopped);
-  
+  produce(output, totalChopped);
+
   double usedLabour = availableLabour - getAmount(TradeGood::Labor);
   deliverGoods(TradeGood::Labor, usedLabour);
   if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workGroves");
@@ -1493,7 +1492,6 @@ void Farmland::devastate (int devastation) {
 }
 
 void Farmland::endOfTurn () {
-  produced = 0;
   BOOST_FOREACH(Farmer* farmer, farmers) farmer->workFields();
   countTotals();
 }
@@ -1527,7 +1525,7 @@ void Village::eatFood () {
     if (!canGetLevel) break;
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
       double amountNeeded = level->getAmount(*tg) * consumptionFactor;
-      deliverGoods((*tg), -amountNeeded);
+      EconActor::consume((*tg), amountNeeded);
     }
     consumptionLevel = level;
   }
@@ -1895,7 +1893,7 @@ void Mine::Miner::workShafts () {
     for (int i = 0; i < numBlocks(); ++i) {
       if (availableLabour < (*ms)->requiredLabour * capFactor) break;
       availableLabour -= (*ms)->requiredLabour * capFactor;
-      deliverGoods(output, _amountOfIron * decline);
+      produce(output, _amountOfIron * decline);
       if (0 == --shafts[**ms]) break;
       decline *= getMarginFactor();
     }

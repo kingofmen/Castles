@@ -53,9 +53,21 @@ EconActor::EconActor ()
   : Numbered<EconActor>()
   , GoodsHolder()
   , owner(0)
+  , theMarket(0)
 {}
 
 EconActor::~EconActor () {}
+
+void EconActor::consume (TradeGood const* const tg, double amount) {
+  double amountActuallyUsed = amount * tg->getConsumption();
+  deliverGoods(tg, -amountActuallyUsed);
+  theMarket->registerConsumption(tg, amountActuallyUsed);
+}
+
+void EconActor::produce (TradeGood const* const tg, double amount) {
+  deliverGoods(tg, amount);
+  theMarket->registerProduction(tg, amount);
+}
 
 void ContractInfo::execute () const {
   if (!recipient) return;
