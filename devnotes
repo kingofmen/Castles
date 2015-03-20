@@ -40,6 +40,8 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Block sizes (check)
    - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
    - Get rid of old supplies stuff
+   - Allow additional production from additional labour
+   - Enforce that output cannot be capital
    - Fix Schlemiel in Farmland fillBlock
    - Make farms buy labour for integer number of fields
    - Make Farmland and Forest statuses enums

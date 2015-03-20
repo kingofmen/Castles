@@ -72,7 +72,7 @@ hexinfo = {
       militia = 5
       drill_level = 1 
     }
-    goods = { money = 100000 }
+    goods = { money = 300000 }
   }
   farmland = { 
     worker = { goods = { money = 10000 food = 125000 } id = 6 }
@@ -96,16 +96,16 @@ hexinfo = {
     owner = { 3 3 3 3 3 3 3 3 3 3 }
   }
   forest = {
-    worker = { goods = { money = 10000 wood = 150 } id = 16 }
-    worker = { goods = { money = 10000 wood = 150 } id = 17 }
-    worker = { goods = { money = 10000 wood = 150 } id = 18 }
-    worker = { goods = { money = 10000 wood = 150 } id = 19 }
-    worker = { goods = { money = 10000 wood = 150 } id = 20 }
-    worker = { goods = { money = 10000 wood = 150 } id = 21 }
-    worker = { goods = { money = 10000 wood = 150 } id = 22 }
-    worker = { goods = { money = 10000 wood = 150 } id = 23 }
-    worker = { goods = { money = 10000 wood = 150 } id = 24 }
-    worker = { goods = { money = 10000 wood = 150 } id = 25 }
+    worker = { goods = { money = 10000 wood = 450 } id = 16 }
+    worker = { goods = { money = 10000 wood = 450 } id = 17 }
+    worker = { goods = { money = 10000 wood = 450 } id = 18 }
+    worker = { goods = { money = 10000 wood = 450 } id = 19 }
+    worker = { goods = { money = 10000 wood = 450 } id = 20 }
+    worker = { goods = { money = 10000 wood = 450 } id = 21 }
+    worker = { goods = { money = 10000 wood = 450 } id = 22 }
+    worker = { goods = { money = 10000 wood = 450 } id = 23 }
+    worker = { goods = { money = 10000 wood = 450 } id = 24 }
+    worker = { goods = { money = 10000 wood = 450 } id = 25 }
     wild    = { 100 75 23 100 100 34 89 100 28 89 }
     cleared = { 0  10 0  0  0  10 0  0  0  0  }
     planted = { 0  0  0  10 0  0  0  0  0  0  }
@@ -123,16 +123,16 @@ hexinfo = {
     minStatusToHarvest = climax
   }
   mine = {
-    worker = { goods = { money = 10000 iron = 150 } id = 26 }
-    worker = { goods = { money = 10000 iron = 150 } id = 27 }
-    worker = { goods = { money = 10000 iron = 150 } id = 28 }
-    worker = { goods = { money = 10000 iron = 150 } id = 29 }
-    worker = { goods = { money = 10000 iron = 150 } id = 30 }
-    worker = { goods = { money = 10000 iron = 150 } id = 31 }
-    worker = { goods = { money = 10000 iron = 150 } id = 32 }
-    worker = { goods = { money = 10000 iron = 150 } id = 33 }
-    worker = { goods = { money = 10000 iron = 150 } id = 34 }
-    worker = { goods = { money = 10000 iron = 150 } id = 35 }
+    worker = { goods = { money = 10000 iron = 450 } id = 26 }
+    worker = { goods = { money = 10000 iron = 450 } id = 27 }
+    worker = { goods = { money = 10000 iron = 450 } id = 28 }
+    worker = { goods = { money = 10000 iron = 450 } id = 29 }
+    worker = { goods = { money = 10000 iron = 450 } id = 30 }
+    worker = { goods = { money = 10000 iron = 450 } id = 31 }
+    worker = { goods = { money = 10000 iron = 450 } id = 32 }
+    worker = { goods = { money = 10000 iron = 450 } id = 33 }
+    worker = { goods = { money = 10000 iron = 450 } id = 34 }
+    worker = { goods = { money = 10000 iron = 450 } id = 35 }
     surface = { 1000000 0 0 0 0 0 0 0 0 0 }
     easy    = { 1000000 0 0 0 0 0 0 0 0 0 }
     medium  = { 10000000 0 0 0 0 0 0 0 0 0 }
