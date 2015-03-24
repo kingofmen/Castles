@@ -102,8 +102,8 @@ public:
     fractionToSell -= soldThisTurn.getAmount(output);
     fractionToSell -= promisedToDeliver.getAmount(output);
     if (1 > fractionToSell) return;
-    //Logger::logStream(DebugStartup) << "  Selling " << fractionToSell << " " << marginalLabourRatio << " " << inverseProductionTime << " " << getAmount(output) << " " << soldThisTurn.getAmount(output) << "\n";
-    bidlist.push_back(new MarketBid(output, -fractionToSell, this, 1));
+    //Logger::logStream(DebugStartup) << getIdx() << " selling " << fractionToSell << " " << marginalLabourRatio << " " << inverseProductionTime << " " << getAmount(output) << " " << soldThisTurn.getAmount(output) << "\n";
+    bidlist.push_back(new MarketBid(output, -1 * min(fractionToSell, getAmount(output)), this, 1));
   }
   
   double capitalFactor (const GoodsHolder& capitalToUse) const {

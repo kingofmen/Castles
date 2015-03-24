@@ -232,10 +232,10 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
       double totalPrice = amountNeeded * prices.getAmount(*tg);
       double labourNeeded = totalPrice / prices.getAmount(TradeGood::Labor);
       if (labourNeeded > resources.getAmount(TradeGood::Labor)) {
-	stopReason = (*tg)->getName() + " too expensive";
+	stopReason = "not enough labour for " + (*tg)->getName();
       }
       else if ((labourThisLevel + labourNeeded) * inverseTotalLabour > level->maxWorkFraction) {
-	stopReason = "too much work";
+	stopReason = "too much work for " + (*tg)->getName();
       }
       else {
 	labourThisLevel += labourNeeded;
@@ -251,6 +251,7 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
       }
       else {
 	canGetLevel = false;
+	stopReason += " and not enough cash";
       }
     }
 

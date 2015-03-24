@@ -42,10 +42,10 @@ hexinfo = {
   }
  
   prices = {
-    labour = 8
-    food   = 8
-    iron   = 5
-    wood   = 5
+    labour = 10
+    food   = 10
+    iron   = 6
+    wood   = 6
   }
 
   village = {
@@ -123,16 +123,16 @@ hexinfo = {
     minStatusToHarvest = climax
   }
   mine = {
-    worker = { goods = { money = 10000 iron = 450 } id = 26 }
-    worker = { goods = { money = 10000 iron = 450 } id = 27 }
-    worker = { goods = { money = 10000 iron = 450 } id = 28 }
-    worker = { goods = { money = 10000 iron = 450 } id = 29 }
-    worker = { goods = { money = 10000 iron = 450 } id = 30 }
-    worker = { goods = { money = 10000 iron = 450 } id = 31 }
-    worker = { goods = { money = 10000 iron = 450 } id = 32 }
-    worker = { goods = { money = 10000 iron = 450 } id = 33 }
-    worker = { goods = { money = 10000 iron = 450 } id = 34 }
-    worker = { goods = { money = 10000 iron = 450 } id = 35 }
+    worker = { goods = { money = 10000 iron = 350 } id = 26 }
+    worker = { goods = { money = 10000 iron = 350 } id = 27 }
+    worker = { goods = { money = 10000 iron = 350 } id = 28 }
+    worker = { goods = { money = 10000 iron = 350 } id = 29 }
+    worker = { goods = { money = 10000 iron = 350 } id = 30 }
+    worker = { goods = { money = 10000 iron = 350 } id = 31 }
+    worker = { goods = { money = 10000 iron = 350 } id = 32 }
+    worker = { goods = { money = 10000 iron = 350 } id = 33 }
+    worker = { goods = { money = 10000 iron = 350 } id = 34 }
+    worker = { goods = { money = 10000 iron = 350 } id = 35 }
     surface = { 1000000 0 0 0 0 0 0 0 0 0 }
     easy    = { 1000000 0 0 0 0 0 0 0 0 0 }
     medium  = { 10000000 0 0 0 0 0 0 0 0 0 }
