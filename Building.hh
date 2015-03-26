@@ -17,6 +17,8 @@ class Line;
 class Player;
 class Farmland; 
 
+typedef boost::tuple<double, int, int> jobInfo; // Labour amount, times needed, turns to complete.
+
 template<class T> class Industry : public EconActor {
   friend class StaticInitialiser;
 
@@ -37,8 +39,9 @@ public:
     double marginFactor = 1;
     double marginalLabourRatio = 0;
     double fullCycleLabour = 0;
+    vector<jobInfo> jobs;
     for (int i = 0; i < industry->numBlocks(); ++i) {
-      double laborNeeded = industry->getLabourForBlock(i, fullCycleLabour);
+      double laborNeeded = industry->getLabourForBlock(i, jobs, fullCycleLabour);
       double expectedProduction = industry->outputOfBlock(i) * marginFactor;
       if (prices.getAmount(TradeGood::Labor) * fullCycleLabour < prices.getAmount(output) * expectedProduction) {
 	totalToBuy += laborNeeded;
@@ -348,7 +351,7 @@ private:
     ~Farmer ();
     double outputOfBlock (int b) const;
     double getCapitalSize () const;
-    double getLabourForBlock (int block, double& prodCycleLabour) const;
+    double getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
     int numBlocks () const;
     double getMarginFactor () const {return boss->marginFactor;}
     virtual void setMirrorState ();
@@ -402,7 +405,7 @@ private:
     ~Forester ();
     double outputOfBlock (int b) const;
     double getCapitalSize () const;
-    double getLabourForBlock (int block, double& prodCycleLabour) const;
+    double getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
     double getMarginFactor () const {return boss->marginFactor;}
     virtual double labourForMaintenance () const;
     virtual double lossFromNoMaintenance () const;
@@ -462,7 +465,7 @@ private:
     ~Miner ();
     double outputOfBlock (int b) const;
     double getCapitalSize () const;
-    double getLabourForBlock (int block, double& prodCycleLabour) const;
+    double getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
     double getMarginFactor () const {return mine->marginFactor;}
     int numBlocks () const {return mine->veinsPerMiner;}
     virtual void setMirrorState ();
