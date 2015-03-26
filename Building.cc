@@ -274,7 +274,9 @@ Village* Village::getTestVillage (int pop) {
 }
 
 void Village::unitTests () {
+  Hex* testHex = Hex::getHex(1000, 1000);
   Village* testVillage = getTestVillage(1000); // 1000 20-year-old males... wonder what they do for entertainment?
+  testHex->setVillage(testVillage);
   GoodsHolder prices;
   vector<MarketBid*> bidlist;
   prices.deliverGoods(TradeGood::Labor, 1);
@@ -367,7 +369,8 @@ void Village::unitTests () {
   bidlist.clear();
   testVillage->getBids(prices, bidlist);
   if (0 != bidlist.size()) throwFormatted("Expected 0 bids (fourth time), got %i, reason %s", bidlist.size(), testVillage->stopReason.c_str());
-  if (testVillage->stopReason != "too much work") throwFormatted("Expected too much work, got %s", testVillage->stopReason.c_str());
+  sprintf(errorMessage, "too much work for %s and not enough cash", nextGood->getName().c_str());
+  if (testVillage->stopReason != errorMessage) throwFormatted("Expected too much work, got %s", testVillage->stopReason.c_str());
   
   consume[20] = oldConsume;
   delete testVillage;
@@ -587,7 +590,9 @@ void Farmland::overrideConstantsForUnitTests (int lts, int ltp, int ltw, int ltr
 }
 
 void Farmland::unitTests () {
+  Hex* testHex = Hex::getHex(1000, 1000);
   Farmland* testFarm = getTestFarm();
+  testHex->setFarm(testFarm);
   // Stupidest imaginable test, but did actually catch a problem, so...
   if ((int) testFarm->farmers.size() != numOwners) {
     sprintf(errorMessage, "Farm should have %i Farmers, has %i", numOwners, testFarm->farmers.size());
@@ -1124,7 +1129,9 @@ double Forest::Forester::outputOfBlock (int block) const {
 }
 
 void Forest::unitTests () {
+  Hex* testHex = Hex::getHex(1000, 1000);
   Forest testForest;
+  testHex->setForest(&testForest);
   if ((int) testForest.foresters.size() != numOwners) {
     sprintf(errorMessage, "Forest should have %i Foresters, has %i", numOwners, testForest.foresters.size());
     throw string(errorMessage);
@@ -1712,8 +1719,9 @@ void Mine::unitTests () {
     sprintf(errorMessage, "Expected at least 3 MineStatus entries, got %i", MineStatus::numTypes());
     throw string(errorMessage);
   }
-  
+  Hex* testHex = Hex::getHex(1000, 1000);
   Mine testMine;
+  testHex->setMine(&testMine);
   if ((int) testMine.miners.size() != numOwners) {
     sprintf(errorMessage, "Mine should have %i Miners, has %i", numOwners, testMine.miners.size());
     throw string(errorMessage);
