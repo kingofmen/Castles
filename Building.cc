@@ -628,11 +628,15 @@ void Farmland::Farmer::unitTests () {
   fields[Clear] = 1400;
   double fullCycleLabour;
   vector<jobInfo> jobs;
-  double laborNeeded = getLabourForBlock(0, jobs, fullCycleLabour);
+  double laborNeeded = 0;
+  getLabourForBlock(0, jobs, laborNeeded);
+  if (0 == jobs.size()) throwFormatted("Expected to find some jobs, got 0");
   if (laborNeeded <= 0) throwFormatted("Expected to need positive amount of labor, but found %f", laborNeeded);
 
   deliverGoods(testCapGood, 1);
-  double laborNeededWithCapital = getLabourForBlock(0, jobs, fullCycleLabour);
+  double laborNeededWithCapital = 0;
+  getLabourForBlock(0, jobs, laborNeededWithCapital);
+  if (0 == jobs.size()) throwFormatted("Expected to find some jobs with capital, got 0");
   if (laborNeededWithCapital >= laborNeeded) throwFormatted("With capital %f of %s, should require less than %f labour, but need %f",
 							    getAmount(testCapGood),
 							    testCapGood->getName().c_str(),
@@ -727,8 +731,8 @@ void Farmland::Farmer::unitTests () {
 	      fields[Ended]);
       throw string(errorMessage);
     }
-    laborNeeded = 0;    
-    for (int i = 0; i < currentBlocks; ++i) laborNeeded += getLabourForBlock(i, jobs, fullCycleLabour);
+    laborNeeded = 0;
+    for (int i = 0; i < currentBlocks; ++i) getLabourForBlock(i, jobs, laborNeeded);
     setAmount(TradeGood::Labor, laborNeeded);
     workFields();
     Calendar::newWeekBegins();
@@ -804,7 +808,8 @@ void Farmland::Farmer::unitTests () {
   for (unsigned int i = 0; i < fields.size(); ++i) fields[i] = 0;
   setAmount(output, 0);
   fields[Ripe3] = boss->blockSize;
-  setAmount(TradeGood::Labor, getLabourForBlock(0, jobs, fullCycleLabour) * Calendar::turnsToNextSeason());
+  getLabourForBlock(0, jobs, fullCycleLabour);
+  setAmount(TradeGood::Labor, fullCycleLabour);
   workFields();
   double firstOutput = getAmount(output);
   if (0.1 > firstOutput) throw string("Expected output larger than 0.1");
@@ -821,7 +826,8 @@ void Farmland::Farmer::unitTests () {
       double gameExpected = 0;
       for (int j = 0; j < blocks; ++j) gameExpected += outputOfBlock(j) * pow(mf, j);
       setAmount(output, 0);
-      setAmount(TradeGood::Labor, blocks*getLabourForBlock(0, jobs, fullCycleLabour) * Calendar::turnsToNextSeason());
+      getLabourForBlock(0, jobs, fullCycleLabour);
+      setAmount(TradeGood::Labor, blocks * fullCycleLabour);
       workFields();
       // Geometric sum, with growth rate r, from 0 to n, is (1-r^(n+1)) / (1-r).
       double coderExpected = firstOutput * (1 - pow(mf, blocks)) / (1 - mf);
@@ -1012,55 +1018,52 @@ double Farmland::Farmer::getCapitalSize () const {
   return numBlocks() * boss->blockSize;
 }
 
-double Farmland::Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
+void Farmland::Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
   // Returns the amount of labour needed to tend the
   // fields, on the assumption that the necessary labour
   // will be spread over the remaining turns in the season. 
 
   Calendar::Season currSeason = Calendar::getCurrentSeason();
-  if (Calendar::Winter == currSeason) return 0;
+  if (Calendar::Winter == currSeason) return;
 
   vector<int> theBlock(NumStatus, 0);
   fillBlock(block, theBlock);
 
   double ret = 0;
+  double capFactor = capitalFactor(*this);
   switch (currSeason) {
   default:
   case Calendar::Spring:
     // In spring we clear new fields, plow and sow existing ones.
     // Fields move from Clear to Ready to Sowed.
-    ret += theBlock[Ready] * _labourToSow;
-    ret += theBlock[Clear] * (_labourToPlow + _labourToSow);
+    searchForMatch(jobs, capFactor*(_labourToPlow + _labourToSow), theBlock[Clear], Calendar::turnsToNextSeason());
+    searchForMatch(jobs, capFactor*_labourToSow, theBlock[Ready], Calendar::turnsToNextSeason());
+    prodCycleLabour  = theBlock[Ready] * _labourToSow;
+    prodCycleLabour += theBlock[Clear] * (_labourToPlow + _labourToSow);
     // A full season of weeding - assume that all the fields will be sowed.
     prodCycleLabour = ret + (theBlock[Ready] + theBlock[Clear] + theBlock[Sowed]) * _labourToWeed * Calendar::turnsPerSeason();
     // And assume that they all reach reaping.
     prodCycleLabour += (theBlock[Ready] + theBlock[Clear] + theBlock[Sowed]) * _labourToReap;
-    ret /= Calendar::turnsToNextSeason();
     break;
 
   case Calendar::Summer:
     // Weeding is special: It is not done once and finished,
     // like plowing, sowing, and harvesting. It must be re-done
-    // each turn. 
-    ret = (theBlock[Sowed] + theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3]) * _labourToWeed;
-    prodCycleLabour = ret * Calendar::turnsToNextSeason() + (theBlock[Sowed] + theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3]) * _labourToReap;
+    // each turn.
+    
+    searchForMatch(jobs, capFactor*_labourToWeed, theBlock[Sowed] + theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3], 1);
+    prodCycleLabour  = (theBlock[Sowed] + theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3]) * _labourToWeed * Calendar::turnsToNextSeason();
+    prodCycleLabour += (theBlock[Sowed] + theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3]) * _labourToReap;
     break;
       
   case Calendar::Autumn:
     // All reaping is equal. 
-    ret += (theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3]) * _labourToReap;
-    prodCycleLabour = ret;
-    ret /= Calendar::turnsToNextSeason();
+    prodCycleLabour = (theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3]) * _labourToReap;
+    searchForMatch(jobs, capFactor*_labourToReap, theBlock[Ripe1] + theBlock[Ripe2] + theBlock[Ripe3], Calendar::turnsToNextSeason());
     break; 
   }
 
-  ret *= capitalFactor(*this);
-  prodCycleLabour *= capitalFactor(*this);
-  
-  // Account for roundoff error, so we don't fail to do a task taking 100 labour
-  // because it occurred in the last block and we ended up with 99.9999.
-  ret += 0.00001;
-  return ret; 
+  prodCycleLabour *= capFactor;
 }
 
 Forest::Forest ()
@@ -1160,23 +1163,18 @@ void Forest::Forester::unitTests () {
   groves[Huge] = 100;
   double fullCycleLabour = 0;
   vector<jobInfo> jobs;
-  double laborNeeded = getLabourForBlock(0, jobs, fullCycleLabour);
-  if (laborNeeded <= 0) {
-    sprintf(errorMessage, "Expected to need positive amount of labor, but found %f", laborNeeded);
-    throw string(errorMessage);
-  }
+  double laborNeeded = 0;
+  getLabourForBlock(0, jobs, laborNeeded);
+  if (laborNeeded <= 0) throwFormatted("Expected to need positive amount of labor, but found %f", laborNeeded);
 
+  double laborNeededWithCapital = 0;
+  getLabourForBlock(0, jobs, laborNeededWithCapital);
   deliverGoods(testCapGood, 1);
-  double laborNeededWithCapital = getLabourForBlock(0, jobs, fullCycleLabour);
-  if (laborNeededWithCapital >= laborNeeded) {
-    sprintf(errorMessage,
-	    "With capital %f of %s, should require less than %f labour, but need %f",
-	    getAmount(testCapGood),
-	    testCapGood->getName().c_str(),
-	    laborNeeded,
-	    laborNeededWithCapital);
-    throw string(errorMessage);
-  }
+  if (laborNeededWithCapital >= laborNeeded) throwFormatted("With capital %f of %s, should require less than %f labour, but need %f",
+							    getAmount(testCapGood),
+							    testCapGood->getName().c_str(),
+							    laborNeeded,
+							    laborNeededWithCapital);
   deliverGoods(testCapGood, -1);
 
   boss->workableBlocks = 100;
@@ -1186,7 +1184,7 @@ void Forest::Forester::unitTests () {
   int oldHarvestLabour = _labourToHarvest;
   _labourToTend = 1;
   _labourToHarvest = 1;
-  laborNeeded = getLabourForBlock(0, jobs, fullCycleLabour);
+  getLabourForBlock(0, jobs, laborNeeded);
   GoodsHolder prices;
   vector<MarketBid*> bidlist;
   prices.deliverGoods(TradeGood::Labor, 1);
@@ -1226,18 +1224,12 @@ void Forest::Forester::unitTests () {
       throw string(errorMessage);
     }
   }
-  if (0.1 > foundLabour) {
-    sprintf(errorMessage,
-	    "Expected to buy %s, no bid found (%f %f)",
-	    TradeGood::Labor->getName().c_str(),
-	    outputOfBlock(0),
-	    getLabourForBlock(0, jobs, fullCycleLabour));
-    throw string(errorMessage);
-  }
-  if (!foundCapGood) {
-    sprintf(errorMessage, "Expected to buy %s, no bid found", testCapGood->getName().c_str());
-    throw string(errorMessage);
-  }
+  getLabourForBlock(0, jobs, fullCycleLabour);
+  if (0.1 > foundLabour) throwFormatted("Expected to buy %s, no bid found (%f %f)",
+					TradeGood::Labor->getName().c_str(),
+					outputOfBlock(0),
+					fullCycleLabour);
+  if (!foundCapGood) throwFormatted("Expected to buy %s, no bid found", testCapGood->getName().c_str());
 
   owner = this;
   tendedGroves = getTendedArea();
@@ -1255,8 +1247,8 @@ void Forest::Forester::unitTests () {
     throw string(errorMessage);
   }
 
-  deliverGoods(TradeGood::Labor, getLabourForBlock(0, jobs, fullCycleLabour));
-  deliverGoods(TradeGood::Labor, labourForMaintenance());
+  getLabourForBlock(0, jobs, fullCycleLabour);
+  deliverGoods(TradeGood::Labor, fullCycleLabour);
   workGroves(false);
   double firstOutput = getAmount(output);
   if (0.01 > firstOutput) throw string("Expected to have some wood after workGroves");
@@ -1264,7 +1256,8 @@ void Forest::Forester::unitTests () {
   if (0 >= boss->blockSize) throw new string("Expected positive block size");
   for (unsigned int i = 0; i < groves.size(); ++i) groves[i] = 0;
   groves[Climax] = boss->blockSize;
-  setAmount(TradeGood::Labor, getLabourForBlock(0, jobs, fullCycleLabour));
+  getLabourForBlock(0, jobs, fullCycleLabour);
+  setAmount(TradeGood::Labor, fullCycleLabour);
   setAmount(output, 0);
   tendedGroves = getTendedArea();
   workGroves(false);
@@ -1281,7 +1274,8 @@ void Forest::Forester::unitTests () {
       double gameExpected = 0;      
       for (int j = 0; j < blocks; ++j) gameExpected += outputOfBlock(j) * pow(mf, j);
       setAmount(output, 0);
-      setAmount(TradeGood::Labor, blocks*getLabourForBlock(0, jobs, fullCycleLabour));
+      getLabourForBlock(0, jobs, fullCycleLabour);
+      setAmount(TradeGood::Labor, blocks*fullCycleLabour);
       tendedGroves = getTendedArea();
       workGroves(false);
       // Geometric sum, with growth rate r, from 0 to n, is (1-r^(n+1)) / (1-r).
@@ -1313,11 +1307,11 @@ void Forest::Forester::unitTests () {
   capital->setAmounts(oldCapital);
 }
 
-double Forest::Forester::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
+void Forest::Forester::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
   Calendar::Season currSeason = Calendar::getCurrentSeason();
-  if (Calendar::Winter == currSeason) return 0;
+  if (Calendar::Winter == currSeason) return;
   prodCycleLabour = _labourToHarvest * boss->blockSize * capitalFactor(*this);
-  return prodCycleLabour;
+  searchForMatch(jobs, _labourToHarvest*capitalFactor(*this), boss->blockSize, 1);
 }
 
 double Forest::Forester::labourForMaintenance () const {
@@ -1748,26 +1742,21 @@ void Mine::Miner::unitTests () {
   shafts[*status] = 100;
   double fullCycleLabour = 0;
   vector<jobInfo> jobs;
-  double laborNeeded = getLabourForBlock(0, jobs, fullCycleLabour);
-  if (laborNeeded <= 0) {
-    sprintf(errorMessage, "Expected to need positive amount of labor, but found %f", laborNeeded);
-    throw string(errorMessage);
-  }
+  double laborNeeded = 0;
+  getLabourForBlock(0, jobs, laborNeeded);
+  if (laborNeeded <= 0) throwFormatted("Expected to need positive amount of labor, but found %f", laborNeeded);
 
   deliverGoods(testCapGood, 1);
-  double laborNeededWithCapital = getLabourForBlock(0, jobs, fullCycleLabour);
-  if (laborNeededWithCapital >= laborNeeded) {
-    sprintf(errorMessage,
-	    "With capital %f of %s, should require less than %f labour, but need %f",
-	    getAmount(testCapGood),
-	    testCapGood->getName().c_str(),
-	    laborNeeded,
-	    laborNeededWithCapital);
-    throw string(errorMessage);
-  }
+  double laborNeededWithCapital = 0;
+  getLabourForBlock(0, jobs, laborNeededWithCapital);
+  if (laborNeededWithCapital >= laborNeeded) throwFormatted("With capital %f of %s, should require less than %f labour, but need %f",
+							    getAmount(testCapGood),
+							    testCapGood->getName().c_str(),
+							    laborNeeded,
+							    laborNeededWithCapital);
   deliverGoods(testCapGood, -1);
 
-  laborNeeded = getLabourForBlock(0, jobs, fullCycleLabour);
+  getLabourForBlock(0, jobs, laborNeeded);
   GoodsHolder prices;
   vector<MarketBid*> bidlist;
   prices.deliverGoods(TradeGood::Labor, 1);
@@ -1808,10 +1797,11 @@ void Mine::Miner::unitTests () {
     }
   }
 
+  getLabourForBlock(0, jobs, fullCycleLabour);
   if (0.1 > foundLabour) throwFormatted("Expected to buy %s, no bid found (%f %f)",
 					TradeGood::Labor->getName().c_str(),
 					outputOfBlock(0),
-					getLabourForBlock(0, jobs, fullCycleLabour));
+					fullCycleLabour);
   if (!foundCapGood) throwFormatted("Expected to buy %s, no bid found", testCapGood->getName().c_str());
 
   owner = this;
@@ -1850,7 +1840,8 @@ void Mine::Miner::unitTests () {
   }
 
   setAmount(output, 0);
-  setAmount(TradeGood::Labor, numBlocks() * getLabourForBlock(0, jobs, fullCycleLabour));
+  getLabourForBlock(0, jobs, laborNeeded);
+  setAmount(TradeGood::Labor, numBlocks() * laborNeeded);
   workShafts();
   double productionTwo = getAmount(output);
   if (0.1 < fabs(productionTwo - numBlocks() * productionOne)) {
@@ -1860,7 +1851,8 @@ void Mine::Miner::unitTests () {
 
   mine->marginFactor = 0.5;
   setAmount(output, 0);
-  setAmount(TradeGood::Labor, numBlocks() * getLabourForBlock(0, jobs, fullCycleLabour));
+  getLabourForBlock(0, jobs, laborNeeded);
+  setAmount(TradeGood::Labor, numBlocks() * laborNeeded);
   workShafts();
   double productionThree = getAmount(output);
   if (0.1 < fabs(productionThree - 1.5 * productionOne)) {
@@ -1871,18 +1863,17 @@ void Mine::Miner::unitTests () {
   mine->marginFactor = 0.75;
   mine->veinsPerMiner = 3;
   setAmount(output, 0);
-  setAmount(TradeGood::Labor, numBlocks() * getLabourForBlock(0, jobs, fullCycleLabour));
+  getLabourForBlock(0, jobs, laborNeeded);
+  setAmount(TradeGood::Labor, numBlocks() * laborNeeded);
   workShafts();
   double productionFour = getAmount(output);
-  if (0.1 < fabs(productionFour - 2.3125 * productionOne)) {
-    sprintf(errorMessage, "With three blocks and margin factor 0.75, expected to produce %f, but got %f", 2.3125 * productionOne, productionThree);
-    throw string(errorMessage);
-  }
-  
+  if (0.1 < fabs(productionFour - 2.3125 * productionOne)) throwFormatted("With three blocks and margin factor 0.75, expected to produce %f, but got %f",
+									  2.3125 * productionOne,
+									  productionThree);
   capital->setAmounts(oldCapital);
 }
 
-double Mine::Miner::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
+void Mine::Miner::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
   double ret = 0;
   for (MineStatus::Iter ms = MineStatus::start(); ms != MineStatus::final(); ++ms) {
     if (0 == shafts[**ms]) continue;
@@ -1892,7 +1883,7 @@ double Mine::Miner::getLabourForBlock (int block, vector<jobInfo>& jobs, double&
 
   ret *= capitalFactor(*this);
   prodCycleLabour = ret;
-  return ret; 
+  searchForMatch(jobs, ret, 1, 1);
 }
 
 void Mine::Miner::workShafts () {
@@ -1924,4 +1915,16 @@ void Mine::setMirrorState () {
     miner->setMirrorState();
     mirror->miners.push_back(miner->getMirror());
   }
+}
+
+void searchForMatch (vector<jobInfo>& jobs, double perChunk, int chunks, int time) {
+  bool found = false;
+  BOOST_FOREACH(jobInfo job, jobs) {
+    if (fabs(boost::get<0>(job) - perChunk) > 0.001) continue;
+    if (boost::get<2>(job) != time) continue;
+    boost::get<1>(job) += chunks;
+    found = true;
+  }
+  if (found) return;
+  jobs.push_back(jobInfo(perChunk, chunks, time));
 }
