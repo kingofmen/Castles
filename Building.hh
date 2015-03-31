@@ -55,6 +55,13 @@ public:
     for (int i = 0; i < industry->numBlocks(); ++i) {
       industry->getLabourForBlock(i, jobs, fullCycleLabour);
       double expectedProduction = industry->outputOfBlock(i) * marginFactor;
+      /*
+      Logger::logStream(DebugStartup) << getIdx() << " block "
+				      << i << ": "
+				      << expectedProduction << " "
+				      << fullCycleLabour << " "
+				      << "\n";
+      */
       if (prices.getAmount(TradeGood::Labor) * fullCycleLabour < prices.getAmount(output) * expectedProduction) {
 	marginFactor *= marginalDecline;
 	marginalLabourRatio = expectedProduction / fullCycleLabour;

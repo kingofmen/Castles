@@ -624,6 +624,19 @@ void Farmland::Farmer::unitTests () {
     break;
   }
 
+  jobInfo testJob(1.0, 1, 1);
+  testJob.numChunks() += 1;
+  if (2 != testJob.numChunks()) throwFormatted("Chunks should now be 2, got %i", testJob.numChunks());
+  vector<jobInfo> testJobs;
+  testJobs.push_back(testJob);
+  BOOST_FOREACH(jobInfo& job, testJobs) {
+    if (2 != job.numChunks()) throwFormatted("Got 2 chunks a moment ago, now %i", job.numChunks());
+    job.numChunks() += 1;
+    if (3 != job.numChunks()) throwFormatted("Chunks should now be 3, got %i", job.numChunks());
+  }
+  searchForMatch(testJobs, 1.0, 1, 1);
+  if (4 != testJobs.back().numChunks()) throwFormatted("Chunks should now be 4, got %i", testJobs.back().numChunks());
+
   Calendar::newYearBegins();
   fields[Clear] = 1400;
   double fullCycleLabour;
@@ -645,9 +658,9 @@ void Farmland::Farmer::unitTests () {
   deliverGoods(testCapGood, -1);
 
   // This makes us need 100 labour per Spring turn on 1400 clear fields, if capital is zero.
-  // With capital 1, we need 100 * (1 - 0.1 log(2)) = 93. So we are saving
-  // 7 labor with 1 iron. At price 1, that's net-present-value of 70. So,
-  // there should be a bid for iron if the price is below seventy, but not if
+  // With capital 1400 (the cap size), we need 100 * (1 - 0.1 log(2)) = 93. So we are saving
+  // 7 labor with 1400 iron. At labour price 210, that's net-present-value of 14700. So,
+  // there should be a bid for iron if the price is below 10-ish, but not if
   // it is above.
   int oldLabourToSow = _labourToSow;
   int oldLabourToPlow = _labourToPlow;
@@ -687,7 +700,7 @@ void Farmland::Farmer::unitTests () {
 			capital->getAmount(testCapGood));
   }
   if (foundLabour <= 0) throwFormatted("Expected to buy %s, found %f", TradeGood::Labor->getName().c_str(), foundLabour);
-  if (foundCapGood <= 0) throwFormatted("Expected to buy %s,found %f", testCapGood->getName().c_str(), foundCapGood);
+  if (foundCapGood <= 0) throwFormatted("Expected to buy capital %s, found %f", testCapGood->getName().c_str(), foundCapGood);
   if (foundOutput >= -1) throwFormatted("Expected to sell at least one %s, found %f", output->getName().c_str(), foundOutput);
   // 7.143 is three forty-twoths of the reserve of 100 - the amount we approach asymptotically as profit goes to infinity.
   if (foundOutput < -7.143) throwFormatted("Did not expect to sell more than 7.143 units, found %f", foundOutput);
@@ -1041,7 +1054,7 @@ void Farmland::Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, doub
     prodCycleLabour  = theBlock[Ready] * _labourToSow;
     prodCycleLabour += theBlock[Clear] * (_labourToPlow + _labourToSow);
     // A full season of weeding - assume that all the fields will be sowed.
-    prodCycleLabour = ret + (theBlock[Ready] + theBlock[Clear] + theBlock[Sowed]) * _labourToWeed * Calendar::turnsPerSeason();
+    prodCycleLabour += ret + (theBlock[Ready] + theBlock[Clear] + theBlock[Sowed]) * _labourToWeed * Calendar::turnsPerSeason();
     // And assume that they all reach reaping.
     prodCycleLabour += (theBlock[Ready] + theBlock[Clear] + theBlock[Sowed]) * _labourToReap;
     break;
@@ -1919,11 +1932,12 @@ void Mine::setMirrorState () {
 
 void searchForMatch (vector<jobInfo>& jobs, double perChunk, int chunks, int time) {
   bool found = false;
-  BOOST_FOREACH(jobInfo job, jobs) {
-    if (fabs(boost::get<0>(job) - perChunk) > 0.001) continue;
-    if (boost::get<2>(job) != time) continue;
-    boost::get<1>(job) += chunks;
+  BOOST_FOREACH(jobInfo& job, jobs) {
+    if (fabs(job.labourPerChunk() - perChunk) > 0.001) continue;
+    if (job.numTurns() != time) continue;
+    job.numChunks() += chunks;
     found = true;
+    break;
   }
   if (found) return;
   jobs.push_back(jobInfo(perChunk, chunks, time));
