@@ -79,10 +79,10 @@ public:
     reserveLabour -= promisedToDeliver.getAmount(TradeGood::Labor); // Probably negative
     reserveLabour -= soldThisTurn.getAmount(TradeGood::Labor); // Probably zero
     double totalLabourUsed = 0;
-    for (vector<jobInfo>::iterator job = jobs.begin(); job != jobs.end(); ++job) {
-      double perChunk = boost::get<0>(*job);
-      int chunks      = boost::get<1>(*job);
-      int turns       = boost::get<2>(*job);
+    BOOST_FOREACH(jobInfo job, jobs) {
+      double perChunk = job.labourPerChunk();
+      int chunks      = job.numChunks();
+      int turns       = job.numTurns();
       if (1 > turns) continue;
       double neededPerTurn = perChunk * chunks;
       totalLabourUsed += neededPerTurn;
@@ -92,10 +92,20 @@ public:
 	continue;
       }
       // Buy multiples of the chunk size
-      int chunksPerTurn = 1 + (int) floor(neededPerTurn / perChunk);
+      int chunksPerTurn = (int) ceil(neededPerTurn / perChunk);
       neededPerTurn = chunksPerTurn * perChunk;
-      neededPerTurn -= reserveLabour;
-      reserveLabour -= chunksPerTurn * perChunk;
+      if (0 < reserveLabour) {
+	neededPerTurn -= reserveLabour;
+	reserveLabour -= chunksPerTurn * perChunk;
+      }
+      Logger::logStream(DebugStartup) << getIdx() << " job: "
+				      << perChunk << " "
+				      << chunks << " "
+				      << turns << " "
+				      << neededPerTurn << " "
+				      << chunksPerTurn << " "
+				      << reserveLabour << " "
+				      << "\n";
       if (1 == turns) bidlist.push_back(new MarketBid(TradeGood::Labor, neededPerTurn, this, 1));
       else bidlist.push_back(new MarketBid(TradeGood::Labor, neededPerTurn, this, turns-1));
     }
