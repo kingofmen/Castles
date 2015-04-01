@@ -1,6 +1,7 @@
 #ifndef BUILDING_HH
 #define BUILDING_HH
 
+#include <deque>
 #include <vector> 
 #include "Market.hh"
 #include "Mirrorable.hh" 
@@ -444,6 +445,7 @@ public:
   
 private:
   class Forester : public Industry<Forester>, public Mirrorable<Forester> {
+    friend class StaticInitialiser;
     friend class Mirrorable<Forester>;
   public:
     Forester (Forest* b);
@@ -460,12 +462,14 @@ private:
     void workGroves (bool tick);
 
     vector<int> groves;
+    deque<ForestStatus> myBlocks;
     int tendedGroves;
   private:
     Forester(Forester* other);
     Forest* boss;
-    int    getForestArea () const;
-    int    getTendedArea () const;
+    int getForestArea () const;
+    int getTendedArea () const;
+    void createBlockQueue ();
   };
  
   Forest (Forest* other);

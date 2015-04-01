@@ -575,6 +575,7 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
     ret->foresters[i]->groves[Forest::Huge]     = huge    ? (huge->numTokens()    > i ? huge->tokenAsInt(i)    : 0) : 0;
     ret->foresters[i]->groves[Forest::Climax]   = climax  ? (climax->numTokens()  > i ? climax->tokenAsInt(i)  : 0) : 0;
     ret->foresters[i]->owner                    = owner   ? (owner->numTokens()   > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
+    ret->foresters[i]->createBlockQueue();
   }
 
   ret->yearsSinceLastTick = fInfo->safeGetInt("yearsSinceLastTick");
