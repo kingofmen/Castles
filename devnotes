@@ -18,6 +18,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Self-castling
  * Supply line interference
  * Raid/tribute/battle mapmode
+ * Fix Miner capitalSize
  * Disambiguate 'clear' methods.
  * Three-resource economy
    - Change producers to be regular EconActors who sell their goods, but supply owners with money. (check)

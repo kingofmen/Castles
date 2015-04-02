@@ -1724,7 +1724,7 @@ void Mine::endOfTurn () {
 }
 
 double Mine::Miner::getCapitalSize () const {
-  return numBlocks() * mine->veinsPerMiner;
+  return numBlocks();
 }
 
 double Mine::Miner::outputOfBlock (int block) const {
@@ -1739,15 +1739,13 @@ void Mine::unitTests () {
   Hex* testHex = Hex::getHex(1000, 1000);
   Mine testMine;
   testHex->setMine(&testMine);
-  if ((int) testMine.miners.size() != numOwners) {
-    sprintf(errorMessage, "Mine should have %i Miners, has %i", numOwners, testMine.miners.size());
-    throw string(errorMessage);
-  }
+  if ((int) testMine.miners.size() != numOwners) throwFormatted("Mine should have %i Miners, has %i", numOwners, testMine.miners.size());
   testMine.miners[0]->unitTests();
 }
 
 void Mine::Miner::unitTests () {
-  if (!output) throw string("Mine output has not been set.");  
+  if (!output) throw string("Mine output has not been set.");
+  if (!theMarket) throw string("No market registered");
   // Note that this is not static, it's run on a particular Miner.
   GoodsHolder oldCapital(*capital);
   TradeGood const* testCapGood = 0;
@@ -1784,7 +1782,7 @@ void Mine::Miner::unitTests () {
   prices.deliverGoods(testCapGood, 1);
   prices.deliverGoods(output, 1);
   getBids(prices, bidlist);
-  
+
   double foundLabour = 0;
   bool foundCapGood = false;
   BOOST_FOREACH(MarketBid* mb, bidlist) {
@@ -1834,6 +1832,7 @@ void Mine::Miner::unitTests () {
   if (0.01 > productionOne) throw string("Expected to have some iron after workShafts");
 
   // Check that, with marginal production of zero, we get the same labor bid.
+  // That is, second block produces nothing, so should not create a bid.
   mine->veinsPerMiner = 2;
   mine->marginFactor = 0;
   bidlist.clear();
@@ -1842,10 +1841,9 @@ void Mine::Miner::unitTests () {
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if (mb->tradeGood == TradeGood::Labor) newFoundLabour += mb->amountToBuy;
   }
-  if (fabs(foundLabour - newFoundLabour) > 0.1) {
-    sprintf(errorMessage, "With zero margin, expected to buy %f, but got %f", foundLabour, newFoundLabour);
-    throw string(errorMessage);
-  }
+  if (fabs(foundLabour - newFoundLabour) > 0.1) throwFormatted("With zero margin, expected to buy %f, but got %f",
+							       foundLabour,
+							       newFoundLabour);
 
   // With no marginal decline, should buy twice as much.
   mine->marginFactor = 1;
@@ -1855,10 +1853,9 @@ void Mine::Miner::unitTests () {
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if (mb->tradeGood == TradeGood::Labor) newFoundLabour += mb->amountToBuy;
   }
-  if (fabs(mine->veinsPerMiner*foundLabour - newFoundLabour) > 0.1) {
-    sprintf(errorMessage, "With margin, 1 expected to buy %f, but got %f", mine->veinsPerMiner*foundLabour, newFoundLabour);
-    throw string(errorMessage);
-  }
+  if (fabs(mine->veinsPerMiner*foundLabour - newFoundLabour) > 0.1) throwFormatted("With margin 1, expected to buy %f, but got %f",
+										   mine->veinsPerMiner*foundLabour,
+										   newFoundLabour);
 
   setAmount(output, 0);
   getLabourForBlock(0, jobs, laborNeeded);
@@ -1921,9 +1918,9 @@ void Mine::Miner::workShafts () {
       if (0 == --shafts[**ms]) break;
       decline *= getMarginFactor();
     }
+
     break;
   }
-
   double usedLabour = availableLabour - getAmount(TradeGood::Labor);
   deliverGoods(TradeGood::Labor, usedLabour);
   if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workShafts");
@@ -1939,6 +1936,8 @@ void Mine::setMirrorState () {
 }
 
 void searchForMatch (vector<jobInfo>& jobs, double perChunk, int chunks, int time) {
+  if (0 >= perChunk) return;
+  if (0 >= chunks) return;
   bool found = false;
   BOOST_FOREACH(jobInfo& job, jobs) {
     if (fabs(job.labourPerChunk() - perChunk) > 0.001) continue;

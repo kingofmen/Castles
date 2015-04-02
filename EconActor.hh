@@ -94,7 +94,7 @@ public:
   virtual void getBids      (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {}
   static void clear () {Numbered<EconActor>::clear();}
   static void unitTests ();
-  
+
 protected:
   void registerSale (TradeGood const* const tg, double amount) {soldThisTurn.deliverGoods(tg, amount);}
   void produce (TradeGood const* const tg, double amount);

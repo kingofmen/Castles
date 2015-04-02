@@ -86,7 +86,7 @@ void Market::makeContracts (vector<MarketBid*>& bids, vector<MarketBid*>& notMat
       // Search for a bid with the same good, but opposite sign.
       if (mb->tradeGood != toMatch->tradeGood) continue;
       if (mb->amountToBuy * toMatch->amountToBuy > 0) continue;      
-      if (mb->bidder == toMatch->bidder) throw string("Bidder trying to buy and sell at the same time");
+      if (mb->bidder == toMatch->bidder) throwFormatted("Bidder %i trying to buy and sell %s at the same time", mb->bidder->getIdx(), mb->tradeGood->getName().c_str());
       if (mb == toMatch) throw string("Bid appears twice in bid list");
       match = mb;
       break;

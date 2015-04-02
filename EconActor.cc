@@ -56,7 +56,9 @@ EconActor::EconActor ()
   , theMarket(0)
 {}
 
-EconActor::~EconActor () {}
+EconActor::~EconActor () {
+  if (theMarket) theMarket->unRegisterParticipant(this);
+}
 
 void EconActor::consume (TradeGood const* const tg, double amount) {
   double amountActuallyUsed = amount * tg->getConsumption();
