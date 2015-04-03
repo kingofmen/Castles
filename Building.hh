@@ -32,6 +32,7 @@ struct jobInfo : public boost::tuple<double, int, int> { // Labour amount, times
 };
 
 void searchForMatch (vector<jobInfo>& jobs, double perChunk, int chunks, int time);
+void searchForMatch (vector<jobInfo>& jobs, jobInfo job);
 
 template<class T> class Industry : public EconActor {
   friend class StaticInitialiser;
@@ -54,18 +55,13 @@ public:
     double fullCycleLabour = 0;
     vector<jobInfo> jobs;
     for (int i = 0; i < industry->numBlocks(); ++i) {
-      industry->getLabourForBlock(i, jobs, fullCycleLabour);
+      vector<jobInfo> candidateJobs;
+      industry->getLabourForBlock(i, candidateJobs, fullCycleLabour);
       double expectedProduction = industry->outputOfBlock(i) * marginFactor;
-      /*
-      Logger::logStream(DebugStartup) << getIdx() << " block "
-				      << i << ": "
-				      << expectedProduction << " "
-				      << fullCycleLabour << " "
-				      << "\n";
-      */
       if (prices.getAmount(TradeGood::Labor) * fullCycleLabour < prices.getAmount(output) * expectedProduction) {
 	marginFactor *= marginalDecline;
 	marginalLabourRatio = expectedProduction / fullCycleLabour;
+	BOOST_FOREACH(jobInfo job, candidateJobs) searchForMatch(jobs, job);
       }
       else {
 	// This is where we no longer make a profit.
@@ -99,32 +95,10 @@ public:
 	neededPerTurn -= reserveLabour;
 	reserveLabour -= chunksPerTurn * perChunk;
       }
-      Logger::logStream(DebugStartup) << getIdx() << " job: "
-				      << perChunk << " "
-				      << chunks << " "
-				      << turns << " "
-				      << neededPerTurn << " "
-				      << chunksPerTurn << " "
-				      << reserveLabour << " "
-				      << "\n";
       if (1 == turns) bidlist.push_back(new MarketBid(TradeGood::Labor, neededPerTurn, this, 1));
       else bidlist.push_back(new MarketBid(TradeGood::Labor, neededPerTurn, this, turns-1));
     }
     
-    /*
-    Logger::logStream(DebugStartup) << getIdx()
-				    << " needs " << totalToBuy << " "
-				    << soldThisTurn.getAmount(TradeGood::Labor) << " "
-				    << promisedToDeliver.getAmount(TradeGood::Labor) << " "
-				    << industry->labourForMaintenance() << " "
-				    << getAmount(TradeGood::Labor) << " "
-				    << industry->numBlocks() << " "
-				    << fullCycleLabour << " "
-				    << industry->getLabourForBlock(0, fullCycleLabour) << " "
-				    << industry->outputOfBlock(0) << " "
-				    << "\n";
-    */
-
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
       if (capital->getAmount(*tg) < 0.00001) continue;
       double laborSaving = totalLabourUsed * (1 - marginalCapFactor((*tg), getAmount(*tg)));

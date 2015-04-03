@@ -1936,16 +1936,20 @@ void Mine::setMirrorState () {
 }
 
 void searchForMatch (vector<jobInfo>& jobs, double perChunk, int chunks, int time) {
+  searchForMatch(jobs, jobInfo(perChunk, chunks, time));
+}
+
+void searchForMatch (vector<jobInfo>& jobs, jobInfo newjob) {
+  double perChunk = newjob.labourPerChunk();
   if (0 >= perChunk) return;
+  int chunks = newjob.numChunks();
   if (0 >= chunks) return;
-  bool found = false;
+  int time = newjob.numTurns();
   BOOST_FOREACH(jobInfo& job, jobs) {
     if (fabs(job.labourPerChunk() - perChunk) > 0.001) continue;
     if (job.numTurns() != time) continue;
     job.numChunks() += chunks;
-    found = true;
-    break;
+    return;
   }
-  if (found) return;
-  jobs.push_back(jobInfo(perChunk, chunks, time));
+  jobs.push_back(newjob);
 }
