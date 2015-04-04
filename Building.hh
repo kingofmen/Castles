@@ -436,7 +436,7 @@ private:
     void workGroves (bool tick);
 
     vector<int> groves;
-    deque<ForestStatus> myBlocks;
+    vector<ForestStatus> myBlocks;
     int tendedGroves;
   private:
     Forester(Forester* other);

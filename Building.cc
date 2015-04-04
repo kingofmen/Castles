@@ -1391,33 +1391,31 @@ void Forest::Forester::workGroves (bool tick) {
 
   double availableLabour = getAmount(TradeGood::Labor);
   double capFactor = capitalFactor(*this);
-  
-  // First priority: Ensure tended land doesn't go wild.
-  int grovesToTend = getTendedArea() - tendedGroves;
-  if (grovesToTend > 0) {
-    int tended = min((int) floor(availableLabour / (_labourToTend * capFactor)), grovesToTend);
-    tendedGroves += tended;
-    availableLabour -= tended * _labourToTend * capFactor;
-  }
   double decline = 1;
-  double totalChopped = 0;
-  int blockCounter = 0;
-  int numBlocksWorked = 0;
-  int status = 0;
   double labourPerChop = _labourToHarvest*capFactor;
-  while ((status = myBlocks.front()) >= boss->minStatusToHarvest) {
-    if (availableLabour < labourPerChop) break;
-    availableLabour -= labourPerChop;
-    myBlocks.pop_front();
-    totalChopped += _amountOfWood[status] * decline;
-    if (++blockCounter >= boss->blockSize) {
-      blockCounter = 0;
-      if (++numBlocksWorked >= boss->workableBlocks) break;
-      decline *= getMarginFactor();
+  double labourPerTend = _labourToTend*capFactor;
+  double totalChopped = 0;
+  for (int block = 0; block < numBlocks(); ++block) {
+    int startIndex = block * boss->blockSize;
+    int endIndex   = min(startIndex + boss->blockSize, (int) myBlocks.size());
+    for (int i = startIndex; i < endIndex; ++i) {
+      if ((tendedGroves <= i) && (availableLabour >= labourPerTend)) {
+	availableLabour -= labourPerTend;
+	++tendedGroves;
+      }
+      if ((myBlocks[i] >= boss->minStatusToHarvest) && (availableLabour >= labourPerChop)) {
+	availableLabour -= labourPerChop;
+	totalChopped += _amountOfWood[myBlocks[i]] * decline;
+	--groves[myBlocks[i]];
+	++groves[Clear];
+      }
     }
-    myBlocks.push_back(Clear);
+    decline *= getMarginFactor();
   }
   produce(output, totalChopped);
+  // This cheats very slightly, by moving groves up in the
+  // queue - formerly inefficient ones thus become the best.
+  createBlockQueue();
 
   double usedLabour = availableLabour - getAmount(TradeGood::Labor);
   deliverGoods(TradeGood::Labor, usedLabour);
