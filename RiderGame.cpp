@@ -397,6 +397,9 @@ void WarfareGame::functionalTests (string fname) {
   map<TradeGood const*, vector<double> > goodsPrices;
   map<TradeGood const*, double> consumed;
   map<TradeGood const*, double> produced;
+  GoodsHolder startingPrices;
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) startingPrices.setAmount((*tg), testHex->getPrice(*tg));
+
   while (Calendar::Winter != Calendar::getCurrentSeason()) {
     Logger::logStream(DebugStartup) << Calendar::toString() << "\n";
     labourAvailable.push_back(testHex->getVillage()->production());
@@ -404,36 +407,46 @@ void WarfareGame::functionalTests (string fname) {
     Logger::logStream(DebugStartup) << testHex->getVillage()->getBidStatus() << "\n";
     labourUsed.push_back(testHex->getVolume(TradeGood::Labor));
     employment.push_back(labourUsed.back() / labourAvailable.back());
-    for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
       goodsPrices[*tg].push_back(testHex->getPrice(*tg));
       produced[*tg] += testHex->getProduced(*tg);
       consumed[*tg] += testHex->getConsumed(*tg);
-      Logger::logStream(DebugStartup) << (*tg)->getName()        << " "
-				      << testHex->getPrice(*tg)  << " "
-				      << testHex->getDemand(*tg) << " "
-				      << testHex->getVolume(*tg) << " "
-				      << testHex->getProduced(*tg) << " "
-				      << testHex->getConsumed(*tg) << " "
+      Logger::logStream(DebugStartup) << (*tg)->getName()        << "\t"
+				      << testHex->getPrice(*tg)  << "\t"
+				      << testHex->getDemand(*tg) << "\t"
+				      << testHex->getVolume(*tg) << "\t"
+				      << testHex->getProduced(*tg) << "\t"
+				      << testHex->getConsumed(*tg) << "\t"
+				      << testHex->getVillage()->getAmount(*tg) << "\t"
 				      << "\n";
     }
     Calendar::newWeekBegins();
     counter++;
-    //if (counter > 1) break;
   }
   doublet labourInfo = calcMeanAndSigma(labourUsed);
   Logger::logStream(DebugStartup) << "Work done : " << labourInfo.x() << " +- " << labourInfo.y() << "\n";
   labourInfo = calcMeanAndSigma(employment);
   Logger::logStream(DebugStartup) << "Employment: " << labourInfo.x() << " +- " << labourInfo.y() << "\n";
   Logger::logStream(DebugStartup) << "Prices:\n";
+  int passed = 0;
+  int tests = 0;
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     doublet curr = calcMeanAndSigma(goodsPrices[*tg]);
     Logger::logStream(DebugStartup) << "  " << (*tg)->getName() << ": " << curr.x() << " +- " << curr.y() << "\n";
+    if (curr.y() > 0.5*startingPrices.getAmount(*tg)) Logger::logStream(DebugStartup) << "  Fail: Too high standard deviation\n";
+    else ++passed;
+    if (curr.x() < 0.1*startingPrices.getAmount(*tg)) Logger::logStream(DebugStartup) << "  Fail: Drastic price drop\n";
+    else ++passed;
+    if (curr.x() > 5*startingPrices.getAmount(*tg)) Logger::logStream(DebugStartup) << "  Fail: Drastic price rise\n";
+    else ++passed;
+    tests += 3;
   }
   Logger::logStream(DebugStartup) << "Production and consumption:\n";
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     Logger::logStream(DebugStartup) << "  " << (*tg)->getName() << ": " << produced[*tg] << ", " << consumed[*tg] << "\n";
   }
 
+  Logger::logStream(DebugStartup) << passed << " of " << tests << " functional tests passed.\n";
 }
 
 void WarfareGame::updateGreatestMilStrength() {

@@ -155,7 +155,7 @@ forest = {
   labourToTend    = 5
   labourToHarvest = 50
   labourToClear   = 250
-  amountOfWood = { 0 0 1 2 5 10 25 50 100 250 }
+  amountOfWood = { 0 0 1 2 5 10 25 50 100 200 }
 
   capital = {
     iron = 0.1
