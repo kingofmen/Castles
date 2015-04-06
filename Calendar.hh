@@ -13,7 +13,8 @@ namespace Calendar {
   int turnsToAutumn ();
   int turnsToNextSeason (); 
   std::string toString ();
-  int currentWeek (); 
+  int currentWeek ();
+  int turnsPerSeason ();
 };
 
 

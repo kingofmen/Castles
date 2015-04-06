@@ -232,7 +232,7 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
     lastProd = curr;
 
     curr = (cons->numTokens() > i ? atof(cons->getToken(i).c_str()) : lastCons);
-    Village::consume[i] = curr;
+    Village::consume[i] = curr * 0.25;
     lastCons = curr;
 
     curr = (recr->numTokens() > i ? atof(recr->getToken(i).c_str()) : lastRecr);
@@ -297,10 +297,22 @@ inline int heightMapHeight (int zoneSide) {
 
 void StaticInitialiser::initialiseGoods (Object* gInfo) {
   TradeGood::initialise();
-  
-  for (int i = 0; i < gInfo->numTokens(); ++i) {
-    new TradeGood(gInfo->getToken(i), (i+1) == gInfo->numTokens()); 
+
+  objvec goods = gInfo->getLeaves();
+  for (objiter go = goods.begin(); go != goods.end(); ++go) {
+    string goodName = (*go)->getKey();
+    TradeGood* tradeGood = (TradeGood*) TradeGood::Labor;
+    if (goodName != tradeGood->getName()) tradeGood = new TradeGood(goodName, (*go) == goods.back());
+    tradeGood->stickiness  = (*go)->safeGetFloat("stickiness",  tradeGood->stickiness);
+    tradeGood->decay       = (*go)->safeGetFloat("decay",       tradeGood->decay);
+    tradeGood->consumption = (*go)->safeGetFloat("consumption", tradeGood->consumption);
+    tradeGood->capital     = (*go)->safeGetFloat("capital",     tradeGood->capital);
   }
+
+  TradeGood* laborForHardcodedValues = (TradeGood*) TradeGood::Labor;
+  laborForHardcodedValues->decay       = 1.0;
+  laborForHardcodedValues->consumption = 1.0;
+  laborForHardcodedValues->capital     = 1.0;
 }
 
 void StaticInitialiser::initialiseGraphics (Object* gInfo) {
@@ -563,6 +575,7 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
     ret->foresters[i]->groves[Forest::Huge]     = huge    ? (huge->numTokens()    > i ? huge->tokenAsInt(i)    : 0) : 0;
     ret->foresters[i]->groves[Forest::Climax]   = climax  ? (climax->numTokens()  > i ? climax->tokenAsInt(i)  : 0) : 0;
     ret->foresters[i]->owner                    = owner   ? (owner->numTokens()   > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
+    ret->foresters[i]->createBlockQueue();
   }
 
   ret->yearsSinceLastTick = fInfo->safeGetInt("yearsSinceLastTick");

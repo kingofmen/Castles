@@ -52,5 +52,6 @@ namespace Calendar {
     ret = buf;
     return ret; 
   }
-  
+
+  int turnsPerSeason () {return seasonLength;}
 };

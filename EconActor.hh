@@ -6,7 +6,8 @@
 #include <cmath>
 #include "UtilityFunctions.hh"
 using namespace std; 
-class EconActor; 
+class EconActor;
+class Market;
 class MarketBid;
 class MarketContract;
 
@@ -21,9 +22,16 @@ public:
 
   static Iter exMoneyStart() {Iter r = start();      return ++r;}
   static Iter exLaborStart() {Iter r = start(); ++r; return ++r;}
+
+  double getStickiness () const {return stickiness;}
+  double getConsumption () const {return consumption;}
   
 private:
   static void initialise ();
+  double stickiness;   // Ratio of maximum price drop to maximum price rise.
+  double decay;        // Fractional storage loss per turn.
+  double consumption;  // Amount lost when used for consumption.
+  double capital;      // Amount lost when used for capital.
 }; 
 
 struct GoodsHolder {
@@ -86,13 +94,16 @@ public:
   virtual void getBids      (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {}
   static void clear () {Numbered<EconActor>::clear();}
   static void unitTests ();
-  
+
 protected:
   void registerSale (TradeGood const* const tg, double amount) {soldThisTurn.deliverGoods(tg, amount);}
+  void produce (TradeGood const* const tg, double amount);
+  void consume (TradeGood const* const tg, double amount);
   
   EconActor* owner;
   GoodsHolder soldThisTurn;
   GoodsHolder promisedToDeliver;
+  Market* theMarket;
 private:
   vector<ContractInfo*> obligations;
   map<EconActor*, double> borrowers;

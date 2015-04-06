@@ -1,6 +1,31 @@
 siegeModifier = 10 
 
-goods = { food iron wood }
+goods = {
+  labour = {
+    stickiness = 0.8
+    decay = 1
+    consumption = 1
+    capital = 1
+  }
+  food = {
+    stickiness = 0.2
+    decay = 0.1
+    consumption = 1
+    capital = 1
+  }
+  iron = {
+    stickiness = 0.2
+    decay = 0.001
+    consumption = 0.05
+    capital = 0.01
+  }
+  wood = {
+    stickiness = 0.2
+    decay = 0.05
+    consumption = 0.25
+    capital = 0.05
+  }
+}
 
 pop_needs = {
   level = {
@@ -28,68 +53,72 @@ pop_needs = {
     name = "Malnourished"
   }
   level = {
-    food = 0.2
+    food = 0.19
+    wood = 0.01
     mortality = 0.97
     max_work_fraction = 0.95
     name = "Hungry"
   }
   level = {
-    food = 0.2
+    food = 0.19
+    iron = 0.01
     mortality = 0.96
     max_work_fraction = 0.94
     name = "Barely fed"
   }
   level = {
-    food = 0.2
+    food = 0.18
+    wood = 0.02
     mortality = 0.95
     max_work_fraction = 0.93
     name = "Adequate"
   }
   level = {
-    food = 0.2
+    food = 0.18
+    iron = 0.02
     mortality = 0.94
     max_work_fraction = 0.92
     name = "Meat on Sundays"
   }
   level = {
-    food = 0.2
+    food = 0.17
+    wood = 0.03
     mortality = 0.93
     max_work_fraction = 0.91
     name = "Well fed"
   }
   level = {
-    food = 0.2
+    food = 0.17
+    iron = 0.03
     mortality = 0.92
     max_work_fraction = 0.90
     name = "Stocky"
   }
   level = {
-    wood = 0.2
-    iron = 0.2
-    food = 0.1
+    food = 0.15
+    wood = 0.05
     mortality = 0.91
     max_work_fraction = 0.90
     name = "One chair"
   }
   level = {
-    wood = 0.2
-    iron = 0.2
-    food = 0.1
+    food = 0.15
+    iron = 0.05
     mortality = 0.91
     max_work_fraction = 0.85
     name = "Two chairs"
   }
   level = {
-    wood = 0.2
-    iron = 0.2
+    wood = 0.1
+    iron = 0.1
     food = 0.1
     mortality = 0.90
     max_work_fraction = 0.70
     name = "Prosperous"
   }
   level = {
-    wood = 0.2
-    iron = 0.2
+    wood = 0.1
+    iron = 0.1
     food = 0.1
     mortality = 0.90
     max_work_fraction = 0.65
@@ -108,15 +137,15 @@ farmland = {
   labourToSow   = 20
   labourToPlow  = 100
   labourToClear = 1000
-  labourToWeed  = 50
+  labourToWeed  = 25
   labourToReap  = 100
-  cropsFrom3    = 700
-  cropsFrom2    = 600
+  cropsFrom3    = 1000
+  cropsFrom2    = 750
   cropsFrom1    = 500
 
   capital = {
     wood = 0.1
-  }  
+  }
 
   output = food
   productionCycle = 42
@@ -126,7 +155,7 @@ forest = {
   labourToTend    = 5
   labourToHarvest = 50
   labourToClear   = 250
-  amountOfWood = { 0 0 1 2 5 10 25 50 100 250 }
+  amountOfWood = { 0 0 1 2 5 10 25 50 100 200 }
 
   capital = {
     iron = 0.1
@@ -158,10 +187,10 @@ mine = {
   }
 
   capital = {
-    iron = 0.1
+    wood = 0.1
   }
   output = iron
-  amount = 50
+  amount = 100
   productionCycle = 1
 }
 
@@ -211,14 +240,14 @@ production = {
   0.02 0.02 0.02 0.02 0.02 0.01 0.01 0.01 0.01 0.01 
   0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 }
 consumption = { 
-  0.05 0.05 0.08 0.08 0.10 0.10 0.12 0.12 0.12 0.12 
-  0.13 0.13 0.14 0.14 0.16 0.18 0.20 0.22 0.25 0.25 
-  0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 
-  0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 
-  0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 
-  0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25 
-  0.20 0.20 0.20 0.20 0.20 0.18 0.18 0.18 0.18 0.18 
-  0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.15 }
+  0.20 0.20 0.32 0.32 0.40 0.40 0.48 0.48 0.48 0.48
+  0.52 0.52 0.56 0.56 0.64 0.72 0.80 0.88 1.00 1.00
+  1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00
+  1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00
+  1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00
+  1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00
+  0.80 0.80 0.80 0.80 0.80 0.72 0.72 0.72 0.72 0.72
+  0.60 0.60 0.60 0.60 0.60 0.60 0.60 0.60 0.60 0.60 }
 recruit = {
   0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
   0.00 0.00 0.00 0.00 0.01 0.10 0.50 1.00 1.00 1.00

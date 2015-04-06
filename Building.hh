@@ -1,6 +1,7 @@
 #ifndef BUILDING_HH
 #define BUILDING_HH
 
+#include <deque>
 #include <vector> 
 #include "Market.hh"
 #include "Mirrorable.hh" 
@@ -17,6 +18,22 @@ class Line;
 class Player;
 class Farmland; 
 
+struct jobInfo : public boost::tuple<double, int, int> { // Labour amount, times needed, turns to complete.
+  jobInfo (double l, double c, double t) : boost::tuple<double, int, int>(l, c, t) {}
+  double& labourPerChunk () {return boost::get<0>(*this);}
+  int& numChunks () {return boost::get<1>(*this);}
+  int& numTurns () {return boost::get<2>(*this);}
+
+  double labourPerChunk () const {return boost::get<0>(*this);}
+  int numChunks () const {return boost::get<1>(*this);}
+  int numTurns () const {return boost::get<2>(*this);}
+
+  double totalLabour () const {return labourPerChunk() * numChunks();}
+};
+
+void searchForMatch (vector<jobInfo>& jobs, double perChunk, int chunks, int time);
+void searchForMatch (vector<jobInfo>& jobs, jobInfo job);
+
 template<class T> class Industry : public EconActor {
   friend class StaticInitialiser;
 
@@ -30,19 +47,21 @@ public:
     // next turn, provided the net-present-value of the reduction is higher than the cost
     // of the machinery.
 
-    double totalExpectedProduction = 0;
-    double totalToBuy = 0 - getAmount(TradeGood::Labor);
+    static const double inverseExpectedRatio = 0.2;
+
     double marginalDecline = industry->getMarginFactor();
     double marginFactor = 1;
+    double marginalLabourRatio = 0;
+    double fullCycleLabour = 0;
+    vector<jobInfo> jobs;
     for (int i = 0; i < industry->numBlocks(); ++i) {
-      double laborNeeded = industry->getLabourForBlock(i);
-      double expectedProduction = industry->outputOfBlock(i) * marginFactor * inverseProductionTime;
-      // This is approximate - it assumes that the same amount of labour
-      // will be needed in every step of the production cycle.
-      if (prices.getAmount(TradeGood::Labor) * laborNeeded < prices.getAmount(output) * expectedProduction) {
-	totalToBuy += laborNeeded;
-	totalExpectedProduction += expectedProduction;
+      vector<jobInfo> candidateJobs;
+      industry->getLabourForBlock(i, candidateJobs, fullCycleLabour);
+      double expectedProduction = industry->outputOfBlock(i) * marginFactor;
+      if (prices.getAmount(TradeGood::Labor) * fullCycleLabour < prices.getAmount(output) * expectedProduction) {
 	marginFactor *= marginalDecline;
+	marginalLabourRatio = expectedProduction / fullCycleLabour;
+	BOOST_FOREACH(jobInfo job, candidateJobs) searchForMatch(jobs, job);
       }
       else {
 	// This is where we no longer make a profit.
@@ -53,71 +72,74 @@ public:
       }
     }
 
-    double neededForMaintenance = industry->labourForMaintenance();
-    if (prices.getAmount(TradeGood::Labor) * neededForMaintenance < prices.getAmount(output) * industry->lossFromNoMaintenance()) {
-      totalToBuy += neededForMaintenance;
+    double reserveLabour = getAmount(TradeGood::Labor);
+    reserveLabour -= promisedToDeliver.getAmount(TradeGood::Labor); // Probably negative
+    reserveLabour -= soldThisTurn.getAmount(TradeGood::Labor); // Probably zero
+    double totalLabourUsed = 0;
+    BOOST_FOREACH(jobInfo job, jobs) {
+      double perChunk = job.labourPerChunk();
+      int chunks      = job.numChunks();
+      int turns       = job.numTurns();
+      if (1 > turns) continue;
+      double neededPerTurn = perChunk * chunks;
+      totalLabourUsed += neededPerTurn;
+      neededPerTurn /= turns;
+      if (neededPerTurn < reserveLabour) {
+	reserveLabour -= neededPerTurn;
+	continue;
+      }
+      // Buy multiples of the chunk size
+      int chunksPerTurn = (int) ceil(neededPerTurn / perChunk);
+      neededPerTurn = chunksPerTurn * perChunk;
+      if (0 < reserveLabour) {
+	neededPerTurn -= reserveLabour;
+	reserveLabour -= chunksPerTurn * perChunk;
+      }
+      if (1 == turns) bidlist.push_back(new MarketBid(TradeGood::Labor, neededPerTurn, this, 1));
+      else bidlist.push_back(new MarketBid(TradeGood::Labor, neededPerTurn, this, turns-1));
     }
-    totalToBuy += soldThisTurn.getAmount(TradeGood::Labor); // Should be zero, but whatever
-    totalToBuy += promisedToDeliver.getAmount(TradeGood::Labor); // Will usually be negative for industries.
-
-    if (0 < totalToBuy) bidlist.push_back(new MarketBid(TradeGood::Labor, totalToBuy, this));
-
+    
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
       if (capital->getAmount(*tg) < 0.00001) continue;
-      double laborSaving = totalToBuy * (1 - marginalCapFactor((*tg), getAmount(*tg)));
+      double laborSaving = totalLabourUsed * (1 - marginalCapFactor((*tg), getAmount(*tg)));
       // Assuming discount rate of 10%. Present value of amount x every period to infinity is (x/r) with r the interest rate.
       // TODO: Take decay into account. Variable discount rate?
       double npv = laborSaving * prices.getAmount(TradeGood::Labor) * 10;
-      if (npv > prices.getAmount(*tg)) bidlist.push_back(new MarketBid((*tg), 1, this));
+      if (npv > prices.getAmount(*tg) * industry->getCapitalSize()) bidlist.push_back(new MarketBid((*tg), industry->getCapitalSize(), this, 1));
     }
 
     // Decide how much output to sell. On average, sell the inverse
     // of the length of the production cycle, thus keeping the output
     // constant. But sell more at higher prices. Expect that in the
-    // long run we will sell at a 5% profit; make today's sale proportional
-    // to the ratio of current profit to that expected five percent.
-    //Logger::logStream(DebugStartup) << "Reserve " << getAmount(output) << " " << output->getName() << "\n";
+    // long run, there will be a particular marginal ratio of labour
+    // to food; when the current marginal ratio is higher (we are getting
+    // more food per labour) then the price of food is low, so reduce
+    // sales; and vice-versa.
     if (1 > getAmount(output)) return;
-    double expectedOutputPerLabour = totalExpectedProduction / (1 + totalToBuy);
-    double profitPerLabour = expectedOutputPerLabour * prices.getAmount(output) - prices.getAmount(TradeGood::Labor);
-    /*Logger::logStream(DebugStartup) << "  Per labour " << expectedOutputPerLabour << " " << profitPerLabour << " "
-				    << prices.getAmount(output) << " "
-				    << prices.getAmount(TradeGood::Labor)
-				    << "\n";*/
-    if (profitPerLabour < 0) return; // Don't sell at a loss.
-    double profitPercentage = profitPerLabour / prices.getAmount(TradeGood::Labor);
-    static const double inverseLongTermPercentage = 20; // Adjustable?
+    marginalLabourRatio *= inverseExpectedRatio;
 
-    profitPercentage *= inverseLongTermPercentage;
-    // Should equal 1 when profitPercentage is 5%, approach 3 (make adjustable?) asymptotically upwards, and 0 downwards.
-    double fractionToSell = 1 + (profitPercentage > 1 ? 2 : 1) * atan(profitPercentage) * M_2_PI;
+    // Should equal 1 when ratio is 1, approach 3 (make adjustable?) asymptotically upwards, and 0 downwards.
+    double fractionToSell = 1 + (marginalLabourRatio >= 1 ? 2 : 1) * atan(marginalLabourRatio) * M_2_PI;
     fractionToSell *= inverseProductionTime;
     fractionToSell *= getAmount(output);
     fractionToSell -= soldThisTurn.getAmount(output);
     fractionToSell -= promisedToDeliver.getAmount(output);
     if (1 > fractionToSell) return;
-    //Logger::logStream(DebugStartup) << "  Selling " << fractionToSell << " " << profitPercentage << " " << inverseProductionTime << " " << getAmount(output) << " " << soldThisTurn.getAmount(output) << "\n";
-    bidlist.push_back(new MarketBid(output, -fractionToSell, this));
+    //Logger::logStream(DebugStartup) << getIdx() << " selling " << fractionToSell << " " << marginalLabourRatio << " " << inverseProductionTime << " " << getAmount(output) << " " << soldThisTurn.getAmount(output) << "\n";
+    bidlist.push_back(new MarketBid(output, -1 * min(fractionToSell, getAmount(output)), this, 1));
   }
   
-  // Return the reduction in required labor if we had one additional unit.
-  double marginalCapFactor (TradeGood const* const tg, double currentAmount) const {
-    return capFactor(capital->getAmount(tg), 1+currentAmount) / capFactor(capital->getAmount(tg), currentAmount);
-  }
-  
-  double capitalFactor (const GoodsHolder& capitalToUse, int dilution = 1) const {
+  double capitalFactor (const GoodsHolder& capitalToUse) const {
     double ret = 1;
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-      ret *= capFactor(capital->getAmount(*tg), capitalToUse.getAmount(*tg)/dilution);
+      ret *= capFactor(capital->getAmount(*tg), capitalToUse.getAmount(*tg)/industry->getCapitalSize());
     }
     return ret;
   }
   
 protected:
-  virtual double getMarginFactor () const = 0;
   virtual double labourForMaintenance () const {return 0;}
   virtual double lossFromNoMaintenance () const {return 0;}
-  virtual int numBlocks() const = 0;
   
   // Capital reduces the amount of labour required by factor (1 - x log (N+1)). This array stores x. 
   static GoodsHolder* capital;
@@ -125,9 +147,15 @@ protected:
   
 private:
   T* industry;
-  
+
   double capFactor (double reductionConstant, double goodAmount) const {
-    return 1 - reductionConstant * log(1 + goodAmount);
+    return max(0.001, 1 - reductionConstant * log(1 + goodAmount));
+  }
+
+  // Return the reduction in required labor if we had one additional unit.
+  double marginalCapFactor (TradeGood const* const tg, double currentAmount) const {
+    double dilution = 1.0 / industry->getCapitalSize();
+    return capFactor(capital->getAmount(tg), (industry->getCapitalSize()+currentAmount)*dilution) / capFactor(capital->getAmount(tg), currentAmount*dilution);
   }
 
   static double inverseProductionTime;
@@ -148,7 +176,11 @@ public:
   Player* getOwner () {return owner;} 
   int getAssignedLand () const {return assignedLand;}
   void assignLand (int amount) {assignedLand += amount; if (0 > assignedLand) assignedLand = 0;}
-  double getAvailableSupplies () const {return supplies;}   
+  double getAvailableSupplies () const {return supplies;}
+
+  // For use in statistics.
+  virtual double expectedProduction () const {return 0;}
+  virtual double possibleProductionThisTurn () const {return 0;}
 
   static const int numOwners = 10;  
 protected:
@@ -322,6 +354,9 @@ public:
       totalFields[Ripe3] +
       totalFields[Ended];}
 
+  virtual double expectedProduction () const;
+  virtual double possibleProductionThisTurn () const;
+
   static Farmland* getTestFarm (int numFields = 0);
   static void overrideConstantsForUnitTests (int lts, int ltp, int ltw, int ltr);
   static void unitTests ();
@@ -335,9 +370,10 @@ private:
     Farmer (Farmland* b);
     ~Farmer ();
     double outputOfBlock (int b) const;
-    double getLabourForBlock (int block) const;
-    virtual int numBlocks () const;
-    virtual double getMarginFactor () const {return boss->marginFactor;}
+    double getCapitalSize () const;
+    void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
+    int numBlocks () const;
+    double getMarginFactor () const {return boss->marginFactor;}
     virtual void setMirrorState ();
     void unitTests ();
     void workFields ();
@@ -383,27 +419,31 @@ public:
   
 private:
   class Forester : public Industry<Forester>, public Mirrorable<Forester> {
+    friend class StaticInitialiser;
     friend class Mirrorable<Forester>;
   public:
     Forester (Forest* b);
     ~Forester ();
-    double outputOfBlock (int b) const; 
-    double getLabourForBlock (int block) const;
-    virtual double getMarginFactor () const {return boss->marginFactor;}
+    double outputOfBlock (int b) const;
+    double getCapitalSize () const;
+    void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
+    double getMarginFactor () const {return boss->marginFactor;}
     virtual double labourForMaintenance () const;
     virtual double lossFromNoMaintenance () const;
-    virtual int numBlocks () const;
+    int numBlocks () const;
     virtual void setMirrorState ();
     void unitTests ();
     void workGroves (bool tick);
 
     vector<int> groves;
+    vector<ForestStatus> myBlocks;
     int tendedGroves;
   private:
     Forester(Forester* other);
     Forest* boss;
-    int    getForestArea () const;
-    int    getTendedArea () const;
+    int getForestArea () const;
+    int getTendedArea () const;
+    void createBlockQueue ();
   };
  
   Forest (Forest* other);
@@ -411,6 +451,7 @@ private:
   int yearsSinceLastTick;
   ForestStatus minStatusToHarvest;
   int blockSize;
+  int workableBlocks;
   
   static vector<int> _amountOfWood;
   static int _labourToTend;    // Ensure forest doesn't go wild.
@@ -445,10 +486,11 @@ private:
   public:
     Miner (Mine* m);
     ~Miner ();
-    double outputOfBlock (int b) const; 
-    double getLabourForBlock (int block) const;
-    virtual double getMarginFactor () const {return mine->marginFactor;}
-    virtual int numBlocks () const {return mine->veinsPerMiner;}
+    double outputOfBlock (int b) const;
+    double getCapitalSize () const;
+    void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
+    double getMarginFactor () const {return mine->marginFactor;}
+    int numBlocks () const {return mine->veinsPerMiner;}
     virtual void setMirrorState ();
     void unitTests ();
     void workShafts ();

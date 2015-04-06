@@ -18,6 +18,8 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Self-castling
  * Supply line interference
  * Raid/tribute/battle mapmode
+ * Fix Miner capitalSize
+ * Disambiguate 'clear' methods.
  * Three-resource economy
    - Change producers to be regular EconActors who sell their goods, but supply owners with money. (check)
    - Forest
@@ -40,7 +42,10 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Block sizes (check)
    - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
    - Get rid of old supplies stuff
+   - Allow additional production from additional labour
+   - Enforce that output cannot be capital
    - Fix Schlemiel in Farmland fillBlock
+   - Make farms buy labour for integer number of fields
    - Make Farmland and Forest statuses enums
    - Margin effects (check)
      . Block sizes in production (check)
@@ -50,6 +55,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Read Forest minStatus from save, write to save, let owner set.
    - The EconActor owner of Farmer, etc, is not mirrored. So if you do a workFoo, the *real* owner gets the output. Problem.
    - Castle as EconActor
+   - Threshold effect on capital
    - Make Markets exist in Vertexes - share between Hexes!
    - Discount rate on Maslow levels, eg do I prefer level 2 now and 0 tomorrow, or 1 both days? Also, seasonal awareness.
    - More GUI insight for testing purposes
@@ -57,7 +63,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Normalisation
    - Ending of contracts
    - MilUnits as EconActors
-   - Dilution of capital
+   - Dilution of capital (check)
    - Decay of goods
    - Trade
    - Forced labour

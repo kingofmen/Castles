@@ -5,19 +5,21 @@
 #include "UtilityFunctions.hh"
 
 struct MarketBid {
-  MarketBid(TradeGood const* tg, double atb, EconActor* b) : tradeGood(tg), amountToBuy(atb), bidder(b) {}
+  MarketBid(TradeGood const* tg, double atb, EconActor* b, unsigned int d = 1) : tradeGood(tg), amountToBuy(atb), bidder(b), duration(d) {}
   
   TradeGood const* tradeGood;
   double amountToBuy;
   EconActor* bidder;
+  unsigned int duration;
 };
 
 struct MarketContract {
-  MarketContract (MarketBid* one, MarketBid* two, double p);
+  MarketContract (MarketBid* one, MarketBid* two, double p, unsigned int duration);
   ~MarketContract ();
 
   void   clear ();
   double execute ();
+  bool   isValid () const {return ((remainingTime > 0) && (accumulatedMissing < amount));}
   void   pay ();
 
   EconActor* recipient;
@@ -25,7 +27,9 @@ struct MarketContract {
   const TradeGood* tradeGood;
   double amount;
   double delivered;
-  double price;  
+  double price;
+  unsigned int remainingTime;
+  double accumulatedMissing;
 };
 
 class Market {
@@ -37,20 +41,27 @@ public:
 
   void holdMarket ();
   void registerParticipant (EconActor* ea);
+  void registerProduction  (TradeGood const* tg, double amount) {produced.deliverGoods(tg, amount);}
+  void registerConsumption (TradeGood const* tg, double amount) {consumed.deliverGoods(tg, amount);}
   void unRegisterParticipant (EconActor* ea);
-  double getDemand (TradeGood const* const tg) const {return demand.getAmount(tg);}
-  double getPrice  (TradeGood const* const tg) const {return prices.getAmount(tg);}
-  double getVolume (TradeGood const* const tg) const {return volume.getAmount(tg);}
+  double getConsumed (TradeGood const* const tg) const {return consumed.getAmount(tg);}
+  double getDemand   (TradeGood const* const tg) const {return demand.getAmount(tg);}
+  double getPrice    (TradeGood const* const tg) const {return prices.getAmount(tg);}
+  double getProduced (TradeGood const* const tg) const {return produced.getAmount(tg);}
+  double getVolume   (TradeGood const* const tg) const {return volume.getAmount(tg);}
 
   static void unitTests ();
 private:
+  void adjustPrices(vector<MarketBid*>& notMatched);
   void executeContracts ();
   void makeContracts(vector<MarketBid*>& bids, vector<MarketBid*>& notMatched);
-  void adjustPrices(vector<MarketBid*>& notMatched);
+  void normalisePrices ();
   
   GoodsHolder prices;
   GoodsHolder volume;
   GoodsHolder demand;
+  GoodsHolder produced;
+  GoodsHolder consumed;
   vector<MarketContract*> contracts;
   vector<EconActor*> participants;
 };

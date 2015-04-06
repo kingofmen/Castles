@@ -53,9 +53,23 @@ EconActor::EconActor ()
   : Numbered<EconActor>()
   , GoodsHolder()
   , owner(0)
+  , theMarket(0)
 {}
 
-EconActor::~EconActor () {}
+EconActor::~EconActor () {
+  if (theMarket) theMarket->unRegisterParticipant(this);
+}
+
+void EconActor::consume (TradeGood const* const tg, double amount) {
+  double amountActuallyUsed = amount * tg->getConsumption();
+  deliverGoods(tg, -amountActuallyUsed);
+  theMarket->registerConsumption(tg, amountActuallyUsed);
+}
+
+void EconActor::produce (TradeGood const* const tg, double amount) {
+  deliverGoods(tg, amount);
+  theMarket->registerProduction(tg, amount);
+}
 
 void ContractInfo::execute () const {
   if (!recipient) return;
@@ -77,7 +91,7 @@ void ContractInfo::execute () const {
 }
 
 double EconActor::availableCredit (EconActor* const applicant) const {
-  if ((isOwnedBy(applicant)) || (applicant->isOwnedBy(this))) return 1e6;  
+  if ((isOwnedBy(applicant)) || (applicant->isOwnedBy(this))) return 1e7;
   static const double maxCredit = 100;
   double amountAvailable = maxCredit - borrowers.find(applicant)->second;
   if (amountAvailable < 0) return 0;
@@ -141,6 +155,10 @@ void EconActor::unregisterContract (MarketContract const* const contract) {
 
 TradeGood::TradeGood (string n, bool lastOne)
   : Enumerable<const TradeGood>(this, n, lastOne)
+  , stickiness(0.2)
+  , decay(0.00001)
+  , consumption(1.0)
+  , capital(0.9999)
 {}
 
 TradeGood::~TradeGood () {}
