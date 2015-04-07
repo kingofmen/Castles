@@ -657,32 +657,54 @@ void Farmland::Farmer::unitTests () {
 							    laborNeededWithCapital);
   deliverGoods(testCapGood, -1);
 
+  int oldLabourToSow = _labourToSow;
+  int oldLabourToPlow = _labourToPlow;
+  int oldLabourToWeed = _labourToWeed;
+  int oldLabourToReap = _labourToReap;
+  GoodsHolder prices;
+  vector<MarketBid*> bidlist;
+  double foundLabour = 0;
+  double foundCapGood = 0;
+  double foundOutput = 0;
+
+  // Check that we bid for integer numbers of fields.
+  _labourToSow = 21;
+  _labourToPlow = 23;
+  prices.setAmount(TradeGood::Labor, 10);
+  prices.setAmount(testCapGood, 100000);
+  prices.setAmount(output, 100000);
+  getBids(prices, bidlist);
+  BOOST_FOREACH(MarketBid* mb, bidlist) {
+    if (mb->tradeGood == TradeGood::Labor) foundLabour += mb->amountToBuy;
+  }
+  double expected = fields[Clear] * (_labourToSow + _labourToPlow) / Calendar::turnsToNextSeason();
+  if (fabs(foundLabour - expected) > 0.1) throwFormatted("Expected to buy %i * (%i + %i) / %i = %.2f, but got %.2f",
+							 fields[Clear],
+							 _labourToSow,
+							 _labourToPlow,
+							 Calendar::turnsToNextSeason(),
+							 expected,
+							 foundLabour);
+  bidlist.clear();
+
   // This makes us need 100 labour per Spring turn on 1400 clear fields, if capital is zero.
   // With capital 1400 (the cap size), we need 100 * (1 - 0.1 log(2)) = 93. So we are saving
   // 7 labor with 1400 iron. At labour price 210, that's net-present-value of 14700. So,
   // there should be a bid for iron if the price is below 10-ish, but not if
   // it is above.
-  int oldLabourToSow = _labourToSow;
-  int oldLabourToPlow = _labourToPlow;
-  int oldLabourToWeed = _labourToWeed;
-  int oldLabourToReap = _labourToReap;
   _labourToSow = 0;
   _labourToPlow = 1;
   _labourToWeed = 0;
   _labourToReap = 0;
-  GoodsHolder prices;
-  vector<MarketBid*> bidlist; 
   // Expect to produce 1400 * 700 / 42 food per turn, using 100 labour;
   // that's 233.3 output per labour. So price of 210 is 10% profit.
-  prices.deliverGoods(TradeGood::Labor, 210);
-  prices.deliverGoods(testCapGood, 1);
-  prices.deliverGoods(output, 1);
+  prices.setAmount(TradeGood::Labor, 210);
+  prices.setAmount(testCapGood, 1);
+  prices.setAmount(output, 1);
   deliverGoods(output, 100);
   getBids(prices, bidlist);
-  
-  double foundLabour = 0;
-  double foundCapGood = 0;
-  double foundOutput = 0;
+
+  foundLabour = 0;
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if (mb->tradeGood == TradeGood::Labor) foundLabour += mb->amountToBuy;
     else if (mb->tradeGood == testCapGood) foundCapGood += mb->amountToBuy;
