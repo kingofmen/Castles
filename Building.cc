@@ -582,13 +582,6 @@ Farmland* Farmland::getTestFarm (int numFields) {
   return testFarm;
 }
 
-void Farmland::overrideConstantsForUnitTests (int lts, int ltp, int ltw, int ltr) {
-  _labourToSow  = lts;
-  _labourToPlow = ltp;
-  _labourToWeed = ltw;
-  _labourToReap = ltr;
-}
-
 void Farmland::unitTests () {
   Hex* testHex = Hex::getHex(1000, 1000);
   Farmland* testFarm = getTestFarm();
@@ -1539,20 +1532,6 @@ void Farmland::devastate (int devastation) {
 void Farmland::endOfTurn () {
   BOOST_FOREACH(Farmer* farmer, farmers) farmer->workFields();
   countTotals();
-}
-
-void Farmland::delivery (EconActor* target, TradeGood const* const good, double amount) {
-  unsigned int divs = 0;
-  BOOST_FOREACH(Farmer* farmer, farmers) {
-    if (farmer->isOwnedBy(target)) ++divs;
-  }
-
-  if (0 == divs) return;
-  amount /= divs;
-  BOOST_FOREACH(Farmer* farmer, farmers) {  
-    if (!farmer->isOwnedBy(target)) continue;
-    farmer->deliverGoods(good, amount);
-  }
 }
 
 void Village::eatFood () {

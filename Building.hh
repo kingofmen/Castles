@@ -34,7 +34,7 @@ struct jobInfo : public boost::tuple<double, int, int> { // Labour amount, times
 void searchForMatch (vector<jobInfo>& jobs, double perChunk, int chunks, int time);
 void searchForMatch (vector<jobInfo>& jobs, jobInfo job);
 
-template<class T> class Industry : public EconActor {
+template <class T> class Industry : public EconActor {
   friend class StaticInitialiser;
 
 public:
@@ -344,7 +344,6 @@ public:
   virtual void setMirrorState ();
   double getAmount (TradeGood const* const tg) {double ret = 0; BOOST_FOREACH(Farmer* f, farmers) ret += f->getAmount(tg); return ret;}
   int getFieldStatus (int s) {return totalFields[s];}
-  void delivery (EconActor* target, TradeGood const* const good, double amount);
   int getTotalFields () const {return
       totalFields[Clear] +
       totalFields[Ready] +
@@ -358,7 +357,6 @@ public:
   virtual double possibleProductionThisTurn () const;
 
   static Farmland* getTestFarm (int numFields = 0);
-  static void overrideConstantsForUnitTests (int lts, int ltp, int ltw, int ltr);
   static void unitTests ();
   
   static const int numOwners = 10; 
