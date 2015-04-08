@@ -197,7 +197,7 @@ template<class T> bool Finalizable<T>::s_Final = false;
 
 template<class T, bool unique=true> class Named {
 public:
-  Named (string n, T* dat) : name(n) {if (unique) assert(!nameToObjectMap[n]); nameToObjectMap[n] = dat;}
+  Named (string n, T* dat) : name(n) {if (unique) assert(!nameToObjectMap[name]); nameToObjectMap[name] = dat;}
   Named () : name("ToBeNamed") {}
   string getName () const {return name;}
   string getName (int space) const {return name + string("").insert(0, space - name.size(), ' ');}

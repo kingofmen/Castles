@@ -327,15 +327,41 @@ private:
   static vector<double> fertility;
 };
 
+template <class Worker> class Collective {
+  friend class StaticInitialiser;
+public:
+  Collective ();
+  ~Collective () {BOOST_FOREACH(Worker* worker, workers) worker->destroyIfReal();}
+  void setMarket (Market* market) {BOOST_FOREACH(Worker* worker, workers) market->registerParticipant(worker);}
+private:
+  vector<Worker*> workers;
+};
+
+class FieldStatus : public Enumerable<const FieldStatus> {
+public:
+  FieldStatus (string n, int rl, bool lastOne = false);
+  ~FieldStatus ();
+
+  static void initialise();
+
+  static FieldStatus const* Clear;
+  static FieldStatus const* Ready;
+  static FieldStatus const* Sowed;
+  static FieldStatus const* Ripe1;
+  static FieldStatus const* Ripe2;
+  static FieldStatus const* Ripe3;
+  static FieldStatus const* Ended;
+};
+
 class Farmland : public Building, public Mirrorable<Farmland> {
   friend class Mirrorable<Farmland>;
   friend class StaticInitialiser;
-  friend class FarmGraphicsInfo; 
+  friend class FarmGraphicsInfo;
 public:
   Farmland ();
   ~Farmland ();
 
-  enum FieldStatus {Clear = 0, Ready, Sowed, Ripe1, Ripe2, Ripe3, Ended, NumStatus};
+  enum FieldStatusOld {Clear = 0, Ready, Sowed, Ripe1, Ripe2, Ripe3, Ended, NumStatus};
 
   void setMarket (Market* market) {BOOST_FOREACH(Farmer* farmer, farmers) {market->registerParticipant(farmer);}}
   void devastate (int devastation);

@@ -22,6 +22,14 @@ double Village::femaleSurplusZero = 1.0;
 double Castle::siegeModifier = 10; 
 vector<Village::MaslowLevel*> Village::maslowLevels;
 
+FieldStatus const* FieldStatus::Clear = 0;
+FieldStatus const* FieldStatus::Ready = 0;
+FieldStatus const* FieldStatus::Sowed = 0;
+FieldStatus const* FieldStatus::Ripe1 = 0;
+FieldStatus const* FieldStatus::Ripe2 = 0;
+FieldStatus const* FieldStatus::Ripe3 = 0;
+FieldStatus const* FieldStatus::Ended = 0;
+
 int Farmland::_labourToSow    = 1;
 int Farmland::_labourToPlow   = 10;
 int Farmland::_labourToClear  = 100;
@@ -1605,22 +1613,12 @@ double Farmland::possibleProductionThisTurn () const {
 }
 
 void Farmland::countTotals () {
-  totalFields[Clear] = 0;
-  totalFields[Ready] = 0;
-  totalFields[Sowed] = 0;
-  totalFields[Ripe1] = 0;
-  totalFields[Ripe2] = 0;
-  totalFields[Ripe3] = 0;
-  totalFields[Ended] = 0;
-
-  BOOST_FOREACH(Farmer* farmer, farmers) {
-    totalFields[Clear] += farmer->fields[Clear];
-    totalFields[Ready] += farmer->fields[Ready];
-    totalFields[Sowed] += farmer->fields[Sowed];
-    totalFields[Ripe1] += farmer->fields[Ripe1];
-    totalFields[Ripe2] += farmer->fields[Ripe2];
-    totalFields[Ripe3] += farmer->fields[Ripe3];
-    totalFields[Ended] += farmer->fields[Ended];
+  for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
+    unsigned int idx = (*fs)->getIdx();
+    totalFields[idx] = 0;
+    BOOST_FOREACH(Farmer* farmer, farmers) {
+      totalFields[idx] += farmer->fields[idx];
+    }
   }
 }
 
@@ -1717,6 +1715,23 @@ Mine::MineStatus::MineStatus (string n, int rl, bool lastOne)
 {}
 
 Mine::MineStatus::~MineStatus () {}
+
+FieldStatus::FieldStatus (string n, int rl, bool lastOne)
+  : Enumerable<const FieldStatus>(this, n, lastOne)
+{}
+
+FieldStatus::~FieldStatus () {}
+
+void FieldStatus::initialise() {
+  Enumerable<const FieldStatus>::clear();
+  FieldStatus::Clear = new FieldStatus("clear", 0, false);
+  FieldStatus::Ready = new FieldStatus("ready", 0, false);
+  FieldStatus::Sowed = new FieldStatus("sowed", 0, false);
+  FieldStatus::Ripe1 = new FieldStatus("ripe1", 0, false);
+  FieldStatus::Ripe2 = new FieldStatus("ripe2", 0, false);
+  FieldStatus::Ripe3 = new FieldStatus("ripe3", 0, false);
+  FieldStatus::Ended = new FieldStatus("ended", 0, true);
+}
 
 void Mine::endOfTurn () {
   BOOST_FOREACH(Miner* miner, miners) miner->workShafts();

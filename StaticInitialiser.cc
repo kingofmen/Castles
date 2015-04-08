@@ -146,7 +146,8 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   initialiseMaslowHierarchy(popInfo->safeGetObject("pop_needs")); 
   Castle::siegeModifier = popInfo->safeGetFloat("siegeModifier", Castle::siegeModifier);
 
-  Object* farmInfo          = popInfo->getNeededObject("farmland"); 
+  Object* farmInfo          = popInfo->getNeededObject("farmland");
+  FieldStatus::initialise();
   Farmland::_labourToSow    = farmInfo->safeGetInt("labourToSow",    Farmland::_labourToSow);
   Farmland::_labourToPlow   = farmInfo->safeGetInt("labourToPlow",   Farmland::_labourToPlow);
   Farmland::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmland::_labourToClear);
@@ -1396,7 +1397,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
 	farmInfo->setValue(worker);
 	writeEconActorIntoObject(farm->farmers[i], worker);
       }
-      map<Farmland::FieldStatus, Object*> statuses;
+      map<Farmland::FieldStatusOld, Object*> statuses;
       statuses[Farmland::Clear] = new Object("clear");
       statuses[Farmland::Ready] = new Object("ready");
       statuses[Farmland::Sowed] = new Object("sowed");
@@ -1404,7 +1405,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       statuses[Farmland::Ripe2] = new Object("ripe2");
       statuses[Farmland::Ripe3] = new Object("ripe3");
       statuses[Farmland::Ended] = new Object("ended");
-      for (map<Farmland::FieldStatus, Object*>::iterator status = statuses.begin(); status != statuses.end(); ++status) {
+      for (map<Farmland::FieldStatusOld, Object*>::iterator status = statuses.begin(); status != statuses.end(); ++status) {
 	(*status).second->setObjList(true);
 	for (int i = 0; i < Farmland::numOwners; ++i) {
 	  (*status).second->addToList(farm->farmers[i]->fields[(*status).first]);
