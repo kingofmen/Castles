@@ -46,7 +46,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Enforce that output cannot be capital
    - Fix Schlemiel in Farmland fillBlock
    - Make farms buy labour for integer number of fields (check)
-   - Make Farmland and Forest statuses enums
+   - Make Farmland (check) and Forest statuses enums
    - Margin effects (check)
      . Block sizes in production (check)
      . Block calculations (check)
@@ -61,7 +61,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - More GUI insight for testing purposes
    - Restore clearing of land
    - Normalisation
-   - Ending of contracts
+   - Ending of contracts (check)
    - MilUnits as EconActors
    - Dilution of capital (check)
    - Decay of goods

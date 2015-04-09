@@ -75,16 +75,16 @@ hexinfo = {
     goods = { money = 300000 }
   }
   farmland = { 
-    worker = { goods = { money = 10000 food = 125000 } id = 6 }
-    worker = { goods = { money = 10000 food = 125000 } id = 7 }
-    worker = { goods = { money = 10000 food = 125000 } id = 8 }
-    worker = { goods = { money = 10000 food = 125000 } id = 9 }
-    worker = { goods = { money = 10000 food = 125000 } id = 10 }
-    worker = { goods = { money = 10000 food = 125000 } id = 11 }
-    worker = { goods = { money = 10000 food = 125000 } id = 12 }
-    worker = { goods = { money = 10000 food = 125000 } id = 13 }
-    worker = { goods = { money = 10000 food = 125000 } id = 14 }
-    worker = { goods = { money = 10000 food = 125000 } id = 15 }
+    worker = { goods = { money = 10000 food = 125000 } id = 6 clear = 100 owner = 3}
+    worker = { goods = { money = 10000 food = 125000 } id = 7 clear = 100 owner = 3}
+    worker = { goods = { money = 10000 food = 125000 } id = 8 clear = 100 owner = 3}
+    worker = { goods = { money = 10000 food = 125000 } id = 9 clear = 100 owner = 3}
+    worker = { goods = { money = 10000 food = 125000 } id = 10 clear = 100 owner = 3}
+    worker = { goods = { money = 10000 food = 125000 } id = 11 clear = 100 owner = 3}
+    worker = { goods = { money = 10000 food = 125000 } id = 12 clear = 100 owner = 3}
+    worker = { goods = { money = 10000 food = 125000 } id = 13 clear = 100 owner = 3}
+    worker = { goods = { money = 10000 food = 125000 } id = 14 clear = 100 owner = 3}
+    worker = { goods = { money = 10000 food = 125000 } id = 15 clear = 100 owner = 3}
 
     clear = { 100 100 100 100 100 100 100 100 100 100 } 
     ready = { 0 0 0 0 0 0 0 0 0 0 } 
@@ -193,16 +193,16 @@ hexinfo = {
     }
   }
   farmland = {
-    worker = { goods = { } id = 36 }
-    worker = { goods = { } id = 37 }
-    worker = { goods = { } id = 38 }
-    worker = { goods = { } id = 39 }
-    worker = { goods = { } id = 40 }
-    worker = { goods = { } id = 41 }
-    worker = { goods = { } id = 42 }
-    worker = { goods = { } id = 43 }
-    worker = { goods = { } id = 44 }
-    worker = { goods = { } id = 45 }
+    worker = { goods = { } id = 36 clear = 100 owner = 5}
+    worker = { goods = { } id = 37 clear = 100 owner = 5}
+    worker = { goods = { } id = 38 clear = 100 owner = 5}
+    worker = { goods = { } id = 39 clear = 100 owner = 5}
+    worker = { goods = { } id = 40 clear = 100 owner = 4}
+    worker = { goods = { } id = 41 clear = 100 owner = 4}
+    worker = { goods = { } id = 42 clear = 100 owner = 4}
+    worker = { goods = { } id = 43 clear = 100 owner = 1}
+    worker = { goods = { } id = 44 clear = 100 owner = 1}
+    worker = { goods = { } id = 45 clear = 100 owner = 1}
 
     clear = { 100 100 100 100 100 100 100 100 100 100 } 
     ready = { 0 0 0 0 0 0 0 0 0 0 } 

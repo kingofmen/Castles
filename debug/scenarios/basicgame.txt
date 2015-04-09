@@ -1,0 +1,944 @@
+week = 0 
+priorityLevels = { 0.1 0.25 0.50 0.75 1.0 1.1 1.25 1.5 2.0 3.0 }
+defaultPriority = 4 
+
+faction = {
+  name = adri 
+  displayname = "Player 1"
+  human = yes
+  red = 163
+  green = 73
+  blue = 164
+  id = 0
+}
+faction = {
+  name = assa
+  displayname = "Player 2"
+  human = no
+  red = 63
+  green = 72
+  blue = 204
+  id = 1
+} 
+
+currentplayer = adri 
+
+hexgrid = {
+  x = 4
+  y = 4
+}
+
+hexinfo = {
+  x = 0
+  y = 0
+  player = adri
+  castle = {
+    id = 2
+    goods = {
+      food = 5750
+      money = 100
+    }
+    pos = SouthEast
+    garrison = {
+      id = 22
+      pikemen = { 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 } 
+    }
+    taxes = {
+      amount = 6000
+      type = fixed 
+    }
+  }
+ 
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+
+  village = {
+    id = 3
+    males = { 
+     1000 750 600 540 535 535 534 534 533 533
+      532 532 531 531 530 530 530 530 530 530
+      529 528 527 526 525 525 524 524 523 523 
+      522 521 520 519 518 516 515 513 512 510 
+      508 505 503 500 498 495 493 490 488 485 
+      480 475 470 465 460 450 438 426 414 400 
+      380 360 340 320 300 285 270 255 240 225 
+      212 200 186 180 164 148 133 121 110 93 }
+    females = { 
+     1000 750 600 540 535 535 534 534 533 533
+      532 532 531 531 530 530 530 530 530 530
+      529 528 527 526 525 525 524 524 523 523 
+      522 521 520 519 518 516 515 513 512 510 
+      508 505 503 500 498 495 493 490 488 485 
+      480 475 470 465 460 450 438 426 414 400 
+      380 360 340 320 300 285 270 255 240 225 
+      212 200 186 180 164 148 133 121 110 93 }
+    militiaUnits = {
+      militia = 5
+      drill_level = 1 
+    }
+    goods = {
+      food = 600000 
+      money = 100
+    }
+    contract = {
+      amount = 0.5
+      type = percentage
+      good = labour
+      target = 2
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 food = 15000 } id = 23 clear = 100 owner = 3 } 
+    worker = { goods = { money = 10000 food = 15000 } id = 24 clear = 100 owner = 3 } 
+    worker = { goods = { money = 10000 food = 10000 } id = 25 clear = 100 owner = 3 } 
+    worker = { goods = { money = 10000 food = 5000 }  id = 26 clear = 100 owner = 3 } 
+    worker = { goods = { money = 10000 food = 5000 }  id = 27 clear = 100 owner = 2 } 
+    worker = { goods = { money = 10000 food = 5000 }  id = 28 clear = 100 owner = 2 } 
+    worker = { goods = { money = 10000 food = 5000 }  id = 29 clear = 100 owner = 2 } 
+    worker = { goods = { money = 10000 food = 5000 }  id = 30 clear = 100 owner = 0 } 
+    worker = { goods = { money = 10000 food = 5000 }  id = 31 clear = 100 owner = 0 } 
+    worker = { goods = { money = 10000 food = 5000 }  id = 32 clear = 100 owner = 0 } 
+  }
+  forest = {
+    worker = { goods = { money = 10000 } id = 33 }
+    worker = { goods = { money = 10000 } id = 34 }
+    worker = { goods = { money = 10000 } id = 35 }
+    worker = { goods = { money = 10000 } id = 36 }
+    worker = { goods = { money = 10000 } id = 37 }
+    worker = { goods = { money = 10000 } id = 38 }
+    worker = { goods = { money = 10000 } id = 39 }
+    worker = { goods = { money = 10000 } id = 40 }
+    worker = { goods = { money = 10000 } id = 41 }
+    worker = { goods = { money = 10000 } id = 42 }
+
+    wild    = { 100 75 23 100 100 34 89 100 28 89 }
+    cleared = { 0 0 0 0 0 0 0 0 0 0 }
+    planted = { 0 0 0 0 0 0 0 0 0 0 }
+    scrubby = { 0 0 0 0 0 0 0 0 0 0 }
+    sapling = { 0 0 0 0 0 0 0 0 0 0 }
+    young   = { 0 0 0 0 0 0 0 0 0 0 }
+    grown   = { 0 0 0 0 0 0 0 0 0 0 }
+    mature  = { 0 0 0 0 0 0 0 0 0 0 }
+    mighty  = { 0 0 0 0 0 0 0 0 0 0 }
+    huge    = { 0 25 0 0 0 0 0 0 0 0 }
+    climax  = { 0 0 0 0 0 0 0 0 0 0 }
+    owner   = { 3 3 3 3 2 2 2 0 0 0 }
+    tended  = { 0 0 0 0 0 0 0 0 0 0 }
+    yearsSinceLastTick = 0
+    minStatusToHarvest = climax
+  }
+  mine = {
+    worker = { goods = { money = 10000 } id = 43 }
+    worker = { goods = { money = 10000 } id = 44 }
+    worker = { goods = { money = 10000 } id = 45 }
+    worker = { goods = { money = 10000 } id = 46 }
+    worker = { goods = { money = 10000 } id = 47 }
+    worker = { goods = { money = 10000 } id = 48 }
+    worker = { goods = { money = 10000 } id = 49 }
+    worker = { goods = { money = 10000 } id = 50 }
+    worker = { goods = { money = 10000 } id = 51 }
+    worker = { goods = { money = 10000 } id = 52 }
+
+    surface = { 100000 0 0 0 0 0 0 0 0 0 }
+    easy    = { 1000000 0 0 0 0 0 0 0 0 0 }
+    medium  = { 10000000 0 0 0 0 0 0 0 0 0 }
+    deep    = { 100000000 0 0 0 0 0 0 0 0 0 }
+    modern  = { 1000000000 0 0 0 0 0 0 0 0 0 }
+    owner   = { 3 3 3 3 2 2 2 0 0 0 }
+  }
+}
+
+hexinfo = {
+  x = 3
+  y = 3
+  player = assa 
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  castle = {
+    id = 4
+    pos = NorthWest
+    garrison = {
+      id = 203
+      pikemen = { 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 } 
+    }
+    goods = {
+      food = 6000 
+      money = 100
+    }
+    taxes = {
+      amount = 6000
+      type = fixed 
+    }
+  } 
+  village = {
+    id = 5
+    males = { 
+     1000 750 600 540 535 535 534 534 533 533
+      532 532 531 531 530 530 530 530 530 530
+      529 528 527 526 525 525 524 524 523 523 
+      522 521 520 519 518 516 515 513 512 510 
+      508 505 503 500 498 495 493 490 488 485 
+      480 475 470 465 460 450 438 426 414 400 
+      380 360 340 320 300 285 270 255 240 225 
+      212 200 186 180 164 148 133 121 110 93 }
+    females = { 
+     1000 750 600 540 535 535 534 534 533 533
+      532 532 531 531 530 530 530 530 530 530
+      529 528 527 526 525 525 524 524 523 523 
+      522 521 520 519 518 516 515 513 512 510 
+      508 505 503 500 498 495 493 490 488 485 
+      480 475 470 465 460 450 438 426 414 400 
+      380 360 340 320 300 285 270 255 240 225 
+      212 200 186 180 164 148 133 121 110 93 }
+    militiaUnits = {
+      militia = 5
+    }
+    goods = {
+      food = 600000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 53 clear = 100 owner = 5 }
+    worker = { goods = { money = 10000 } id = 54 clear = 100 owner = 5 }
+    worker = { goods = { money = 10000 } id = 55 clear = 100 owner = 5 }
+    worker = { goods = { money = 10000 } id = 56 clear = 100 owner = 5 }
+    worker = { goods = { money = 10000 } id = 57 clear = 100 owner = 4 }
+    worker = { goods = { money = 10000 } id = 58 clear = 100 owner = 4 }
+    worker = { goods = { money = 10000 } id = 59 clear = 100 owner = 4 }
+    worker = { goods = { money = 10000 } id = 60 clear = 100 owner = 1 }
+    worker = { goods = { money = 10000 } id = 61 clear = 100 owner = 1 }
+    worker = { goods = { money = 10000 } id = 62 clear = 100 owner = 1 }
+  }
+}
+
+hexinfo = {
+  x = 1
+  y = 0
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 6
+    males = { 
+     1152 665 489 444 427 568 565 552 610 529 591 520 520 421 426 411
+     448 605 475 626 421 573 605 629 411 495 528 406 601 437 488 617 393
+     442 428 501 389 427 565 541 478 394 449 488 389 443 412 587 500 597
+     500 531 455 460 530 519 364 393 425 384 286 311 360 252 281 257 307
+     241 214 260 248 180 152 214 135 148 146 126 90 78 
+    }
+    females = { 
+      947 671 512 643 613 451 641 610 498 439 466 425 536 608 519 606 612
+      603 585 528 523 501 490 588 451 500 474 491 434 407 552 465 425 506
+      489 466 437 410 621 499 472 566 403 459 528 476 608 583 417 558 524
+      415 378 517 485 350 500 333 459 460 327 405 287 333 252 233 249 194
+      261 229 237 195 213 141 168 140 139 132 97 80
+    }
+    militiaUnits = {
+      militia = 3
+      pikemen = 1
+      knights = 0
+      archers = 2
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 63 clear = 100 }
+    worker = { goods = { money = 10000 } id = 64 clear = 100 }
+    worker = { goods = { money = 10000 } id = 65 clear = 100 }
+    worker = { goods = { money = 10000 } id = 66 clear = 100 }
+    worker = { goods = { money = 10000 } id = 67 clear = 100 }
+    worker = { goods = { money = 10000 } id = 68 clear = 100 }
+    worker = { goods = { money = 10000 } id = 69 clear = 100 }
+    worker = { goods = { money = 10000 } id = 70 clear = 100 }
+    worker = { goods = { money = 10000 } id = 71 clear = 100 }
+    worker = { goods = { money = 10000 } id = 72 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 2
+  y = 0
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 7
+    males = {
+    1000 779 578 449 591 566 653 503 663 478 491 545 578 595 521 520 647
+    410 478 402 472 614 443 499 476 412 421 529 582 438 501 580 542 465
+    559 578 599 610 565 601 381 516 423 466 450 395 379 440 568 572 476
+    430 363 413 368 546 460 465 355 493 342 346 348 278 281 233 216 254
+    298 207 185 209 230 158 137 111 159 143 110 91
+    }
+    females = {
+      875 668 483 646 666 455 493 578 481 627 493 663 559 401 597 571 605
+      477 522 640 588 609 635 589 414 622 479 454 454 434 512 479 550 647
+      494 587 428 620 579 444 404 510 378 588 603 495 399 574 540 601 478
+      478 490 373 355 429 430 496 433 457 304 270 342 289 276 312 283 314
+      250 252 180 178 197 191 174 169 135 118 124 101
+    }
+    militiaUnits = {
+      militia = 6
+      pikemen = 1
+      knights = 0
+      archers = 1
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 73 clear = 100 }
+    worker = { goods = { money = 10000 } id = 74 clear = 100 }
+    worker = { goods = { money = 10000 } id = 75 clear = 100 }
+    worker = { goods = { money = 10000 } id = 76 clear = 100 }
+    worker = { goods = { money = 10000 } id = 77 clear = 100 }
+    worker = { goods = { money = 10000 } id = 78 clear = 100 }
+    worker = { goods = { money = 10000 } id = 79 clear = 100 }
+    worker = { goods = { money = 10000 } id = 80 clear = 100 }
+    worker = { goods = { money = 10000 } id = 81 clear = 100 }
+    worker = { goods = { money = 10000 } id = 82 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 3
+  y = 0  
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 8
+    males = {
+    790 700 719 618 426 414 667 597 478 551 651 514 475 524 464 596 618
+    415 635 519 479 396 529 507 536 423 577 413 585 511 585 409 596 558
+    493 451 589 498 414 599 565 513 469 604 517 529 436 377 487 558 488
+    419 438 349 467 403 444 515 456 490 438 279 287 378 339 216 301 242
+    204 182 239 237 226 150 189 184 149 124 92 95
+    }
+    females = {
+      1124 789 669 507 610 417 432 538 461 663 425 578 407 617 451 650 637
+      575 557 594 628 630 463 643 407 632 464 504 548 475 538 568 649 429
+      573 598 540 510 413 566 461 445 469 499 546 453 582 419 394 555 538
+      541 433 479 566 380 386 362 458 491 455 443 259 367 322 234 297 265
+      281 237 198 203 181 196 202 161 105 99 98 93
+    }
+
+    militiaUnits = {
+      militia = 3
+      pikemen = 0
+      knights = 1
+      archers = 0
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 83 clear = 100 }
+    worker = { goods = { money = 10000 } id = 84 clear = 100 }
+    worker = { goods = { money = 10000 } id = 85 clear = 100 }
+    worker = { goods = { money = 10000 } id = 86 clear = 100 }
+    worker = { goods = { money = 10000 } id = 87 clear = 100 }
+    worker = { goods = { money = 10000 } id = 88 clear = 100 }
+    worker = { goods = { money = 10000 } id = 89 clear = 100 }
+    worker = { goods = { money = 10000 } id = 90 clear = 100 }
+    worker = { goods = { money = 10000 } id = 91 clear = 100 }
+    worker = { goods = { money = 10000 } id = 92 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 0
+  y = 1
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 9
+    males = {
+    908 777 713 408 438 659 462 597 591 528 426 490 515 551 442 470 431
+    468 638 574 546 593 589 550 464 443 494 514 517 605 534 588 497 444
+    576 632 590 617 487 564 528 429 483 460 376 423 512 488 567 415 496
+    377 538 396 357 454 429 474 330 322 317 436 383 369 272 340 203 204
+    281 192 246 174 140 205 174 163 126 147 130 108
+    }
+    females = {
+      830 816 720 631 549 482 447 652 577 460 548 632 516 409 401 541 646
+      612 516 651 615 576 620 518 436 575 581 442 491 608 553 568 531 479
+      422 626 616 476 625 509 521 541 443 378 518 549 472 574 411 401 544
+      364 419 383 535 452 373 395 445 408 425 439 330 305 282 343 267 237
+      281 246 181 230 213 217 177 168 157 123 86 97
+    }
+    militiaUnits = {
+      militia = 3
+      pikemen = 0
+      knights = 0
+      archers = 0
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 93 clear = 100 }
+    worker = { goods = { money = 10000 } id = 94 clear = 100 }
+    worker = { goods = { money = 10000 } id = 95 clear = 100 }
+    worker = { goods = { money = 10000 } id = 96 clear = 100 }
+    worker = { goods = { money = 10000 } id = 97 clear = 100 }
+    worker = { goods = { money = 10000 } id = 98 clear = 100 }
+    worker = { goods = { money = 10000 } id = 99 clear = 100 }
+    worker = { goods = { money = 10000 } id = 100 clear = 100 }
+    worker = { goods = { money = 10000 } id = 101 clear = 100 }
+    worker = { goods = { money = 10000 } id = 102 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 1
+  y = 1
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 10
+    males = {
+    1236 607 658 627 598 514 427 533 477 457 503 538 471 491 643 502 423
+    417 441 434 512 556 612 527 398 649 456 501 546 406 400 562 443 621
+    634 603 574 466 387 525 528 559 610 596 562 400 535 372 385 487 459
+    420 520 450 489 386 528 484 409 336 291 420 331 389 344 309 236 265
+    275 242 256 232 162 161 141 139 164 109 98 100
+    }
+    females = {
+      1127 909 585 607 590 532 526 552 433 466 619 489 526 518 503 473 572
+      567 484 544 521 461 439 506 506 499 459 592 583 651 481 572 527 390
+      517 538 502 404 436 432 463 465 572 409 429 487 610 515 536 605 575
+      418 421 561 367 447 395 419 515 457 433 311 333 321 346 275 307 292
+      297 227 230 222 155 224 188 172 135 117 98 104
+    }
+    militiaUnits = {
+      militia = 7
+      pikemen = 0
+      knights = 1
+      archers = 0
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 103 clear = 100 }
+    worker = { goods = { money = 10000 } id = 104 clear = 100 }
+    worker = { goods = { money = 10000 } id = 105 clear = 100 }
+    worker = { goods = { money = 10000 } id = 106 clear = 100 }
+    worker = { goods = { money = 10000 } id = 107 clear = 100 }
+    worker = { goods = { money = 10000 } id = 108 clear = 100 }
+    worker = { goods = { money = 10000 } id = 109 clear = 100 }
+    worker = { goods = { money = 10000 } id = 110 clear = 100 }
+    worker = { goods = { money = 10000 } id = 111 clear = 100 }
+    worker = { goods = { money = 10000 } id = 112 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 2
+  y = 1
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 11
+    males = {
+    1161 911 655 460 612 527 417 437 405 650 506 454 646 425 459 525 400
+    639 530 492 483 433 586 599 473 432 484 568 580 645 500 555 636 552
+    495 618 515 572 489 512 571 444 496 569 613 533 432 608 496 395 577
+    426 478 406 392 561 418 478 501 481 292 374 335 256 372 254 311 297
+    295 226 210 222 199 213 136 129 143 149 89 88
+    }
+    females = {
+      1151 854 513 567 570 445 658 667 435 592 659 613 610 627 545 411 619
+      423 550 534 582 564 565 637 621 448 512 493 600 421 506 415 446 531
+      554 461 555 435 602 489 417 386 627 527 441 464 555 454 467 423 470
+      465 415 560 396 388 455 472 376 485 317 294 390 315 254 232 258 237
+      256 243 234 238 148 189 159 153 149 132 92 111
+    }
+    militiaUnits = {
+      militia = 6
+      pikemen = 2
+      knights = 0
+      archers = 2
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 113 clear = 100 }
+    worker = { goods = { money = 10000 } id = 114 clear = 100 }
+    worker = { goods = { money = 10000 } id = 115 clear = 100 }
+    worker = { goods = { money = 10000 } id = 116 clear = 100 }
+    worker = { goods = { money = 10000 } id = 117 clear = 100 }
+    worker = { goods = { money = 10000 } id = 118 clear = 100 }
+    worker = { goods = { money = 10000 } id = 119 clear = 100 }
+    worker = { goods = { money = 10000 } id = 120 clear = 100 }
+    worker = { goods = { money = 10000 } id = 121 clear = 100 }
+    worker = { goods = { money = 10000 } id = 122 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 3
+  y = 1
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 12
+    males = {
+    1067 912 502 446 451 444 555 604 648 622 589 567 548 431 608 633 434
+    454 596 613 561 632 499 402 564 493 600 645 525 487 627 532 495 477
+    504 416 642 435 396 552 406 381 537 440 564 404 377 549 478 483 570
+    511 503 394 516 444 431 386 418 304 444 444 262 269 320 308 336 298
+    207 262 264 156 162 196 126 152 136 104 88 88
+    }
+    females = {
+      1036 810 455 645 594 636 564 628 455 488 425 400 407 418 582 583 459
+      423 538 619 507 632 592 415 524 469 630 469 580 518 551 452 620 495
+      491 521 620 453 600 584 516 475 628 416 464 431 605 603 393 564 550
+      500 377 393 498 528 340 377 353 339 292 442 280 342 346 273 233 262
+      207 244 189 241 149 171 179 167 108 93 133 109
+    }
+    militiaUnits = {
+      militia = 6
+      pikemen = 1
+      knights = 1
+      archers = 0
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 123 clear = 100 }
+    worker = { goods = { money = 10000 } id = 124 clear = 100 }
+    worker = { goods = { money = 10000 } id = 125 clear = 100 }
+    worker = { goods = { money = 10000 } id = 126 clear = 100 }
+    worker = { goods = { money = 10000 } id = 127 clear = 100 }
+    worker = { goods = { money = 10000 } id = 128 clear = 100 }
+    worker = { goods = { money = 10000 } id = 129 clear = 100 }
+    worker = { goods = { money = 10000 } id = 130 clear = 100 }
+    worker = { goods = { money = 10000 } id = 131 clear = 100 }
+    worker = { goods = { money = 10000 } id = 132 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 0
+  y = 2
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 13
+    males = {
+    839 581 601 580 621 546 427 532 413 419 641 410 481 590 482 660 596
+    503 594 660 588 507 604 622 544 486 563 404 549 402 572 456 480 636
+    487 510 414 580 483 420 548 414 628 518 451 579 545 529 395 370 398
+    555 454 539 392 397 462 351 384 353 298 413 316 246 303 317 222 267
+    238 243 252 244 143 216 158 151 154 113 134 71
+    }
+    females = {
+      916 937 660 430 502 452 500 597 631 598 469 580 618 633 405 422 563
+      549 535 529 531 416 641 395 484 608 443 582 560 500 541 516 597 391
+      542 585 541 600 420 616 384 399 595 511 411 587 565 438 501 525 415
+      521 517 535 548 441 491 386 362 468 388 448 294 303 363 318 210 301
+      196 179 197 192 205 143 173 119 121 110 124 93
+    }
+    militiaUnits = {
+      militia = 5
+      pikemen = 2
+      knights = 1
+      archers = 1
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 133 clear = 100 }
+    worker = { goods = { money = 10000 } id = 134 clear = 100 }
+    worker = { goods = { money = 10000 } id = 135 clear = 100 }
+    worker = { goods = { money = 10000 } id = 136 clear = 100 }
+    worker = { goods = { money = 10000 } id = 137 clear = 100 }
+    worker = { goods = { money = 10000 } id = 138 clear = 100 }
+    worker = { goods = { money = 10000 } id = 139 clear = 100 }
+    worker = { goods = { money = 10000 } id = 140 clear = 100 }
+    worker = { goods = { money = 10000 } id = 141 clear = 100 }
+    worker = { goods = { money = 10000 } id = 142 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 1
+  y = 2
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 14
+    males = {
+    862 642 749 591 560 580 423 517 503 622 551 577 483 451 533 435 428
+    634 480 499 404 467 627 633 550 586 395 560 561 600 652 554 531 492
+    530 640 574 508 610 401 493 586 413 614 560 394 371 394 558 401 499
+    435 423 506 470 557 406 519 414 374 357 426 363 325 289 272 283 202
+    257 176 225 198 146 200 198 144 140 135 100 100
+    }
+    females = {
+      927 643 478 596 666 573 454 472 569 571 549 551 619 425 599 422 604
+      515 630 528 626 457 569 608 505 649 626 633 579 444 399 443 448 589
+      406 522 421 504 562 487 407 579 548 497 442 387 485 415 491 531 384
+      526 574 534 421 377 475 323 315 320 441 368 382 254 345 286 300 291
+      271 222 252 153 178 165 148 138 165 110 130 102
+    }
+    militiaUnits = {
+      militia = 3
+      pikemen = 1
+      knights = 0
+      archers = 2
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 143 clear = 100 }
+    worker = { goods = { money = 10000 } id = 144 clear = 100 }
+    worker = { goods = { money = 10000 } id = 145 clear = 100 }
+    worker = { goods = { money = 10000 } id = 146 clear = 100 }
+    worker = { goods = { money = 10000 } id = 147 clear = 100 }
+    worker = { goods = { money = 10000 } id = 148 clear = 100 }
+    worker = { goods = { money = 10000 } id = 149 clear = 100 }
+    worker = { goods = { money = 10000 } id = 150 clear = 100 }
+    worker = { goods = { money = 10000 } id = 151 clear = 100 }
+    worker = { goods = { money = 10000 } id = 152 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 2
+  y = 2
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 15
+    males = {
+    1020 691 748 473 507 558 666 590 656 477 474 600 592 624 419 586 531
+    430 474 524 640 658 556 595 455 448 641 521 466 506 399 528 589 543
+    462 545 583 488 637 521 500 439 541 535 428 414 521 476 545 437 595
+    505 503 424 509 389 377 394 319 317 364 446 267 323 241 302 295 229
+    250 177 230 230 172 162 130 148 104 125 135 100
+    }
+    females = {
+      1204 840 457 465 656 612 415 417 407 586 420 509 581 536 423 548 522
+      567 644 612 501 504 496 557 591 637 547 422 414 429 569 587 502 423
+      556 458 616 564 504 609 463 431 510 557 468 524 416 502 551 563 536
+      511 524 401 452 363 515 438 333 341 290 435 324 254 333 236 211 292
+      240 211 245 184 211 207 193 132 151 141 107 85
+    }
+    militiaUnits = {
+      militia = 7
+      pikemen = 1
+      knights = 1
+      archers = 1
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 153 clear = 100 }
+    worker = { goods = { money = 10000 } id = 154 clear = 100 }
+    worker = { goods = { money = 10000 } id = 155 clear = 100 }
+    worker = { goods = { money = 10000 } id = 156 clear = 100 }
+    worker = { goods = { money = 10000 } id = 157 clear = 100 }
+    worker = { goods = { money = 10000 } id = 158 clear = 100 }
+    worker = { goods = { money = 10000 } id = 159 clear = 100 }
+    worker = { goods = { money = 10000 } id = 160 clear = 100 }
+    worker = { goods = { money = 10000 } id = 161 clear = 100 }
+    worker = { goods = { money = 10000 } id = 162 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 3
+  y = 2
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 16
+    males = {
+    1198 701 696 495 433 494 476 515 613 564 564 542 582 659 592 413 446
+    534 531 600 610 433 642 407 397 510 536 482 435 591 648 605 594 510
+    626 478 413 533 427 556 574 521 403 593 590 470 430 374 421 581 404
+    405 552 418 501 480 488 332 324 328 441 438 404 380 275 257 302 219
+    205 252 209 150 223 209 166 181 122 104 113 87
+    }
+    females = {
+      880 937 549 437 578 449 638 595 550 557 635 651 410 647 461 498 519
+      420 402 512 657 570 541 535 487 621 619 536 623 535 455 521 571 520
+      431 517 458 406 491 629 430 627 499 377 401 454 409 419 381 603 471
+      475 577 381 517 425 397 342 329 379 340 343 410 362 367 228 326 239
+      268 207 171 246 164 151 149 154 120 132 123 81
+    }
+    militiaUnits = {
+      militia = 3
+      pikemen = 1
+      knights = 0
+      archers = 0
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 163 clear = 100 }
+    worker = { goods = { money = 10000 } id = 164 clear = 100 }
+    worker = { goods = { money = 10000 } id = 165 clear = 100 }
+    worker = { goods = { money = 10000 } id = 166 clear = 100 }
+    worker = { goods = { money = 10000 } id = 167 clear = 100 }
+    worker = { goods = { money = 10000 } id = 168 clear = 100 }
+    worker = { goods = { money = 10000 } id = 169 clear = 100 }
+    worker = { goods = { money = 10000 } id = 170 clear = 100 }
+    worker = { goods = { money = 10000 } id = 171 clear = 100 }
+    worker = { goods = { money = 10000 } id = 172 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 0
+  y = 3
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 17
+    males = {
+    782 643 693 653 578 402 509 587 644 664 444 467 491 635 444 542 510
+    529 607 590 416 465 612 492 511 426 626 634 633 540 411 486 485 635
+    590 438 550 401 608 535 466 623 399 597 583 386 520 424 495 453 366
+    490 428 386 434 517 415 479 445 356 330 366 300 313 357 268 214 299
+    229 184 212 171 207 177 188 113 136 149 128 78
+    }
+    females = {
+      1091 718 701 644 538 498 578 636 604 665 418 641 541 442 505 500 536
+      585 520 492 536 406 564 571 459 644 471 514 462 577 501 602 464 473
+      507 570 563 430 511 446 439 584 537 391 401 375 516 378 413 392 510
+      413 474 486 489 361 343 500 423 482 431 327 421 314 338 325 215 195
+      285 271 236 203 180 147 189 111 115 130 134 83
+    }
+    militiaUnits = {
+      militia = 7
+      pikemen = 0
+      knights = 1
+      archers = 1
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 173 clear = 100 }
+    worker = { goods = { money = 10000 } id = 174 clear = 100 }
+    worker = { goods = { money = 10000 } id = 175 clear = 100 }
+    worker = { goods = { money = 10000 } id = 176 clear = 100 }
+    worker = { goods = { money = 10000 } id = 177 clear = 100 }
+    worker = { goods = { money = 10000 } id = 178 clear = 100 }
+    worker = { goods = { money = 10000 } id = 179 clear = 100 }
+    worker = { goods = { money = 10000 } id = 180 clear = 100 }
+    worker = { goods = { money = 10000 } id = 181 clear = 100 }
+    worker = { goods = { money = 10000 } id = 182 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 1
+  y = 3
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 18
+    males = {
+    1155 865 539 673 646 563 620 571 489 557 535 439 623 632 428 541 530
+    528 658 624 427 636 454 487 408 634 409 648 448 564 525 399 462 638
+    441 421 453 615 528 486 435 539 422 605 444 485 472 468 591 397 441
+    400 457 456 530 415 491 338 492 347 343 374 328 260 302 323 211 211
+    189 201 180 203 220 172 164 183 156 98 109 90
+    }
+    females = {
+      972 717 565 410 641 640 491 437 440 555 590 409 616 662 608 519 510
+      512 558 546 639 552 420 433 513 491 518 416 490 635 630 402 512 392
+      479 483 516 518 554 474 623 470 393 534 380 486 541 590 589 396 491
+      560 425 494 476 423 358 522 323 499 398 440 307 331 286 301 263 222
+      216 243 226 213 214 166 154 132 114 124 95 86
+    }
+    militiaUnits = {
+      militia = 7
+      pikemen = 1
+      knights = 0
+      archers = 0
+    }
+    goods = {
+      food = 400000 
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 183 clear = 100 }
+    worker = { goods = { money = 10000 } id = 184 clear = 100 }
+    worker = { goods = { money = 10000 } id = 185 clear = 100 }
+    worker = { goods = { money = 10000 } id = 186 clear = 100 }
+    worker = { goods = { money = 10000 } id = 187 clear = 100 }
+    worker = { goods = { money = 10000 } id = 188 clear = 100 }
+    worker = { goods = { money = 10000 } id = 189 clear = 100 }
+    worker = { goods = { money = 10000 } id = 190 clear = 100 }
+    worker = { goods = { money = 10000 } id = 191 clear = 100 }
+    worker = { goods = { money = 10000 } id = 192 clear = 100 }
+  }
+}
+
+hexinfo = {
+  x = 2
+  y = 3
+  prices = {
+    labour = 10
+    food   = 9
+    iron   = 5
+    wood   = 5
+  }
+  village = {
+    id = 19
+    males = {
+    1202 588 633 554 610 456 665 497 418 557 460 519 485 465 466 505 576
+    643 638 566 484 563 419 553 488 525 431 456 569 610 521 566 467 500
+    524 424 611 422 562 438 486 564 619 428 457 594 459 595 529 516 588
+    488 499 522 548 536 391 479 482 450 415 426 356 359 225 271 203 209
+    194 198 163 157 171 209 140 113 127 148 95 94
+    }
+    females = {
+      1157 721 690 405 458 488 631 429 464 410 640 418 540 459 562 518 646
+      446 603 409 411 495 492 414 653 471 650 569 484 526 506 537 523 646
+      564 640 420 558 608 613 606 456 590 490 499 489 534 533 367 596 495
+      440 404 418 350 412 447 447 356 475 461 378 357 308 251 217 311 255
+      230 183 240 240 221 179 133 123 158 101 129 83
+    }
+    militiaUnits = {
+      militia = 4
+      pikemen = 2
+      knights = 1
+      archers = 0
+    }
+    goods = {
+      food = 400000  
+      money = 100
+    }
+  }
+  farmland = {
+    worker = { goods = { money = 10000 } id = 193 clear = 100 }
+    worker = { goods = { money = 10000 } id = 194 clear = 100 }
+    worker = { goods = { money = 10000 } id = 195 clear = 100 }
+    worker = { goods = { money = 10000 } id = 196 clear = 100 }
+    worker = { goods = { money = 10000 } id = 197 clear = 100 }
+    worker = { goods = { money = 10000 } id = 198 clear = 100 }
+    worker = { goods = { money = 10000 } id = 199 clear = 100 }
+    worker = { goods = { money = 10000 } id = 200 clear = 100 }
+    worker = { goods = { money = 10000 } id = 201 clear = 100 }
+    worker = { goods = { money = 10000 } id = 202 clear = 100 }
+  }
+}
+
+unit = {
+  id = 20
+  x = 1
+  y = 3
+  player = adri
+  vtx = Right 
+  militia = { 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 } 
+  archers = { 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 } 
+  name = "Player 1 Army"
+}
+
+unit = {
+  id = 21
+  x = 3
+  y = 3
+  player = assa
+  vtx = UpLeft 
+  pikemen = { 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 } 
+  name = "Player 2 Army"
+}
+

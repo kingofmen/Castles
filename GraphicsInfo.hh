@@ -99,7 +99,7 @@ public:
   struct FieldInfo {
     friend class FarmGraphicsInfo; 
     FieldInfo (FieldShape s); 
-    int getIndex () const {return textureIndices[status];} 
+    int getIndex () const {return textureIndices[*status];}
     
     cpit begin () const {return shape.begin();}
     pit  begin ()       {return shape.begin();}
@@ -109,7 +109,7 @@ public:
   private:
     FieldShape shape;
     double area;
-    int status;
+    FieldStatus const* status;
   };
 
   typedef vector<FieldInfo>::const_iterator cfit;

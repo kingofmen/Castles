@@ -361,23 +361,14 @@ public:
   Farmland ();
   ~Farmland ();
 
-  enum FieldStatusOld {Clear = 0, Ready, Sowed, Ripe1, Ripe2, Ripe3, Ended, NumStatus};
-
   void setMarket (Market* market) {BOOST_FOREACH(Farmer* farmer, farmers) {market->registerParticipant(farmer);}}
   void devastate (int devastation);
   virtual void endOfTurn ();  
   void setDefaultOwner (EconActor* o); 
   virtual void setMirrorState ();
   double getAmount (TradeGood const* const tg) {double ret = 0; BOOST_FOREACH(Farmer* f, farmers) ret += f->getAmount(tg); return ret;}
-  int getFieldStatus (int s) {return totalFields[s];}
-  int getTotalFields () const {return
-      totalFields[Clear] +
-      totalFields[Ready] +
-      totalFields[Sowed] +
-      totalFields[Ripe1] +
-      totalFields[Ripe2] +
-      totalFields[Ripe3] +
-      totalFields[Ended];}
+  int getFieldStatus (FieldStatus const* const fs) {return totalFields[*fs];}
+  int getTotalFields () const;
 
   virtual double expectedProduction () const;
   virtual double possibleProductionThisTurn () const;
@@ -411,7 +402,7 @@ private:
 
   Farmland (Farmland* other);
   void countTotals ();
-  int totalFields[NumStatus]; // Sum over farmers.
+  vector<int> totalFields; // Sum over farmers.
   vector<Farmer*> farmers;
   int blockSize;
   

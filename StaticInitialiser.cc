@@ -286,6 +286,8 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
   }
 
   readGoodsHolder(info->safeGetObject("goods"), *econ);
+  int ownerIdx = info->safeGetInt("owner", -1);
+  if (ownerIdx >= 0) econ->setEconOwner(EconActor::getByIndex(ownerIdx));
 }
 
 inline int heightMapWidth (int zoneSide) {
@@ -514,28 +516,13 @@ void readAgeTrackerFromObject (AgeTracker& age, Object* obj) {
 
 Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Farmland* ret = new Farmland();
-
-  Object* clear = fInfo->safeGetObject("clear");
-  Object* ready = fInfo->safeGetObject("ready");
-  Object* sowed = fInfo->safeGetObject("sowed");
-  Object* ripe1 = fInfo->safeGetObject("ripe1");
-  Object* ripe2 = fInfo->safeGetObject("ripe2");
-  Object* ripe3 = fInfo->safeGetObject("ripe3");
-  Object* ended = fInfo->safeGetObject("ended");
-  Object* owner = fInfo->safeGetObject("owner");  
-
   objvec workers = fInfo->getValue("worker");
   if ((int) workers.size() < Farmland::numOwners) throwFormatted("Expected %i worker objects, found %i", Farmland::numOwners, workers.size());
   for (int i = 0; i < Farmland::numOwners; ++i) {
     initialiseEcon(ret->farmers[i], workers[i]);
-    ret->farmers[i]->fields[Farmland::Clear] = clear ? (clear->numTokens() > i ? clear->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Ready] = ready ? (ready->numTokens() > i ? ready->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Sowed] = sowed ? (sowed->numTokens() > i ? sowed->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Ripe1] = ripe1 ? (ripe1->numTokens() > i ? ripe1->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Ripe2] = ripe2 ? (ripe2->numTokens() > i ? ripe2->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Ripe3] = ripe3 ? (ripe3->numTokens() > i ? ripe3->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->fields[Farmland::Ended] = ended ? (ended->numTokens() > i ? ended->tokenAsInt(i) : 0) : 0;
-    ret->farmers[i]->owner                   = owner ? (owner->numTokens() > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
+    for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
+      ret->farmers[i]->fields[**fs] = workers[i]->safeGetInt((*fs)->getName(), 0);
+    }
   }
   ret->countTotals();
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
@@ -1282,6 +1269,7 @@ void StaticInitialiser::writeAgeInfoToObject (AgeTracker& age, Object* obj, int 
 void StaticInitialiser::writeEconActorIntoObject (EconActor* econ, Object* info) {
   info->setLeaf("id", econ->getIdx());
   writeGoodsHolderIntoObject(*econ, info->getNeededObject("goods"));
+  if (econ->getEconOwner()) info->setLeaf("owner", econ->getEconOwner()->getIdx());
 }
 
 void StaticInitialiser::writeGoodsHolderIntoObject (const GoodsHolder& goodsHolder, Object* info) {
@@ -1396,27 +1384,9 @@ void StaticInitialiser::writeGameToFile (string fname) {
 	Object* worker = new Object("worker");
 	farmInfo->setValue(worker);
 	writeEconActorIntoObject(farm->farmers[i], worker);
-      }
-      map<Farmland::FieldStatusOld, Object*> statuses;
-      statuses[Farmland::Clear] = new Object("clear");
-      statuses[Farmland::Ready] = new Object("ready");
-      statuses[Farmland::Sowed] = new Object("sowed");
-      statuses[Farmland::Ripe1] = new Object("ripe1");
-      statuses[Farmland::Ripe2] = new Object("ripe2");
-      statuses[Farmland::Ripe3] = new Object("ripe3");
-      statuses[Farmland::Ended] = new Object("ended");
-      for (map<Farmland::FieldStatusOld, Object*>::iterator status = statuses.begin(); status != statuses.end(); ++status) {
-	(*status).second->setObjList(true);
-	for (int i = 0; i < Farmland::numOwners; ++i) {
-	  (*status).second->addToList(farm->farmers[i]->fields[(*status).first]);
+	for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
+	  worker->setLeaf((*fs)->getName(), farm->farmers[i]->fields[**fs]);
 	}
-	farmInfo->setValue((*status).second);
-      }
-      Object* owner = new Object("owner");
-      owner->setObjList(true);
-      farmInfo->setValue(owner);
-      for (int i = 0; i < Farmland::numOwners; ++i) {
-	owner->addToList((int) farm->farmers[i]->owner->getIdx());
       }
       farmInfo->setLeaf("blockSize", farm->blockSize);
     }

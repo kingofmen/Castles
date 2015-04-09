@@ -282,13 +282,13 @@ void HexGraphicsInfo::describe (QTextStream& str) const {
   }
   if (farm) {
     str << "  Field status:\n"
-	<< "    Cleared : " << farm->getFieldStatus(Farmland::Clear) << "\n"
-	<< "    Ploughed: " << farm->getFieldStatus(Farmland::Ready) << "\n"
-	<< "    Sowed   : " << farm->getFieldStatus(Farmland::Sowed) << "\n"
-	<< "    Sparse  : " << farm->getFieldStatus(Farmland::Ripe1) << "\n"
-	<< "    Ripe    : " << farm->getFieldStatus(Farmland::Ripe2) << "\n"
-	<< "    Abundant: " << farm->getFieldStatus(Farmland::Ripe3) << "\n"
-	<< "    Fallow  : " << farm->getFieldStatus(Farmland::Ended) << "\n";
+	<< "    Cleared : " << farm->getFieldStatus(FieldStatus::Clear) << "\n"
+	<< "    Ploughed: " << farm->getFieldStatus(FieldStatus::Ready) << "\n"
+	<< "    Sowed   : " << farm->getFieldStatus(FieldStatus::Sowed) << "\n"
+	<< "    Sparse  : " << farm->getFieldStatus(FieldStatus::Ripe1) << "\n"
+	<< "    Ripe    : " << farm->getFieldStatus(FieldStatus::Ripe2) << "\n"
+	<< "    Abundant: " << farm->getFieldStatus(FieldStatus::Ripe3) << "\n"
+	<< "    Fallow  : " << farm->getFieldStatus(FieldStatus::Ended) << "\n";
   }
   if (village) {
     str << "  Militia:";
@@ -957,7 +957,7 @@ FarmGraphicsInfo::FarmGraphicsInfo (Farmland* f)
 FarmGraphicsInfo::FieldInfo::FieldInfo (FieldShape f) 
   : shape(f)
   , area(-1)
-  , status(Farmland::Clear)
+  , status(FieldStatus::Clear)
 {}
 
 double FarmGraphicsInfo::fieldArea () {
@@ -999,13 +999,13 @@ void FarmGraphicsInfo::updateFieldStatus () {
     double totalFieldArea = 1.0 / (*info)->myFarm->getTotalFields();
     double totalGraphArea = 1.0 / (*info)->fieldArea();
     fit currentField = (*info)->start(); 
-    for (int s = Farmland::Clear; s < Farmland::NumStatus; ++s) {
-      double percentage = (*info)->myFarm->getFieldStatus(s);
+    for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
+      double percentage = (*info)->myFarm->getFieldStatus(*fs);
       percentage *= totalFieldArea;
       double assigned = 0.005; // Ignore less than half a percent.
       while (assigned < percentage) {
 	assigned += (*currentField).area * totalGraphArea;
-	(*currentField).status = s;
+	(*currentField).status = (*fs);
 	++currentField;
 	if (currentField == (*info)->final()) break;
       }
