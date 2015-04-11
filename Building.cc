@@ -534,19 +534,16 @@ MilUnit* Village::raiseMilitia () {
 Farmland::Farmland () 
   : Building(1)
   , Mirrorable<Farmland>()
+  , Collective<Farmer>()
   , totalFields(FieldStatus::numTypes(), 0)
   , blockSize(5)
 {
   for (int j = 0; j < numOwners; ++j) {
-    farmers.push_back(new Farmer(this));
+    workers.push_back(new Farmer(this));
   }
 }
 
-Farmland::~Farmland () {
-  BOOST_FOREACH(Farmer* farmer, farmers) {
-    farmer->destroyIfReal();
-  }
-}
+Farmland::~Farmland () {}
 
 Farmland::Farmland (Farmland* other)
   : Building(1)
@@ -588,7 +585,7 @@ double Farmer::outputOfBlock (int block) const {
 
 Farmland* Farmland::getTestFarm (int numFields) {
   Farmland* testFarm = new Farmland();
-  testFarm->farmers[0]->fields[*FieldStatus::Clear] = numFields;
+  testFarm->workers[0]->fields[*FieldStatus::Clear] = numFields;
   return testFarm;
 }
 
@@ -605,12 +602,15 @@ void Farmland::unitTests () {
   Farmland* testFarm = getTestFarm();
   testHex->setFarm(testFarm);
   // Stupidest imaginable test, but did actually catch a problem, so...
-  if ((int) testFarm->farmers.size() != numOwners) {
-    sprintf(errorMessage, "Farm should have %i Farmers, has %i", numOwners, testFarm->farmers.size());
+  if ((int) testFarm->workers.size() != numOwners) {
+    sprintf(errorMessage, "Farm should have %i Farmers, has %i", numOwners, testFarm->workers.size());
     throw string(errorMessage);
   }
 
-  testFarm->farmers[0]->unitTests();
+  Farmer* testFarmer = testFarm->workers[0];
+  testFarmer->unitTests();
+  delete testFarm;
+  if (testFarmer->theMarket) throw string("Expected farmer to have been unregistered");
 }
 
 int Farmer::numBlocks () const {
@@ -622,6 +622,7 @@ int Farmer::numBlocks () const {
 }
 
 void Farmer::unitTests () {
+  if (!theMarket) throw string("Farm has not been registered with a market.");
   if (!output) throw string("Farm output has not been set.");
   if (0 >= boss->blockSize) throw new string("Farmer expected positive block size");
   // Note that this is not static, it's run on a particular Farmer.
@@ -1510,10 +1511,10 @@ void Village::setMirrorState () {
 
 void Farmland::setMirrorState () {
   mirror->setOwner(getOwner());
-  mirror->farmers.clear();
-  BOOST_FOREACH(Farmer* farmer, farmers) {
+  mirror->workers.clear();
+  BOOST_FOREACH(Farmer* farmer, workers) {
     farmer->setMirrorState();
-    mirror->farmers.push_back(farmer->getMirror());
+    mirror->workers.push_back(farmer->getMirror());
   }
   mirror->blockSize = blockSize;
 }
@@ -1539,16 +1540,16 @@ double Village::consumption () const {
 
 void Farmland::devastate (int devastation) {
   while (devastation > 0) {
-    int target = rand() % farmers.size();
-    if      (farmers[target]->fields[*FieldStatus::Ripe3] > 0) {farmers[target]->fields[*FieldStatus::Ripe3]--; farmers[target]->fields[*FieldStatus::Ripe2]++;}
-    else if (farmers[target]->fields[*FieldStatus::Ripe2] > 0) {farmers[target]->fields[*FieldStatus::Ripe2]--; farmers[target]->fields[*FieldStatus::Ripe1]++;}
-    else if (farmers[target]->fields[*FieldStatus::Ripe1] > 0) {farmers[target]->fields[*FieldStatus::Ripe1]--; farmers[target]->fields[*FieldStatus::Ready]++;}
+    int target = rand() % workers.size();
+    if      (workers[target]->fields[*FieldStatus::Ripe3] > 0) {workers[target]->fields[*FieldStatus::Ripe3]--; workers[target]->fields[*FieldStatus::Ripe2]++;}
+    else if (workers[target]->fields[*FieldStatus::Ripe2] > 0) {workers[target]->fields[*FieldStatus::Ripe2]--; workers[target]->fields[*FieldStatus::Ripe1]++;}
+    else if (workers[target]->fields[*FieldStatus::Ripe1] > 0) {workers[target]->fields[*FieldStatus::Ripe1]--; workers[target]->fields[*FieldStatus::Ready]++;}
     devastation--;
   }
 }
 
 void Farmland::endOfTurn () {
-  BOOST_FOREACH(Farmer* farmer, farmers) farmer->workFields();
+  BOOST_FOREACH(Farmer* farmer, workers) farmer->workFields();
   countTotals();
 }
 
@@ -1575,7 +1576,7 @@ void Village::eatFood () {
 
 void Farmland::setDefaultOwner (EconActor* o) {
   if (!o) return;
-  BOOST_FOREACH(Farmer* farmer, farmers) {  
+  BOOST_FOREACH(Farmer* farmer, workers) {
     if (farmer->getEconOwner()) continue;
     farmer->setEconOwner(o);
   }
@@ -1603,7 +1604,7 @@ void Forest::endOfTurn () {
 
 double Farmland::expectedProduction () const {
   double ret = 0;
-  BOOST_FOREACH(Farmer* farmer, farmers) {
+  BOOST_FOREACH(Farmer* farmer, workers) {
     double margin = 1;
     for (int i = 0; i < farmer->numBlocks(); ++i) {
       ret += farmer->outputOfBlock(i) * margin;
@@ -1616,7 +1617,7 @@ double Farmland::expectedProduction () const {
 double Farmland::possibleProductionThisTurn () const {
   if (Calendar::Autumn != Calendar::getCurrentSeason()) return 0;
   double ret = 0;
-  BOOST_FOREACH(Farmer* farmer, farmers) {
+  BOOST_FOREACH(Farmer* farmer, workers) {
     ret += farmer->fields[*FieldStatus::Ripe1] * Farmer::_cropsFrom1;
     ret += farmer->fields[*FieldStatus::Ripe2] * Farmer::_cropsFrom2;
     ret += farmer->fields[*FieldStatus::Ripe3] * Farmer::_cropsFrom3;
@@ -1627,7 +1628,7 @@ double Farmland::possibleProductionThisTurn () const {
 void Farmland::countTotals () {
   for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
     totalFields[**fs] = 0;
-    BOOST_FOREACH(Farmer* farmer, farmers) {
+    BOOST_FOREACH(Farmer* farmer, workers) {
       totalFields[**fs] += farmer->fields[**fs];
     }
   }

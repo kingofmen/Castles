@@ -330,10 +330,11 @@ private:
 template <class Worker> class Collective {
   friend class StaticInitialiser;
 public:
-  Collective ();
+  Collective () {}
   ~Collective () {BOOST_FOREACH(Worker* worker, workers) worker->destroyIfReal();}
+  double getAmount (TradeGood const* const tg) {double ret = 0; BOOST_FOREACH(Worker* f, workers) ret += f->getAmount(tg); return ret;}
   void setMarket (Market* market) {BOOST_FOREACH(Worker* worker, workers) market->registerParticipant(worker);}
-private:
+protected:
   vector<Worker*> workers;
 };
 
@@ -384,7 +385,7 @@ private:
   static int _cropsFrom1;
 };
 
-class Farmland : public Building, public Mirrorable<Farmland> {
+class Farmland : public Building, public Mirrorable<Farmland>, public Collective<Farmer> {
   friend class Mirrorable<Farmland>;
   friend class StaticInitialiser;
   friend class FarmGraphicsInfo;
@@ -393,12 +394,10 @@ public:
   Farmland ();
   ~Farmland ();
 
-  void setMarket (Market* market) {BOOST_FOREACH(Farmer* farmer, farmers) {market->registerParticipant(farmer);}}
   void devastate (int devastation);
   virtual void endOfTurn ();  
   void setDefaultOwner (EconActor* o); 
   virtual void setMirrorState ();
-  double getAmount (TradeGood const* const tg) {double ret = 0; BOOST_FOREACH(Farmer* f, farmers) ret += f->getAmount(tg); return ret;}
   int getFieldStatus (FieldStatus const* const fs) {return totalFields[*fs];}
   int getTotalFields () const;
 
@@ -414,7 +413,6 @@ private:
   Farmland (Farmland* other);
   void countTotals ();
   vector<int> totalFields; // Sum over farmers.
-  vector<Farmer*> farmers;
   int blockSize;  
 };
 

@@ -519,9 +519,9 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   objvec workers = fInfo->getValue("worker");
   if ((int) workers.size() < Farmland::numOwners) throwFormatted("Expected %i worker objects, found %i", Farmland::numOwners, workers.size());
   for (int i = 0; i < Farmland::numOwners; ++i) {
-    initialiseEcon(ret->farmers[i], workers[i]);
+    initialiseEcon(ret->workers[i], workers[i]);
     for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
-      ret->farmers[i]->fields[**fs] = workers[i]->safeGetInt((*fs)->getName(), 0);
+      ret->workers[i]->fields[**fs] = workers[i]->safeGetInt((*fs)->getName(), 0);
     }
   }
   ret->countTotals();
@@ -1383,9 +1383,9 @@ void StaticInitialiser::writeGameToFile (string fname) {
       for (int i = 0; i < Farmland::numOwners; ++i) {
 	Object* worker = new Object("worker");
 	farmInfo->setValue(worker);
-	writeEconActorIntoObject(farm->farmers[i], worker);
+	writeEconActorIntoObject(farm->workers[i], worker);
 	for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
-	  worker->setLeaf((*fs)->getName(), farm->farmers[i]->fields[**fs]);
+	  worker->setLeaf((*fs)->getName(), farm->workers[i]->fields[**fs]);
 	}
       }
       farmInfo->setLeaf("blockSize", farm->blockSize);
