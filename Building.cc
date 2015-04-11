@@ -30,14 +30,14 @@ FieldStatus const* FieldStatus::Ripe2 = 0;
 FieldStatus const* FieldStatus::Ripe3 = 0;
 FieldStatus const* FieldStatus::Ended = 0;
 
-int Farmland::_labourToSow    = 1;
-int Farmland::_labourToPlow   = 10;
-int Farmland::_labourToClear  = 100;
-int Farmland::_labourToWeed   = 3;
-int Farmland::_labourToReap   = 10;
-int Farmland::_cropsFrom3     = 1000;
-int Farmland::_cropsFrom2     = 500;
-int Farmland::_cropsFrom1     = 100;
+int Farmer::_labourToSow    = 1;
+int Farmer::_labourToPlow   = 10;
+int Farmer::_labourToClear  = 100;
+int Farmer::_labourToWeed   = 3;
+int Farmer::_labourToReap   = 10;
+int Farmer::_cropsFrom3     = 1000;
+int Farmer::_cropsFrom2     = 500;
+int Farmer::_cropsFrom1     = 100;
 
 int Forest::_labourToTend    = 5;
 int Forest::_labourToHarvest = 50;
@@ -554,28 +554,32 @@ Farmland::Farmland (Farmland* other)
   , blockSize(5)    
 {}
 
-Farmland::Farmer::Farmer (Farmland* b)
+Farmer::Farmer (Farmland* b)
   : Industry<Farmer>(this)
-  , Mirrorable<Farmland::Farmer>()
+  , Mirrorable<Farmer>()
   , fields(FieldStatus::numTypes(), 0)
   , boss(b)
 {}
 
-Farmland::Farmer::Farmer (Farmer* other)
+Farmer::Farmer (Farmer* other)
   : Industry<Farmer>(this)
-  , Mirrorable<Farmland::Farmer>(other)
+  , Mirrorable<Farmer>(other)
   , fields(FieldStatus::numTypes(), 0)
 {}
 
-void Farmland::Farmer::setMirrorState () {
+void Farmer::setMirrorState () {
   mirror->owner = owner;
   for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
   mirror->boss = boss->getMirror();
 }
 
-Farmland::Farmer::~Farmer () {}
+Farmer::~Farmer () {}
 
-double Farmland::Farmer::outputOfBlock (int block) const {
+double Farmer::getMarginFactor () const {
+  return boss->marginFactor;
+}
+
+double Farmer::outputOfBlock (int block) const {
   // May be inaccurate for the last block. TODO: It would be good to have
   // an expectation value instead, with a discount rate and accounting for
   // the current state of the block.
@@ -609,7 +613,7 @@ void Farmland::unitTests () {
   testFarm->farmers[0]->unitTests();
 }
 
-int Farmland::Farmer::numBlocks () const {
+int Farmer::numBlocks () const {
   int total = 0;
   BOOST_FOREACH(int f, fields) total += f;
   int blocks = total / boss->blockSize;
@@ -617,7 +621,7 @@ int Farmland::Farmer::numBlocks () const {
   return blocks;
 }
 
-void Farmland::Farmer::unitTests () {
+void Farmer::unitTests () {
   if (!output) throw string("Farm output has not been set.");
   if (0 >= boss->blockSize) throw new string("Farmer expected positive block size");
   // Note that this is not static, it's run on a particular Farmer.
@@ -904,7 +908,7 @@ void Farmland::Farmer::unitTests () {
   capital->setAmounts(oldCapital);
 }
 
-void Farmland::Farmer::workFields () {  
+void Farmer::workFields () {  
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   double availableLabour = getAmount(TradeGood::Labor);
   double capFactor = capitalFactor(*this);
@@ -1035,7 +1039,7 @@ void Farmland::Farmer::workFields () {
   if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workFields");
 }
 
-void Farmland::Farmer::fillBlock (int block, vector<int>& theBlock) const {
+void Farmer::fillBlock (int block, vector<int>& theBlock) const {
   // Figure out the field status in the given block;
   // since block N is always worked on before block N+1,
   // we can do so by counting backwards from the top status
@@ -1057,11 +1061,11 @@ void Farmland::Farmer::fillBlock (int block, vector<int>& theBlock) const {
   }
 }
 
-double Farmland::Farmer::getCapitalSize () const {
+double Farmer::getCapitalSize () const {
   return numBlocks() * boss->blockSize;
 }
 
-void Farmland::Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
+void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
   // Returns the amount of labour needed to tend the
   // fields, on the assumption that the necessary labour
   // will be spread over the remaining turns in the season. 
@@ -1613,7 +1617,9 @@ double Farmland::possibleProductionThisTurn () const {
   if (Calendar::Autumn != Calendar::getCurrentSeason()) return 0;
   double ret = 0;
   BOOST_FOREACH(Farmer* farmer, farmers) {
-    ret += farmer->fields[*FieldStatus::Ripe1] * _cropsFrom1 + farmer->fields[*FieldStatus::Ripe2] * _cropsFrom2 + farmer->fields[*FieldStatus::Ripe3] * _cropsFrom3;
+    ret += farmer->fields[*FieldStatus::Ripe1] * Farmer::_cropsFrom1;
+    ret += farmer->fields[*FieldStatus::Ripe2] * Farmer::_cropsFrom2;
+    ret += farmer->fields[*FieldStatus::Ripe3] * Farmer::_cropsFrom3;
   }
   return ret;
 }

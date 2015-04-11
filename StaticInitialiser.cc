@@ -148,15 +148,15 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
 
   Object* farmInfo          = popInfo->getNeededObject("farmland");
   FieldStatus::initialise();
-  Farmland::_labourToSow    = farmInfo->safeGetInt("labourToSow",    Farmland::_labourToSow);
-  Farmland::_labourToPlow   = farmInfo->safeGetInt("labourToPlow",   Farmland::_labourToPlow);
-  Farmland::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmland::_labourToClear);
-  Farmland::_labourToWeed   = farmInfo->safeGetInt("labourToWeed",   Farmland::_labourToWeed);
-  Farmland::_labourToReap   = farmInfo->safeGetInt("labourToReap",   Farmland::_labourToReap);
-  Farmland::_cropsFrom3     = farmInfo->safeGetInt("cropsFrom3",     Farmland::_cropsFrom3);
-  Farmland::_cropsFrom2     = farmInfo->safeGetInt("cropsFrom2",     Farmland::_cropsFrom2);
-  Farmland::_cropsFrom1     = farmInfo->safeGetInt("cropsFrom1",     Farmland::_cropsFrom1);
-  initialiseIndustry<Farmland::Farmer>(farmInfo);
+  Farmer::_labourToSow    = farmInfo->safeGetInt("labourToSow",    Farmer::_labourToSow);
+  Farmer::_labourToPlow   = farmInfo->safeGetInt("labourToPlow",   Farmer::_labourToPlow);
+  Farmer::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmer::_labourToClear);
+  Farmer::_labourToWeed   = farmInfo->safeGetInt("labourToWeed",   Farmer::_labourToWeed);
+  Farmer::_labourToReap   = farmInfo->safeGetInt("labourToReap",   Farmer::_labourToReap);
+  Farmer::_cropsFrom3     = farmInfo->safeGetInt("cropsFrom3",     Farmer::_cropsFrom3);
+  Farmer::_cropsFrom2     = farmInfo->safeGetInt("cropsFrom2",     Farmer::_cropsFrom2);
+  Farmer::_cropsFrom1     = farmInfo->safeGetInt("cropsFrom1",     Farmer::_cropsFrom1);
+  initialiseIndustry<Farmer>(farmInfo);
   
   Object* forestInfo       = popInfo->getNeededObject("forest");
   Forest::_labourToTend    = forestInfo->safeGetInt("labourToTend", Forest::_labourToTend);

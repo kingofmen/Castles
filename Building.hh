@@ -353,10 +353,42 @@ public:
   static FieldStatus const* Ended;
 };
 
+class Farmer : public Industry<Farmer>, public Mirrorable<Farmer> {
+  friend class StaticInitialiser;
+  friend class Mirrorable<Farmer>;
+  friend class Farmland;
+public:
+  Farmer (Farmland* b);
+  ~Farmer ();
+  double outputOfBlock (int b) const;
+  double getCapitalSize () const;
+  void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
+  int numBlocks () const;
+  double getMarginFactor () const;
+  virtual void setMirrorState ();
+  void unitTests ();
+  void workFields ();
+private:
+  Farmer(Farmer* other);
+  void fillBlock (int block, vector<int>& theBlock) const;
+  vector<int> fields;
+  Farmland* boss;
+
+  static int _labourToSow;
+  static int _labourToPlow;
+  static int _labourToClear;
+  static int _labourToWeed;
+  static int _labourToReap;
+  static int _cropsFrom3;
+  static int _cropsFrom2;
+  static int _cropsFrom1;
+};
+
 class Farmland : public Building, public Mirrorable<Farmland> {
   friend class Mirrorable<Farmland>;
   friend class StaticInitialiser;
   friend class FarmGraphicsInfo;
+  friend class Farmer;
 public:
   Farmland ();
   ~Farmland ();
@@ -379,41 +411,11 @@ public:
   static const int numOwners = 10; 
   
 private:
-  class Farmer : public Industry<Farmer>, public Mirrorable<Farmer> {
-    friend class Mirrorable<Farmer>;
-  public:
-    Farmer (Farmland* b);
-    ~Farmer ();
-    double outputOfBlock (int b) const;
-    double getCapitalSize () const;
-    void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
-    int numBlocks () const;
-    double getMarginFactor () const {return boss->marginFactor;}
-    virtual void setMirrorState ();
-    void unitTests ();
-    void workFields ();
-
-    vector<int> fields;
-  private:
-    Farmer(Farmer* other);
-    void fillBlock (int block, vector<int>& theBlock) const;
-    Farmland* boss;
-  };
-
   Farmland (Farmland* other);
   void countTotals ();
   vector<int> totalFields; // Sum over farmers.
   vector<Farmer*> farmers;
-  int blockSize;
-  
-  static int _labourToSow;
-  static int _labourToPlow;
-  static int _labourToClear;
-  static int _labourToWeed;
-  static int _labourToReap;
-  static int _cropsFrom3;
-  static int _cropsFrom2;
-  static int _cropsFrom1;
+  int blockSize;  
 };
 
 class Forest : public Building, public Mirrorable<Forest> {
