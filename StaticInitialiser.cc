@@ -516,14 +516,7 @@ void readAgeTrackerFromObject (AgeTracker& age, Object* obj) {
 
 Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Farmland* ret = new Farmland();
-  objvec workers = fInfo->getValue("worker");
-  if ((int) workers.size() < Farmland::numOwners) throwFormatted("Expected %i worker objects, found %i", Farmland::numOwners, workers.size());
-  for (int i = 0; i < Farmland::numOwners; ++i) {
-    initialiseEcon(ret->workers[i], workers[i]);
-    for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
-      ret->workers[i]->fields[**fs] = workers[i]->safeGetInt((*fs)->getName(), 0);
-    }
-  }
+  initialiseCollective<Farmer, FieldStatus, Farmland::numOwners>(ret, fInfo);
   ret->countTotals();
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
   
@@ -1380,14 +1373,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* farmInfo = new Object("farmland");
       writeBuilding(farmInfo, farm);
       hexInfo->setValue(farmInfo);
-      for (int i = 0; i < Farmland::numOwners; ++i) {
-	Object* worker = new Object("worker");
-	farmInfo->setValue(worker);
-	writeEconActorIntoObject(farm->workers[i], worker);
-	for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
-	  worker->setLeaf((*fs)->getName(), farm->workers[i]->fields[**fs]);
-	}
-      }
+      writeCollective<Farmer, FieldStatus, Farmland::numOwners>(farm, farmInfo);
       farmInfo->setLeaf("blockSize", farm->blockSize);
     }
 

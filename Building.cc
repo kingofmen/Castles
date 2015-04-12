@@ -534,7 +534,7 @@ MilUnit* Village::raiseMilitia () {
 Farmland::Farmland () 
   : Building(1)
   , Mirrorable<Farmland>()
-  , Collective<Farmer>()
+  , Collective<Farmer, FieldStatus, 10>()
   , totalFields(FieldStatus::numTypes(), 0)
   , blockSize(5)
 {
@@ -782,7 +782,7 @@ void Farmer::unitTests () {
     jobs.clear();
     for (int i = 0; i < currentBlocks; ++i) getLabourForBlock(i, jobs, laborNeeded);
     BOOST_FOREACH(jobInfo job, jobs) deliverGoods(TradeGood::Labor, job.totalLabour());
-    workFields();
+    extractResources();
     Calendar::newWeekBegins();
   }
   if (fields[*FieldStatus::Ended] != 1400) {
@@ -858,7 +858,7 @@ void Farmer::unitTests () {
   fields[*FieldStatus::Ripe3] = boss->blockSize;
   getLabourForBlock(0, jobs, fullCycleLabour);
   setAmount(TradeGood::Labor, fullCycleLabour);
-  workFields();
+  extractResources();
   double firstOutput = getAmount(output);
   if (0.1 > firstOutput) throw string("Expected output larger than 0.1");
   
@@ -876,7 +876,7 @@ void Farmer::unitTests () {
       setAmount(output, 0);
       getLabourForBlock(0, jobs, fullCycleLabour);
       setAmount(TradeGood::Labor, blocks * fullCycleLabour);
-      workFields();
+      extractResources();
       // Geometric sum, with growth rate r, from 0 to n, is (1-r^(n+1)) / (1-r).
       double coderExpected = firstOutput * (1 - pow(mf, blocks)) / (1 - mf);
       double actual = getAmount(output);
@@ -909,7 +909,7 @@ void Farmer::unitTests () {
   capital->setAmounts(oldCapital);
 }
 
-void Farmer::workFields () {  
+void Farmer::extractResources () {  
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   double availableLabour = getAmount(TradeGood::Labor);
   double capFactor = capitalFactor(*this);
@@ -1037,7 +1037,7 @@ void Farmer::workFields () {
 
   double usedLabour = availableLabour - getAmount(TradeGood::Labor);
   deliverGoods(TradeGood::Labor, usedLabour);
-  if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workFields");
+  if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after extractResources");
 }
 
 void Farmer::fillBlock (int block, vector<int>& theBlock) const {
@@ -1549,7 +1549,7 @@ void Farmland::devastate (int devastation) {
 }
 
 void Farmland::endOfTurn () {
-  BOOST_FOREACH(Farmer* farmer, workers) farmer->workFields();
+  doWork();
   countTotals();
 }
 

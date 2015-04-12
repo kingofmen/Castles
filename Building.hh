@@ -327,15 +327,17 @@ private:
   static vector<double> fertility;
 };
 
-template <class Worker> class Collective {
+template <class WorkerType, class StatusType, int N> class Collective {
   friend class StaticInitialiser;
 public:
   Collective () {}
-  ~Collective () {BOOST_FOREACH(Worker* worker, workers) worker->destroyIfReal();}
-  double getAmount (TradeGood const* const tg) {double ret = 0; BOOST_FOREACH(Worker* f, workers) ret += f->getAmount(tg); return ret;}
-  void setMarket (Market* market) {BOOST_FOREACH(Worker* worker, workers) market->registerParticipant(worker);}
+  ~Collective () {BOOST_FOREACH(WorkerType* worker, workers) worker->destroyIfReal();}
+  void doWork () {BOOST_FOREACH(WorkerType* worker, workers) worker->extractResources();}
+  double getAmount (TradeGood const* const tg) {double ret = 0; BOOST_FOREACH(WorkerType* f, workers) ret += f->getAmount(tg); return ret;}
+  void setMarket (Market* market) {BOOST_FOREACH(WorkerType* worker, workers) market->registerParticipant(worker);}
 protected:
-  vector<Worker*> workers;
+  vector<WorkerType*> workers;
+  static const int Num = N;
 };
 
 class FieldStatus : public Enumerable<const FieldStatus> {
@@ -368,7 +370,7 @@ public:
   double getMarginFactor () const;
   virtual void setMirrorState ();
   void unitTests ();
-  void workFields ();
+  void extractResources ();
 private:
   Farmer(Farmer* other);
   void fillBlock (int block, vector<int>& theBlock) const;
@@ -385,7 +387,7 @@ private:
   static int _cropsFrom1;
 };
 
-class Farmland : public Building, public Mirrorable<Farmland>, public Collective<Farmer> {
+class Farmland : public Building, public Mirrorable<Farmland>, public Collective<Farmer, FieldStatus, 10> {
   friend class Mirrorable<Farmland>;
   friend class StaticInitialiser;
   friend class FarmGraphicsInfo;
@@ -406,9 +408,7 @@ public:
 
   static Farmland* getTestFarm (int numFields = 0);
   static void unitTests ();
-  
-  static const int numOwners = 10; 
-  
+
 private:
   Farmland (Farmland* other);
   void countTotals ();

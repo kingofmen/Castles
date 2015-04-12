@@ -45,8 +45,31 @@ public:
   static void      writeGameToFile (string fname);
   static void      writeAgeInfoToObject (AgeTracker& age, Object* obj, int skip = 0);  
   static void      writeUnitToObject (MilUnit* unit, Object* obj);
-  
+
 private:
+  template <class W, class S, int N> static void initialiseCollective (Collective<W, S, N>* collective, Object* cInfo) {
+    objvec wInfos = cInfo->getValue("worker");
+    if ((int) wInfos.size() < N) throwFormatted("Expected %i worker objects, found %i", N, wInfos.size());
+    for (int i = 0; i < N; ++i) {
+      W* currWorker = collective->workers[i];
+      initialiseEcon(currWorker, wInfos[i]);
+      for (typename S::Iter stat = S::start(); stat != S::final(); ++stat) {
+	currWorker->fields[**stat] = wInfos[i]->safeGetInt((*stat)->getName(), 0);
+      }
+    }
+  }
+
+  template <class W, class S, int N> static void writeCollective (Collective<W, S, N>* collective, Object* cInfo) {
+    for (int i = 0; i < N; ++i) {
+      Object* worker = new Object("worker");
+      cInfo->setValue(worker);
+      writeEconActorIntoObject(collective->workers[i], worker);
+      for (typename S::Iter fs = S::start(); fs != S::final(); ++fs) {
+	worker->setLeaf((*fs)->getName(), collective->workers[i]->fields[**fs]);
+      }
+    }
+  }
+
   static Farmland* buildFarm (Object* fInfo);
   static Forest*   buildForest (Object* fInfo);
   static Mine*     buildMine (Object* mInfo);  
