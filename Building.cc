@@ -39,6 +39,18 @@ int Farmer::_cropsFrom3     = 1000;
 int Farmer::_cropsFrom2     = 500;
 int Farmer::_cropsFrom1     = 100;
 
+ForestStatus const* ForestStatus::Clear = 0;
+ForestStatus const* ForestStatus::Planted = 0;
+ForestStatus const* ForestStatus::Scrub = 0;
+ForestStatus const* ForestStatus::Saplings = 0;
+ForestStatus const* ForestStatus::Young = 0;
+ForestStatus const* ForestStatus::Grown = 0;
+ForestStatus const* ForestStatus::Mature = 0;
+ForestStatus const* ForestStatus::Mighty = 0;
+ForestStatus const* ForestStatus::Huge = 0;
+ForestStatus const* ForestStatus::Climax = 0;
+ForestStatus const* ForestStatus::Wild = 0;
+
 int Forest::_labourToTend    = 5;
 int Forest::_labourToHarvest = 50;
 int Forest::_labourToClear   = 250;
@@ -1117,8 +1129,8 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
 Forest::Forest ()
   : Building(1)
   , Mirrorable<Forest>()
-  , yearsSinceLastTick(0)    
-  , minStatusToHarvest(Huge)    
+  , yearsSinceLastTick(0)
+  , minStatusToHarvest(Huge)
   , blockSize(1)
   , workableBlocks(3)
 {
@@ -1743,6 +1755,27 @@ void FieldStatus::initialise() {
   FieldStatus::Ripe2 = new FieldStatus("ripe2", 0, false);
   FieldStatus::Ripe3 = new FieldStatus("ripe3", 0, false);
   FieldStatus::Ended = new FieldStatus("ended", 0, true);
+}
+
+ForestStatus::ForestStatus (string n, int rl, bool lastOne)
+  : Enumerable<const ForestStatus>(this, n, lastOne)
+{}
+
+ForestStatus::~ForestStatus () {}
+
+void ForestStatus::initialise() {
+  Enumerable<const ForestStatus>::clear();
+  ForestStatus::Clear    = new ForestStatus("clear",    0, false);
+  ForestStatus::Planted  = new ForestStatus("planted",  0, false);
+  ForestStatus::Scrub    = new ForestStatus("scrub",    0, false);
+  ForestStatus::Saplings = new ForestStatus("saplings", 0, false);
+  ForestStatus::Young    = new ForestStatus("young",    0, false);
+  ForestStatus::Grown    = new ForestStatus("grown",    0, false);
+  ForestStatus::Mature   = new ForestStatus("mature",   0, false);
+  ForestStatus::Mighty   = new ForestStatus("mighty",   0, false);
+  ForestStatus::Huge     = new ForestStatus("huge",     0, false);
+  ForestStatus::Climax   = new ForestStatus("climax",   0, false);
+  ForestStatus::Wild     = new ForestStatus("wild",     0, true);
 }
 
 void Mine::endOfTurn () {

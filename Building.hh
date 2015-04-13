@@ -416,6 +416,26 @@ private:
   int blockSize;  
 };
 
+class ForestStatus : public Enumerable<const ForestStatus> {
+public:
+  ForestStatus (string n, int rl, bool lastOne = false);
+  ~ForestStatus ();
+
+  static void initialise();
+
+  static ForestStatus const* Clear;
+  static ForestStatus const* Planted;
+  static ForestStatus const* Scrub;
+  static ForestStatus const* Saplings;
+  static ForestStatus const* Young;
+  static ForestStatus const* Grown;
+  static ForestStatus const* Mature;
+  static ForestStatus const* Mighty;
+  static ForestStatus const* Huge;
+  static ForestStatus const* Climax;
+  static ForestStatus const* Wild;
+};
+
 class Forest : public Building, public Mirrorable<Forest> {
   friend class StaticInitialiser;
   friend class Mirrorable<Forest>;
