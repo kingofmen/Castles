@@ -163,8 +163,14 @@ template <class T> class Iterable {
 
   typedef typename vector<T*>::iterator Iter;
   typedef typename vector<T*>::iterator Iterator;
+  typedef typename vector<T*>::reverse_iterator rIter;
+  typedef typename vector<T*>::reverse_iterator rIterator;
+
   static Iter start () {return allThings.begin();}
   static Iter final () {return allThings.end();}
+  static rIter rstart () {return allThings.rbegin();}
+  static rIter rfinal () {return allThings.rend();}
+
   static unsigned int totalAmount () {return allThings.size();}
   static void clear () {
     while (0 < totalAmount()) {
@@ -236,6 +242,11 @@ public:
   unsigned int getIdx () const {return idx;}
   static T* getByIndex (unsigned int i) {if (i >= theNumbers.size()) return 0; return theNumbers[i];}
   operator unsigned int() const {return idx;}
+  bool operator< (unsigned int i) const {return idx < i;}
+  bool operator<  (const Numbered<T>& other) {return idx <  other.idx;}
+  bool operator<= (const Numbered<T>& other) {return idx <= other.idx;}
+  bool operator>  (const Numbered<T>& other) {return idx >  other.idx;}
+  bool operator>= (const Numbered<T>& other) {return idx >= other.idx;}
 
 protected:
   static void clear () {

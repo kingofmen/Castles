@@ -545,24 +545,24 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
   if ((int) workers.size() < Forest::numOwners) throwFormatted("Expected %i worker objects, found %i", Forest::numOwners, workers.size());
   for (int i = 0; i < Forest::numOwners; ++i) {
     initialiseEcon(ret->foresters[i], workers[i]);
-    ret->foresters[i]->groves[Forest::Wild]     = wild    ? (wild->numTokens()    > i ? wild->tokenAsInt(i)    : 0) : 0;
-    ret->foresters[i]->groves[Forest::Clear]    = clear   ? (clear->numTokens()   > i ? clear->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[Forest::Planted]  = plant   ? (plant->numTokens()   > i ? plant->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[Forest::Scrub]    = scrub   ? (scrub->numTokens()   > i ? scrub->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[Forest::Saplings] = sapling ? (sapling->numTokens() > i ? sapling->tokenAsInt(i) : 0) : 0;
-    ret->foresters[i]->groves[Forest::Young]    = young   ? (young->numTokens()   > i ? young->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[Forest::Grown]    = grown   ? (grown->numTokens()   > i ? grown->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[Forest::Mature]   = mature  ? (mature->numTokens()  > i ? mature->tokenAsInt(i)  : 0) : 0;
-    ret->foresters[i]->groves[Forest::Mighty]   = mighty  ? (mighty->numTokens()  > i ? mighty->tokenAsInt(i)  : 0) : 0;
-    ret->foresters[i]->groves[Forest::Huge]     = huge    ? (huge->numTokens()    > i ? huge->tokenAsInt(i)    : 0) : 0;
-    ret->foresters[i]->groves[Forest::Climax]   = climax  ? (climax->numTokens()  > i ? climax->tokenAsInt(i)  : 0) : 0;
+    ret->foresters[i]->groves[*ForestStatus::Wild]     = wild    ? (wild->numTokens()    > i ? wild->tokenAsInt(i)    : 0) : 0;
+    ret->foresters[i]->groves[*ForestStatus::Clear]    = clear   ? (clear->numTokens()   > i ? clear->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[*ForestStatus::Planted]  = plant   ? (plant->numTokens()   > i ? plant->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[*ForestStatus::Scrub]    = scrub   ? (scrub->numTokens()   > i ? scrub->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[*ForestStatus::Saplings] = sapling ? (sapling->numTokens() > i ? sapling->tokenAsInt(i) : 0) : 0;
+    ret->foresters[i]->groves[*ForestStatus::Young]    = young   ? (young->numTokens()   > i ? young->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[*ForestStatus::Grown]    = grown   ? (grown->numTokens()   > i ? grown->tokenAsInt(i)   : 0) : 0;
+    ret->foresters[i]->groves[*ForestStatus::Mature]   = mature  ? (mature->numTokens()  > i ? mature->tokenAsInt(i)  : 0) : 0;
+    ret->foresters[i]->groves[*ForestStatus::Mighty]   = mighty  ? (mighty->numTokens()  > i ? mighty->tokenAsInt(i)  : 0) : 0;
+    ret->foresters[i]->groves[*ForestStatus::Huge]     = huge    ? (huge->numTokens()    > i ? huge->tokenAsInt(i)    : 0) : 0;
+    ret->foresters[i]->groves[*ForestStatus::Climax]   = climax  ? (climax->numTokens()  > i ? climax->tokenAsInt(i)  : 0) : 0;
     ret->foresters[i]->owner                    = owner   ? (owner->numTokens()   > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
     ret->foresters[i]->createBlockQueue();
   }
 
   ret->yearsSinceLastTick = fInfo->safeGetInt("yearsSinceLastTick");
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
-  ret->minStatusToHarvest = Forest::Huge;
+  ret->minStatusToHarvest = ForestStatus::Huge;
   
   return ret;
 }
@@ -1389,23 +1389,23 @@ void StaticInitialiser::writeGameToFile (string fname) {
 	writeEconActorIntoObject(forest->foresters[i], worker);
       }
 
-      map<Forest::ForestStatus, Object*> statuses;
-      statuses[Forest::Wild]     = new Object("wild");
-      statuses[Forest::Clear]    = new Object("cleared");
-      statuses[Forest::Planted]  = new Object("planted");
-      statuses[Forest::Scrub]    = new Object("scrubby");
-      statuses[Forest::Saplings] = new Object("sapling");
-      statuses[Forest::Young]    = new Object("young");
-      statuses[Forest::Grown]    = new Object("grown");
-      statuses[Forest::Mature]   = new Object("mature");
-      statuses[Forest::Mighty]   = new Object("mighty");
-      statuses[Forest::Huge]     = new Object("huge");
-      statuses[Forest::Climax]   = new Object("climax");
+      map<ForestStatus const*, Object*> statuses;
+      statuses[ForestStatus::Wild]     = new Object("wild");
+      statuses[ForestStatus::Clear]    = new Object("cleared");
+      statuses[ForestStatus::Planted]  = new Object("planted");
+      statuses[ForestStatus::Scrub]    = new Object("scrubby");
+      statuses[ForestStatus::Saplings] = new Object("sapling");
+      statuses[ForestStatus::Young]    = new Object("young");
+      statuses[ForestStatus::Grown]    = new Object("grown");
+      statuses[ForestStatus::Mature]   = new Object("mature");
+      statuses[ForestStatus::Mighty]   = new Object("mighty");
+      statuses[ForestStatus::Huge]     = new Object("huge");
+      statuses[ForestStatus::Climax]   = new Object("climax");
       
-      for (map<Forest::ForestStatus, Object*>::iterator status = statuses.begin(); status != statuses.end(); ++status) {
+      for (map<ForestStatus const*, Object*>::iterator status = statuses.begin(); status != statuses.end(); ++status) {
 	(*status).second->setObjList(true);
 	for (int i = 0; i < Forest::numOwners; ++i) {
-	  (*status).second->addToList(forest->foresters[i]->groves[(*status).first]);
+	  (*status).second->addToList(forest->foresters[i]->groves[*(*status).first]);
 	}
 	forestInfo->setValue((*status).second);
       }
@@ -1423,7 +1423,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       }
       forestInfo->setLeaf("yearsSinceLastTick", forest->yearsSinceLastTick);
       forestInfo->setLeaf("blockSize", forest->blockSize);
-      forestInfo->setLeaf("minStatusToHarvest", Forest::Huge);
+      forestInfo->setLeaf("minStatusToHarvest", *ForestStatus::Huge);
     }
 
     Mine* mine = (*hex)->mine;

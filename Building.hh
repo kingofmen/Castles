@@ -138,9 +138,6 @@ public:
   }
   
 protected:
-  virtual double labourForMaintenance () const {return 0;}
-  virtual double lossFromNoMaintenance () const {return 0;}
-  
   // Capital reduces the amount of labour required by factor (1 - x log (N+1)). This array stores x. 
   static GoodsHolder* capital;
   static TradeGood const* output;
@@ -443,8 +440,6 @@ public:
   Forest ();
   ~Forest ();
 
-  enum ForestStatus {Clear = 0, Planted, Scrub, Saplings, Young, Grown, Mature, Mighty, Huge, Climax, Wild, NumStatus};
-
   virtual void endOfTurn ();
   void setDefaultOwner (EconActor* o);
   void setMarket (Market* market) {BOOST_FOREACH(Forester* forester, foresters) {market->registerParticipant(forester);}}
@@ -463,15 +458,13 @@ private:
     double getCapitalSize () const;
     void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
     double getMarginFactor () const {return boss->marginFactor;}
-    virtual double labourForMaintenance () const;
-    virtual double lossFromNoMaintenance () const;
     int numBlocks () const;
     virtual void setMirrorState ();
     void unitTests ();
     void workGroves (bool tick);
 
     vector<int> groves;
-    vector<ForestStatus> myBlocks;
+    vector<ForestStatus const*> myBlocks;
     int tendedGroves;
   private:
     Forester(Forester* other);
@@ -484,7 +477,7 @@ private:
   Forest (Forest* other);
   vector<Forester*> foresters;
   int yearsSinceLastTick;
-  ForestStatus minStatusToHarvest;
+  ForestStatus const* minStatusToHarvest;
   int blockSize;
   int workableBlocks;
   
