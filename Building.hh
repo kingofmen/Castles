@@ -448,9 +448,10 @@ public:
   int numBlocks () const;
   virtual void setMirrorState ();
   void unitTests ();
-  void workGroves (bool tick);
+  void extractResources () {}
+  void extractResources (bool tick);
 
-  vector<int> groves;
+  vector<int> fields;
   vector<ForestStatus const*> myBlocks;
   int tendedGroves;
 private:
@@ -461,7 +462,7 @@ private:
   void createBlockQueue ();
 };
 
-class Forest : public Building, public Mirrorable<Forest> {
+class Forest : public Building, public Mirrorable<Forest>, public Collective<Forester, ForestStatus, 10> {
   friend class StaticInitialiser;
   friend class Mirrorable<Forest>;
   friend class Forester;
@@ -471,14 +472,12 @@ public:
 
   virtual void endOfTurn ();
   void setDefaultOwner (EconActor* o);
-  void setMarket (Market* market) {BOOST_FOREACH(Forester* forester, foresters) {market->registerParticipant(forester);}}
   virtual void setMirrorState ();
 
   static void unitTests ();
   
 private:
   Forest (Forest* other);
-  vector<Forester*> foresters;
   int yearsSinceLastTick;
   ForestStatus const* minStatusToHarvest;
   int blockSize;

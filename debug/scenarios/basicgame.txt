@@ -104,29 +104,16 @@ hexinfo = {
     worker = { goods = { money = 10000 food = 5000 }  id = 32 clear = 100 owner = 0 } 
   }
   forest = {
-    worker = { goods = { money = 10000 } id = 33 }
-    worker = { goods = { money = 10000 } id = 34 }
-    worker = { goods = { money = 10000 } id = 35 }
-    worker = { goods = { money = 10000 } id = 36 }
-    worker = { goods = { money = 10000 } id = 37 }
-    worker = { goods = { money = 10000 } id = 38 }
-    worker = { goods = { money = 10000 } id = 39 }
-    worker = { goods = { money = 10000 } id = 40 }
-    worker = { goods = { money = 10000 } id = 41 }
-    worker = { goods = { money = 10000 } id = 42 }
-
-    wild    = { 100 75 23 100 100 34 89 100 28 89 }
-    cleared = { 0 0 0 0 0 0 0 0 0 0 }
-    planted = { 0 0 0 0 0 0 0 0 0 0 }
-    scrubby = { 0 0 0 0 0 0 0 0 0 0 }
-    sapling = { 0 0 0 0 0 0 0 0 0 0 }
-    young   = { 0 0 0 0 0 0 0 0 0 0 }
-    grown   = { 0 0 0 0 0 0 0 0 0 0 }
-    mature  = { 0 0 0 0 0 0 0 0 0 0 }
-    mighty  = { 0 0 0 0 0 0 0 0 0 0 }
-    huge    = { 0 25 0 0 0 0 0 0 0 0 }
-    climax  = { 0 0 0 0 0 0 0 0 0 0 }
-    owner   = { 3 3 3 3 2 2 2 0 0 0 }
+    worker = { goods = { money = 10000 } id = 33 owner = 3 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 34 owner = 3 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 35 owner = 3 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 36 owner = 3 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 37 owner = 2 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 38 owner = 2 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 39 owner = 2 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 40 owner = 0 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 41 owner = 0 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 42 owner = 0 wild = 100 climax = 100 }
     tended  = { 0 0 0 0 0 0 0 0 0 0 }
     yearsSinceLastTick = 0
     minStatusToHarvest = climax

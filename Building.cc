@@ -1133,35 +1133,33 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
 Forest::Forest ()
   : Building(1)
   , Mirrorable<Forest>()
+  , Collective<Forester, ForestStatus, numOwners>()
   , yearsSinceLastTick(0)
   , minStatusToHarvest(ForestStatus::Huge)
   , blockSize(1)
   , workableBlocks(3)
 {
   for (int j = 0; j < numOwners; ++j) {
-    foresters.push_back(new Forester(this));
+    workers.push_back(new Forester(this));
   }
 }
 
 Forest::Forest (Forest* other)
   : Building(1)
   , Mirrorable<Forest>(other)
+  , Collective<Forester, ForestStatus, numOwners>()
   , yearsSinceLastTick(0)    
   , minStatusToHarvest(other->minStatusToHarvest)
   , blockSize(other->blockSize)
   , workableBlocks(other->workableBlocks)
 {}
 
-Forest::~Forest () {
-  BOOST_FOREACH(Forester* forester, foresters) {
-    forester->destroyIfReal();
-  }
-}
+Forest::~Forest () {}
 
 Forester::Forester (Forest* b)
   : Industry<Forester>(this)
   , Mirrorable<Forester>()
-  , groves(ForestStatus::numTypes(), 0)
+  , fields(ForestStatus::numTypes(), 0)
   , tendedGroves(0)
   , boss(b)
 {}
@@ -1169,12 +1167,12 @@ Forester::Forester (Forest* b)
 Forester::Forester (Forester* other)
   : Industry<Forester>(this)
   , Mirrorable<Forester>(other)
-  , groves(ForestStatus::numTypes(), 0)
+  , fields(ForestStatus::numTypes(), 0)
 {}
 
 void Forester::setMirrorState () {
   mirror->owner = owner;
-  for (unsigned int i = 0; i < groves.size(); ++i) mirror->groves[i] = groves[i];
+  for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
   mirror->boss = boss->getMirror();
 }
 
@@ -1195,13 +1193,13 @@ void Forest::unitTests () {
   Hex* testHex = Hex::getHex(1000, 1000);
   Forest testForest;
   testHex->setForest(&testForest);
-  if ((int) testForest.foresters.size() != numOwners) {
-    sprintf(errorMessage, "Forest should have %i Foresters, has %i", numOwners, testForest.foresters.size());
+  if ((int) testForest.workers.size() != numOwners) {
+    sprintf(errorMessage, "Forest should have %i Workers, has %i", numOwners, testForest.workers.size());
     throw string(errorMessage);
   }
 
   testForest.minStatusToHarvest = ForestStatus::Mature;
-  testForest.foresters[0]->unitTests();
+  testForest.workers[0]->unitTests();
 }
 
 void Forester::unitTests () {
@@ -1219,8 +1217,8 @@ void Forester::unitTests () {
   }
 
   Calendar::newYearBegins();
-  groves[*ForestStatus::Clear] = 100;
-  groves[*ForestStatus::Huge] = 100;
+  fields[*ForestStatus::Clear] = 100;
+  fields[*ForestStatus::Huge] = 100;
   createBlockQueue();
   double fullCycleLabour = 0;
   vector<jobInfo> jobs;
@@ -1245,8 +1243,8 @@ void Forester::unitTests () {
   // for capital if the capital price is below 210.
   int oldTendLabour = Forest::_labourToTend;
   int oldHarvestLabour = Forest::_labourToHarvest;
-  Forest::_labourToTend = 14;   // 200 groves, times 14 labour, over 14 turns, makes 210 next turn - it will try to do 15 per turn.
-  Forest::_labourToHarvest = 1; // 100 harvestable groves, which we want done this turn.
+  Forest::_labourToTend = 14;   // 200 fields, times 14 labour, over 14 turns, makes 210 next turn - it will try to do 15 per turn.
+  Forest::_labourToHarvest = 1; // 100 harvestable fields, which we want done this turn.
   GoodsHolder prices;
   vector<MarketBid*> bidlist;
   GoodsHolder::clear();
@@ -1282,8 +1280,8 @@ void Forester::unitTests () {
   if (fabs(foundLabour - 310) > 0.1) throwFormatted("Expected to buy 310 %s, bid is for %f (%i %i) %f %f %i %i",
 						    TradeGood::Labor->getName().c_str(),
 						    foundLabour,
-						    groves[*ForestStatus::Clear],
-						    groves[*ForestStatus::Huge],
+						    fields[*ForestStatus::Clear],
+						    fields[*ForestStatus::Huge],
 						    capitalFactor(*this),
 						    getAmount(testCapGood),
 						    getTendedArea(),
@@ -1294,42 +1292,42 @@ void Forester::unitTests () {
   owner = this;
   tendedGroves = getTendedArea();
   tendedGroves -= 10;
-  workGroves(true);
-  if ((groves[*ForestStatus::Clear] > 0) ||
-      (groves[*ForestStatus::Huge] > 0) ||
-      (groves[*ForestStatus::Climax] != 95) ||
-      (groves[*ForestStatus::Planted] != 95) ||
-      (groves[*ForestStatus::Wild] != 10))
+  extractResources(true);
+  if ((fields[*ForestStatus::Clear] > 0) ||
+      (fields[*ForestStatus::Huge] > 0) ||
+      (fields[*ForestStatus::Climax] != 95) ||
+      (fields[*ForestStatus::Planted] != 95) ||
+      (fields[*ForestStatus::Wild] != 10))
     throwFormatted("Expected (Clear, Huge, Climax, Planted, Wild) to be (%i %i %i %i %i), got (%i %i %i %i %i)",
 		   0, 0, 95, 95, 10,
-		   groves[*ForestStatus::Clear],
-		   groves[*ForestStatus::Huge],
-		   groves[*ForestStatus::Climax],
-		   groves[*ForestStatus::Planted],
-		   groves[*ForestStatus::Wild]);
+		   fields[*ForestStatus::Clear],
+		   fields[*ForestStatus::Huge],
+		   fields[*ForestStatus::Climax],
+		   fields[*ForestStatus::Planted],
+		   fields[*ForestStatus::Wild]);
 
   getLabourForBlock(0, jobs, fullCycleLabour);
   deliverGoods(TradeGood::Labor, fullCycleLabour);
-  workGroves(false);
+  extractResources(false);
   double firstOutput = getAmount(output);
-  if (0.01 > firstOutput) throwFormatted("Expected to have some wood after workGroves %i %i %i %i %i",
-					 groves[*ForestStatus::Clear],
-					 groves[*ForestStatus::Huge],
-					 groves[*ForestStatus::Climax],
-					 groves[*ForestStatus::Planted],
-					 groves[*ForestStatus::Wild]);
+  if (0.01 > firstOutput) throwFormatted("Expected to have some wood after extractResources %i %i %i %i %i",
+					 fields[*ForestStatus::Clear],
+					 fields[*ForestStatus::Huge],
+					 fields[*ForestStatus::Climax],
+					 fields[*ForestStatus::Planted],
+					 fields[*ForestStatus::Wild]);
 
-  for (unsigned int i = 0; i < groves.size(); ++i) groves[i] = 0;
-  groves[*ForestStatus::Climax] = boss->blockSize;
+  for (unsigned int i = 0; i < fields.size(); ++i) fields[i] = 0;
+  fields[*ForestStatus::Climax] = boss->blockSize;
   createBlockQueue();
   getLabourForBlock(0, jobs, fullCycleLabour);
   setAmount(TradeGood::Labor, fullCycleLabour);
   setAmount(output, 0);
   tendedGroves = getTendedArea();
   unsigned int beforeWork = myBlocks.size();
-  workGroves(false);
+  extractResources(false);
   unsigned int afterWork = myBlocks.size();
-  if (beforeWork != afterWork) throwFormatted("Change in number of groves during workGroves, %i -> %i", beforeWork, afterWork);
+  if (beforeWork != afterWork) throwFormatted("Change in number of fields during extractResources, %i -> %i", beforeWork, afterWork);
   firstOutput = getAmount(output);
 
   vector<double> marginFactors;
@@ -1339,7 +1337,7 @@ void Forester::unitTests () {
   BOOST_FOREACH(double mf, marginFactors) {
     boss->marginFactor = mf;
     for (int blocks = 2; blocks < 5; ++blocks) {
-      groves[*ForestStatus::Climax] = blocks*boss->blockSize;
+      fields[*ForestStatus::Climax] = blocks*boss->blockSize;
       createBlockQueue();
       double gameExpected = 0;      
       for (int j = 0; j < blocks; ++j) gameExpected += outputOfBlock(j) * pow(mf, j);
@@ -1347,7 +1345,7 @@ void Forester::unitTests () {
       getLabourForBlock(0, jobs, fullCycleLabour);
       setAmount(TradeGood::Labor, blocks*fullCycleLabour);
       tendedGroves = getTendedArea();
-      workGroves(false);
+      extractResources(false);
       // Geometric sum, with growth rate r, from 0 to n, is (1-r^(n+1)) / (1-r).
       double coderExpected = firstOutput * (1 - pow(mf, blocks)) / (1 - mf);
       double actual = getAmount(output);
@@ -1395,24 +1393,24 @@ int Forester::numBlocks () const {
   return min(blocks, boss->workableBlocks);
 }
 
-void Forester::workGroves (bool tick) {
+void Forester::extractResources (bool tick) {
   if (tick) {
-    groves[*ForestStatus::Climax]    += groves[*ForestStatus::Huge];
-    groves[*ForestStatus::Huge]       = groves[*ForestStatus::Mighty];
-    groves[*ForestStatus::Mighty]     = groves[*ForestStatus::Mature];
-    groves[*ForestStatus::Mature]     = groves[*ForestStatus::Grown];
-    groves[*ForestStatus::Grown]      = groves[*ForestStatus::Young];
-    groves[*ForestStatus::Young]      = groves[*ForestStatus::Saplings];
-    groves[*ForestStatus::Saplings]   = groves[*ForestStatus::Scrub];
-    groves[*ForestStatus::Scrub]      = groves[*ForestStatus::Planted];
-    groves[*ForestStatus::Planted]    = groves[*ForestStatus::Clear];
-    groves[*ForestStatus::Clear]      = 0;
+    fields[*ForestStatus::Climax]    += fields[*ForestStatus::Huge];
+    fields[*ForestStatus::Huge]       = fields[*ForestStatus::Mighty];
+    fields[*ForestStatus::Mighty]     = fields[*ForestStatus::Mature];
+    fields[*ForestStatus::Mature]     = fields[*ForestStatus::Grown];
+    fields[*ForestStatus::Grown]      = fields[*ForestStatus::Young];
+    fields[*ForestStatus::Young]      = fields[*ForestStatus::Saplings];
+    fields[*ForestStatus::Saplings]   = fields[*ForestStatus::Scrub];
+    fields[*ForestStatus::Scrub]      = fields[*ForestStatus::Planted];
+    fields[*ForestStatus::Planted]    = fields[*ForestStatus::Clear];
+    fields[*ForestStatus::Clear]      = 0;
     int wildening      = getTendedArea() - tendedGroves;
-    groves[*ForestStatus::Wild]      += wildening;
+    fields[*ForestStatus::Wild]      += wildening;
     ForestStatus::rIter target = ForestStatus::rstart(); ++target;
     while (wildening > 0) {
-      if (0 < groves[**target]) {
-	groves[**target]--;
+      if (0 < fields[**target]) {
+	fields[**target]--;
 	wildening--;
       }
       if (++target == ForestStatus::rfinal()) {target = ForestStatus::rstart(); ++target;}
@@ -1439,20 +1437,20 @@ void Forester::workGroves (bool tick) {
       if ((*myBlocks[i] >= *(boss->minStatusToHarvest)) && (availableLabour >= labourPerChop)) {
 	availableLabour -= labourPerChop;
 	totalChopped += Forest::_amountOfWood[*myBlocks[i]] * decline;
-	--groves[*myBlocks[i]];
-	++groves[*ForestStatus::Clear];
+	--fields[*myBlocks[i]];
+	++fields[*ForestStatus::Clear];
       }
     }
     decline *= getMarginFactor();
   }
   produce(output, totalChopped);
-  // This cheats very slightly, by moving groves up in the
+  // This cheats very slightly, by moving fields up in the
   // queue - formerly inefficient ones thus become the best.
   createBlockQueue();
 
   double usedLabour = availableLabour - getAmount(TradeGood::Labor);
   deliverGoods(TradeGood::Labor, usedLabour);
-  if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workGroves");
+  if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after extractResources");
 }
 
 double Forester::getCapitalSize () const {
@@ -1460,27 +1458,27 @@ double Forester::getCapitalSize () const {
 }
 
 int Forester::getTendedArea () const {
-  return (groves[*ForestStatus::Clear] +
-	  groves[*ForestStatus::Planted] +
-	  groves[*ForestStatus::Scrub] +
-	  groves[*ForestStatus::Saplings] +
-	  groves[*ForestStatus::Young] +
-	  groves[*ForestStatus::Grown] +
-	  groves[*ForestStatus::Mature] +
-	  groves[*ForestStatus::Mighty] +
-	  groves[*ForestStatus::Huge] +
-	  groves[*ForestStatus::Climax]);
+  return (fields[*ForestStatus::Clear] +
+	  fields[*ForestStatus::Planted] +
+	  fields[*ForestStatus::Scrub] +
+	  fields[*ForestStatus::Saplings] +
+	  fields[*ForestStatus::Young] +
+	  fields[*ForestStatus::Grown] +
+	  fields[*ForestStatus::Mature] +
+	  fields[*ForestStatus::Mighty] +
+	  fields[*ForestStatus::Huge] +
+	  fields[*ForestStatus::Climax]);
 }
 
 int Forester::getForestArea () const {
-  return getTendedArea() + groves[*ForestStatus::Wild];
+  return getTendedArea() + fields[*ForestStatus::Wild];
 }
 
 void Forester::createBlockQueue () {
   myBlocks.clear();
   for (ForestStatus::rIter i = ForestStatus::rstart(); i != ForestStatus::rfinal(); ++i) {
     if ((*i) == ForestStatus::Wild) continue;
-    for (int j = 0; j < groves[**i]; ++j) {
+    for (int j = 0; j < fields[**i]; ++j) {
       myBlocks.push_back(*i);
     }
   }
@@ -1488,10 +1486,10 @@ void Forester::createBlockQueue () {
 
 void Forest::setMirrorState () {
   mirror->setOwner(getOwner());
-  mirror->foresters.clear();
-  BOOST_FOREACH(Forester* forester, foresters) {
+  mirror->workers.clear();
+  BOOST_FOREACH(Forester* forester, workers) {
     forester->setMirrorState();
-    mirror->foresters.push_back(forester->getMirror());
+    mirror->workers.push_back(forester->getMirror());
   }
   mirror->yearsSinceLastTick = yearsSinceLastTick;
   mirror->minStatusToHarvest = minStatusToHarvest;
@@ -1584,7 +1582,7 @@ void Farmland::setDefaultOwner (EconActor* o) {
 
 void Forest::setDefaultOwner (EconActor* o) {
   if (!o) return;
-  BOOST_FOREACH(Forester* forester, foresters) {
+  BOOST_FOREACH(Forester* forester, workers) {
     if (forester->getEconOwner()) continue;
     forester->setEconOwner(o);
   }
@@ -1599,7 +1597,7 @@ void Forest::endOfTurn () {
       tick = true;
     }
   }
-  BOOST_FOREACH(Forester* forester, foresters) forester->workGroves(tick);
+  BOOST_FOREACH(Forester* forester, workers) forester->extractResources(tick);
 }
 
 double Farmland::expectedProduction () const {
