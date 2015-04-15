@@ -178,7 +178,7 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   for (int i = 0; i < amountOfWood->numTokens(); ++i) {
     Forest::_amountOfWood[i] = amountOfWood->tokenAsInt(i);
   }
-  initialiseIndustry<Forest::Forester>(forestInfo);
+  initialiseIndustry<Forester>(forestInfo);
   
   Object* mineInfo       = popInfo->getNeededObject("mine");
   Mine::_amountOfIron    = mineInfo->safeGetInt("amount", Mine::_amountOfIron);

@@ -16,7 +16,8 @@ class MilUnitGraphicsInfo;
 class Hex;
 class Line; 
 class Player;
-class Farmland; 
+class Farmland;
+class Forest;
 
 struct jobInfo : public boost::tuple<double, int, int> { // Labour amount, times needed, turns to complete.
   jobInfo (double l, double c, double t) : boost::tuple<double, int, int>(l, c, t) {}
@@ -433,9 +434,37 @@ public:
   static ForestStatus const* Wild;
 };
 
+class Forester : public Industry<Forester>, public Mirrorable<Forester> {
+  friend class StaticInitialiser;
+  friend class Mirrorable<Forester>;
+  friend class Forest;
+public:
+  Forester (Forest* b);
+  ~Forester ();
+  double outputOfBlock (int b) const;
+  double getCapitalSize () const;
+  void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
+  double getMarginFactor () const;
+  int numBlocks () const;
+  virtual void setMirrorState ();
+  void unitTests ();
+  void workGroves (bool tick);
+
+  vector<int> groves;
+  vector<ForestStatus const*> myBlocks;
+  int tendedGroves;
+private:
+  Forester(Forester* other);
+  Forest* boss;
+  int getForestArea () const;
+  int getTendedArea () const;
+  void createBlockQueue ();
+};
+
 class Forest : public Building, public Mirrorable<Forest> {
   friend class StaticInitialiser;
   friend class Mirrorable<Forest>;
+  friend class Forester;
 public:
   Forest ();
   ~Forest ();
@@ -448,32 +477,6 @@ public:
   static void unitTests ();
   
 private:
-  class Forester : public Industry<Forester>, public Mirrorable<Forester> {
-    friend class StaticInitialiser;
-    friend class Mirrorable<Forester>;
-  public:
-    Forester (Forest* b);
-    ~Forester ();
-    double outputOfBlock (int b) const;
-    double getCapitalSize () const;
-    void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
-    double getMarginFactor () const {return boss->marginFactor;}
-    int numBlocks () const;
-    virtual void setMirrorState ();
-    void unitTests ();
-    void workGroves (bool tick);
-
-    vector<int> groves;
-    vector<ForestStatus const*> myBlocks;
-    int tendedGroves;
-  private:
-    Forester(Forester* other);
-    Forest* boss;
-    int getForestArea () const;
-    int getTendedArea () const;
-    void createBlockQueue ();
-  };
- 
   Forest (Forest* other);
   vector<Forester*> foresters;
   int yearsSinceLastTick;
