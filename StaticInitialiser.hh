@@ -45,9 +45,21 @@ public:
   static void      writeGameToFile (string fname);
   static void      writeAgeInfoToObject (AgeTracker& age, Object* obj, int skip = 0);  
   static void      writeUnitToObject (MilUnit* unit, Object* obj);
-
+  
 private:
-  template <class W, class S, int N> static void initialiseCollective (Collective<W, S, N>* collective, Object* cInfo) {
+  template<class W> static void readInts (W* target, Object* source, map<string, int W::*> memMap) {
+    for (typename map<string, int W::*>::iterator i = memMap.begin(); i != memMap.end(); ++i) {
+      target->*((*i).second) = source->safeGetInt((*i).first);
+    }
+  }
+
+  template<class W> static void writeInts (W* source, Object* target, map<string, int W::*> memMap) {
+    for (typename map<string, int W::*>::iterator i = memMap.begin(); i != memMap.end(); ++i) {
+      target->setLeaf((*i).first, source->*((*i).second));
+    }
+  }
+  
+  template <class W, class S, int N> static void initialiseCollective (Collective<W, S, N>* collective, Object* cInfo, map<string, int W::*> intMap) {
     objvec wInfos = cInfo->getValue("worker");
     if ((int) wInfos.size() < N) throwFormatted("Expected %i worker objects, found %i", N, wInfos.size());
     for (int i = 0; i < N; ++i) {
@@ -56,10 +68,11 @@ private:
       for (typename S::Iter stat = S::start(); stat != S::final(); ++stat) {
 	currWorker->fields[**stat] = wInfos[i]->safeGetInt((*stat)->getName(), 0);
       }
+      readInts<W>(currWorker, wInfos[i], intMap);
     }
   }
 
-  template <class W, class S, int N> static void writeCollective (Collective<W, S, N>* collective, Object* cInfo) {
+  template <class W, class S, int N> static void writeCollective (Collective<W, S, N>* collective, Object* cInfo, map<string, int W::*> intMap) {
     for (int i = 0; i < N; ++i) {
       Object* worker = new Object("worker");
       cInfo->setValue(worker);
@@ -67,6 +80,7 @@ private:
       for (typename S::Iter fs = S::start(); fs != S::final(); ++fs) {
 	worker->setLeaf((*fs)->getName(), collective->workers[i]->fields[**fs]);
       }
+      writeInts<W>(collective->workers[i], worker, intMap);
     }
   }
 

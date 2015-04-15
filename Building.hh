@@ -330,7 +330,7 @@ template <class WorkerType, class StatusType, int N> class Collective {
 public:
   Collective () {}
   ~Collective () {BOOST_FOREACH(WorkerType* worker, workers) worker->destroyIfReal();}
-  void doWork () {BOOST_FOREACH(WorkerType* worker, workers) worker->extractResources();}
+  void doWork (bool tick = false) {BOOST_FOREACH(WorkerType* worker, workers) worker->extractResources(tick);}
   double getAmount (TradeGood const* const tg) {double ret = 0; BOOST_FOREACH(WorkerType* f, workers) ret += f->getAmount(tg); return ret;}
   void setMarket (Market* market) {BOOST_FOREACH(WorkerType* worker, workers) market->registerParticipant(worker);}
 protected:
@@ -368,7 +368,7 @@ public:
   double getMarginFactor () const;
   virtual void setMirrorState ();
   void unitTests ();
-  void extractResources ();
+  void extractResources (bool tick = false);
 private:
   Farmer(Farmer* other);
   void fillBlock (int block, vector<int>& theBlock) const;
@@ -448,7 +448,6 @@ public:
   int numBlocks () const;
   virtual void setMirrorState ();
   void unitTests ();
-  void extractResources () {}
   void extractResources (bool tick);
 
   vector<int> fields;

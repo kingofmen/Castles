@@ -16,6 +16,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Punitive expedition
    - Tribute
    - Self-castling
+ * Initialise F*Status and f*erMaps from text files or statically.
  * Supply line interference
  * Raid/tribute/battle mapmode
  * Fix Miner capitalSize

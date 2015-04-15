@@ -925,7 +925,7 @@ void Farmer::unitTests () {
   capital->setAmounts(oldCapital);
 }
 
-void Farmer::extractResources () {  
+void Farmer::extractResources (bool /* tick */) {
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   double availableLabour = getAmount(TradeGood::Labor);
   double capFactor = capitalFactor(*this);
@@ -1547,7 +1547,7 @@ void Farmland::devastate (int devastation) {
 }
 
 void Farmland::endOfTurn () {
-  doWork();
+  doWork(false);
   countTotals();
 }
 
@@ -1597,7 +1597,7 @@ void Forest::endOfTurn () {
       tick = true;
     }
   }
-  BOOST_FOREACH(Forester* forester, workers) forester->extractResources(tick);
+  doWork(tick);
 }
 
 double Farmland::expectedProduction () const {

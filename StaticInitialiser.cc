@@ -22,6 +22,11 @@ int StaticInitialiser::defaultUnitPriority = 4;
 ThreeDSprite* makeSprite (Object* info); 
 map<MilUnitTemplate*, Object*> milUnitSpriteObjectMap;
 
+static map<string, int Farmer::*> farmerMap;
+static map<string, int Forester::*> foresterMap;
+// On changing compilers, change to this construction:
+// static const map<string, int Forester::*> foresterMap = {{"tended", &Forester::tendedGroves}};
+
 void readGoodsHolder (Object* goodsObject, GoodsHolder& goods) {
   goods.clear();
   if (!goodsObject) return;
@@ -517,7 +522,7 @@ void readAgeTrackerFromObject (AgeTracker& age, Object* obj) {
 
 Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Farmland* ret = new Farmland();
-  initialiseCollective<Farmer, FieldStatus, Farmland::numOwners>(ret, fInfo);
+  initialiseCollective<Farmer, FieldStatus, Farmland::numOwners>(ret, fInfo, farmerMap);
   ret->countTotals();
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
   
@@ -527,40 +532,11 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
 
 Forest* StaticInitialiser::buildForest (Object* fInfo) {
   Forest* ret = new Forest();
-  /*
-  Object* wild    = fInfo->safeGetObject("wild");
-  Object* clear   = fInfo->safeGetObject("cleared");
-  Object* plant   = fInfo->safeGetObject("planted");
-  Object* scrub   = fInfo->safeGetObject("scrubby");
-  Object* sapling = fInfo->safeGetObject("sapling");
-  Object* young   = fInfo->safeGetObject("young");
-  Object* grown   = fInfo->safeGetObject("grown");
-  Object* mature  = fInfo->safeGetObject("mature");
-  Object* mighty  = fInfo->safeGetObject("mighty");
-  Object* huge    = fInfo->safeGetObject("huge");
-  Object* climax  = fInfo->safeGetObject("climax");
-  Object* owner   = fInfo->safeGetObject("owner");
-
-  objvec workers = fInfo->getValue("worker");
-  if ((int) workers.size() < Forest::numOwners) throwFormatted("Expected %i worker objects, found %i", Forest::numOwners, workers.size());
-  for (int i = 0; i < Forest::numOwners; ++i) {
-    initialiseEcon(ret->foresters[i], workers[i]);
-    ret->foresters[i]->groves[*ForestStatus::Wild]     = wild    ? (wild->numTokens()    > i ? wild->tokenAsInt(i)    : 0) : 0;
-    ret->foresters[i]->groves[*ForestStatus::Clear]    = clear   ? (clear->numTokens()   > i ? clear->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[*ForestStatus::Planted]  = plant   ? (plant->numTokens()   > i ? plant->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[*ForestStatus::Scrub]    = scrub   ? (scrub->numTokens()   > i ? scrub->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[*ForestStatus::Saplings] = sapling ? (sapling->numTokens() > i ? sapling->tokenAsInt(i) : 0) : 0;
-    ret->foresters[i]->groves[*ForestStatus::Young]    = young   ? (young->numTokens()   > i ? young->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[*ForestStatus::Grown]    = grown   ? (grown->numTokens()   > i ? grown->tokenAsInt(i)   : 0) : 0;
-    ret->foresters[i]->groves[*ForestStatus::Mature]   = mature  ? (mature->numTokens()  > i ? mature->tokenAsInt(i)  : 0) : 0;
-    ret->foresters[i]->groves[*ForestStatus::Mighty]   = mighty  ? (mighty->numTokens()  > i ? mighty->tokenAsInt(i)  : 0) : 0;
-    ret->foresters[i]->groves[*ForestStatus::Huge]     = huge    ? (huge->numTokens()    > i ? huge->tokenAsInt(i)    : 0) : 0;
-    ret->foresters[i]->groves[*ForestStatus::Climax]   = climax  ? (climax->numTokens()  > i ? climax->tokenAsInt(i)  : 0) : 0;
-    ret->foresters[i]->owner                    = owner   ? (owner->numTokens()   > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0) : 0;
-    ret->foresters[i]->createBlockQueue();
+  if (0 == foresterMap.size()) {
+    foresterMap["tended"] = &Forester::tendedGroves;
   }
-  */
-  initialiseCollective<Forester, ForestStatus, Forest::numOwners>(ret, fInfo);
+
+  initialiseCollective<Forester, ForestStatus, Forest::numOwners>(ret, fInfo, foresterMap);
   ret->yearsSinceLastTick = fInfo->safeGetInt("yearsSinceLastTick");
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
   ret->minStatusToHarvest = ForestStatus::Huge;
@@ -1375,7 +1351,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* farmInfo = new Object("farmland");
       writeBuilding(farmInfo, farm);
       hexInfo->setValue(farmInfo);
-      writeCollective<Farmer, FieldStatus, Farmland::numOwners>(farm, farmInfo);
+      writeCollective<Farmer, FieldStatus, Farmland::numOwners>(farm, farmInfo, farmerMap);
       farmInfo->setLeaf("blockSize", farm->blockSize);
     }
 
@@ -1384,13 +1360,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* forestInfo = new Object("forest");
       writeBuilding(forestInfo, forest);
       hexInfo->setValue(forestInfo);
-      writeCollective<Forester, ForestStatus, Forest::numOwners>(forest, forestInfo);
-      Object* tended = new Object("tended");
-      tended->setObjList(true);
-      forestInfo->setValue(tended);
-      for (int i = 0; i < Forest::numOwners; ++i) {
-	tended->addToList((int) forest->workers[i]->tendedGroves);
-      }
+      writeCollective<Forester, ForestStatus, Forest::numOwners>(forest, forestInfo, foresterMap);
       forestInfo->setLeaf("yearsSinceLastTick", forest->yearsSinceLastTick);
       forestInfo->setLeaf("blockSize", forest->blockSize);
       forestInfo->setLeaf("minStatusToHarvest", *ForestStatus::Huge);

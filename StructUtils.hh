@@ -32,10 +32,9 @@ template <typename T, typename M, typename C> member_lt_type<T,M,C> member_lt( M
   return member_lt_type<T,M,C>( ptr, cmp );
 }
 
-
 // Greater than for descending order.
 // Note use of lt_type - member_lt_type doesn't actually care
-// whether the suppled 'cmp' is a less-than! 
+// whether the supplied 'cmp' is a less-than! 
 template <typename T, typename M> member_lt_type<T,M, std::greater<M> > member_gt( M T::*ptr ) {
   return member_lt_type<T,M, std::greater<M> >(ptr, std::greater<M>() );
 }

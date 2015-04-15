@@ -104,17 +104,16 @@ hexinfo = {
     worker = { goods = { money = 10000 food = 5000 }  id = 32 clear = 100 owner = 0 } 
   }
   forest = {
-    worker = { goods = { money = 10000 } id = 33 owner = 3 wild = 100 climax = 100 }
-    worker = { goods = { money = 10000 } id = 34 owner = 3 wild = 100 climax = 100 }
-    worker = { goods = { money = 10000 } id = 35 owner = 3 wild = 100 climax = 100 }
-    worker = { goods = { money = 10000 } id = 36 owner = 3 wild = 100 climax = 100 }
-    worker = { goods = { money = 10000 } id = 37 owner = 2 wild = 100 climax = 100 }
-    worker = { goods = { money = 10000 } id = 38 owner = 2 wild = 100 climax = 100 }
-    worker = { goods = { money = 10000 } id = 39 owner = 2 wild = 100 climax = 100 }
-    worker = { goods = { money = 10000 } id = 40 owner = 0 wild = 100 climax = 100 }
-    worker = { goods = { money = 10000 } id = 41 owner = 0 wild = 100 climax = 100 }
-    worker = { goods = { money = 10000 } id = 42 owner = 0 wild = 100 climax = 100 }
-    tended  = { 0 0 0 0 0 0 0 0 0 0 }
+    worker = { goods = { money = 10000 } id = 33 owner = 3 tended = 0 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 34 owner = 3 tended = 0 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 35 owner = 3 tended = 0 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 36 owner = 3 tended = 0 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 37 owner = 2 tended = 0 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 38 owner = 2 tended = 0 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 39 owner = 2 tended = 0 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 40 owner = 0 tended = 0 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 41 owner = 0 tended = 0 wild = 100 climax = 100 }
+    worker = { goods = { money = 10000 } id = 42 owner = 0 tended = 0 wild = 100 climax = 100 }
     yearsSinceLastTick = 0
     minStatusToHarvest = climax
   }

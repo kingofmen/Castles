@@ -96,17 +96,16 @@ hexinfo = {
     owner = { 3 3 3 3 3 3 3 3 3 3 }
   }
   forest = {
-    worker = { goods = { money = 10000 wood = 250 } id = 16 owner = 3 wild = 100 climax = 1000}
-    worker = { goods = { money = 10000 wood = 250 } id = 17 owner = 3 wild = 75 cleared = 10 huge = 25 climax = 1000 }
-    worker = { goods = { money = 10000 wood = 250 } id = 18 owner = 3 wild = 23 young = 10 climax = 1000}
-    worker = { goods = { money = 10000 wood = 250 } id = 19 owner = 3 wild = 100 planted = 10 sapling = 10 climax = 1000}
-    worker = { goods = { money = 10000 wood = 250 } id = 20 owner = 3 wild = 100 cleared = 10 grown = 10 climax = 1000}
-    worker = { goods = { money = 10000 wood = 250 } id = 21 owner = 3 wild = 34 mighty = 10 climax = 1000}
-    worker = { goods = { money = 10000 wood = 250 } id = 22 owner = 3 wild = 89 scrubby = 10 mature = 10 climax = 1000}
-    worker = { goods = { money = 10000 wood = 250 } id = 23 owner = 3 wild = 100 sapling = 10 climax = 1000}
-    worker = { goods = { money = 10000 wood = 250 } id = 24 owner = 3 wild = 28 mature = 10 climax = 1000}
-    worker = { goods = { money = 10000 wood = 250 } id = 25 owner = 3 wild = 89 climax = 1000}
-    tended  = { 0 0 0 0 0 0 0 0 0 0 }
+    worker = { goods = { money = 10000 wood = 250 } id = 16 owner = 3 tended = 0 wild = 100 climax = 1000}
+    worker = { goods = { money = 10000 wood = 250 } id = 17 owner = 3 tended = 0 wild = 75 cleared = 10 huge = 25 climax = 1000 }
+    worker = { goods = { money = 10000 wood = 250 } id = 18 owner = 3 tended = 0 wild = 23 young = 10 climax = 1000}
+    worker = { goods = { money = 10000 wood = 250 } id = 19 owner = 3 tended = 0 wild = 100 planted = 10 sapling = 10 climax = 1000}
+    worker = { goods = { money = 10000 wood = 250 } id = 20 owner = 3 tended = 0 wild = 100 cleared = 10 grown = 10 climax = 1000}
+    worker = { goods = { money = 10000 wood = 250 } id = 21 owner = 3 tended = 0 wild = 34 mighty = 10 climax = 1000}
+    worker = { goods = { money = 10000 wood = 250 } id = 22 owner = 3 tended = 0 wild = 89 scrubby = 10 mature = 10 climax = 1000}
+    worker = { goods = { money = 10000 wood = 250 } id = 23 owner = 3 tended = 0 wild = 100 sapling = 10 climax = 1000}
+    worker = { goods = { money = 10000 wood = 250 } id = 24 owner = 3 tended = 0 wild = 28 mature = 10 climax = 1000}
+    worker = { goods = { money = 10000 wood = 250 } id = 25 owner = 3 tended = 0 wild = 89 climax = 1000}
     yearsSinceLastTick = 0
     minStatusToHarvest = climax
   }
