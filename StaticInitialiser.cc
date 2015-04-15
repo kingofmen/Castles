@@ -372,14 +372,6 @@ void StaticInitialiser::initialiseGraphics (Object* gInfo) {
   Logger::logStream(DebugStartup) << "Leaving StaticInitialiser::initialiseGraphics\n";   
 }
 
-void StaticInitialiser::initialiseMarket (Market* market, Object* pInfo) {
-  /*
-  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-    market->prices[**tg] = pInfo->safeGetFloat((*tg)->getName(), 1);
-  }
-  */
-}
-
 void StaticInitialiser::initialiseMaslowHierarchy (Object* popNeeds) {
   assert(popNeeds);
   objvec levels = popNeeds->getValue("level");
@@ -494,8 +486,6 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     if (owner) mine->setOwner(owner);
     hex->setMine(mine);
   }
-  
-  //initialiseMarket(hex, hInfo->getNeededObject("prices"));
 }
 
 ThreeDSprite* makeSprite (Object* info) {
@@ -522,7 +512,7 @@ void readAgeTrackerFromObject (AgeTracker& age, Object* obj) {
 
 Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Farmland* ret = new Farmland();
-  initialiseCollective<Farmer, FieldStatus, Farmland::numOwners>(ret, fInfo, farmerMap);
+  initialiseCollective<Farmer, FieldStatus, Farmland>(ret, fInfo, farmerMap);
   ret->countTotals();
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
   
@@ -536,7 +526,8 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
     foresterMap["tended"] = &Forester::tendedGroves;
   }
 
-  initialiseCollective<Forester, ForestStatus, Forest::numOwners>(ret, fInfo, foresterMap);
+  initialiseCollective<Forester, ForestStatus, Forest>(ret, fInfo, foresterMap);
+  BOOST_FOREACH(Forester* f, ret->workers) f->createBlockQueue();
   ret->yearsSinceLastTick = fInfo->safeGetInt("yearsSinceLastTick");
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
   ret->minStatusToHarvest = ForestStatus::Huge;
@@ -1351,7 +1342,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* farmInfo = new Object("farmland");
       writeBuilding(farmInfo, farm);
       hexInfo->setValue(farmInfo);
-      writeCollective<Farmer, FieldStatus, Farmland::numOwners>(farm, farmInfo, farmerMap);
+      writeCollective<Farmer, FieldStatus, Farmland>(farm, farmInfo, farmerMap);
       farmInfo->setLeaf("blockSize", farm->blockSize);
     }
 
@@ -1360,7 +1351,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* forestInfo = new Object("forest");
       writeBuilding(forestInfo, forest);
       hexInfo->setValue(forestInfo);
-      writeCollective<Forester, ForestStatus, Forest::numOwners>(forest, forestInfo, foresterMap);
+      writeCollective<Forester, ForestStatus, Forest>(forest, forestInfo, foresterMap);
       forestInfo->setLeaf("yearsSinceLastTick", forest->yearsSinceLastTick);
       forestInfo->setLeaf("blockSize", forest->blockSize);
       forestInfo->setLeaf("minStatusToHarvest", *ForestStatus::Huge);

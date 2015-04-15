@@ -26,7 +26,6 @@ public:
   static void      initialiseEcon (EconActor* econ, Object* info); 
   static void      initialiseGoods (Object* gInfo); 
   static void      initialiseGraphics (Object* gInfo);
-  static void      initialiseMarket (Market* market, Object* pInfo);
   static void      initialiseMaslowHierarchy (Object* popNeeds); 
   static void      buildHex (Object* hInfo);
   static void      buildMilitia (Village* target, Object* mInfo);  
@@ -59,11 +58,12 @@ private:
     }
   }
   
-  template <class W, class S, int N> static void initialiseCollective (Collective<W, S, N>* collective, Object* cInfo, map<string, int W::*> intMap) {
+  template <class W, class S, class C> static void initialiseCollective (C* collective, Object* cInfo, map<string, int W::*> intMap) {
     objvec wInfos = cInfo->getValue("worker");
-    if ((int) wInfos.size() < N) throwFormatted("Expected %i worker objects, found %i", N, wInfos.size());
-    for (int i = 0; i < N; ++i) {
-      W* currWorker = collective->workers[i];
+    if ((int) wInfos.size() < C::numOwners) throwFormatted("Expected %i worker objects, found %i", C::numOwners, wInfos.size());
+    for (int i = 0; i < C::numOwners; ++i) {
+      W* currWorker = new W(collective);
+      collective->workers.push_back(currWorker);
       initialiseEcon(currWorker, wInfos[i]);
       for (typename S::Iter stat = S::start(); stat != S::final(); ++stat) {
 	currWorker->fields[**stat] = wInfos[i]->safeGetInt((*stat)->getName(), 0);
@@ -72,8 +72,8 @@ private:
     }
   }
 
-  template <class W, class S, int N> static void writeCollective (Collective<W, S, N>* collective, Object* cInfo, map<string, int W::*> intMap) {
-    for (int i = 0; i < N; ++i) {
+  template <class W, class S, class C> static void writeCollective (C* collective, Object* cInfo, map<string, int W::*> intMap) {
+    for (int i = 0; i < C::numOwners; ++i) {
       Object* worker = new Object("worker");
       cInfo->setValue(worker);
       writeEconActorIntoObject(collective->workers[i], worker);

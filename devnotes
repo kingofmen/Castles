@@ -16,12 +16,13 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Punitive expedition
    - Tribute
    - Self-castling
- * Initialise F*Status and f*erMaps from text files or statically.
  * Supply line interference
  * Raid/tribute/battle mapmode
- * Fix Miner capitalSize
- * Disambiguate 'clear' methods.
  * Three-resource economy
+   - Initialise F*Status and f*erMaps from text files or statically.
+   - Fix Miner capitalSize
+   - Disambiguate 'clear' methods.
+   - Think up better names for 'fields' and 'extractResources'
    - Change producers to be regular EconActors who sell their goods, but supply owners with money. (check)
    - Forest
      . Internal (check)
