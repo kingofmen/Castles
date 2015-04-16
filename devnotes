@@ -48,13 +48,15 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Enforce that output cannot be capital
    - Fix Schlemiel in Farmland fillBlock
    - Make farms buy labour for integer number of fields (check)
-   - Make Farmland (check) and Forest statuses enums
+   - Make Farmland and Forest statuses enums (check)
    - Margin effects (check)
      . Block sizes in production (check)
      . Block calculations (check)
      . Marginal declines in production (check)
    - Allow maintenance in addition to production (check)
    - Read Forest minStatus from save, write to save, let owner set.
+   - Remove boss from Forester.
+   - Set workableBlocks from save for all buildings.
    - The EconActor owner of Farmer, etc, is not mirrored. So if you do a workFoo, the *real* owner gets the output. Problem.
    - Castle as EconActor
    - Threshold effect on capital

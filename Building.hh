@@ -36,11 +36,19 @@ struct jobInfo : public boost::tuple<double, int, int> { // Labour amount, times
 void searchForMatch (vector<jobInfo>& jobs, double perChunk, int chunks, int time);
 void searchForMatch (vector<jobInfo>& jobs, jobInfo job);
 
+struct BlockInfo {
+public:
+  BlockInfo (double mf = 1.0, int bs = 1, int wb = 1) : marginFactor(mf), blockSize(bs), workableBlocks(wb) {}
+  double marginFactor;
+  int blockSize;
+  int workableBlocks; // Number of blocks that can be worked on in one turn.
+};
+
 template <class T> class Industry : public EconActor {
   friend class StaticInitialiser;
 
 public:
-  Industry (T* ind, double md = 1) : EconActor(), industry(ind) {}
+  Industry (T* ind, BlockInfo* bi) : EconActor(), blockInfo(bi), industry(ind) {}
   
   virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
     // Goal is to maximise profit. Calculate how much labor we need to get in the harvest;
@@ -51,7 +59,6 @@ public:
 
     static const double inverseExpectedRatio = 0.2;
 
-    double marginalDecline = industry->getMarginFactor();
     double marginFactor = 1;
     double marginalLabourRatio = 0;
     double fullCycleLabour = 0;
@@ -61,7 +68,7 @@ public:
       industry->getLabourForBlock(i, candidateJobs, fullCycleLabour);
       double expectedProduction = industry->outputOfBlock(i) * marginFactor;
       if (prices.getAmount(TradeGood::Labor) * fullCycleLabour < prices.getAmount(output) * expectedProduction) {
-	marginFactor *= marginalDecline;
+	marginFactor *= blockInfo->marginFactor;
 	marginalLabourRatio = expectedProduction / fullCycleLabour;
 	BOOST_FOREACH(jobInfo job, candidateJobs) searchForMatch(jobs, job);
       }
@@ -127,7 +134,6 @@ public:
     fractionToSell -= soldThisTurn.getAmount(output);
     fractionToSell -= promisedToDeliver.getAmount(output);
     if (1 > fractionToSell) return;
-    //Logger::logStream(DebugStartup) << getIdx() << " selling " << fractionToSell << " " << marginalLabourRatio << " " << inverseProductionTime << " " << getAmount(output) << " " << soldThisTurn.getAmount(output) << "\n";
     bidlist.push_back(new MarketBid(output, -1 * min(fractionToSell, getAmount(output)), this, 1));
   }
   
@@ -140,6 +146,7 @@ public:
   }
   
 protected:
+  BlockInfo* const blockInfo;
   // Capital reduces the amount of labour required by factor (1 - x log (N+1)). This array stores x. 
   static GoodsHolder* capital;
   static TradeGood const* output;
@@ -164,10 +171,10 @@ template<class T> GoodsHolder* Industry<T>::capital = 0;
 template<class T> TradeGood const* Industry<T>::output = 0;
 template<class T> double Industry<T>::inverseProductionTime = 1;
 
-class Building {
+class Building : public BlockInfo {
   friend class StaticInitialiser; 
 public: 
-  Building (double mf = 1) : marginFactor(mf), supplies(0), owner(0) {}
+  Building (double mf = 1, int bs = 1, int wb = 1) : BlockInfo(mf, bs, wb), supplies(0), owner(0) {}
   ~Building () {}
   
   virtual void endOfTurn () = 0; 
@@ -182,7 +189,6 @@ public:
   virtual double possibleProductionThisTurn () const {return 0;}
 
 protected:
-  double marginFactor;
   double supplies; 
   
 private:
@@ -375,7 +381,6 @@ public:
   double getCapitalSize () const;
   void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
   int numBlocks () const;
-  double getMarginFactor () const;
   virtual void setMirrorState ();
   void unitTests ();
   void extractResources (bool tick = false);
@@ -383,7 +388,6 @@ private:
   Farmer(Farmer* other);
   void fillBlock (int block, vector<int>& theBlock) const;
   vector<int> fields;
-  Farmland* boss;
 
   static int _labourToSow;
   static int _labourToPlow;
@@ -421,7 +425,6 @@ private:
   Farmland (Farmland* other);
   void countTotals ();
   vector<int> totalFields; // Sum over farmers.
-  int blockSize;  
 };
 
 class ForestStatus : public Enumerable<const ForestStatus> {
@@ -454,7 +457,6 @@ public:
   double outputOfBlock (int b) const;
   double getCapitalSize () const;
   void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
-  double getMarginFactor () const;
   int numBlocks () const;
   virtual void setMirrorState ();
   void unitTests ();
@@ -464,8 +466,9 @@ public:
   vector<ForestStatus const*> myBlocks;
   int tendedGroves;
 private:
-  Forester(Forester* other);
   Forest* boss;
+
+  Forester(Forester* other);
   int getForestArea () const;
   int getTendedArea () const;
   void createBlockQueue ();
@@ -489,8 +492,6 @@ private:
   Forest (Forest* other);
   int yearsSinceLastTick;
   ForestStatus const* minStatusToHarvest;
-  int blockSize;
-  int workableBlocks;
   
   static vector<int> _amountOfWood;
   static int _labourToTend;    // Ensure forest doesn't go wild.
@@ -520,12 +521,10 @@ public:
   virtual void setMirrorState ();
   void unitTests ();
   void extractResources (bool tick = false);
-  double getMarginFactor () const;
   
   vector<int> fields;
 private:
   Miner(Miner* other);
-  Mine* boss;
 };
 
 
@@ -544,7 +543,6 @@ public:
   static void unitTests ();
 private: 
   Mine (Mine* other);
-  int veinsPerMiner;
   static int _amountOfIron;
 };
 

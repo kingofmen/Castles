@@ -540,7 +540,7 @@ Mine* StaticInitialiser::buildMine (Object* mInfo) {
   Mine* ret = new Mine();
   initialiseCollective<Mine>(ret, mInfo, minerMap);
   objvec workers = mInfo->getValue("worker");
-  ret->veinsPerMiner = mInfo->safeGetInt("veinsPerShaft", ret->veinsPerMiner);
+  ret->workableBlocks = mInfo->safeGetInt("veinsPerShaft", ret->workableBlocks);
   return ret;
 }
 
@@ -1351,7 +1351,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       writeBuilding(mineInfo, mine);
       hexInfo->setValue(mineInfo);
       writeCollective<Mine>(mine, mineInfo, minerMap);
-      mineInfo->setLeaf("veinsPerShaft", mine->veinsPerMiner);
+      mineInfo->setLeaf("veinsPerShaft", mine->workableBlocks);
     }
   }
   

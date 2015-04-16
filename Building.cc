@@ -544,11 +544,10 @@ MilUnit* Village::raiseMilitia () {
 }
 
 Farmland::Farmland () 
-  : Building(1)
+  : Building(1, 5, 1e6)
   , Mirrorable<Farmland>()
   , Collective<Farmer, FieldStatus, 10>()
   , totalFields(FieldStatus::numTypes(), 0)
-  , blockSize(5)
 {
   createWorkers(this);
 }
@@ -556,20 +555,18 @@ Farmland::Farmland ()
 Farmland::~Farmland () {}
 
 Farmland::Farmland (Farmland* other)
-  : Building(1)
+  : Building(other->marginFactor, other->blockSize, other->workableBlocks)
   , Mirrorable<Farmland>(other)
-  , blockSize(5)    
 {}
 
 Farmer::Farmer (Farmland* b)
-  : Industry<Farmer>(this)
+  : Industry<Farmer>(this, b)
   , Mirrorable<Farmer>()
   , fields(FieldStatus::numTypes(), 0)
-  , boss(b)
 {}
 
 Farmer::Farmer (Farmer* other)
-  : Industry<Farmer>(this)
+  : Industry<Farmer>(this, other->blockInfo)
   , Mirrorable<Farmer>(other)
   , fields(FieldStatus::numTypes(), 0)
 {}
@@ -577,28 +574,15 @@ Farmer::Farmer (Farmer* other)
 void Farmer::setMirrorState () {
   mirror->owner = owner;
   for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
-  mirror->boss = boss->getMirror();
 }
 
 Farmer::~Farmer () {}
-
-double Farmer::getMarginFactor () const {
-  return boss->marginFactor;
-}
-
-double Forester::getMarginFactor () const {
-  return boss->marginFactor;
-}
-
-double Miner::getMarginFactor () const {
-  return boss->marginFactor;
-}
 
 double Farmer::outputOfBlock (int block) const {
   // May be inaccurate for the last block. TODO: It would be good to have
   // an expectation value instead, with a discount rate and accounting for
   // the current state of the block.
-  return _cropsFrom3 * boss->blockSize;
+  return _cropsFrom3 * blockInfo->blockSize;
 }
 
 Farmland* Farmland::getTestFarm (int numFields) {
@@ -634,15 +618,15 @@ void Farmland::unitTests () {
 int Farmer::numBlocks () const {
   int total = 0;
   BOOST_FOREACH(int f, fields) total += f;
-  int blocks = total / boss->blockSize;
-  if (blocks * boss->blockSize < total) ++blocks;
+  int blocks = total / blockInfo->blockSize;
+  if (blocks * blockInfo->blockSize < total) ++blocks;
   return blocks;
 }
 
 void Farmer::unitTests () {
   if (!theMarket) throw string("Farm has not been registered with a market.");
   if (!output) throw string("Farm output has not been set.");
-  if (0 >= boss->blockSize) throw new string("Farmer expected positive block size");
+  if (0 >= blockInfo->blockSize) throw new string("Farmer expected positive block size");
   // Note that this is not static, it's run on a particular Farmer.
   GoodsHolder oldCapital(*capital);
   capital->clear();
@@ -820,20 +804,20 @@ void Farmer::unitTests () {
     throw string(errorMessage);
   }
 
-  boss->blockSize = 5;
+  blockInfo->blockSize = 5;
   fields[*FieldStatus::Ended] = 6;
   vector<int> theBlock(FieldStatus::numTypes(), 0);
   fillBlock(0, theBlock);
-  if (theBlock[*FieldStatus::Ended] != boss->blockSize) {
-    sprintf(errorMessage, "Expected %i Ended fields in block 0, got %i", boss->blockSize, theBlock[*FieldStatus::Ended]);
+  if (theBlock[*FieldStatus::Ended] != blockInfo->blockSize) {
+    sprintf(errorMessage, "Expected %i Ended fields in block 0, got %i", blockInfo->blockSize, theBlock[*FieldStatus::Ended]);
     throw string(errorMessage);
   }
   theBlock[*FieldStatus::Ended] = 0;
 
   fields[*FieldStatus::Ended] = 100;
   fillBlock(5, theBlock);
-  if (theBlock[*FieldStatus::Ended] != boss->blockSize) {
-    sprintf(errorMessage, "Expected %i Ended fields in block 5, got %i", boss->blockSize, theBlock[*FieldStatus::Ended]);
+  if (theBlock[*FieldStatus::Ended] != blockInfo->blockSize) {
+    sprintf(errorMessage, "Expected %i Ended fields in block 5, got %i", blockInfo->blockSize, theBlock[*FieldStatus::Ended]);
     throw string(errorMessage);
   }
   theBlock[*FieldStatus::Ended] = 0;
@@ -846,11 +830,11 @@ void Farmer::unitTests () {
   }
   theBlock[*FieldStatus::Ended] = 0;
   
-  fields[*FieldStatus::Ended] = boss->blockSize - 1;
+  fields[*FieldStatus::Ended] = blockInfo->blockSize - 1;
   fields[*FieldStatus::Ripe3] = 1;
   fillBlock(0, theBlock);
-  if (theBlock[*FieldStatus::Ended] != boss->blockSize - 1) {
-    sprintf(errorMessage, "Expected %i Ended fields in block 0, got %i", boss->blockSize - 1, theBlock[*FieldStatus::Ended]);
+  if (theBlock[*FieldStatus::Ended] != blockInfo->blockSize - 1) {
+    sprintf(errorMessage, "Expected %i Ended fields in block 0, got %i", blockInfo->blockSize - 1, theBlock[*FieldStatus::Ended]);
     throw string(errorMessage);
   }
   if (theBlock[*FieldStatus::Ripe3] != 1) {
@@ -860,12 +844,12 @@ void Farmer::unitTests () {
 
   theBlock[*FieldStatus::Ended] = 0;
   theBlock[*FieldStatus::Ripe3] = 0;
-  fields[*FieldStatus::Ripe2] = boss->blockSize;
+  fields[*FieldStatus::Ripe2] = blockInfo->blockSize;
   fillBlock(1, theBlock);
   if (theBlock[*FieldStatus::Ended] != 0) throw string("Did not expect Ended fields in block 1");
   if (theBlock[*FieldStatus::Ripe3] != 0) throw string("Did not expect Ripe3 fields in block 1");
-  if (theBlock[*FieldStatus::Ripe2] != boss->blockSize) {
-    sprintf(errorMessage, "Expected %i Ripe2 fields in block 1, got %i", boss->blockSize, theBlock[*FieldStatus::Ripe2]);
+  if (theBlock[*FieldStatus::Ripe2] != blockInfo->blockSize) {
+    sprintf(errorMessage, "Expected %i Ripe2 fields in block 1, got %i", blockInfo->blockSize, theBlock[*FieldStatus::Ripe2]);
     throw string(errorMessage);    
   }
 
@@ -873,7 +857,7 @@ void Farmer::unitTests () {
   if (Calendar::Autumn != Calendar::getCurrentSeason()) throw string("Expected week 30 to be Autumn");
   for (unsigned int i = 0; i < fields.size(); ++i) fields[i] = 0;
   setAmount(output, 0);
-  fields[*FieldStatus::Ripe3] = boss->blockSize;
+  fields[*FieldStatus::Ripe3] = blockInfo->blockSize;
   getLabourForBlock(0, jobs, fullCycleLabour);
   setAmount(TradeGood::Labor, fullCycleLabour);
   extractResources();
@@ -885,10 +869,10 @@ void Farmer::unitTests () {
   marginFactors.push_back(0.9);
   marginFactors.push_back(0.1);
   BOOST_FOREACH(double mf, marginFactors) {
-    boss->marginFactor = mf;    
+    blockInfo->marginFactor = mf;
     for (int blocks = 2; blocks < 5; ++blocks) {
       fields[*FieldStatus::Ended] = 0;
-      fields[*FieldStatus::Ripe3] = blocks*boss->blockSize;
+      fields[*FieldStatus::Ripe3] = blocks*blockInfo->blockSize;
       double gameExpected = 0;
       for (int j = 0; j < blocks; ++j) gameExpected += outputOfBlock(j) * pow(mf, j);
       setAmount(output, 0);
@@ -1008,17 +992,17 @@ void Farmer::extractResources (bool /* tick */) {
   }
   case Calendar::Autumn: {
     // In autumn we harvest.
-    int block = fields[*FieldStatus::Ended] / boss->blockSize;
-    int counter = fields[*FieldStatus::Ended] - block*boss->blockSize;
-    double marginFactor = pow(getMarginFactor(), block);
+    int block = fields[*FieldStatus::Ended] / blockInfo->blockSize;
+    int counter = fields[*FieldStatus::Ended] - block*blockInfo->blockSize;
+    double marginFactor = pow(blockInfo->marginFactor, block);
     int harvest = min(fields[*FieldStatus::Ripe3], (int) floor(availableLabour / (_labourToReap * capFactor)));
     double totalHarvested = 0;
     availableLabour -= harvest * _labourToReap * capFactor;
     for (int i = 0; i < harvest; ++i) {
       totalHarvested += _cropsFrom3 * marginFactor;
-      if (++counter >= boss->blockSize) {
+      if (++counter >= blockInfo->blockSize) {
 	counter = 0;
-	marginFactor *= getMarginFactor();
+	marginFactor *= blockInfo->marginFactor;
       }
     }
     fields[*FieldStatus::Ripe3] -= harvest;
@@ -1028,9 +1012,9 @@ void Farmer::extractResources (bool /* tick */) {
     availableLabour -= harvest * _labourToReap * capFactor;
     for (int i = 0; i < harvest; ++i) {
       totalHarvested += _cropsFrom2 * marginFactor;
-      if (++counter >= boss->blockSize) {
+      if (++counter >= blockInfo->blockSize) {
 	counter = 0;
-	marginFactor *= getMarginFactor();
+	marginFactor *= blockInfo->marginFactor;
       }
     }
     fields[*FieldStatus::Ripe2] -= harvest;
@@ -1040,9 +1024,9 @@ void Farmer::extractResources (bool /* tick */) {
     availableLabour -= harvest * _labourToReap * capFactor;
     for (int i = 0; i < harvest; ++i) {
       totalHarvested += _cropsFrom1 * marginFactor;
-      if (++counter >= boss->blockSize) {
+      if (++counter >= blockInfo->blockSize) {
 	counter = 0;
-	marginFactor *= getMarginFactor();
+	marginFactor *= blockInfo->marginFactor;
       }
     }
     fields[*FieldStatus::Ripe1] -= harvest;
@@ -1069,19 +1053,19 @@ void Farmer::fillBlock (int block, vector<int>& theBlock) const {
   int counted = 0;
   int found = 0;
   for (int i = *FieldStatus::Ended; i >= 0; --i) {
-    if (counted + fields[i] <= block * boss->blockSize) {
+    if (counted + fields[i] <= block * blockInfo->blockSize) {
       counted += fields[i];
       continue;
     }
-    theBlock[i] = min(fields[i], boss->blockSize - found);
+    theBlock[i] = min(fields[i], blockInfo->blockSize - found);
     found += theBlock[i];
-    if (found >= boss->blockSize) break;
+    if (found >= blockInfo->blockSize) break;
     counted += theBlock[i];
   }
 }
 
 double Farmer::getCapitalSize () const {
-  return numBlocks() * boss->blockSize;
+  return numBlocks() * blockInfo->blockSize;
 }
 
 void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
@@ -1133,31 +1117,27 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
 }
 
 Forest::Forest ()
-  : Building(1)
+  : Building(1, 1, 3)
   , Mirrorable<Forest>()
   , Collective<Forester, ForestStatus, numOwners>()
   , yearsSinceLastTick(0)
   , minStatusToHarvest(ForestStatus::Huge)
-  , blockSize(1)
-  , workableBlocks(3)
 {
   createWorkers(this);
 }
 
 Forest::Forest (Forest* other)
-  : Building(1)
+  : Building(other->marginFactor, other->blockSize, other->workableBlocks)
   , Mirrorable<Forest>(other)
   , Collective<Forester, ForestStatus, numOwners>()
   , yearsSinceLastTick(0)    
   , minStatusToHarvest(other->minStatusToHarvest)
-  , blockSize(other->blockSize)
-  , workableBlocks(other->workableBlocks)
 {}
 
 Forest::~Forest () {}
 
 Forester::Forester (Forest* b)
-  : Industry<Forester>(this)
+  : Industry<Forester>(this, b)
   , Mirrorable<Forester>()
   , fields(ForestStatus::numTypes(), 0)
   , tendedGroves(0)
@@ -1165,7 +1145,7 @@ Forester::Forester (Forest* b)
 {}
 
 Forester::Forester (Forester* other)
-  : Industry<Forester>(this)
+  : Industry<Forester>(this, other->blockInfo)
   , Mirrorable<Forester>(other)
   , fields(ForestStatus::numTypes(), 0)
 {}
@@ -1173,7 +1153,6 @@ Forester::Forester (Forester* other)
 void Forester::setMirrorState () {
   mirror->owner = owner;
   for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
-  mirror->boss = boss->getMirror();
 }
 
 Forester::~Forester () {}
@@ -1186,7 +1165,7 @@ Forester::~Forester () {}
 // expected total possibly years from now, when the trees
 // become harvestable.
 double Forester::outputOfBlock (int block) const {
-  return Forest::_amountOfWood[*ForestStatus::Climax] * boss->blockSize;
+  return Forest::_amountOfWood[*ForestStatus::Climax] * blockInfo->blockSize;
 }
 
 void Forest::unitTests () {
@@ -1205,7 +1184,7 @@ void Forest::unitTests () {
 void Forester::unitTests () {
   // Note that this is not static, it's run on a particular Forester.
   if (!output) throw string("Forest output has not been set.");
-  if (0 >= boss->blockSize) throw new string("Expected positive block size");
+  if (0 >= blockInfo->blockSize) throw new string("Expected positive block size");
   GoodsHolder oldCapital(*capital);
   capital->clear();
   TradeGood const* testCapGood = 0;
@@ -1236,7 +1215,7 @@ void Forester::unitTests () {
 							    laborNeeded,
 							    laborNeededWithCapital);
 
-  boss->workableBlocks = 200;
+  blockInfo->workableBlocks = 200;
   createBlockQueue();
   // Set labour so we need 310 of it next turn.
   // Saving about 7% of that means we should bid
@@ -1318,7 +1297,7 @@ void Forester::unitTests () {
 					 fields[*ForestStatus::Wild]);
 
   for (unsigned int i = 0; i < fields.size(); ++i) fields[i] = 0;
-  fields[*ForestStatus::Climax] = boss->blockSize;
+  fields[*ForestStatus::Climax] = blockInfo->blockSize;
   createBlockQueue();
   getLabourForBlock(0, jobs, fullCycleLabour);
   setAmount(TradeGood::Labor, fullCycleLabour);
@@ -1335,9 +1314,9 @@ void Forester::unitTests () {
   marginFactors.push_back(0.9);
   marginFactors.push_back(0.1);
   BOOST_FOREACH(double mf, marginFactors) {
-    boss->marginFactor = mf;
+    blockInfo->marginFactor = mf;
     for (int blocks = 2; blocks < 5; ++blocks) {
-      fields[*ForestStatus::Climax] = blocks*boss->blockSize;
+      fields[*ForestStatus::Climax] = blocks*blockInfo->blockSize;
       createBlockQueue();
       double gameExpected = 0;      
       for (int j = 0; j < blocks; ++j) gameExpected += outputOfBlock(j) * pow(mf, j);
@@ -1370,8 +1349,8 @@ void Forester::unitTests () {
 void Forester::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter == currSeason) return;
-  int startIndex = block * boss->blockSize;
-  int endIndex   = min(startIndex + boss->blockSize, (int) myBlocks.size());
+  int startIndex = block * blockInfo->blockSize;
+  int endIndex   = min(startIndex + blockInfo->blockSize, (int) myBlocks.size());
   int numToTend  = 0;
   int numToChop  = 0;
   for (int i = startIndex; i < endIndex; ++i) {
@@ -1388,9 +1367,9 @@ void Forester::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prod
 }
 
 int Forester::numBlocks () const {
-  int blocks = myBlocks.size() / boss->blockSize;
-  if ((int) myBlocks.size() > blocks * boss->blockSize) ++blocks;
-  return min(blocks, boss->workableBlocks);
+  int blocks = myBlocks.size() / blockInfo->blockSize;
+  if ((int) myBlocks.size() > blocks * blockInfo->blockSize) ++blocks;
+  return min(blocks, blockInfo->workableBlocks);
 }
 
 void Forester::extractResources (bool tick) {
@@ -1427,8 +1406,8 @@ void Forester::extractResources (bool tick) {
   double labourPerTend = Forest::_labourToTend*capFactor;
   double totalChopped = 0;
   for (int block = 0; block < numBlocks(); ++block) {
-    int startIndex = block * boss->blockSize;
-    int endIndex   = min(startIndex + boss->blockSize, (int) myBlocks.size());
+    int startIndex = block * blockInfo->blockSize;
+    int endIndex   = min(startIndex + blockInfo->blockSize, (int) myBlocks.size());
     for (int i = startIndex; i < endIndex; ++i) {
       if ((tendedGroves <= i) && (availableLabour >= labourPerTend)) {
 	availableLabour -= labourPerTend;
@@ -1441,7 +1420,7 @@ void Forester::extractResources (bool tick) {
 	++fields[*ForestStatus::Clear];
       }
     }
-    decline *= getMarginFactor();
+    decline *= blockInfo->marginFactor;
   }
   produce(output, totalChopped);
   // This cheats very slightly, by moving fields up in the
@@ -1670,16 +1649,15 @@ int Village::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit*
 }
 
 Mine::Mine ()
-  : Building(1)
+  : Building(1, 1, 1)
   , Mirrorable<Mine>()
   , Collective<Miner, MineStatus, 10>()
-  , veinsPerMiner(1)
 {
   createWorkers(this);
 }
 
 Mine::Mine (Mine* other)
-  : Building(1)
+  : Building(other->marginFactor, other->blockSize, other->workableBlocks)
   , Mirrorable<Mine>(other)
   , Collective<Miner, MineStatus, 10>()
 {}
@@ -1687,20 +1665,19 @@ Mine::Mine (Mine* other)
 Mine::~Mine () {}
 
 Miner::Miner (Mine* m)
-  : Industry<Miner>(this)
+  : Industry<Miner>(this, m)
   , Mirrorable<Miner>()
   , fields(MineStatus::numTypes(), 0)
-  , boss(m)
 {}
 
 Miner::Miner (Miner* other)
-  : Industry<Miner>(this)
+  : Industry<Miner>(this, other->blockInfo)
   , Mirrorable<Miner>(other)
   , fields(MineStatus::numTypes(), 0)
 {}
 
 int Miner::numBlocks () const {
-  return boss->veinsPerMiner;
+  return blockInfo->workableBlocks;
 }
 
 void Mine::setDefaultOwner (EconActor* o) {
@@ -1714,7 +1691,6 @@ void Mine::setDefaultOwner (EconActor* o) {
 void Miner::setMirrorState () {
   mirror->owner = owner;
   for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
-  mirror->boss = boss->getMirror();
 }
 
 Miner::~Miner () {}
@@ -1878,8 +1854,8 @@ void Miner::unitTests () {
 
   // Check that, with marginal production of zero, we get the same labor bid.
   // That is, second block produces nothing, so should not create a bid.
-  boss->veinsPerMiner = 2;
-  boss->marginFactor = 0;
+  blockInfo->workableBlocks = 2;
+  blockInfo->marginFactor = 0;
   bidlist.clear();
   getBids(prices, bidlist);
   double newFoundLabour = 0;
@@ -1891,15 +1867,15 @@ void Miner::unitTests () {
 							       newFoundLabour);
 
   // With no marginal decline, should buy twice as much.
-  boss->marginFactor = 1;
+  blockInfo->marginFactor = 1;
   bidlist.clear();
   getBids(prices, bidlist);
   newFoundLabour = 0;
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if (mb->tradeGood == TradeGood::Labor) newFoundLabour += mb->amountToBuy;
   }
-  if (fabs(boss->veinsPerMiner*foundLabour - newFoundLabour) > 0.1) throwFormatted("With margin 1, expected to buy %f, but got %f",
-										   boss->veinsPerMiner*foundLabour,
+  if (fabs(blockInfo->workableBlocks*foundLabour - newFoundLabour) > 0.1) throwFormatted("With margin 1, expected to buy %f, but got %f",
+										   blockInfo->workableBlocks*foundLabour,
 										   newFoundLabour);
 
   setAmount(output, 0);
@@ -1912,7 +1888,7 @@ void Miner::unitTests () {
     throw string(errorMessage);
   }
 
-  boss->marginFactor = 0.5;
+  blockInfo->marginFactor = 0.5;
   setAmount(output, 0);
   getLabourForBlock(0, jobs, laborNeeded);
   setAmount(TradeGood::Labor, numBlocks() * laborNeeded);
@@ -1923,8 +1899,8 @@ void Miner::unitTests () {
     throw string(errorMessage);
   }
 
-  boss->marginFactor = 0.75;
-  boss->veinsPerMiner = 3;
+  blockInfo->marginFactor = 0.75;
+  blockInfo->workableBlocks = 3;
   setAmount(output, 0);
   getLabourForBlock(0, jobs, laborNeeded);
   setAmount(TradeGood::Labor, numBlocks() * laborNeeded);
@@ -1961,7 +1937,7 @@ void Miner::extractResources (bool /*tick*/) {
       availableLabour -= (*ms)->requiredLabour * capFactor;
       produce(output, Mine::_amountOfIron * decline);
       if (0 == --fields[**ms]) break;
-      decline *= getMarginFactor();
+      decline *= blockInfo->marginFactor;
     }
 
     break;
