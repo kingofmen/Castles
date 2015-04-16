@@ -18,6 +18,7 @@ class Line;
 class Player;
 class Farmland;
 class Forest;
+class Mine;
 
 struct jobInfo : public boost::tuple<double, int, int> { // Labour amount, times needed, turns to complete.
   jobInfo (double l, double c, double t) : boost::tuple<double, int, int>(l, c, t) {}
@@ -497,51 +498,52 @@ private:
   static int _labourToClear;   // Go from wild to clear.
 };
 
-class Mine : public Building, public Mirrorable<Mine> {
+class MineStatus : public Enumerable<MineStatus> {
+  friend class StaticInitialiser;
+public:
+  MineStatus (string n, int rl, bool lastOne = false);
+  ~MineStatus ();
+  int requiredLabour;
+};
+
+class Miner : public Industry<Miner>, public Mirrorable<Miner> {
+  friend class Mirrorable<Miner>;
+  friend class StaticInitialiser;
+  friend class Mine;
+public:
+  Miner (Mine* m);
+  ~Miner ();
+  double outputOfBlock (int b) const;
+  double getCapitalSize () const;
+  void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
+  int numBlocks () const;
+  virtual void setMirrorState ();
+  void unitTests ();
+  void extractResources (bool tick = false);
+  double getMarginFactor () const;
+  
+  vector<int> fields;
+private:
+  Miner(Miner* other);
+  Mine* boss;
+};
+
+
+class Mine : public Building, public Mirrorable<Mine>, public Collective<Miner, MineStatus, 10> {
   friend class StaticInitialiser;
   friend class Mirrorable<Mine>;
+  friend class Miner;
 public:
   Mine ();
   ~Mine ();
 
-  struct MineStatus : public Enumerable<MineStatus> {
-    friend class StaticInitialiser;
-    MineStatus (string n, int rl, bool lastOne = false);
-    ~MineStatus ();
-    int requiredLabour;
-  };
-
   virtual void endOfTurn ();
   void setDefaultOwner (EconActor* o);
-  void setMarket (Market* market) {BOOST_FOREACH(Miner* miner, miners) {market->registerParticipant(miner);}}
   virtual void setMirrorState ();
 
   static void unitTests ();
-  static const int numOwners = 10;
-private:
-  class Miner : public Industry<Miner>, public Mirrorable<Miner> {
-    friend class Mirrorable<Miner>;
-  public:
-    Miner (Mine* m);
-    ~Miner ();
-    double outputOfBlock (int b) const;
-    double getCapitalSize () const;
-    void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
-    double getMarginFactor () const {return mine->marginFactor;}
-    int numBlocks () const {return mine->veinsPerMiner;}
-    virtual void setMirrorState ();
-    void unitTests ();
-    void workShafts ();
-
-    vector<int> shafts;
-  private:
-    Miner(Miner* other);
-
-    Mine* mine;
-  };
- 
+private: 
   Mine (Mine* other);
-  vector<Miner*> miners;
   int veinsPerMiner;
   static int _amountOfIron;
 };

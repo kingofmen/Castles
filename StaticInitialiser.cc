@@ -26,6 +26,7 @@ static map<string, int Farmer::*> farmerMap;
 static map<string, int Forester::*> foresterMap;
 // On changing compilers, change to this construction:
 // static const map<string, int Forester::*> foresterMap = {{"tended", &Forester::tendedGroves}};
+static map<string, int Miner::*> minerMap;
 
 void readGoodsHolder (Object* goodsObject, GoodsHolder& goods) {
   goods.clear();
@@ -187,11 +188,11 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   
   Object* mineInfo       = popInfo->getNeededObject("mine");
   Mine::_amountOfIron    = mineInfo->safeGetInt("amount", Mine::_amountOfIron);
-  initialiseIndustry<Mine::Miner>(mineInfo);
-  Enumerable<Mine::MineStatus>::clear();
+  initialiseIndustry<Miner>(mineInfo);
+  Enumerable<MineStatus>::clear();
   objvec statuses = mineInfo->getValue("status");
   for (unsigned int i = 0; i < statuses.size(); ++i) {
-    Mine::MineStatus* stat = new Mine::MineStatus(statuses[i]->safeGetString("name", "nameNotFound"), statuses[i]->safeGetInt("requiredLabour", 10), (i+1) == statuses.size());
+    MineStatus* stat = new MineStatus(statuses[i]->safeGetString("name", "nameNotFound"), statuses[i]->safeGetInt("requiredLabour", 10), (i+1) == statuses.size());
     stat = 0; //Quiet, compiler
   }
   
@@ -537,21 +538,8 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
 
 Mine* StaticInitialiser::buildMine (Object* mInfo) {
   Mine* ret = new Mine();
-
-  for (Mine::MineStatus::Iter ms = Mine::MineStatus::start(); ms != Mine::MineStatus::final(); ++ms) {
-    Object* status = mInfo->getNeededObject((*ms)->getName());
-    for (int i = 0; i < Mine::numOwners; ++i) {  
-      ret->miners[i]->shafts[**ms] = (status->numTokens() > i ? status->tokenAsInt(i) : 0);
-    }
-  }
-  Object* owner = mInfo->getNeededObject("owner");
+  initialiseCollective<Mine>(ret, mInfo, minerMap);
   objvec workers = mInfo->getValue("worker");
-  if ((int) workers.size() < Mine::numOwners) throwFormatted("Expected %i worker objects, found %i", Mine::numOwners, workers.size());
-  for (int i = 0; i < Mine::numOwners; ++i) {
-    initialiseEcon(ret->miners[i], workers[i]);
-    ret->miners[i]->owner = (owner->numTokens() > i ? EconActor::getByIndex(owner->tokenAsInt(i)) : 0);
-  }
-
   ret->veinsPerMiner = mInfo->safeGetInt("veinsPerShaft", ret->veinsPerMiner);
   return ret;
 }
@@ -1362,26 +1350,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* mineInfo = new Object("mine");
       writeBuilding(mineInfo, mine);
       hexInfo->setValue(mineInfo);
-      for (int i = 0; i < Mine::numOwners; ++i) {
-	Object* worker = new Object("worker");
-	mineInfo->setValue(worker);
-	writeEconActorIntoObject(mine->miners[i], worker);
-      }
-
-      for (Mine::MineStatus::Iter ms = Mine::MineStatus::start(); ms != Mine::MineStatus::final(); ++ms) {
-	Object* statusInfo = new Object((*ms)->getName());
-	mineInfo->setValue(statusInfo);
-	statusInfo->setObjList(true);
-	for (int i = 0; i < Mine::numOwners; ++i) {
-	  statusInfo->addToList(mine->miners[i]->shafts[**ms]);
-	}
-      }
-      Object* owner = new Object("owner");
-      mineInfo->setValue(owner);
-      owner->setObjList(true);
-      for (int i = 0; i < Mine::numOwners; ++i) {
-	owner->addToList((int) mine->miners[i]->owner->getIdx());
-      }
+      writeCollective<Mine>(mine, mineInfo, minerMap);
       mineInfo->setLeaf("veinsPerShaft", mine->veinsPerMiner);
     }
   }

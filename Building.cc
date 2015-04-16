@@ -549,7 +549,9 @@ Farmland::Farmland ()
   , Collective<Farmer, FieldStatus, 10>()
   , totalFields(FieldStatus::numTypes(), 0)
   , blockSize(5)
-{}
+{
+  createWorkers(this);
+}
 
 Farmland::~Farmland () {}
 
@@ -588,6 +590,10 @@ double Forester::getMarginFactor () const {
   return boss->marginFactor;
 }
 
+double Miner::getMarginFactor () const {
+  return boss->marginFactor;
+}
+
 double Farmer::outputOfBlock (int block) const {
   // May be inaccurate for the last block. TODO: It would be good to have
   // an expectation value instead, with a discount rate and accounting for
@@ -597,7 +603,6 @@ double Farmer::outputOfBlock (int block) const {
 
 Farmland* Farmland::getTestFarm (int numFields) {
   Farmland* testFarm = new Farmland();
-  createWorkers(testFarm);
   testFarm->workers[0]->fields[*FieldStatus::Clear] = numFields;
   return testFarm;
 }
@@ -1135,7 +1140,9 @@ Forest::Forest ()
   , minStatusToHarvest(ForestStatus::Huge)
   , blockSize(1)
   , workableBlocks(3)
-{}
+{
+  createWorkers(this);
+}
 
 Forest::Forest (Forest* other)
   : Building(1)
@@ -1185,7 +1192,6 @@ double Forester::outputOfBlock (int block) const {
 void Forest::unitTests () {
   Hex* testHex = Hex::getHex(1000, 1000);
   Forest testForest;
-  createWorkers(&testForest);
   testHex->setForest(&testForest);
   if ((int) testForest.workers.size() != numOwners) {
     sprintf(errorMessage, "Forest should have %i Workers, has %i", numOwners, testForest.workers.size());
@@ -1666,59 +1672,59 @@ int Village::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit*
 Mine::Mine ()
   : Building(1)
   , Mirrorable<Mine>()
+  , Collective<Miner, MineStatus, 10>()
   , veinsPerMiner(1)
 {
-  for (int j = 0; j < numOwners; ++j) {
-    miners.push_back(new Miner(this));
-  }
+  createWorkers(this);
 }
 
 Mine::Mine (Mine* other)
   : Building(1)
   , Mirrorable<Mine>(other)
+  , Collective<Miner, MineStatus, 10>()
 {}
 
-Mine::~Mine () {
-  BOOST_FOREACH(Miner* miner, miners) {
-    miner->destroyIfReal();
-  }
-}
+Mine::~Mine () {}
 
-Mine::Miner::Miner (Mine* m)
+Miner::Miner (Mine* m)
   : Industry<Miner>(this)
   , Mirrorable<Miner>()
-  , shafts(MineStatus::numTypes(), 0)
-  , mine(m)
+  , fields(MineStatus::numTypes(), 0)
+  , boss(m)
 {}
 
-Mine::Miner::Miner (Miner* other)
+Miner::Miner (Miner* other)
   : Industry<Miner>(this)
-  , Mirrorable<Mine::Miner>(other)
-  , shafts(MineStatus::numTypes(), 0)
+  , Mirrorable<Miner>(other)
+  , fields(MineStatus::numTypes(), 0)
 {}
+
+int Miner::numBlocks () const {
+  return boss->veinsPerMiner;
+}
 
 void Mine::setDefaultOwner (EconActor* o) {
   if (!o) return;
-  BOOST_FOREACH(Miner* miner, miners) {  
+  BOOST_FOREACH(Miner* miner, workers) {  
     if (miner->getEconOwner()) continue;
     miner->setEconOwner(o);
   }
 }
 
-void Mine::Miner::setMirrorState () {
+void Miner::setMirrorState () {
   mirror->owner = owner;
-  for (unsigned int i = 0; i < shafts.size(); ++i) mirror->shafts[i] = shafts[i];
-  mirror->mine = mine->getMirror();
+  for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
+  mirror->boss = boss->getMirror();
 }
 
-Mine::Miner::~Miner () {}
+Miner::~Miner () {}
 
-Mine::MineStatus::MineStatus (string n, int rl, bool lastOne)
+MineStatus::MineStatus (string n, int rl, bool lastOne)
   : Enumerable<MineStatus>(this, n, lastOne)
   , requiredLabour(rl)
 {}
 
-Mine::MineStatus::~MineStatus () {}
+MineStatus::~MineStatus () {}
 
 FieldStatus::FieldStatus (string n, int rl, bool lastOne)
   : Enumerable<const FieldStatus>(this, n, lastOne)
@@ -1759,15 +1765,15 @@ void ForestStatus::initialise() {
 }
 
 void Mine::endOfTurn () {
-  BOOST_FOREACH(Miner* miner, miners) miner->workShafts();
+  doWork();
 }
 
-double Mine::Miner::getCapitalSize () const {
+double Miner::getCapitalSize () const {
   return numBlocks();
 }
 
-double Mine::Miner::outputOfBlock (int block) const {
-  return _amountOfIron;
+double Miner::outputOfBlock (int block) const {
+  return Mine::_amountOfIron;
 }
 
 void Mine::unitTests () {
@@ -1778,11 +1784,11 @@ void Mine::unitTests () {
   Hex* testHex = Hex::getHex(1000, 1000);
   Mine testMine;
   testHex->setMine(&testMine);
-  if ((int) testMine.miners.size() != numOwners) throwFormatted("Mine should have %i Miners, has %i", numOwners, testMine.miners.size());
-  testMine.miners[0]->unitTests();
+  if ((int) testMine.workers.size() != numOwners) throwFormatted("Mine should have %i Workers, has %i", numOwners, testMine.workers.size());
+  testMine.workers[0]->unitTests();
 }
 
-void Mine::Miner::unitTests () {
+void Miner::unitTests () {
   if (!output) throw string("Mine output has not been set.");
   if (!theMarket) throw string("No market registered");
   // Note that this is not static, it's run on a particular Miner.
@@ -1797,7 +1803,7 @@ void Mine::Miner::unitTests () {
 
   MineStatus::Iter msi = MineStatus::start();
   MineStatus* status = (*msi);
-  shafts[*status] = 100;
+  fields[*status] = 100;
   double fullCycleLabour = 0;
   vector<jobInfo> jobs;
   double laborNeeded = 0;
@@ -1864,16 +1870,16 @@ void Mine::Miner::unitTests () {
 
   owner = this;
   deliverGoods(TradeGood::Labor, laborNeeded);
-  workShafts();
-  if (shafts[*status] != 99) throwFormatted("Expected %s to be 99, got %i", status->getName().c_str(), shafts[*status]);
+  extractResources();
+  if (fields[*status] != 99) throwFormatted("Expected %s to be 99, got %i", status->getName().c_str(), fields[*status]);
 
   double productionOne = getAmount(output);
-  if (0.01 > productionOne) throw string("Expected to have some iron after workShafts");
+  if (0.01 > productionOne) throw string("Expected to have some iron after extractResources");
 
   // Check that, with marginal production of zero, we get the same labor bid.
   // That is, second block produces nothing, so should not create a bid.
-  mine->veinsPerMiner = 2;
-  mine->marginFactor = 0;
+  boss->veinsPerMiner = 2;
+  boss->marginFactor = 0;
   bidlist.clear();
   getBids(prices, bidlist);
   double newFoundLabour = 0;
@@ -1885,44 +1891,44 @@ void Mine::Miner::unitTests () {
 							       newFoundLabour);
 
   // With no marginal decline, should buy twice as much.
-  mine->marginFactor = 1;
+  boss->marginFactor = 1;
   bidlist.clear();
   getBids(prices, bidlist);
   newFoundLabour = 0;
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if (mb->tradeGood == TradeGood::Labor) newFoundLabour += mb->amountToBuy;
   }
-  if (fabs(mine->veinsPerMiner*foundLabour - newFoundLabour) > 0.1) throwFormatted("With margin 1, expected to buy %f, but got %f",
-										   mine->veinsPerMiner*foundLabour,
+  if (fabs(boss->veinsPerMiner*foundLabour - newFoundLabour) > 0.1) throwFormatted("With margin 1, expected to buy %f, but got %f",
+										   boss->veinsPerMiner*foundLabour,
 										   newFoundLabour);
 
   setAmount(output, 0);
   getLabourForBlock(0, jobs, laborNeeded);
   setAmount(TradeGood::Labor, numBlocks() * laborNeeded);
-  workShafts();
+  extractResources();
   double productionTwo = getAmount(output);
   if (0.1 < fabs(productionTwo - numBlocks() * productionOne)) {
     sprintf(errorMessage, "With %i blocks and margin factor 1, expected to produce %f, but got %f", numBlocks(), numBlocks() * productionOne, productionTwo);
     throw string(errorMessage);
   }
 
-  mine->marginFactor = 0.5;
+  boss->marginFactor = 0.5;
   setAmount(output, 0);
   getLabourForBlock(0, jobs, laborNeeded);
   setAmount(TradeGood::Labor, numBlocks() * laborNeeded);
-  workShafts();
+  extractResources();
   double productionThree = getAmount(output);
   if (0.1 < fabs(productionThree - 1.5 * productionOne)) {
     sprintf(errorMessage, "With two blocks and margin factor 0.5, expected to produce %f, but got %f", 1.5 * productionOne, productionThree);
     throw string(errorMessage);
   }
 
-  mine->marginFactor = 0.75;
-  mine->veinsPerMiner = 3;
+  boss->marginFactor = 0.75;
+  boss->veinsPerMiner = 3;
   setAmount(output, 0);
   getLabourForBlock(0, jobs, laborNeeded);
   setAmount(TradeGood::Labor, numBlocks() * laborNeeded);
-  workShafts();
+  extractResources();
   double productionFour = getAmount(output);
   if (0.1 < fabs(productionFour - 2.3125 * productionOne)) throwFormatted("With three blocks and margin factor 0.75, expected to produce %f, but got %f",
 									  2.3125 * productionOne,
@@ -1930,10 +1936,10 @@ void Mine::Miner::unitTests () {
   capital->setAmounts(oldCapital);
 }
 
-void Mine::Miner::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
+void Miner::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
   double ret = 0;
   for (MineStatus::Iter ms = MineStatus::start(); ms != MineStatus::final(); ++ms) {
-    if (0 == shafts[**ms]) continue;
+    if (0 == fields[**ms]) continue;
     ret = (*ms)->requiredLabour;
     break;
   }
@@ -1943,18 +1949,18 @@ void Mine::Miner::getLabourForBlock (int block, vector<jobInfo>& jobs, double& p
   searchForMatch(jobs, ret, 1, 1);
 }
 
-void Mine::Miner::workShafts () {
+void Miner::extractResources (bool /*tick*/) {
   double availableLabour = getAmount(TradeGood::Labor);
   double capFactor = capitalFactor(*this);
 
   double decline = 1;
   for (MineStatus::Iter ms = MineStatus::start(); ms != MineStatus::final(); ++ms) {
-    if (0 == shafts[**ms]) continue;
+    if (0 == fields[**ms]) continue;
     for (int i = 0; i < numBlocks(); ++i) {
       if (availableLabour < (*ms)->requiredLabour * capFactor) break;
       availableLabour -= (*ms)->requiredLabour * capFactor;
-      produce(output, _amountOfIron * decline);
-      if (0 == --shafts[**ms]) break;
+      produce(output, Mine::_amountOfIron * decline);
+      if (0 == --fields[**ms]) break;
       decline *= getMarginFactor();
     }
 
@@ -1962,15 +1968,15 @@ void Mine::Miner::workShafts () {
   }
   double usedLabour = availableLabour - getAmount(TradeGood::Labor);
   deliverGoods(TradeGood::Labor, usedLabour);
-  if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workShafts");
+  if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workFields");
 }
 
 void Mine::setMirrorState () {
   mirror->setOwner(getOwner());
-  mirror->miners.clear();
-  BOOST_FOREACH(Miner* miner, miners) {
+  mirror->workers.clear();
+  BOOST_FOREACH(Miner* miner, workers) {
     miner->setMirrorState();
-    mirror->miners.push_back(miner->getMirror());
+    mirror->workers.push_back(miner->getMirror());
   }
 }
 

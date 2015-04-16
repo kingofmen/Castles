@@ -61,7 +61,6 @@ private:
   template <class C> static void initialiseCollective (C* collective, Object* cInfo, map<string, int C::WorkerType::*> intMap) {
     objvec wInfos = cInfo->getValue("worker");
     if ((int) wInfos.size() < C::numOwners) throwFormatted("Expected %i worker objects, found %i", C::numOwners, wInfos.size());
-    C::createWorkers(collective);
     for (int i = 0; i < C::numOwners; ++i) {
       initialiseEcon(collective->workers[i], wInfos[i]);
       for (typename C::StatusType::Iter stat = C::StatusType::start(); stat != C::StatusType::final(); ++stat) {

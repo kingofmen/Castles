@@ -118,23 +118,16 @@ hexinfo = {
     minStatusToHarvest = climax
   }
   mine = {
-    worker = { goods = { money = 10000 } id = 43 }
-    worker = { goods = { money = 10000 } id = 44 }
-    worker = { goods = { money = 10000 } id = 45 }
-    worker = { goods = { money = 10000 } id = 46 }
-    worker = { goods = { money = 10000 } id = 47 }
-    worker = { goods = { money = 10000 } id = 48 }
-    worker = { goods = { money = 10000 } id = 49 }
-    worker = { goods = { money = 10000 } id = 50 }
-    worker = { goods = { money = 10000 } id = 51 }
-    worker = { goods = { money = 10000 } id = 52 }
-
-    surface = { 100000 0 0 0 0 0 0 0 0 0 }
-    easy    = { 1000000 0 0 0 0 0 0 0 0 0 }
-    medium  = { 10000000 0 0 0 0 0 0 0 0 0 }
-    deep    = { 100000000 0 0 0 0 0 0 0 0 0 }
-    modern  = { 1000000000 0 0 0 0 0 0 0 0 0 }
-    owner   = { 3 3 3 3 2 2 2 0 0 0 }
+    worker = { goods = { money = 10000 } id = 43 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
+    worker = { goods = { money = 10000 } id = 44 owner = 3 }
+    worker = { goods = { money = 10000 } id = 45 owner = 3 }
+    worker = { goods = { money = 10000 } id = 46 owner = 3 }
+    worker = { goods = { money = 10000 } id = 47 owner = 3 }
+    worker = { goods = { money = 10000 } id = 48 owner = 3 }
+    worker = { goods = { money = 10000 } id = 49 owner = 3 }
+    worker = { goods = { money = 10000 } id = 50 owner = 3 }
+    worker = { goods = { money = 10000 } id = 51 owner = 3 }
+    worker = { goods = { money = 10000 } id = 52 owner = 3 }
   }
 }
 
