@@ -180,7 +180,6 @@ public:
   virtual double expectedProduction () const {return 0;}
   virtual double possibleProductionThisTurn () const {return 0;}
 
-  static const int numOwners = 10;  
 protected:
   double marginFactor;
   double supplies; 
@@ -325,17 +324,27 @@ private:
   static vector<double> fertility;
 };
 
-template <class WorkerType, class StatusType, int N> class Collective {
+template <class W, class S, int N> class Collective {
   friend class StaticInitialiser;
 public:
   Collective () {}
-  ~Collective () {BOOST_FOREACH(WorkerType* worker, workers) worker->destroyIfReal();}
-  void doWork (bool tick = false) {BOOST_FOREACH(WorkerType* worker, workers) worker->extractResources(tick);}
-  double getAmount (TradeGood const* const tg) {double ret = 0; BOOST_FOREACH(WorkerType* f, workers) ret += f->getAmount(tg); return ret;}
-  void setMarket (Market* market) {BOOST_FOREACH(WorkerType* worker, workers) market->registerParticipant(worker);}
+  ~Collective () {BOOST_FOREACH(W* worker, workers) worker->destroyIfReal();}
+
+  typedef W WorkerType;
+  typedef S StatusType;
+
+  void doWork (bool tick = false) {BOOST_FOREACH(W* worker, workers) worker->extractResources(tick);}
+  double getAmount (TradeGood const* const tg) {double ret = 0; BOOST_FOREACH(W* f, workers) ret += f->getAmount(tg); return ret;}
+  void setMarket (Market* market) {BOOST_FOREACH(W* worker, workers) market->registerParticipant(worker);}
 protected:
-  vector<WorkerType*> workers;
-  static const int Num = N;
+  vector<W*> workers;
+  static const int numOwners = N;
+
+  template<class C> static void createWorkers (C* collective) {
+    for (int i = 0; i < C::numOwners; ++i) {
+      collective->workers.push_back(new typename C::WorkerType(collective));
+    }
+  }
 };
 
 class FieldStatus : public Enumerable<const FieldStatus> {
@@ -508,7 +517,7 @@ public:
   virtual void setMirrorState ();
 
   static void unitTests ();
-  
+  static const int numOwners = 10;
 private:
   class Miner : public Industry<Miner>, public Mirrorable<Miner> {
     friend class Mirrorable<Miner>;

@@ -58,29 +58,28 @@ private:
     }
   }
   
-  template <class W, class S, class C> static void initialiseCollective (C* collective, Object* cInfo, map<string, int W::*> intMap) {
+  template <class C> static void initialiseCollective (C* collective, Object* cInfo, map<string, int C::WorkerType::*> intMap) {
     objvec wInfos = cInfo->getValue("worker");
     if ((int) wInfos.size() < C::numOwners) throwFormatted("Expected %i worker objects, found %i", C::numOwners, wInfos.size());
+    C::createWorkers(collective);
     for (int i = 0; i < C::numOwners; ++i) {
-      W* currWorker = new W(collective);
-      collective->workers.push_back(currWorker);
-      initialiseEcon(currWorker, wInfos[i]);
-      for (typename S::Iter stat = S::start(); stat != S::final(); ++stat) {
-	currWorker->fields[**stat] = wInfos[i]->safeGetInt((*stat)->getName(), 0);
+      initialiseEcon(collective->workers[i], wInfos[i]);
+      for (typename C::StatusType::Iter stat = C::StatusType::start(); stat != C::StatusType::final(); ++stat) {
+	collective->workers[i]->fields[**stat] = wInfos[i]->safeGetInt((*stat)->getName(), 0);
       }
-      readInts<W>(currWorker, wInfos[i], intMap);
+      readInts<typename C::WorkerType>(collective->workers[i], wInfos[i], intMap);
     }
   }
 
-  template <class W, class S, class C> static void writeCollective (C* collective, Object* cInfo, map<string, int W::*> intMap) {
+  template <class C> static void writeCollective (C* collective, Object* cInfo, map<string, int C::WorkerType::*> intMap) {
     for (int i = 0; i < C::numOwners; ++i) {
       Object* worker = new Object("worker");
       cInfo->setValue(worker);
       writeEconActorIntoObject(collective->workers[i], worker);
-      for (typename S::Iter fs = S::start(); fs != S::final(); ++fs) {
+      for (typename C::StatusType::Iter fs = C::StatusType::start(); fs != C::StatusType::final(); ++fs) {
 	worker->setLeaf((*fs)->getName(), collective->workers[i]->fields[**fs]);
       }
-      writeInts<W>(collective->workers[i], worker, intMap);
+      writeInts<typename C::WorkerType>(collective->workers[i], worker, intMap);
     }
   }
 

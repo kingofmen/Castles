@@ -597,7 +597,7 @@ double Farmer::outputOfBlock (int block) const {
 
 Farmland* Farmland::getTestFarm (int numFields) {
   Farmland* testFarm = new Farmland();
-  for (int i = 0; i < numOwners; ++i) testFarm->workers.push_back(new Farmer(testFarm));
+  createWorkers(testFarm);
   testFarm->workers[0]->fields[*FieldStatus::Clear] = numFields;
   return testFarm;
 }
@@ -1185,7 +1185,7 @@ double Forester::outputOfBlock (int block) const {
 void Forest::unitTests () {
   Hex* testHex = Hex::getHex(1000, 1000);
   Forest testForest;
-  for (int i = 0; i < numOwners; ++i) testForest.workers.push_back(new Forester(&testForest));
+  createWorkers(&testForest);
   testHex->setForest(&testForest);
   if ((int) testForest.workers.size() != numOwners) {
     sprintf(errorMessage, "Forest should have %i Workers, has %i", numOwners, testForest.workers.size());

@@ -512,7 +512,7 @@ void readAgeTrackerFromObject (AgeTracker& age, Object* obj) {
 
 Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Farmland* ret = new Farmland();
-  initialiseCollective<Farmer, FieldStatus, Farmland>(ret, fInfo, farmerMap);
+  initialiseCollective<Farmland>(ret, fInfo, farmerMap);
   ret->countTotals();
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
   
@@ -526,7 +526,7 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
     foresterMap["tended"] = &Forester::tendedGroves;
   }
 
-  initialiseCollective<Forester, ForestStatus, Forest>(ret, fInfo, foresterMap);
+  initialiseCollective<Forest>(ret, fInfo, foresterMap);
   BOOST_FOREACH(Forester* f, ret->workers) f->createBlockQueue();
   ret->yearsSinceLastTick = fInfo->safeGetInt("yearsSinceLastTick");
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
@@ -1342,7 +1342,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* farmInfo = new Object("farmland");
       writeBuilding(farmInfo, farm);
       hexInfo->setValue(farmInfo);
-      writeCollective<Farmer, FieldStatus, Farmland>(farm, farmInfo, farmerMap);
+      writeCollective<Farmland>(farm, farmInfo, farmerMap);
       farmInfo->setLeaf("blockSize", farm->blockSize);
     }
 
@@ -1351,7 +1351,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* forestInfo = new Object("forest");
       writeBuilding(forestInfo, forest);
       hexInfo->setValue(forestInfo);
-      writeCollective<Forester, ForestStatus, Forest>(forest, forestInfo, foresterMap);
+      writeCollective<Forest>(forest, forestInfo, foresterMap);
       forestInfo->setLeaf("yearsSinceLastTick", forest->yearsSinceLastTick);
       forestInfo->setLeaf("blockSize", forest->blockSize);
       forestInfo->setLeaf("minStatusToHarvest", *ForestStatus::Huge);
