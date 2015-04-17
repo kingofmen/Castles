@@ -474,8 +474,6 @@ public:
   vector<ForestStatus const*> myBlocks;
   int tendedGroves;
 private:
-  Forest* boss;
-
   Forester(Forester* other);
   int getForestArea () const;
   int getTendedArea () const;
@@ -498,7 +496,6 @@ public:
 private:
   Forest (Forest* other);
   int yearsSinceLastTick;
-  ForestStatus const* minStatusToHarvest;
   
   static vector<int> _amountOfWood;
   static int _labourToTend;    // Ensure forest doesn't go wild.

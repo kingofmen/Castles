@@ -531,7 +531,6 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
   BOOST_FOREACH(Forester* f, ret->workers) f->createBlockQueue();
   ret->yearsSinceLastTick = fInfo->safeGetInt("yearsSinceLastTick");
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
-  ret->minStatusToHarvest = ForestStatus::Huge;
   
   return ret;
 }
@@ -1342,7 +1341,6 @@ void StaticInitialiser::writeGameToFile (string fname) {
       writeCollective<Forest>(forest, forestInfo, foresterMap);
       forestInfo->setLeaf("yearsSinceLastTick", forest->yearsSinceLastTick);
       forestInfo->setLeaf("blockSize", forest->blockSize);
-      forestInfo->setLeaf("minStatusToHarvest", *ForestStatus::Huge);
     }
 
     Mine* mine = (*hex)->mine;

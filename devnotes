@@ -54,7 +54,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Block calculations (check)
      . Marginal declines in production (check)
    - Allow maintenance in addition to production (check)
-   - Read Forest minStatus from save, write to save, let owner set.
+   - Use EconActor discount rate in Forester chopping decisions
    - Remove boss from Forester.
    - Set workableBlocks from save for all buildings.
    - The EconActor owner of Farmer, etc, is not mirrored. So if you do a workFoo, the *real* owner gets the output. Problem.

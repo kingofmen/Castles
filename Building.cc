@@ -1121,7 +1121,6 @@ Forest::Forest ()
   , Mirrorable<Forest>()
   , Collective<Forester, ForestStatus, numOwners>()
   , yearsSinceLastTick(0)
-  , minStatusToHarvest(ForestStatus::Huge)
 {
   createWorkers(this);
 }
@@ -1131,7 +1130,6 @@ Forest::Forest (Forest* other)
   , Mirrorable<Forest>(other)
   , Collective<Forester, ForestStatus, numOwners>()
   , yearsSinceLastTick(0)    
-  , minStatusToHarvest(other->minStatusToHarvest)
 {}
 
 Forest::~Forest () {}
@@ -1141,7 +1139,6 @@ Forester::Forester (Forest* b)
   , Mirrorable<Forester>()
   , fields(ForestStatus::numTypes(), 0)
   , tendedGroves(0)
-  , boss(b)
 {}
 
 Forester::Forester (Forester* other)
@@ -1177,7 +1174,6 @@ void Forest::unitTests () {
     throw string(errorMessage);
   }
 
-  testForest.minStatusToHarvest = ForestStatus::Mature;
   testForest.workers[0]->unitTests();
 }
 
@@ -1355,7 +1351,8 @@ void Forester::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prod
   int numToChop  = 0;
   for (int i = startIndex; i < endIndex; ++i) {
     if (i >= tendedGroves) ++numToTend;
-    if (*myBlocks[i] >= *(boss->minStatusToHarvest)) ++numToChop;
+    // TODO: Get from discount rate
+    if (*myBlocks[i] >= *ForestStatus::Huge) ++numToChop;
   }
 
   double capFactor = capitalFactor(*this);
@@ -1413,7 +1410,8 @@ void Forester::extractResources (bool tick) {
 	availableLabour -= labourPerTend;
 	++tendedGroves;
       }
-      if ((*myBlocks[i] >= *(boss->minStatusToHarvest)) && (availableLabour >= labourPerChop)) {
+      // TODO: Use discount rate
+      if ((*myBlocks[i] >= *ForestStatus::Huge) && (availableLabour >= labourPerChop)) {
 	availableLabour -= labourPerChop;
 	totalChopped += Forest::_amountOfWood[*myBlocks[i]] * decline;
 	--fields[*myBlocks[i]];
@@ -1471,7 +1469,6 @@ void Forest::setMirrorState () {
     mirror->workers.push_back(forester->getMirror());
   }
   mirror->yearsSinceLastTick = yearsSinceLastTick;
-  mirror->minStatusToHarvest = minStatusToHarvest;
 }
 
 void Village::setMirrorState () {
