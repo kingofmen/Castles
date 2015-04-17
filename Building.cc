@@ -1551,22 +1551,6 @@ void Village::eatFood () {
   }
 }
 
-void Farmland::setDefaultOwner (EconActor* o) {
-  if (!o) return;
-  BOOST_FOREACH(Farmer* farmer, workers) {
-    if (farmer->getEconOwner()) continue;
-    farmer->setEconOwner(o);
-  }
-}
-
-void Forest::setDefaultOwner (EconActor* o) {
-  if (!o) return;
-  BOOST_FOREACH(Forester* forester, workers) {
-    if (forester->getEconOwner()) continue;
-    forester->setEconOwner(o);
-  }
-}
-
 void Forest::endOfTurn () {
   bool tick = false;
   if (Calendar::Winter == Calendar::getCurrentSeason()) {
@@ -1678,14 +1662,6 @@ Miner::Miner (Miner* other)
 
 int Miner::numBlocks () const {
   return blockInfo->workableBlocks;
-}
-
-void Mine::setDefaultOwner (EconActor* o) {
-  if (!o) return;
-  BOOST_FOREACH(Miner* miner, workers) {  
-    if (miner->getEconOwner()) continue;
-    miner->setEconOwner(o);
-  }
 }
 
 void Miner::setMirrorState () {
