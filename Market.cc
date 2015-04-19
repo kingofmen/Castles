@@ -42,13 +42,6 @@ void Market::executeContracts () {
     BOOST_FOREACH(MarketContract* mc, contracts) {
       double currTrade = mc->execute();
       traded += currTrade;
-      /*
-      Logger::logStream(DebugStartup) << "Moved " << currTrade << " "
-				      << mc->tradeGood->getName() << " from "
-				      << mc->producer->getIdx() << " to "
-				      << mc->recipient->getIdx() << " "
-				      <<"\n";
-      */
       volume.deliverGoods(mc->tradeGood, currTrade);
     }
     if (0.001 > traded) break;
@@ -102,7 +95,6 @@ void Market::makeContracts (vector<MarketBid*>& bids, vector<MarketBid*>& notMat
       match = temp;
     }
 
-    
     MarketContract* contract = new MarketContract(toMatch, match, prices.getAmount(toMatch->tradeGood), min(toMatch->duration, match->duration));
     contracts.push_back(contract);
     toMatch->amountToBuy += match->amountToBuy;
@@ -220,7 +212,7 @@ void Market::unitTests () {
 
   class Labourer : public EconActor {
   public:
-    Labourer (TradeGood const* const tg) : EconActor(), food(tg) {}
+    Labourer (TradeGood const* const tg) : EconActor(), food(tg) {setAmount(TradeGood::Money, 1e7);}
     virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
       double labourToSell = prices.getAmount(TradeGood::Labor);
       bidlist.push_back(new MarketBid(TradeGood::Labor, -labourToSell, this, 1));
@@ -234,7 +226,7 @@ void Market::unitTests () {
   };
   class FoodProducer : public EconActor {
   public:
-    FoodProducer (TradeGood const* const tg) : EconActor(), output(tg) {}
+    FoodProducer (TradeGood const* const tg) : EconActor(), output(tg) {setAmount(TradeGood::Money, 1e7);}
     virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
       double labourToBuy = 20 - prices.getAmount(TradeGood::Labor);
       bidlist.push_back(new MarketBid(TradeGood::Labor, labourToBuy, this, 1));
@@ -268,7 +260,6 @@ void Market::unitTests () {
       double oldFoodPrice = testMarket.prices.getAmount(food);
       testMarket.volume.clear();
       testMarket.demand.clear();
-      
       testMarket.holdMarket();
       if (0 < testMarket.contracts.size()) throwFormatted("Contracts of duration 1 should have been removed, found %i", testMarket.contracts.size());
       if (testMarket.volume.getAmount(food) < 0.01) throwFormatted("With prices (%f, %f), iteration %i had tiny volume %f for %s",

@@ -54,6 +54,9 @@ EconActor::EconActor ()
   , GoodsHolder()
   , owner(0)
   , theMarket(0)
+  , obligations()
+  , borrowers()
+  , discountRate(0.10)
 {}
 
 EconActor::~EconActor () {
@@ -93,7 +96,9 @@ void ContractInfo::execute () const {
 double EconActor::availableCredit (EconActor* const applicant) const {
   if ((isOwnedBy(applicant)) || (applicant->isOwnedBy(this))) return 1e7;
   static const double maxCredit = 100;
-  double amountAvailable = maxCredit - borrowers.find(applicant)->second;
+  double borrowed = 0;
+  if (borrowers.count(applicant)) borrowed = borrowers.find(applicant)->second; // Use find for const-ness.
+  double amountAvailable = maxCredit - borrowed;
   if (amountAvailable < 0) return 0;
   return amountAvailable;
 }

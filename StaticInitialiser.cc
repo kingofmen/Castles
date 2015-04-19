@@ -295,6 +295,7 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
   readGoodsHolder(info->safeGetObject("goods"), *econ);
   int ownerIdx = info->safeGetInt("owner", -1);
   if (ownerIdx >= 0) econ->setEconOwner(EconActor::getByIndex(ownerIdx));
+  econ->discountRate = info->safeGetFloat("discountRate", econ->discountRate);
 }
 
 inline int heightMapWidth (int zoneSide) {
@@ -1219,6 +1220,7 @@ void StaticInitialiser::writeEconActorIntoObject (EconActor* econ, Object* info)
   info->setLeaf("id", econ->getIdx());
   writeGoodsHolderIntoObject(*econ, info->getNeededObject("goods"));
   if (econ->getEconOwner()) info->setLeaf("owner", econ->getEconOwner()->getIdx());
+  info->setLeaf("discountRate", econ->discountRate);
 }
 
 void StaticInitialiser::writeGoodsHolderIntoObject (const GoodsHolder& goodsHolder, Object* info) {

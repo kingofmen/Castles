@@ -82,6 +82,7 @@ public:
   double availableCredit (EconActor* const applicant) const;
   void dunAndPay ();
   double extendCredit (EconActor* const applicant, double amountWanted);
+  double getDiscountRate () const {return discountRate;}
   void getPaid (EconActor* const payer, double amount);
   double getPromised (TradeGood const* const tg) {return promisedToDeliver.getAmount(tg);}
   virtual double produceForContract (TradeGood const* const tg, double amount);
@@ -107,6 +108,7 @@ protected:
 private:
   vector<ContractInfo*> obligations;
   map<EconActor*, double> borrowers;
+  double discountRate;
 };
 
 #endif 
