@@ -106,15 +106,12 @@ double Player::evaluateGlobalStrength () {
   double influence = calculateInfluence();
 
   // Military strength - fighting power of units
-  double suppliesUsed = 0;
-  double suppliesNeeded = 0; 
   double unitStrength = 0;
   for (Vertex::Iterator v = Vertex::start(); v != Vertex::final(); ++v) {
     Vertex* vex = (*v)->getMirror();
     if (0 == vex->numUnits()) continue;
     MilUnit* unit = vex->getUnit(0);
     if (this == unit->getOwner()) {
-      suppliesUsed += unit->getPrioritisedSuppliesNeeded();
       ret -= distanceModifier*pow(vex->value.distanceMap[this], distancePower);
       unitStrength += calculateUnitStrength(unit, 1.0); 
     }
@@ -122,7 +119,6 @@ double Player::evaluateGlobalStrength () {
 
   // Economic and geographic strength - castles, population, productive capacity 
   double castlePoints = 0;
-  double suppliesProduced = 0; 
   for (Line::Iterator l = Line::start(); l != Line::final(); ++l) {
     Line* lin = (*l)->getMirror();
     Castle* castle = lin->getCastle();
@@ -133,7 +129,6 @@ double Player::evaluateGlobalStrength () {
     int nGar = castle->numGarrison(); 
     for (int i = 0; i < nGar; ++i) {
       MilUnit* unit = castle->getGarrison(i);
-      suppliesUsed += unit->getPrioritisedSuppliesNeeded();
       unitStrength += calculateUnitStrength(unit, 1.0 / Castle::getSiegeMod());
     }
 
@@ -141,18 +136,12 @@ double Player::evaluateGlobalStrength () {
     assert(support);
     Village* village = support->getVillage();
     if (!village) continue;
-    suppliesProduced += village->production(); 
   }
   
   ret += influence;
   ret += castlePoints;
   ret += unitStrength;
 
-  // Adjust for economic power getting close to limits, or past them
-  ret -= supplyWeight*atan(suppliesNeeded / suppliesProduced); 
-
-  //Logger::logStream(DebugAI) << "[" << unitStrength << " " << influence << " " << castlePoints << "] "; 
-  
   return ret; 
 }
 

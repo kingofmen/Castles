@@ -99,7 +99,6 @@ public:
   void setAggression (double a) {aggression = max(a, min(a, 0.01));} 
   
   int totalSoldiers () const; 
-  void addSupplies (double amount) {supplies += amount;} 
   double calcStrength (double decayConstant, double MilUnitElement::*field);
   void setLocation (Vertex* dat) {location = dat;} 
   virtual void setMirrorState ();
@@ -111,7 +110,6 @@ public:
   MilUnitElement* getElement (MilUnitTemplate const* ut);
   MilUnitGraphicsInfo const* getGraphicsInfo () {return graphicsInfo;}  
   double getSupplyRatio () const {return supplyRatio;} 
-  double getPrioritisedSuppliesNeeded () const;
   double getPriority () const {return priorityLevels[priority];} 
   virtual int getUnitTypeAmount (MilUnitTemplate const* const ut) const; 
   double efficiency () const {return max(0.1, supplyRatio);} 
@@ -124,7 +122,6 @@ public:
 private:
   MilUnit (MilUnit* other); 
   
-  double getSuppliesNeeded () const;  
   void recalcElementAttributes (); 
   int takeCasualties (double rate);
   void getShockRange (double shkRatio, double firRatio, double mobRatio, double& shkPercent, double& firPercent) const;
@@ -132,7 +129,6 @@ private:
   Vertex* location; 
   Vertices rear;
   vector<MilUnitElement*> forces;
-  double supplies;
   double supplyRatio; 
   int priority;
   std::stack<double> modStack;

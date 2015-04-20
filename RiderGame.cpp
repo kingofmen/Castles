@@ -226,78 +226,29 @@ void WarfareGame::endOfTurn () {
   
   // Trade
   for (Player::Iter p = Player::start(); p != Player::final(); ++p) {
-    vector<Route*> routes;
     vector<Castle*> sources;
-    vector<MilUnit*> sinks;
+    //vector<MilUnit*> sinks;
     findCastles(sources, (*p));
-    findUnits(sinks, (*p));
-
-    for (vector<Castle*>::iterator c = sources.begin(); c != sources.end(); ++c) {
-      for (vector<MilUnit*>::iterator m = sinks.begin(); m != sinks.end(); ++m) {
-	if (!(*m)->getLocation()) continue; // Indicates garrison unit 
-	if (!routeMap[*p][(*c)->getLocation()][(*m)->getLocation()]) findRoute((*c)->getLocation(), (*m)->getLocation(), (*p), 0.8);
-	routes.push_back(routeMap[*p][(*c)->getLocation()][(*m)->getLocation()]);
-	routes.back()->source = (*c);
-	routes.back()->target = (*m)->getLocation(); 
-      }
-    }
+    //findUnits(sinks, (*p));
 
     for (vector<Castle*>::iterator c = sources.begin(); c != sources.end(); ++c) {
       (*c)->supplyGarrison(); 
     }
-
-    sort(routes.begin(), routes.end(), deref<Route>(member_lt(&Route::distance)));
-    for (vector<Route*>::iterator r = routes.begin(); r != routes.end(); ++r) {
-      if (!(*r)) continue;
-      double amountWanted = 0;
-      for (Vertex::UnitIterator m = (*r)->target->beginUnits(); m != (*r)->target->endUnits(); ++m) {
-	amountWanted += (*m)->getPrioritisedSuppliesNeeded(); 
-      }
-      if (amountWanted < 1) continue; 
-      double amountSent = (*r)->source->removeSupplies(amountWanted); 
-
-      Geography* previous = 0; 
-      for (vector<Geography*>::reverse_iterator g = (*r)->route.rbegin(); g != (*r)->route.rend(); ++g) {
-	(*g)->traverseSupplies(amountSent, *p, previous);
-	previous = (*g); 
-	//amountSent -= (*g)->traversalCost(*p);
-	//Logger::logStream(DebugSupply) << "Traversed " << (int) (*g) << " at cost " << (*g)->traversalCost(*p) << "\n"; 
-	//double lossChance = (*g)->traversalRisk(*p);
-	//double roll = rand();
-	//roll /= RAND_MAX;
-	//if (roll < lossChance) amountSent *= 0.9; 
-	if (amountSent < 0.05 * amountWanted) break;
-      }
-      if (amountSent < 0.05 * amountWanted) continue;
-
-      for (Vertex::UnitIterator m = (*r)->target->beginUnits(); m != (*r)->target->endUnits(); ++m) {
-	double fraction = (*m)->getPrioritisedSuppliesNeeded();
-	fraction /= amountWanted;
-	/*Logger::logStream(DebugSupply) << "Delivering to unit at "
-				       << (*r)->target->getName() << " : "
-				       << amountSent * fraction
-				       << " from " << (*r)->source->getSupport()->getName()
-				       << "\n"; */
-	(*m)->addSupplies(amountSent * fraction); 
-      }
-    }
-    
   }
-  
 
   // Supply consumption, strength calculation
-  for (MilUnit::Iterator mil = MilUnit::start(); mil != MilUnit::final(); ++mil) (*mil)->endOfTurn(); 
+  for (MilUnit::Iterator mil = MilUnit::start(); mil != MilUnit::final(); ++mil) (*mil)->endOfTurn();
 
   Calendar::newWeekBegins();
   Logger::logStream(Logger::Game) << Calendar::toString() << "\n";
   
   if (Calendar::Winter == Calendar::getCurrentSeason()) {
-    // Hex buildings do special things in winter. 
+    // Hex buildings do special things in winter.
     for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
 
     // So do MilUnits.
     for (MilUnit::Iterator mil = MilUnit::start(); mil != MilUnit::final(); ++mil) (*mil)->endOfTurn();
-    
+
     Calendar::newYearBegins(); 
   }
   FarmGraphicsInfo::updateFieldStatus();

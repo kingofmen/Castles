@@ -23,7 +23,6 @@ MilUnit::MilUnit ()
   , Named<MilUnit, false>()
   , Iterable<MilUnit>(this)
   , rear(Left)
-  , supplies(0)
   , supplyRatio(1) 
   , priority(4)
   , fightFraction(1.0)
@@ -103,8 +102,6 @@ MilUnit* MilUnit::detach (double fraction) {
     ret->addElement((*i)->unitType, transfer);
   }
   ret->rear = rear;
-  ret->supplies = fraction * supplies;
-  supplies -= ret->supplies;
   ret->supplyRatio = supplyRatio;
   ret->priority = priority; 
   recalcElementAttributes(); 
@@ -160,7 +157,6 @@ void MilUnitElement::setMirrorState () {
 void MilUnit::setMirrorState () {
   mirror->setOwner(getOwner());
   mirror->rear = rear;
-  mirror->supplies = supplies;
   mirror->supplyRatio = supplyRatio; 
   mirror->priority = priority;
   mirror->modStack = modStack;
@@ -229,21 +225,6 @@ double MilUnit::calcStrength (double lifetime, double MilUnitElement::*field) {
   return 1 + ret; 
 }
 
-double MilUnit::getSuppliesNeeded () const {
-  double needed = 0.001;
-  for (CElmIter i = forces.begin(); i != forces.end(); ++i) {
-    needed += (*i)->strength() * (*i)->unitType->supplyConsumption;
-  }
-  return needed; 
-}
-
-double MilUnit::getPrioritisedSuppliesNeeded () const {
-  double ret = getSuppliesNeeded();
-  ret *= getPriority();
-  if (ret < supplies) return 0;
-  return ret - supplies;
-}
-
 void MilUnit::endOfTurn () {
   if (0 == forces.size()) return; 
   if (0 == totalSoldiers()) return; 
@@ -255,16 +236,9 @@ void MilUnit::endOfTurn () {
     return; 
   }
   
-  double needed = getSuppliesNeeded(); 
-  supplyRatio = (supplies / needed);
-  if (supplyRatio > 1) supplyRatio = sqrt(supplyRatio);
-  if (supplyRatio > 3) supplyRatio = 3;
-  supplies -= needed*supplyRatio;
   recalcElementAttributes();
   graphicsInfo->updateSprites(this);   
 }
-
-const double invHalfPi = 0.6366197730950255;
 
 int MilUnit::takeCasualties (double rate) {
   rate *= fightFraction; 

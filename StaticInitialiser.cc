@@ -419,12 +419,10 @@ Vertex* findVertex (Object* info, Hex* hex) {
 }
 
 void StaticInitialiser::initialiseBuilding (Building* build, Object* info) {
-  build->supplies = info->safeGetFloat("supplies", 0);
   build->marginFactor = info->safeGetFloat("marginalDecline", build->marginFactor);
 }
 
 void StaticInitialiser::writeBuilding (Object* bInfo, Building* build) {
-  bInfo->setLeaf("supplies", build->supplies);
   bInfo->setLeaf("marginalDecline", build->marginFactor);
 }
 
@@ -580,7 +578,6 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
     if (vtx) vtx->addUnit(m);
   }
   m->setName(mInfo->safeGetString("name", "\"Unknown Soldiers\"")); 
-  m->supplies = mInfo->safeGetFloat("supplies"); 
 
   initialiseEcon(m, mInfo);
   return m; 
@@ -992,12 +989,6 @@ void StaticInitialiser::loadSprites () {
   Object* pos = ginfo->getNeededObject("cowPositions");
   objvec cows = pos->getValue("position");
   VillageGraphicsInfo::maxCows = pos->safeGetInt("maxCows", 15);
-  double maxSupplies = VillageGraphicsInfo::maxCows;
-  for (VillageGraphicsInfo::Iterator f = VillageGraphicsInfo::begin(); f != VillageGraphicsInfo::end(); ++f) {
-    maxSupplies = max(maxSupplies, (*f)->myVillage->getAvailableSupplies());
-  }
-  double tolerance = pos->safeGetFloat("cowTolerance", 1.5);
-  VillageGraphicsInfo::suppliesPerCow = (int) floor(maxSupplies*tolerance/VillageGraphicsInfo::maxCows); 
   
   for (int i = 0; i < VillageGraphicsInfo::maxCows; ++i) {
     if (i >= (int) cows.size()) {
@@ -1199,7 +1190,7 @@ void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
     obj->setValue(numbers);
     writeAgeInfoToObject(*((*i)->soldiers), numbers, 16); 
   }
-  if (0 < unit->supplies) obj->setLeaf("supplies", unit->supplies);
+
   writeEconActorIntoObject(unit, obj);
   obj->setLeaf("priority", unit->priority);
 }
@@ -1287,7 +1278,6 @@ void StaticInitialiser::writeGameToFile (string fname) {
       hexInfo->setValue(castleObject);
       writeEconActorIntoObject(castle, castleObject); 
       castleObject->setLeaf("pos", getDirectionName((*hex)->getDirection(*lin)));
-      castleObject->setLeaf("supplies", castle->supplies);
       castleObject->setLeaf("recruiting", castle->recruitType->name); 
       for (unsigned int i = 0; (int) i < castle->numGarrison(); ++i) {
 	Object* garrObject = new Object("garrison");
@@ -1322,8 +1312,6 @@ void StaticInitialiser::writeGameToFile (string fname) {
       males = new Object("females");      
       writeAgeInfoToObject(village->women, males);
       villageInfo->setValue(males);
-
-      villageInfo->setLeaf("supplies", village->supplies);
     }
     
     Farmland* farm = (*hex)->getFarm();

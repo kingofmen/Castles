@@ -277,8 +277,8 @@ void HexGraphicsInfo::describe (QTextStream& str) const {
     //str << "Devastation   : " << myHex->getDevastation() << "\n"
     str << "  Population  : " << village->getTotalPopulation() << "\n"
 	<< "  Labour      : " << village->production() << "\n"
-	<< "  Consumption : " << village->consumption() << "\n"
-	<< "  Supplies    : " << village->getAvailableSupplies() << "\n";
+	<< "  Consumption : " << village->consumption() << "\n";
+      //<< "  Supplies    : " << village->getAvailableSupplies() << "\n";
   }
   if (farm) {
     str << "  Field status:\n"
@@ -535,7 +535,7 @@ void LineGraphicsInfo::describe (QTextStream& str) const {
     str << "Castle: \n"
 	<< "  Owner     : " << castle->getOwner()->getDisplayName().c_str() << "\n"
 	<< "  Recruiting: " << castle->getRecruitType()->name.c_str() << "\n"
-	<< "  Supplies  : " << castle->getAvailableSupplies() << "\n"
+      //<< "  Supplies  : " << castle->getAvailableSupplies() << "\n"
 	<< "  ";
     MilUnit* unit = castle->getGarrison(0);
     if (unit) unit->getGraphicsInfo()->describe(str);
@@ -1022,10 +1022,10 @@ VillageGraphicsInfo::VillageGraphicsInfo (Village* f)
 
 void VillageGraphicsInfo::updateVillageStatus () {
   for (Iterator info = begin(); info != end(); ++info) {
-    // Supplies.
     (*info)->spriteIndices.clear();
     (*info)->formation.clear();
-    int numCows = min(maxCows, (int) floor((*info)->myVillage->getAvailableSupplies() / suppliesPerCow)); 
+    //int numCows = min(maxCows, (int) floor((*info)->myVillage->getAvailableSupplies() / suppliesPerCow));
+    int numCows = 1;
     for (int i = 0; i < numCows; ++i) {
       (*info)->spriteIndices.push_back(supplySpriteIndex);
       (*info)->formation.push_back(cowPositions[i]);

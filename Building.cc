@@ -68,6 +68,7 @@ Castle::Castle (Hex* dat, Line* lin)
 {
   recruitType = *(MilUnitTemplate::begin());
   setMirrorState();
+  support->registerParticipant(this);
 }
 
 Castle::Castle (Castle* other)
@@ -108,25 +109,14 @@ void Castle::callForSurrender (MilUnit* siegers, Outcome out) {
 }
 
 void Castle::endOfTurn () {
-  //support->getVillage()->demandSupplies(&taxExtraction);
-  //supplies += taxExtraction.delivered;
-  //taxExtraction.delivered = 0;
+}
+
+void Castle::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
+
 }
 
 void Castle::supplyGarrison () {
   if (0 == garrison.size()) return; 
-  double totalRequired = 0.001; 
-  for (vector<MilUnit*>::iterator m = garrison.begin(); m != garrison.end(); ++m) {
-    totalRequired += (*m)->getPrioritisedSuppliesNeeded();
-  }
-  double fraction = supplies / totalRequired;
-  if (fraction > 1) fraction = 1; 
-  for (vector<MilUnit*>::iterator m = garrison.begin(); m != garrison.end(); ++m) {
-    double required = (*m)->getPrioritisedSuppliesNeeded();
-    required *= fraction;
-    supplies -= required;
-    (*m)->addSupplies(required); 
-  }
 }
 
 MilUnit* Castle::removeGarrison () {
@@ -135,12 +125,6 @@ MilUnit* Castle::removeGarrison () {
  ret->dropExtMod(); // No longer gets fortification bonus. 
  return ret;
  }
-
-double Castle::removeSupplies (double amount) {
-  if (amount > supplies) amount = supplies;
-  supplies -= amount;
-  return amount; 
-}
 
 MilUnit* Castle::removeUnit (MilUnit* dat) {
   std::vector<MilUnit*>::iterator target = std::find(garrison.begin(), garrison.end(), dat);
@@ -179,7 +163,6 @@ void Castle::setMirrorState () {
   mirror->setOwner(getOwner()); 
   mirror->support = support;
   mirror->location = location; 
-  mirror->supplies = supplies;
   mirror->recruitType = recruitType;
 
   mirror->garrison.clear();  

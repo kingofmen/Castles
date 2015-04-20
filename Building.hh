@@ -174,7 +174,7 @@ template<class T> double Industry<T>::inverseProductionTime = 1;
 class Building : public BlockInfo {
   friend class StaticInitialiser; 
 public: 
-  Building (double mf = 1, int bs = 1, int wb = 1) : BlockInfo(mf, bs, wb), supplies(0), owner(0) {}
+  Building (double mf = 1, int bs = 1, int wb = 1) : BlockInfo(mf, bs, wb), owner(0) {}
   ~Building () {}
   
   virtual void endOfTurn () = 0; 
@@ -182,14 +182,12 @@ public:
   Player* getOwner () {return owner;} 
   int getAssignedLand () const {return assignedLand;}
   void assignLand (int amount) {assignedLand += amount; if (0 > assignedLand) assignedLand = 0;}
-  double getAvailableSupplies () const {return supplies;}
 
   // For use in statistics.
   virtual double expectedProduction () const {return 0;}
   virtual double possibleProductionThisTurn () const {return 0;}
 
 protected:
-  double supplies; 
   
 private:
   Player* owner;
@@ -206,13 +204,13 @@ public:
   void addGarrison (MilUnit* p);
   void callForSurrender (MilUnit* siegers, Outcome out); 
   virtual void endOfTurn ();
+  virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
   Line* getLocation () {return location;}
   MilUnit* getGarrison (unsigned int i) {if (i >= garrison.size()) return 0; return garrison[i];}
   Hex* getSupport () {return support;}
   int numGarrison () const {return garrison.size();}
   void recruit (Outcome out);  
   MilUnit* removeGarrison ();
-  double removeSupplies (double amount);   
   MilUnit* removeUnit (MilUnit* r);
   virtual void setOwner (Player* p);
   void setRecruitType (const MilUnitTemplate* m) {recruitType = m;}
