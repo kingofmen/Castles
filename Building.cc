@@ -188,6 +188,7 @@ void Castle::setMirrorState () {
     mirror->garrison.push_back((*unt)->getMirror());
   }
   mirror->setAmounts(this);
+  setEconMirrorState(mirror);
 }
 
 Village::Village ()
@@ -572,8 +573,8 @@ Farmer::Farmer (Farmer* other)
 {}
 
 void Farmer::setMirrorState () {
-  mirror->owner = owner;
   for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
+  setEconMirrorState(mirror);
 }
 
 Farmer::~Farmer () {}
@@ -1148,8 +1149,8 @@ Forester::Forester (Forester* other)
 {}
 
 void Forester::setMirrorState () {
-  mirror->owner = owner;
   for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
+  setEconMirrorState(mirror);
 }
 
 Forester::~Forester () {}
@@ -1478,9 +1479,9 @@ void Village::setMirrorState () {
   mirror->milTrad = milTrad->getMirror();
   mirror->consumptionLevel = consumptionLevel;
   mirror->setOwner(getOwner());
-  mirror->setAmounts(this);
-  // Building mirror states set by Hex.  
+  // Building mirror states set by Hex.
   if (farm) mirror->farm = farm->getMirror();
+  setEconMirrorState(mirror);
 }
 
 void Farmland::setMirrorState () {
@@ -1662,8 +1663,8 @@ int Miner::numBlocks () const {
 }
 
 void Miner::setMirrorState () {
-  mirror->owner = owner;
   for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
+  setEconMirrorState(mirror);
 }
 
 Miner::~Miner () {}

@@ -57,7 +57,8 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Use EconActor discount rate in Forester chopping decisions
    - Remove boss from Forester.
    - Set workableBlocks from save for all buildings.
-   - The EconActor owner of Farmer, etc, is not mirrored. So if you do a workFoo, the *real* owner gets the output. Problem.
+   - The EconActor owner of Farmer, etc, is not mirrored. So if you do a workFoo, the *real* owner gets the output. Problem. (fixed)
+   - Markets aren't mirrored either. So running mirrors may affect real production volumes.
    - Castle as EconActor
    - Threshold effect on capital
    - Make Markets exist in Vertexes - share between Hexes!

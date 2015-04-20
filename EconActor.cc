@@ -69,6 +69,12 @@ void EconActor::consume (TradeGood const* const tg, double amount) {
   theMarket->registerConsumption(tg, amountActuallyUsed);
 }
 
+void EconActor::setEconMirrorState (EconActor* ea) {
+  econMirror = ea;
+  econMirror->setAmounts(*this);
+  econMirror->setEconOwner(owner ? owner->getEconMirror() : 0);
+}
+
 void EconActor::produce (TradeGood const* const tg, double amount) {
   deliverGoods(tg, amount);
   theMarket->registerProduction(tg, amount);

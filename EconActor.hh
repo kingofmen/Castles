@@ -83,6 +83,7 @@ public:
   void dunAndPay ();
   double extendCredit (EconActor* const applicant, double amountWanted);
   double getDiscountRate () const {return discountRate;}
+  EconActor* getEconMirror () const {return econMirror;}
   void getPaid (EconActor* const payer, double amount);
   double getPromised (TradeGood const* const tg) {return promisedToDeliver.getAmount(tg);}
   virtual double produceForContract (TradeGood const* const tg, double amount);
@@ -90,6 +91,7 @@ public:
   bool isOwnedBy (EconActor const* const cand) const {return cand == owner;}
   void registerContract (MarketContract const* const contract);
   void setEconOwner (EconActor* ea) {owner = ea;}
+  void setEconMirror (EconActor* ea) {econMirror = ea;}
   void unregisterContract (MarketContract const* const contract);
   
   virtual void getBids      (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {}
@@ -98,6 +100,7 @@ public:
 
 protected:
   void registerSale (TradeGood const* const tg, double amount) {soldThisTurn.deliverGoods(tg, amount);}
+  void setEconMirrorState (EconActor* ea);
   void produce (TradeGood const* const tg, double amount);
   void consume (TradeGood const* const tg, double amount);
   
@@ -105,6 +108,7 @@ protected:
   GoodsHolder soldThisTurn;
   GoodsHolder promisedToDeliver;
   Market* theMarket;
+  EconActor* econMirror;
 private:
   vector<ContractInfo*> obligations;
   map<EconActor*, double> borrowers;
