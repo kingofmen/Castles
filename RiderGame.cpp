@@ -82,7 +82,6 @@ WarfareGame* WarfareGame::createGame (string filename) {
 
   Logger::logStream(DebugStartup) << "Creating unit templates\n";
   Object* unitInfo = processFile("./common/units.txt");
-  assert(unitInfo); 
   StaticInitialiser::buildMilUnitTemplates(unitInfo);
   Logger::logStream(DebugStartup) << "Initialising buildings\n";
   StaticInitialiser::initialiseCivilBuildings(popInfo);

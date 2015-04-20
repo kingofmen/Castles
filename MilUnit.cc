@@ -168,7 +168,8 @@ void MilUnit::setMirrorState () {
     (*i)->setMirrorState();
     mirror->forces.push_back((*i)->getMirror());     
   }
-  mirror->setAmounts(this);  
+  mirror->setAmounts(this);
+  setEconMirrorState(mirror);
 }
 
 int MilUnit::totalSoldiers () const {

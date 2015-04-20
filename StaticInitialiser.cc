@@ -584,7 +584,7 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
 }
 
 void StaticInitialiser::buildMilUnitTemplates (Object* info) {
-  assert(info);
+  if (!info) throw string("Attempt to call buildMilUnitTemplates with null object!");
   MilUnit::defaultDecayConstant = info->safeGetFloat("defaultDecayConstant", MilUnit::defaultDecayConstant);
   Object* effects = info->safeGetObject("drillEffects");
   if (effects) {
@@ -603,7 +603,10 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
 
   double mDrill = 1.0 / (MilUnitTemplate::drillEffects.size() - 1);
   int failNames = 0;
-
+  map<string, double SupplyLevel::*> floatMap;
+  floatMap["desertionModifier"] = &SupplyLevel::desertionModifier;
+  floatMap["fightingModifier"]  = &SupplyLevel::fightingModifier;
+  floatMap["movementModifier"]  = &SupplyLevel::movementModifier;
   objvec units = info->getValue("unit");
   for (objiter unit = units.begin(); unit != units.end(); ++unit) {
     string uname = (*unit)->safeGetString("name", "FAIL");
@@ -623,6 +626,14 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
     nType->militiaDrill      = (*unit)->safeGetFloat("militiaDrill");
    
     if (nType->militiaDrill > mDrill) nType->militiaDrill = mDrill; 
+
+    objvec sLevels = (*unit)->getValue("supplies");
+    for (objiter level = sLevels.begin(); level != sLevels.end(); ++level) {
+      SupplyLevel supplyLevel;
+      readGoodsHolder((*level), supplyLevel);
+      readFloats(&supplyLevel, (*level), floatMap);
+      nType->supplyLevels.push_back(supplyLevel);
+    }
 
     Object* spriteInfo = (*unit)->safeGetObject("sprite");
     if (spriteInfo) {
@@ -1158,7 +1169,7 @@ void StaticInitialiser::setUItexts (Object* tInfo) {
     WarfareWindow::currWindow->unitInterface->decreasePriorityButton.setArrowType(Qt::NoArrow);
     WarfareWindow::currWindow->unitInterface->decreasePriorityButton.setIcon(QIcon(iconfile.c_str()));
   }
- 
+
   WarfareWindow::currWindow->castleInterface->increaseRecruitButton.setToolTip(remQuotes(tInfo->safeGetString("incRecruit", badString)).c_str());
   WarfareWindow::currWindow->castleInterface->decreaseRecruitButton.setToolTip(remQuotes(tInfo->safeGetString("decRecruit", badString)).c_str());
   for (MilUnitTemplate::Iterator unit = MilUnitTemplate::begin(); unit != MilUnitTemplate::end(); ++unit) {
@@ -1166,7 +1177,7 @@ void StaticInitialiser::setUItexts (Object* tInfo) {
     Logger::logStream(DebugStartup) << "Setting icon " << iconfile << "\n"; 
     if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) CastleInterface::icons[*unit] = QIcon(iconfile.c_str()); 
   }
-  
+
   WarfareWindow::currWindow->villageInterface->increaseDrillButton.setToolTip(remQuotes(tInfo->safeGetString("incDrill", badString)).c_str());
   iconfile = icons->safeGetString("incDrill", badString);
   if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) {
@@ -1201,7 +1212,7 @@ void StaticInitialiser::writeAgeInfoToObject (AgeTracker& age, Object* obj, int 
     if (age.people[i] > 0) break;
     firstZero = i; 
   }
-  
+
   for (int i = skip; i < firstZero; ++i) {
     obj->addToList(age.people[i]); 
   }

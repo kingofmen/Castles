@@ -9,9 +9,14 @@
 #include "UtilityFunctions.hh"
 #include "EconActor.hh" 
 
-
 class Vertex; 
 struct BattleResult; 
+
+struct SupplyLevel : public GoodsHolder {
+  double desertionModifier;
+  double fightingModifier;
+  double movementModifier;
+};
 
 class MilUnitTemplate {
   friend class StaticInitialiser; 
@@ -26,6 +31,7 @@ public:
   double base_tacmob;  
   //map<string, int> synergies;
   double supplyConsumption;
+  vector<SupplyLevel> supplyLevels;
   int recruit_speed; 
   double militiaDecay;
   double militiaDrill; // Amount of labour required to do one level of drill for one of these units.  

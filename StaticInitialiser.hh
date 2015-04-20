@@ -52,12 +52,24 @@ private:
     }
   }
 
+  template<class W> static void readFloats (W* target, Object* source, map<string, double W::*> memMap) {
+    for (typename map<string, double W::*>::iterator i = memMap.begin(); i != memMap.end(); ++i) {
+      target->*((*i).second) = source->safeGetFloat((*i).first);
+    }
+  }
+
   template<class W> static void writeInts (W* source, Object* target, map<string, int W::*> memMap) {
     for (typename map<string, int W::*>::iterator i = memMap.begin(); i != memMap.end(); ++i) {
       target->setLeaf((*i).first, source->*((*i).second));
     }
   }
-  
+
+  template<class W> static void writeFloats (W* source, Object* target, map<string, double W::*> memMap) {
+    for (typename map<string, double W::*>::iterator i = memMap.begin(); i != memMap.end(); ++i) {
+      target->setLeaf((*i).first, source->*((*i).second));
+    }
+  }
+
   template <class C> static void initialiseCollective (C* collective, Object* cInfo, map<string, int C::WorkerType::*> intMap) {
     objvec wInfos = cInfo->getValue("worker");
     if ((int) wInfos.size() < C::numOwners) throwFormatted("Expected %i worker objects, found %i", C::numOwners, wInfos.size());
