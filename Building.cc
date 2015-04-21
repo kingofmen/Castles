@@ -66,7 +66,7 @@ Castle::Castle (Hex* dat, Line* lin)
   , location(lin)
   , recruitType(0) 
 {
-  recruitType = *(MilUnitTemplate::begin());
+  recruitType = *(MilUnitTemplate::start());
   setMirrorState();
   support->registerParticipant(this);
 }
@@ -135,7 +135,7 @@ MilUnit* Castle::removeUnit (MilUnit* dat) {
 }
 
 void Castle::recruit (Outcome out) {
-  if (!recruitType) recruitType = *(MilUnitTemplate::begin());
+  if (!recruitType) recruitType = *(MilUnitTemplate::start());
   MilUnit* target = (garrison.size() > 0 ? garrison[0] : new MilUnit());
   int newSoldiers = support->recruit(getOwner(), recruitType, target, out);
   if (0 == garrison.size()) {

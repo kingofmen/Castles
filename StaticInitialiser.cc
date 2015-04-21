@@ -440,7 +440,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     hex->castle = castle; 
     castle->setOwner(owner);
     initialiseBuilding(castle, cinfo);
-    castle->recruitType = MilUnitTemplate::getUnitType(cinfo->safeGetString("recruiting", *(MilUnitTemplate::beginTypeNames()))); 
+    castle->recruitType = MilUnitTemplate::getByName(cinfo->safeGetString("recruiting", (*MilUnitTemplate::start())->getName()));
     Object* garrison = cinfo->safeGetObject("garrison");
     if (garrison) {
       MilUnit* m = buildMilUnit(garrison); 
@@ -544,9 +544,9 @@ Mine* StaticInitialiser::buildMine (Object* mInfo) {
 
 void StaticInitialiser::buildMilitia (Village* target, Object* mInfo) {
   if (0 == mInfo) return;
-  for (MilUnitTemplate::Iterator i = MilUnitTemplate::begin(); i != MilUnitTemplate::end(); ++i) {
+  for (MilUnitTemplate::Iter i = MilUnitTemplate::start(); i != MilUnitTemplate::final(); ++i) {
     assert(*i);     
-    int amount = mInfo->safeGetInt((*i)->name);
+    int amount = mInfo->safeGetInt((*i)->getName());
     if (0 >= amount) continue;
     target->milTrad->militiaStrength[*i] = amount;
   }
@@ -558,14 +558,15 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
   static AgeTracker ages; 
   
   MilUnit* m = new MilUnit();
-  for (MilUnitTemplate::TypeNameIterator ut = MilUnitTemplate::beginTypeNames(); ut != MilUnitTemplate::endTypeNames(); ++ut) {
-    Object* strength = mInfo->safeGetObject(*ut);
+  for (MilUnitTemplate::Iter ut = MilUnitTemplate::start(); ut != MilUnitTemplate::final(); ++ut) {
+    string name = (*ut)->getName();
+    Object* strength = mInfo->safeGetObject(name);
     if (!strength) continue;
     ages.clear();
     readAgeTrackerFromObject(ages, strength);
     for (int i = 0; i < 16; ++i) ages.age(); // Quick hack to avoid long strings of initial zeroes in every MilUnit definition. 
     
-    m->addElement(MilUnitTemplate::getUnitType(*ut), ages);
+    m->addElement(MilUnitTemplate::getByName(name), ages);
     
   }
   m->setPriority(mInfo->safeGetInt("priority", defaultUnitPriority));
@@ -585,6 +586,7 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
 
 void StaticInitialiser::buildMilUnitTemplates (Object* info) {
   if (!info) throw string("Attempt to call buildMilUnitTemplates with null object!");
+  Enumerable<MilUnitTemplate>::clear();
   MilUnit::defaultDecayConstant = info->safeGetFloat("defaultDecayConstant", MilUnit::defaultDecayConstant);
   Object* effects = info->safeGetObject("drillEffects");
   if (effects) {
@@ -955,7 +957,7 @@ void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, dou
 void StaticInitialiser::loadSprites () {
   Logger::logStream(DebugStartup) << "loadSprites begin\n";
   for (map<MilUnitTemplate*, Object*>::iterator muto = milUnitSpriteObjectMap.begin(); muto != milUnitSpriteObjectMap.end(); ++muto) {
-    Logger::logStream(DebugStartup) << (*muto).first->name << "\n";
+    Logger::logStream(DebugStartup) << (*muto).first->getName() << "\n";
     Object* spriteInfo = (*muto).second;
     ThreeDSprite* nSprite = makeSprite(spriteInfo);
     MilUnitGraphicsInfo::indexMap[(*muto).first] = SpriteContainer::sprites.size();
@@ -1172,8 +1174,8 @@ void StaticInitialiser::setUItexts (Object* tInfo) {
 
   WarfareWindow::currWindow->castleInterface->increaseRecruitButton.setToolTip(remQuotes(tInfo->safeGetString("incRecruit", badString)).c_str());
   WarfareWindow::currWindow->castleInterface->decreaseRecruitButton.setToolTip(remQuotes(tInfo->safeGetString("decRecruit", badString)).c_str());
-  for (MilUnitTemplate::Iterator unit = MilUnitTemplate::begin(); unit != MilUnitTemplate::end(); ++unit) {
-    iconfile = icons->safeGetString((*unit)->name, badString);
+  for (MilUnitTemplate::Iter unit = MilUnitTemplate::start(); unit != MilUnitTemplate::final(); ++unit) {
+    iconfile = icons->safeGetString((*unit)->getName(), badString);
     Logger::logStream(DebugStartup) << "Setting icon " << iconfile << "\n"; 
     if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) CastleInterface::icons[*unit] = QIcon(iconfile.c_str()); 
   }
@@ -1197,7 +1199,7 @@ void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
   obj->setLeaf("player", unit->getOwner()->getName());   
   for (vector<MilUnitElement*>::iterator i = unit->forces.begin(); i != unit->forces.end(); ++i) {
     if (1 > (*i)->strength()) continue;
-    Object* numbers = new Object((*i)->unitType->name);
+    Object* numbers = new Object((*i)->unitType->getName());
     obj->setValue(numbers);
     writeAgeInfoToObject(*((*i)->soldiers), numbers, 16); 
   }
@@ -1289,7 +1291,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       hexInfo->setValue(castleObject);
       writeEconActorIntoObject(castle, castleObject); 
       castleObject->setLeaf("pos", getDirectionName((*hex)->getDirection(*lin)));
-      castleObject->setLeaf("recruiting", castle->recruitType->name); 
+      castleObject->setLeaf("recruiting", castle->recruitType->getName());
       for (unsigned int i = 0; (int) i < castle->numGarrison(); ++i) {
 	Object* garrObject = new Object("garrison");
 	castleObject->setValue(garrObject);

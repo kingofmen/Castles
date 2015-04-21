@@ -261,18 +261,18 @@ void WarfareGame::unitComparison (string fname) {
   vector<MilUnit*> units1;
   vector<MilUnit*> units2;
   AgeTracker recruits;
-  for (MilUnitTemplate::Iterator t = MilUnitTemplate::begin(); t != MilUnitTemplate::end(); ++t) {
+  for (MilUnitTemplate::Iterator t = MilUnitTemplate::start(); t != MilUnitTemplate::final(); ++t) {
     MilUnit* u = new MilUnit();
     recruits.clear();
     recruits.addPop((*t)->recruit_speed, 18);
-    u->addElement((*t), recruits); 
+    u->addElement((*t), recruits);
     units1.push_back(u);
-    u->setName((*t)->name);
+    u->setName((*t)->getName());
 
     u = new MilUnit();
-    u->addElement((*t), recruits);     
-    u->setName((*t)->name);    
-    units2.push_back(u);    
+    u->addElement((*t), recruits);
+    u->setName((*t)->getName());
+    units2.push_back(u);
   }
 
   for (vector<MilUnit*>::iterator unit1 = units1.begin(); unit1 != units1.end(); ++unit1) {
@@ -333,6 +333,7 @@ void WarfareGame::unitTests (string fname) {
   callTestFunction("Farmland", &Farmland::unitTests);
   callTestFunction("Forest",   &Forest::unitTests);
   callTestFunction("Mine",     &Mine::unitTests);
+  callTestFunction("MilUnit",  &MilUnit::unitTests);
 
   Logger::logStream(DebugStartup) << passed << " of " << tests << " tests passed.\n";
 }

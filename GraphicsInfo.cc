@@ -293,9 +293,9 @@ void HexGraphicsInfo::describe (QTextStream& str) const {
   if (village) {
     str << "  Militia:";
     int totalStrength = 0;
-    for (MilUnitTemplate::Iterator m = MilUnitTemplate::begin(); m != MilUnitTemplate::end(); ++m) {
+    for (MilUnitTemplate::Iterator m = MilUnitTemplate::start(); m != MilUnitTemplate::final(); ++m) {
       int curr = village->getMilitiaStrength(*m);
-      if (0 < curr) str << "\n    " << (*m)->name.c_str() << ": " << curr;
+      if (0 < curr) str << "\n    " << (*m)->getName().c_str() << ": " << curr;
       totalStrength += curr;
     }
     if (0 == totalStrength) str << " None\n";
@@ -534,7 +534,7 @@ void LineGraphicsInfo::describe (QTextStream& str) const {
   if (castle) {
     str << "Castle: \n"
 	<< "  Owner     : " << castle->getOwner()->getDisplayName().c_str() << "\n"
-	<< "  Recruiting: " << castle->getRecruitType()->name.c_str() << "\n"
+	<< "  Recruiting: " << castle->getRecruitType()->getName().c_str() << "\n"
       //<< "  Supplies  : " << castle->getAvailableSupplies() << "\n"
 	<< "  ";
     MilUnit* unit = castle->getGarrison(0);
@@ -786,10 +786,10 @@ PlayerGraphicsInfo::~PlayerGraphicsInfo () {}
 
 string MilUnitGraphicsInfo::strengthString (string indent) const {
   ostringstream buffer;
-  for (MilUnitTemplate::Iterator m = MilUnitTemplate::begin(); m != MilUnitTemplate::end(); ++m) {
+  for (MilUnitTemplate::Iterator m = MilUnitTemplate::start(); m != MilUnitTemplate::final(); ++m) {
     int num = myUnit->getUnitTypeAmount(*m);
     if (1 > num) continue;
-    buffer << indent << (*m)->name.c_str() << ": " << num << "\n";
+    buffer << indent << (*m)->getName().c_str() << ": " << num << "\n";
   }
   return buffer.str(); 
 }

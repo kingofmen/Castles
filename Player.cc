@@ -428,7 +428,7 @@ void Player::getAction () {
     curr.cease = (*lin);
 
     double currScore = 0;
-    for (MilUnitTemplate::Iterator ut = MilUnitTemplate::begin(); ut != MilUnitTemplate::end(); ++ut) {
+    for (MilUnitTemplate::Iterator ut = MilUnitTemplate::start(); ut != MilUnitTemplate::final(); ++ut) {
       curr.unitType = (*ut);
       currScore = evaluate(curr);
       //Logger::logStream(DebugAI) << "Score from " << (*ut)->name << " : " << currScore << "\n"; 

@@ -10,9 +10,6 @@ typedef std::vector<MilUnitElement*>::iterator ElmIter;
 typedef std::vector<MilUnitElement*>::reverse_iterator RElmIter;
 typedef std::vector<MilUnitElement*>::const_reverse_iterator CRElmIter; 
 
-map<string, MilUnitTemplate const*> MilUnitTemplate::allUnitTemplates;
-vector<string> MilUnitTemplate::allUnitTypeNames;
-set<MilUnitTemplate const*> MilUnitTemplate::allUnitTypes; 
 vector<double> MilUnit::priorityLevels; 
 double MilUnit::defaultDecayConstant = 1000; 
 vector<double> MilUnitTemplate::drillEffects;
@@ -47,15 +44,8 @@ MilUnit::~MilUnit () {
 }
 
 MilUnitTemplate::MilUnitTemplate (string n)
-  : name(n)
-{
-  // TODO: Insert check for previous use of name here
-  allUnitTemplates[name] = this;
-  allUnitTypeNames.push_back(name);
-  allUnitTypes.insert(this);
-
-  Logger::logStream(DebugStartup) << "Created template " << this << " " << name << "\n"; 
-}
+  : Enumerable<MilUnitTemplate>(this, n)
+{}
 
 void MilUnit::addElement (MilUnitTemplate const* const temp, AgeTracker& str) {
   assert(temp); 
@@ -446,6 +436,10 @@ void MilUnit::setPriorityLevels (vector<double> newPs) {
  for (unsigned int p = 0; p < newPs.size(); ++p)
    priorityLevels.push_back(newPs[p]);
  if (0 == priorityLevels.size()) priorityLevels.push_back(1.0); 
+}
+
+void MilUnit::unitTests () {
+
 }
 
 void battleReport (Logger& log, BattleResult& outcome) {

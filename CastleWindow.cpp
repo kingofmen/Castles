@@ -114,21 +114,21 @@ CastleInterface::CastleInterface (QWidget*p)
 void CastleInterface::changeRecruitment (int direction) {
   if (!castle) return;
   const MilUnitTemplate* curr = castle->getRecruitType();
-  MilUnitTemplate::Iterator final = MilUnitTemplate::begin();
-  for (; final != MilUnitTemplate::end(); ++final) {
-    if (curr == (*final)) break; 
+  MilUnitTemplate::Iterator last = MilUnitTemplate::start();
+  for (; last != MilUnitTemplate::final(); ++last) {
+    if (curr == (*last)) break;
   }
 
   if (direction > 0) {
-    ++final;
-    if (MilUnitTemplate::end() == final) final = MilUnitTemplate::begin();
+    ++last;
+    if (MilUnitTemplate::final() == last) last = MilUnitTemplate::start();
   }
   else {
-    if (MilUnitTemplate::begin() == final) final = MilUnitTemplate::end();
-    --final; 
+    if (MilUnitTemplate::start() == last) last = MilUnitTemplate::final();
+    --last;
   }
   
-  castle->setRecruitType(*final);
+  castle->setRecruitType(*last);
   setCastle(castle); // Also sets icons. 
 }
 
@@ -136,21 +136,20 @@ void CastleInterface::setCastle (Castle* m) {
   castle = m;
 
   const MilUnitTemplate* curr = castle->getRecruitType();
-  MilUnitTemplate::Iterator final = MilUnitTemplate::begin();
-  for (; final != MilUnitTemplate::end(); ++final) {
-    if (curr == (*final)) break; 
+  MilUnitTemplate::Iterator last = MilUnitTemplate::start();
+  for (; last != MilUnitTemplate::final(); ++last) {
+    if (curr == (*last)) break;
   }
 
-  MilUnitTemplate::Iterator next = final; ++next;
-  if (next == MilUnitTemplate::end()) next = MilUnitTemplate::begin();
-  MilUnitTemplate::Iterator prev = final; 
-  if (final == MilUnitTemplate::begin()) prev = MilUnitTemplate::end();
+  MilUnitTemplate::Iterator next = last; ++next;
+  if (next == MilUnitTemplate::final()) next = MilUnitTemplate::start();
+  MilUnitTemplate::Iterator prev = last;
+  if (last == MilUnitTemplate::start()) prev = MilUnitTemplate::final();
   --prev;
 
-  
   if (icons.find(*prev) == icons.end()) decreaseRecruitButton.setArrowType(Qt::LeftArrow);
   else {
-    decreaseRecruitButton.setArrowType(Qt::NoArrow);    
+    decreaseRecruitButton.setArrowType(Qt::NoArrow);
     decreaseRecruitButton.setIcon(icons[*prev]);
   }
   if (icons.find(*next) == icons.end()) increaseRecruitButton.setArrowType(Qt::RightArrow);
@@ -302,7 +301,7 @@ void GLDrawer::drawSprites (const SpriteContainer* info, vector<int>& texts, dou
   for (SpriteContainer::spriterator sprite = info->start(); sprite != info->final(); ++sprite) {
     glBindTexture(GL_TEXTURE_2D, 0);
     glPushMatrix();
-    glRotated(angle, 0, 0, 1);          
+    glRotated(angle, 0, 0, 1);
     glTranslated(sprite.getFormation().x(), sprite.getFormation().y(), 0); 
     for (vector<doublet>::iterator p = (*sprite)->positions.begin(); p != (*sprite)->positions.end(); ++p) {
       glPushMatrix();
@@ -435,7 +434,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   VillageGraphicsInfo const* villageInfo = dat->getVillageInfo(); 
   Village* village = villageInfo->getVillage(); 
 
-  glEnable(GL_TEXTURE_2D);      
+  glEnable(GL_TEXTURE_2D);
   for (FarmGraphicsInfo::cfit field = farmInfo->start(); field != farmInfo->final(); ++field) {
     glBindTexture(GL_TEXTURE_2D, (*field).getIndex()); 
     glBegin(GL_POLYGON);

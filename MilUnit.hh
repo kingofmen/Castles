@@ -18,13 +18,12 @@ struct SupplyLevel : public GoodsHolder {
   double movementModifier;
 };
 
-class MilUnitTemplate {
+class MilUnitTemplate : public Enumerable<MilUnitTemplate> {
   friend class StaticInitialiser; 
 public:
   MilUnitTemplate (string n);
-  ~MilUnitTemplate (); 
-  
-  string name;
+  ~MilUnitTemplate () {}
+
   double base_shock;
   double base_range;
   double base_defense;
@@ -35,24 +34,12 @@ public:
   int recruit_speed; 
   double militiaDecay;
   double militiaDrill; // Amount of labour required to do one level of drill for one of these units.  
-  
-  typedef vector<string>::const_iterator TypeNameIterator;
-  static TypeNameIterator beginTypeNames () {return allUnitTypeNames.begin();}
-  static TypeNameIterator endTypeNames () {return allUnitTypeNames.end();}
-  typedef set<MilUnitTemplate const*>::const_iterator Iterator;
-  static Iterator begin () {return allUnitTypes.begin();}
-  static Iterator end () {return allUnitTypes.end();} 
 
-  static MilUnitTemplate const* getUnitType (string n) {return allUnitTemplates[n];} 
   static double getDrillEffect (int level) {if (level < 0) return drillEffects[0]; if (level >= (int) drillEffects.size()) return drillEffects.back(); return drillEffects[level];}
   static int getMaxDrill () {return drillEffects.size() - 1;} 
-  
-private: 
-  
-  static map<string, MilUnitTemplate const*> allUnitTemplates;
-  static vector<string> allUnitTypeNames;
-  static set<MilUnitTemplate const*> allUnitTypes;
-  static vector<double> drillEffects; // Effects of drill levels on decay constant. 
+
+private:
+  static vector<double> drillEffects; // Effects of drill levels on decay constant.
 };
 
 class MilUnitElement : public Mirrorable<MilUnitElement> {
@@ -124,6 +111,7 @@ public:
   void setPriority (int p) {if (p < 0) priority = 0; else if (p >= (int) priorityLevels.size()) priority = priorityLevels.size() - 1; else priority = p;}
   
   static void setPriorityLevels (vector<double> newPs);
+  static void unitTests ();
   
 private:
   MilUnit (MilUnit* other); 

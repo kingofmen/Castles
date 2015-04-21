@@ -322,7 +322,7 @@ bool contains (vector<triplet> const& polygon, triplet const& point) {
 
 int MilStrength::getTotalStrength () const {
   double total = 0;
-  for (MilUnitTemplate::Iterator m = MilUnitTemplate::begin(); m != MilUnitTemplate::end(); ++m) {
+  for (MilUnitTemplate::Iterator m = MilUnitTemplate::start(); m != MilUnitTemplate::final(); ++m) {
     total += getUnitTypeAmount(*m);
   }
   return total;
