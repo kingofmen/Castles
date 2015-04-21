@@ -192,9 +192,9 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Enumerable<MineStatus>::clear();
   objvec statuses = mineInfo->getValue("status");
   for (unsigned int i = 0; i < statuses.size(); ++i) {
-    MineStatus* stat = new MineStatus(statuses[i]->safeGetString("name", "nameNotFound"), statuses[i]->safeGetInt("requiredLabour", 10), (i+1) == statuses.size());
-    stat = 0; //Quiet, compiler
+    new MineStatus(statuses[i]->safeGetString("name", "nameNotFound"), statuses[i]->safeGetInt("requiredLabour", 10));
   }
+  MineStatus::freeze();
   
   Object* femf = popInfo->safeGetObject("femaleFert");
   assert(femf);
@@ -656,6 +656,7 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
       */      
     }
   }
+  MilUnitTemplate::freeze();
 }
 
 Village* StaticInitialiser::buildVillage (Object* fInfo) {
