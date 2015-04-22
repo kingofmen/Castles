@@ -163,7 +163,6 @@ void MilUnit::setMirrorState () {
     (*i)->setMirrorState();
     mirror->forces.push_back((*i)->getMirror());     
   }
-  mirror->setAmounts(this);
   setEconMirrorState(mirror);
 }
 
@@ -205,7 +204,7 @@ double MilUnit::calcStrength (double lifetime, double MilUnitElement::*field) {
   // Higher lifetime is better.
 
   double gamma = 1.0 / lifetime; 
-  
+
   sort(forces.begin(), forces.end(), deref<MilUnitElement>(member_lt(field)));
   double totalStrength = 0;
   double ret = 0;
@@ -215,7 +214,6 @@ double MilUnit::calcStrength (double lifetime, double MilUnitElement::*field) {
     if (1 > nums) continue;
     ret += curr * (exp(-gamma*totalStrength) - exp(-gamma*(totalStrength + nums)));
     totalStrength += nums;
-    //Logger::logStream(Logger::Debug) << "Strength after " << nums << " " << (*i)->unitType->name << " : " << totalStrength << " " << ret << "\n"; 
   }
   ret *= lifetime; 
   return 1 + ret; 

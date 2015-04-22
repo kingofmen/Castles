@@ -443,9 +443,11 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     castle->recruitType = MilUnitTemplate::getByName(cinfo->safeGetString("recruiting", (*MilUnitTemplate::start())->getName()));
     Object* garrison = cinfo->safeGetObject("garrison");
     if (garrison) {
-      MilUnit* m = buildMilUnit(garrison); 
-      m->setOwner(owner);
-      castle->addGarrison(m);
+      MilUnit* m = buildMilUnit(garrison);
+      if (m) {
+	m->setOwner(owner);
+	castle->addGarrison(m);
+      }
     }
     lin->addCastle(castle);
     initialiseEcon(castle, cinfo);
@@ -560,14 +562,24 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
   MilUnit* m = new MilUnit();
   for (MilUnitTemplate::Iter ut = MilUnitTemplate::start(); ut != MilUnitTemplate::final(); ++ut) {
     string name = (*ut)->getName();
-    Object* strength = mInfo->safeGetObject(name);
+    Object* element = mInfo->safeGetObject(name);
+    if (!element) continue;
+    Object* strength = element->safeGetObject("strength");
     if (!strength) continue;
     ages.clear();
     readAgeTrackerFromObject(ages, strength);
     for (int i = 0; i < 16; ++i) ages.age(); // Quick hack to avoid long strings of initial zeroes in every MilUnit definition. 
-    
     m->addElement(MilUnitTemplate::getByName(name), ages);
-    
+    string supplyName = element->safeGetString("supply", "None");
+    for (vector<SupplyLevel>::const_iterator sl = (*ut)->supplyLevels.begin(); sl != (*ut)->supplyLevels.end(); ++sl) {
+      if ((*sl).name != supplyName) continue;
+      m->forces.back()->supply = sl;
+      break;
+    }
+  }
+  if (0 == m->forces.size()) {
+    delete m;
+    return 0;
   }
   m->setPriority(mInfo->safeGetInt("priority", defaultUnitPriority));
 
@@ -1199,12 +1211,15 @@ void StaticInitialiser::setUItexts (Object* tInfo) {
 
 void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
   obj->setLeaf("name", unit->getName());
-  obj->setLeaf("player", unit->getOwner()->getName());   
+  obj->setLeaf("player", unit->getOwner()->getName());
   for (vector<MilUnitElement*>::iterator i = unit->forces.begin(); i != unit->forces.end(); ++i) {
     if (1 > (*i)->strength()) continue;
-    Object* numbers = new Object((*i)->unitType->getName());
-    obj->setValue(numbers);
-    writeAgeInfoToObject(*((*i)->soldiers), numbers, 16); 
+    Object* element = new Object((*i)->unitType->getName());
+    obj->setValue(element);
+    Object* numbers = new Object("strength");
+    element->setValue(numbers);
+    writeAgeInfoToObject(*((*i)->soldiers), numbers, 16);
+    element->setLeaf("supply", (*((*i)->supply)).name);
   }
 
   writeEconActorIntoObject(unit, obj);

@@ -41,7 +41,9 @@ hexinfo = {
     pos = SouthEast
     garrison = {
       id = 22
-      pikemen = { 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 } 
+      pikemen = {
+        strength = { 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 }
+      }
     }
     taxes = {
       amount = 6000
@@ -146,7 +148,9 @@ hexinfo = {
     pos = NorthWest
     garrison = {
       id = 203
-      pikemen = { 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 } 
+      pikemen = {
+        strength = { 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 }
+      }
     }
     goods = {
       food = 6000 
@@ -906,8 +910,12 @@ unit = {
   y = 3
   player = adri
   vtx = Right 
-  militia = { 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 } 
-  archers = { 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 } 
+  militia = {
+    strength = { 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 }
+  }
+  archers = {
+    strength = { 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 }
+  }
   name = "Player 1 Army"
 }
 
@@ -916,8 +924,10 @@ unit = {
   x = 3
   y = 3
   player = assa
-  vtx = UpLeft 
-  pikemen = { 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 } 
+  vtx = UpLeft
+  pikemen = {
+    strength = { 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 }
+  }
   name = "Player 2 Army"
 }
 
