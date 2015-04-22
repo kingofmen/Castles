@@ -20,7 +20,6 @@ MilUnit::MilUnit ()
   , Named<MilUnit, false>()
   , Iterable<MilUnit>(this)
   , rear(Left)
-  , supplyRatio(1) 
   , priority(4)
   , fightFraction(1.0)
   , aggression(0.25)
@@ -62,9 +61,8 @@ void MilUnit::addElement (MilUnitTemplate const* const temp, AgeTracker& str) {
 
   if (!merged) {
     //Logger::logStream(Logger::Debug) << "Not found, making new\n"; 
-    MilUnitElement* nElm = new MilUnitElement();
+    MilUnitElement* nElm = new MilUnitElement(temp);
     nElm->soldiers->addPop(str); 
-    nElm->unitType = temp; 
     forces.push_back(nElm);
   }
   recalcElementAttributes(); 
@@ -92,7 +90,6 @@ MilUnit* MilUnit::detach (double fraction) {
     ret->addElement((*i)->unitType, transfer);
   }
   ret->rear = rear;
-  ret->supplyRatio = supplyRatio;
   ret->priority = priority; 
   recalcElementAttributes(); 
   return ret; 
@@ -103,7 +100,6 @@ void MilUnit::transfer (MilUnit* target, double fraction) {
   for (ElmIter i = forces.begin(); i != forces.end(); ++i) {
     int transfer = (int) floor((*i)->strength() * fraction + 0.5);
     (*i)->strength -= transfer;
-    // Exploit here due to no supplyRatio recalculation. FIXME. 
     target->addElement((*i)->unitType, transfer);
   }
   recalcElementAttributes(); 
@@ -118,21 +114,30 @@ int MilUnit::getUnitTypeAmount (MilUnitTemplate const* const ut) const {
   return 0; 
 }
 
-MilUnitElement::MilUnitElement ()
+MilUnitElement::MilUnitElement (MilUnitTemplate const* const mut)
   : Mirrorable<MilUnitElement>()
+  , unitType(mut)
 {
   soldiers = new AgeTracker();
-  mirror->soldiers = soldiers->getMirror(); 
+  mirror->soldiers = soldiers->getMirror();
+  supply = mut->supplyLevels.begin();
 }
 
 MilUnitElement::MilUnitElement (MilUnitElement* other)
   : Mirrorable<MilUnitElement>(other)
+  , unitType(other->unitType)
 {}
 
 MilUnitElement::~MilUnitElement () {
   soldiers->destroyIfReal(); 
 }
 
+void MilUnitElement::reCalculate () {
+  shock   = unitType->base_shock   * (*supply).fightingModifier;
+  range   = unitType->base_range   * (*supply).fightingModifier;
+  defense = unitType->base_defense * (*supply).fightingModifier;
+  tacmob  = unitType->base_tacmob  * (*supply).movementModifier;
+}
 
 void MilUnitElement::setMirrorState () {
   mirror->shock      = shock;
@@ -141,13 +146,13 @@ void MilUnitElement::setMirrorState () {
   mirror->tacmob     = tacmob;
   mirror->unitType   = unitType;
   soldiers->setMirrorState();
-  mirror->soldiers = soldiers->getMirror();
+  mirror->soldiers   = soldiers->getMirror();
+  mirror->supply     = supply;
 }
 
 void MilUnit::setMirrorState () {
   mirror->setOwner(getOwner());
   mirror->rear = rear;
-  mirror->supplyRatio = supplyRatio; 
   mirror->priority = priority;
   mirror->modStack = modStack;
   mirror->aggression = aggression;   
@@ -226,9 +231,40 @@ void MilUnit::endOfTurn () {
     }
     return; 
   }
-  
+
+  consumeSupplies();
   recalcElementAttributes();
   graphicsInfo->updateSprites(this);   
+}
+
+void MilUnit::consumeSupplies () {
+  for (ElmIter i = forces.begin(); i != forces.end(); ++i) {
+    (*i)->supply = (*i)->unitType->supplyLevels.end();
+  }
+  while (true) {
+    bool suppliedAny = false;
+    for (ElmIter i = forces.begin(); i != forces.end(); ++i) {
+      vector<SupplyLevel>::const_iterator next = (*i)->supply;
+      if (next == (*i)->unitType->supplyLevels.end()) next = (*i)->unitType->supplyLevels.begin();
+      else ++next;
+      if (next == (*i)->unitType->supplyLevels.end()) continue;
+
+      int soldiers = (*i)->strength();
+      bool canSupply = true;
+      for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+	if (getAmount(*tg) >= soldiers * (*next).getAmount(*tg)) continue;
+	canSupply = false;
+	break;
+      }
+      if (!canSupply) continue;
+      suppliedAny = true;
+      (*i)->supply = next;
+      for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+	deliverGoods((*tg), -soldiers*(*next).getAmount(*tg));
+      }
+    }
+    if (!suppliedAny) break;
+  }
 }
 
 int MilUnit::takeCasualties (double rate) {
@@ -312,7 +348,6 @@ double MilUnit::calcBattleCasualties (MilUnit* const adversary, BattleResult* ou
     outcome->attackerInfo.shock            = myShk;
     outcome->attackerInfo.range            = myFir;
     outcome->attackerInfo.lossRate         = myTotCasRate;
-    outcome->attackerInfo.efficiency       = efficiency();
     outcome->attackerInfo.fightingFraction = fightFraction;
     outcome->attackerInfo.decayConstant    = getDecayConstant(); 
 
@@ -320,7 +355,6 @@ double MilUnit::calcBattleCasualties (MilUnit* const adversary, BattleResult* ou
     outcome->defenderInfo.shock            = thShk;
     outcome->defenderInfo.range            = thFir;
     outcome->defenderInfo.lossRate         = thTotCasRate;
-    outcome->defenderInfo.efficiency       = adversary->efficiency();
     outcome->defenderInfo.fightingFraction = adversary->fightFraction;
     outcome->defenderInfo.decayConstant    = adversary->getDecayConstant(); 
     
@@ -417,13 +451,8 @@ int MilUnit::getFightingModifier (MilUnit* const adversary) {
 }
 
 void MilUnit::recalcElementAttributes () {
+  BOOST_FOREACH(MilUnitElement* mue, forces) mue->reCalculate();
   // TODO: Deal with synergies, whatnot.
-  for (ElmIter i = forces.begin(); i != forces.end(); ++i) {
-    (*i)->shock = (*i)->unitType->base_shock * efficiency();
-    (*i)->range = (*i)->unitType->base_range * efficiency();
-    (*i)->defense = (*i)->unitType->base_defense * efficiency();
-    (*i)->tacmob = (*i)->unitType->base_tacmob * efficiency();
-  }
 }
 
 void MilUnit::setExtMod (double extMod) {
@@ -448,10 +477,8 @@ void battleReport (Logger& log, BattleResult& outcome) {
       << outcome.attackerInfo.mobRatio   << " : "
       << outcome.defenderInfo.shock << " " << outcome.defenderInfo.range << "\n"
       << "Efficiencies: "
-      << outcome.attackerInfo.efficiency << " "
       << outcome.attackerInfo.fightingFraction << " "
       << outcome.attackerInfo.decayConstant << " : "
-      << outcome.defenderInfo.efficiency << " "
       << outcome.defenderInfo.fightingFraction << " "
       << outcome.defenderInfo.decayConstant << "\n";
   sprintf(strbuffer, "%.1f%% shock, %.1f%% fire", 100*outcome.shockPercent, 100*outcome.rangePercent);

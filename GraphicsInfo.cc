@@ -799,7 +799,6 @@ void MilUnitGraphicsInfo::describe (QTextStream& str) const {
   str << "Unit: \n"
       << "  Owner: " << myUnit->getOwner()->getDisplayName().c_str() << "\n"
       << strengthString("  ").c_str()
-      << "  Efficiency: " << myUnit->getSupplyRatio() << "\n"
       << "  Priority  : " << myUnit->getPriority() << "\n"
       << "  Shock     : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::shock) << "\n"
       << "  Fire      : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::range) << "\n"

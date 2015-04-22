@@ -13,6 +13,8 @@ class Vertex;
 struct BattleResult; 
 
 struct SupplyLevel : public GoodsHolder {
+  SupplyLevel (string n) : name(n), desertionModifier(1.0), fightingModifier(0.01), movementModifier(0.1) {}
+  string name;
   double desertionModifier;
   double fightingModifier;
   double movementModifier;
@@ -29,7 +31,6 @@ public:
   double base_defense;
   double base_tacmob;  
   //map<string, int> synergies;
-  double supplyConsumption;
   vector<SupplyLevel> supplyLevels;
   int recruit_speed; 
   double militiaDecay;
@@ -45,19 +46,21 @@ private:
 class MilUnitElement : public Mirrorable<MilUnitElement> {
   friend class Mirrorable<MilUnitElement>;
 public:
-  MilUnitElement ();
+  MilUnitElement (MilUnitTemplate const* const mut);
   MilUnitElement (MilUnitElement* other);
   ~MilUnitElement ();  
   
   double shock;
   double range;
   double defense;
-  double tacmob;  
+  double tacmob;
+  void reCalculate ();
   int strength () {return soldiers->getTotalPopulation();}
   virtual void setMirrorState ();
   
   MilUnitTemplate const * unitType;
-  AgeTracker* soldiers; 
+  AgeTracker* soldiers;
+  vector<SupplyLevel>::const_iterator supply;
 };
 
 class MilUnit : public Unit, public EconActor, public Mirrorable<MilUnit>, public Named<MilUnit, false>, public MilStrength, public Iterable<MilUnit> {
@@ -102,10 +105,8 @@ public:
 
   MilUnitElement* getElement (MilUnitTemplate const* ut);
   MilUnitGraphicsInfo const* getGraphicsInfo () {return graphicsInfo;}  
-  double getSupplyRatio () const {return supplyRatio;} 
   double getPriority () const {return priorityLevels[priority];} 
   virtual int getUnitTypeAmount (MilUnitTemplate const* const ut) const; 
-  double efficiency () const {return max(0.1, supplyRatio);} 
   void endOfTurn ();
   void incPriority (bool up = true) {setPriority(priority + (up ? 1 : -1));}
   void setPriority (int p) {if (p < 0) priority = 0; else if (p >= (int) priorityLevels.size()) priority = priorityLevels.size() - 1; else priority = p;}
@@ -115,7 +116,8 @@ public:
   
 private:
   MilUnit (MilUnit* other); 
-  
+
+  void consumeSupplies ();
   void recalcElementAttributes (); 
   int takeCasualties (double rate);
   void getShockRange (double shkRatio, double firRatio, double mobRatio, double& shkPercent, double& firPercent) const;
@@ -123,7 +125,6 @@ private:
   Vertex* location; 
   Vertices rear;
   vector<MilUnitElement*> forces;
-  double supplyRatio; 
   int priority;
   std::stack<double> modStack;
   double fightFraction;  // For use in hypotheticals: If this unit were at X% strength. 
@@ -140,7 +141,6 @@ struct CombatInfo {
   double shock;
   double range;
   double lossRate;
-  double efficiency;
   double fightingFraction;
   double decayConstant; 
 };

@@ -622,16 +622,18 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
     nType->base_range        = (*unit)->safeGetFloat("base_range");
     nType->base_defense      = (*unit)->safeGetFloat("base_defense");
     nType->base_tacmob       = (*unit)->safeGetFloat("base_tacmob");
-    nType->supplyConsumption = (*unit)->safeGetFloat("supplyConsumption");
     nType->recruit_speed     = (*unit)->safeGetInt("recruit_speed");
     nType->militiaDecay      = (*unit)->safeGetFloat("militiaDecay");
     nType->militiaDrill      = (*unit)->safeGetFloat("militiaDrill");
    
     if (nType->militiaDrill > mDrill) nType->militiaDrill = mDrill; 
 
-    objvec sLevels = (*unit)->getValue("supplies");
+    // Default supply level, 'None'.
+    nType->supplyLevels.push_back(SupplyLevel("None"));
+    Object* supplyObject = (*unit)->getNeededObject("supplies");
+    objvec sLevels = supplyObject->getLeaves();
     for (objiter level = sLevels.begin(); level != sLevels.end(); ++level) {
-      SupplyLevel supplyLevel;
+      SupplyLevel supplyLevel((*level)->getKey());
       readGoodsHolder((*level), supplyLevel);
       readFloats(&supplyLevel, (*level), floatMap);
       nType->supplyLevels.push_back(supplyLevel);

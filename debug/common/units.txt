@@ -7,7 +7,6 @@ unit = {
   base_range = 0
   base_defense = 20
   base_tacmob = 4  
-  supplyConsumption = 5 
   recruit_speed = 100
   militiaDecay = 0.1
   militiaDrill = 0.05
@@ -21,6 +20,11 @@ unit = {
     position = {x=0 y= 0.00}
     position = {x=0 y=-0.04} 
   }
+  supplies = {
+    bread_and_water = {
+      food = 0.25
+    }
+  }
 }
 unit = {
   name = militia
@@ -28,7 +32,6 @@ unit = {
   base_range = 1
   base_defense = 1 
   base_tacmob = 3   
-  supplyConsumption = 4 
   recruit_speed = 300
   militiaDecay = 0.01
   militiaDrill = 0.02
@@ -42,6 +45,11 @@ unit = {
     position = {x=-0.03 y= 0.03} 
     position = {x=-0.03 y=-0.03} 
   }
+  supplies = {
+    bread_and_water = {
+      food = 0.20
+    }
+  }
 }
 unit = {
   name = knights
@@ -49,7 +57,6 @@ unit = {
   base_range = 0
   base_defense = 66 
   base_tacmob = 10   
-  supplyConsumption = 25
   recruit_speed = 30
   militiaDecay = 0.5
   militiaDrill = 0.15
@@ -61,6 +68,11 @@ unit = {
     zscale = 0.75
     position = {x=0 y= 0.0}
   }
+  supplies = {
+    bread_and_water = {
+      food = 0.35
+    }
+  }
 }
 unit = {
   name = archers
@@ -68,7 +80,6 @@ unit = {
   base_range = 12
   base_defense = 10
   base_tacmob = 6    
-  supplyConsumption = 5
   recruit_speed = 50
   militiaDecay = 0.2
   militiaDrill = 0.066
@@ -81,5 +92,10 @@ unit = {
     position = {x= 0.03 y= 0.00}
     position = {x=-0.03 y=-0.03}
     position = {x=-0.03 y= 0.03} 
+  }
+  supplies = {
+    bread_and_water = {
+      food = 0.25
+    }
   }
 }
