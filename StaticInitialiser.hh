@@ -48,13 +48,13 @@ public:
 private:
   template<class W> static void readInts (W* target, Object* source, map<string, int W::*> memMap) {
     for (typename map<string, int W::*>::iterator i = memMap.begin(); i != memMap.end(); ++i) {
-      target->*((*i).second) = source->safeGetInt((*i).first);
+      target->*((*i).second) = source->safeGetInt((*i).first, target->*((*i).second));
     }
   }
 
   template<class W> static void readFloats (W* target, Object* source, map<string, double W::*> memMap) {
     for (typename map<string, double W::*>::iterator i = memMap.begin(); i != memMap.end(); ++i) {
-      target->*((*i).second) = source->safeGetFloat((*i).first);
+      target->*((*i).second) = source->safeGetFloat((*i).first, target->*((*i).second));
     }
   }
 
