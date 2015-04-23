@@ -254,7 +254,7 @@ void MilUnit::consumeSupplies () {
   while (true) {
     bool suppliedAny = false;
     for (ElmIter i = forces.begin(); i != forces.end(); ++i) {
-      vector<SupplyLevel>::const_iterator next = (*i)->supply;
+      supIter next = (*i)->supply;
       if (next == (*i)->unitType->supplyLevels.end()) next = (*i)->unitType->supplyLevels.begin();
       else ++next;
       if (next == (*i)->unitType->supplyLevels.end()) continue;
@@ -448,6 +448,54 @@ int MilUnit::getSkirmishModifier (MilUnit* const adversary) {
   return 0; 
 }
 
+void MilUnit::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
+  list<pair<MilUnitElement const*, supIter> > levels;
+  GoodsHolder availableResources(*this);
+  GoodsHolder wanted;
+  BOOST_FOREACH(MilUnitElement* mue, forces) levels.push_back(pair<MilUnitElement* const, supIter>(mue, mue->unitType->supplyLevels.begin()));
+  while (levels.size()) {
+    for (list<pair<MilUnitElement const*, supIter> >::iterator level = levels.begin(); level != levels.end(); ++level) {
+      bool canSupply = true;
+      int soldiers = (*level).first->strength();
+      for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+	double amountWanted = soldiers * (*(*level).second).getAmount(*tg);
+	if (availableResources.getAmount(*tg) >= amountWanted) continue;
+	amountWanted *= prices.getAmount(*tg);
+	if (availableResources.getAmount(TradeGood::Money) >= amountWanted) continue;
+	canSupply = false;
+	break;
+      }
+      if (canSupply) {
+	for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+	  double amountWanted = soldiers * (*(*level).second).getAmount(*tg);
+	  if (availableResources.getAmount(*tg) >= amountWanted) availableResources.deliverGoods((*tg), -amountWanted);
+	  else {
+	    amountWanted *= prices.getAmount(*tg);
+	    availableResources.deliverGoods(TradeGood::Money, -amountWanted);
+	    wanted.deliverGoods((*tg), amountWanted);
+	  }
+	}
+	++(*level).second;
+	if ((*level).second == (*level).first->unitType->supplyLevels.end()) {
+	  level = levels.erase(level);
+	  if (0 == levels.size()) break;
+	  if (level == levels.end()) break;
+	}
+	continue;
+      }
+
+      // We cannot supply this unit further - remove it from the candidates.
+      level = levels.erase(level);
+      if (0 == levels.size()) break;
+      if (level == levels.end()) break;
+    }
+  }
+  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+    if (0.01 > wanted.getAmount(*tg)) continue;
+    bidlist.push_back(new MarketBid((*tg), wanted.getAmount(*tg), this));
+  }
+}
+
 int MilUnit::getFightingModifier (MilUnit* const adversary) {
   double ratio = std::max(1.0, calcStrength(getDecayConstant(), &MilUnitElement::shock) - adversary->calcStrength(adversary->getDecayConstant(), &MilUnitElement::defense));
   ratio /= std::max(1.0, adversary->calcStrength(getDecayConstant(), &MilUnitElement::shock) - calcStrength(adversary->getDecayConstant(), &MilUnitElement::defense));
@@ -487,7 +535,7 @@ void MilUnit::unitTests () {
   if (2 > unitType->supplyLevels.size()) throwFormatted("Expected %s to have at least 2 supply levels, found %i",
 							unitType->getName().c_str(),
 							unitType->supplyLevels.size());
-  vector<SupplyLevel>::const_iterator betterSupply = unitType->supplyLevels.begin();
+  supIter betterSupply = unitType->supplyLevels.begin();
   ++betterSupply;
   testOne.forces.back()->supply = betterSupply;
   testOne.recalcElementAttributes();
@@ -497,6 +545,32 @@ void MilUnit::unitTests () {
   if (casualtiesTwo <= casualtiesOne) throwFormatted("Expected unsupplied unit to take heavier casualties, but found %.2f vs %.2f",
 						     casualtiesOne,
 						     casualtiesTwo);
+
+  testOne.setAmount(TradeGood::Money, 1000000);
+  GoodsHolder prices;
+  vector<MarketBid*> bidlist;
+  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) prices.setAmount((*tg), 1);
+  testOne.getBids(prices, bidlist);
+  GoodsHolder actualBids;
+  BOOST_FOREACH(MarketBid* mb, bidlist) actualBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
+  GoodsHolder expectedBids;
+  for (supIter level = unitType->supplyLevels.begin(); level != unitType->supplyLevels.end(); ++level) expectedBids += (*level);
+  expectedBids *= 1000;
+  double totalExpected = 0;
+  double totalActual = 0;
+  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+    double expected = expectedBids.getAmount(*tg);
+    double actual = actualBids.getAmount(*tg);
+    double diff = expected - actual;
+    if (fabs(diff) > 0.01) throwFormatted("Expected to bid for %.2f %s, but found %.2f",
+					  expected,
+					  (*tg)->getName().c_str(),
+					  actual);
+    totalExpected += expected;
+    totalActual += actual;
+  }
+  if (0.01 > totalExpected) throwFormatted("Expected total bid should not be zero!");
+  if (0.01 > totalActual) throwFormatted("Actual total bid should not be zero!");
 }
 
 void battleReport (Logger& log, BattleResult& outcome) {

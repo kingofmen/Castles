@@ -20,6 +20,8 @@ struct SupplyLevel : public GoodsHolder {
   double movementModifier;
 };
 
+typedef vector<SupplyLevel>::const_iterator supIter;
+
 class MilUnitTemplate : public Enumerable<MilUnitTemplate> {
   friend class StaticInitialiser; 
 public:
@@ -55,7 +57,7 @@ public:
   double defense;
   double tacmob;
   void reCalculate ();
-  int strength () {return soldiers->getTotalPopulation();}
+  int strength () const {return soldiers->getTotalPopulation();}
   virtual void setMirrorState ();
   
   MilUnitTemplate const * unitType;
@@ -84,6 +86,7 @@ public:
   double calcBattleCasualties (MilUnit* const adversary, BattleResult* outcome = 0);
   double calcRoutCasualties (MilUnit* const adversary);
   double effectiveMobility (MilUnit* const versus);
+  virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
   double getDecayConstant () const {return defaultDecayConstant * (modStack.size() > 0 ? modStack.top() : 1);}
   int getFightingModifier (MilUnit* const adversary);
   int getScoutingModifier (MilUnit* const adversary);

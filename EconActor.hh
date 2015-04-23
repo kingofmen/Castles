@@ -48,6 +48,7 @@ public:
 
   void operator-= (const GoodsHolder& other);
   void operator+= (const GoodsHolder& other);
+  void operator*= (const double scale);
 private:
   vector<double> tradeGoods;
 };

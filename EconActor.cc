@@ -26,26 +26,32 @@ void GoodsHolder::clear () {
 }
 
 void GoodsHolder::setAmounts (GoodsHolder const* const gh) {
-  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     tradeGoods[**tg] = gh->getAmount(*tg);
   }
 }
 
 void GoodsHolder::setAmounts (const GoodsHolder& gh) {
-  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     tradeGoods[**tg] = gh.getAmount(*tg);
   }
 }
 
 void GoodsHolder::operator+= (const GoodsHolder& other) {
-  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     tradeGoods[**tg] += other.tradeGoods[**tg];
   }
 }
 
 void GoodsHolder::operator-= (const GoodsHolder& other) {
-  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     tradeGoods[**tg] -= other.tradeGoods[**tg];
+  }
+}
+
+void GoodsHolder::operator*= (const double scale) {
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+    tradeGoods[**tg] *= scale;
   }
 }
 
