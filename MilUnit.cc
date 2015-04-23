@@ -355,7 +355,6 @@ double MilUnit::calcBattleCasualties (MilUnit* const adversary, BattleResult* ou
     outcome->defenderInfo.lossRate         = thTotCasRate;
     outcome->defenderInfo.fightingFraction = adversary->fightFraction;
     outcome->defenderInfo.decayConstant    = adversary->getDecayConstant(); 
-    
   }
   
   return myTotCasRate;   
@@ -466,7 +465,26 @@ void MilUnit::setPriorityLevels (vector<double> newPs) {
 }
 
 void MilUnit::unitTests () {
-
+  AgeTracker youngMen;
+  youngMen.addPop(1000, 16);
+  MilUnit testOne;
+  MilUnit testTwo;
+  MilUnitTemplate const* unitType = *MilUnitTemplate::start();
+  testOne.addElement(unitType, youngMen);
+  testTwo.addElement(unitType, youngMen);
+  if (2 > unitType->supplyLevels.size()) throwFormatted("Expected %s to have at least 2 supply levels, found %i",
+							unitType->getName().c_str(),
+							unitType->supplyLevels.size());
+  vector<SupplyLevel>::const_iterator betterSupply = unitType->supplyLevels.begin();
+  ++betterSupply;
+  testOne.forces.back()->supply = betterSupply;
+  testOne.recalcElementAttributes();
+  testTwo.recalcElementAttributes();
+  double casualtiesOne = testOne.calcBattleCasualties(&testTwo);
+  double casualtiesTwo = testTwo.calcBattleCasualties(&testOne);
+  if (casualtiesTwo <= casualtiesOne) throwFormatted("Expected unsupplied unit to take heavier casualties, but found %.2f vs %.2f",
+						     casualtiesOne,
+						     casualtiesTwo);
 }
 
 void battleReport (Logger& log, BattleResult& outcome) {

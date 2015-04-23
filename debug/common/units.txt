@@ -21,8 +21,24 @@ unit = {
     position = {x=0 y=-0.04} 
   }
   supplies = {
-    bread_and_water = {
+    basic_food = {
       food = 0.25
+      desertionModifier = 0.5
+      fightingModifier  = 0.25
+      movementModifier  = 0.25
+    }
+    food = {
+      food = 0.25
+      desertionModifier = 0.1
+      fightingModifier  = 0.3
+      movementModifier  = 0.95
+    }
+    pikes = {
+      wood = 0.05
+      iron = 0.05
+      desertionModifier = 0.01
+      fightingModifier  = 1.0
+      movementModifier  = 1.0
     }
   }
 }
@@ -46,9 +62,26 @@ unit = {
     position = {x=-0.03 y=-0.03} 
   }
   supplies = {
-    bread_and_water = {
+    basic_food = {
       food = 0.20
+      desertionModifier = 0.5
+      fightingModifier  = 0.25
+      movementModifier  = 0.25
     }
+    food = {
+      food = 0.25
+      desertionModifier = 0.1
+      fightingModifier  = 0.3
+      movementModifier  = 0.95
+    }
+    weapons = {
+      wood = 0.01
+      iron = 0.01
+      desertionModifier = 0.01
+      fightingModifier  = 1.0
+      movementModifier  = 1.0
+    }
+
   }
 }
 unit = {
@@ -69,8 +102,29 @@ unit = {
     position = {x=0 y= 0.0}
   }
   supplies = {
-    bread_and_water = {
+    basic_food = {
       food = 0.35
+      desertionModifier = 0.75
+      fightingModifier  = 0.25
+      movementModifier  = 0.25
+    }
+    food = {
+      food = 0.25
+      desertionModifier = 0.5
+      fightingModifier  = 0.3
+      movementModifier  = 0.33
+    }
+    grain = {
+      food = 0.25
+      desertionModifier = 0.1
+      fightingModifier  = 0.5
+      movementModifier  = 0.95
+    }
+    armour = {
+      iron = 0.1
+      desertionModifier = 0.01
+      fightingModifier  = 1.0
+      movementModifier  = 1.0
     }
   }
 }
@@ -94,8 +148,24 @@ unit = {
     position = {x=-0.03 y= 0.03} 
   }
   supplies = {
-    bread_and_water = {
+    basic_food = {
       food = 0.25
+      desertionModifier = 0.5
+      fightingModifier  = 0.25
+      movementModifier  = 0.25
+    }
+    food = {
+      food = 0.25
+      desertionModifier = 0.1
+      fightingModifier  = 0.3
+      movementModifier  = 0.95
+    }
+    arrows = {
+      wood = 0.01
+      iron = 0.01
+      desertionModifier = 0.01
+      fightingModifier  = 1.0
+      movementModifier  = 1.0
     }
   }
 }
