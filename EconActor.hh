@@ -86,6 +86,7 @@ public:
   EconActor* getEconMirror () const {return econMirror;}
   void getPaid (EconActor* const payer, double amount);
   double getPromised (TradeGood const* const tg) {return promisedToDeliver.getAmount(tg);}
+  void leaveMarket ();
   virtual double produceForContract (TradeGood const* const tg, double amount);
   EconActor* getEconOwner () const {return owner;}
   bool isOwnedBy (EconActor const* const cand) const {return cand == owner;}

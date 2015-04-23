@@ -96,7 +96,7 @@ public:
 
   int totalSoldiers () const; 
   double calcStrength (double decayConstant, double MilUnitElement::*field);
-  void setLocation (Vertex* dat) {location = dat;} 
+  void setLocation (Vertex* dat);
   virtual void setMirrorState ();
   void setRear (Vertices r) {rear = r;}
 

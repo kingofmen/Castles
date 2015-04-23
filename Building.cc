@@ -87,7 +87,9 @@ void Castle::addGarrison (MilUnit* p) {
   assert(p); 
   garrison.push_back(p);
   p->setLocation(0);
-  p->setExtMod(siegeModifier); // Fortification bonus 
+  p->setExtMod(siegeModifier); // Fortification bonus
+  p->leaveMarket();
+  support->registerParticipant(p);
 }
 
 void Castle::callForSurrender (MilUnit* siegers, Outcome out) {

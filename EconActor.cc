@@ -60,7 +60,7 @@ EconActor::EconActor ()
 {}
 
 EconActor::~EconActor () {
-  if (theMarket) theMarket->unRegisterParticipant(this);
+  leaveMarket();
 }
 
 void EconActor::consume (TradeGood const* const tg, double amount) {
@@ -139,6 +139,11 @@ void EconActor::getPaid (EconActor* const payer, double amount) {
     borrowers[payer] -= amount;
     if (borrowers[payer] < 0) borrowers[payer] = 0;
   }
+}
+
+void EconActor::leaveMarket () {
+  if (theMarket) theMarket->unRegisterParticipant(this);
+  theMarket = 0;
 }
 
 double EconActor::produceForContract (TradeGood const* const tg, double amount) {

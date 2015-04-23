@@ -150,6 +150,18 @@ void MilUnitElement::setMirrorState () {
   mirror->supply     = supply;
 }
 
+void MilUnit::setLocation (Vertex* dat) {
+  location = dat;
+  leaveMarket();
+  if (location) {
+    for (Vertex::HexIterator hex = location->beginHexes(); hex != location->endHexes(); ++hex) {
+      if ((*hex)->getOwner() != getOwner()) continue;
+      (*hex)->registerParticipant(this);
+      break;
+    }
+  }
+}
+
 void MilUnit::setMirrorState () {
   mirror->setOwner(getOwner());
   mirror->rear = rear;
