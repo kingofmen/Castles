@@ -88,6 +88,7 @@ public:
   double effectiveMobility (MilUnit* const versus);
   virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
   double getDecayConstant () const {return defaultDecayConstant * (modStack.size() > 0 ? modStack.top() : 1);}
+  double getForageStrength ();
   int getFightingModifier (MilUnit* const adversary);
   int getScoutingModifier (MilUnit* const adversary);
   int getSkirmishModifier (MilUnit* const adversary);
@@ -121,6 +122,7 @@ private:
   MilUnit (MilUnit* other); 
 
   void consumeSupplies ();
+  void forage ();
   void recalcElementAttributes (); 
   int takeCasualties (double rate);
   void getShockRange (double shkRatio, double firRatio, double mobRatio, double& shkPercent, double& firPercent) const;

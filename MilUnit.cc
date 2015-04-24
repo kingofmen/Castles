@@ -4,6 +4,7 @@
 #include <cmath> 
 #include "Logger.hh" 
 #include "Calendar.hh"
+#include "Player.hh"
 
 typedef std::vector<MilUnitElement*>::const_iterator CElmIter;
 typedef std::vector<MilUnitElement*>::iterator ElmIter;
@@ -155,7 +156,7 @@ void MilUnit::setLocation (Vertex* dat) {
   leaveMarket();
   if (location) {
     for (Vertex::HexIterator hex = location->beginHexes(); hex != location->endHexes(); ++hex) {
-      if ((*hex)->getOwner() != getOwner()) continue;
+      if ((*hex)->getOwner()->isFriendly(getOwner())) continue;
       (*hex)->registerParticipant(this);
       break;
     }
@@ -242,6 +243,7 @@ void MilUnit::endOfTurn () {
     return; 
   }
 
+  forage();
   consumeSupplies();
   recalcElementAttributes();
   graphicsInfo->updateSprites(this);   
@@ -274,6 +276,36 @@ void MilUnit::consumeSupplies () {
       }
     }
     if (!suppliedAny) break;
+  }
+}
+
+void MilUnit::forage () {
+  if (!location) return;
+  vector<Hex*> targets;
+  for (Vertex::HexIterator hex = location->beginHexes(); hex != location->endHexes(); ++hex) {
+    if ((!(*hex)->getVillage()) && (!(*hex)->getFarm()) && (!(*hex)->getForest()) && (!(*hex)->getMine())) continue;
+    if ((*hex)->getOwner()->isEnemy(getOwner())) targets.push_back(*hex);
+  }
+
+  if (0 == targets.size()) return;
+
+  double forageStrength = getForageStrength();
+  BOOST_FOREACH(Hex* hex, targets) {
+    vector<MilUnit*> defenders;
+    if (hex->getVillage()) defenders.push_back(hex->getVillage()->raiseMilitia());
+    Castle* castle = hex->getCastle();
+    if (castle) {
+      for (int i = 0; i < castle->numGarrison(); ++i) defenders.push_back(castle->getGarrison(i));
+    }
+    for (Hex::VtxIterator vex = hex->vexBegin(); vex != hex->vexEnd(); ++vex) {
+      if ((*vex) == location) continue;
+      for (int i = 0; i < (*vex)->numUnits(); ++i) {
+	MilUnit* cand = (*vex)->getUnit(i);
+	if (cand->getOwner()->isFriendly(hex->getOwner())) defenders.push_back(cand);
+      }
+    }
+    double defenderStrength = 0;
+    BOOST_FOREACH(MilUnit* mu, defenders) defenderStrength += mu->getForageStrength();
   }
 }
 
@@ -494,6 +526,10 @@ void MilUnit::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
     if (0.01 > wanted.getAmount(*tg)) continue;
     bidlist.push_back(new MarketBid((*tg), wanted.getAmount(*tg), this));
   }
+}
+
+double MilUnit::getForageStrength () {
+  return calcStrength(getDecayConstant(), &MilUnitElement::tacmob) + 0.5*calcStrength(getDecayConstant(), &MilUnitElement::shock);
 }
 
 int MilUnit::getFightingModifier (MilUnit* const adversary) {

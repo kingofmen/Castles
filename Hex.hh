@@ -33,12 +33,15 @@ public:
   bool                   colonise (Line* lin, MilUnit* unit, Outcome out);
   void                   createVertices ();
   void                   endOfTurn ();
+  Castle*                getCastle ();
   Vertices               getDirection (Vertex const * const ofdis) const;
   Direction              getDirection (Hex const * const dat) const;
   Direction              getDirection (Line const * const dat) const;
   Farmland*              getFarm () {return farms;}
+  Forest*                getForest () {return forest;}
   HexGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;}
   Line*                  getLine (Direction dir) {return lines[dir];}
+  Mine*                  getMine () {return mine;}
   Player*                getOwner () {return owner;}
   pair<int, int>         getPos () const {return pos;}
   pair<int, int>         getPos (Direction dat) const;

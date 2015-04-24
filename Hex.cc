@@ -410,6 +410,15 @@ Hex* Line::otherHex (Hex* dat) {
   return hex1; 
 }
 
+Castle* Hex::getCastle () {
+  for (LineIterator lin = linBegin(); lin != linEnd(); ++lin) {
+    Castle* cand = (*lin)->getCastle();
+    if (!cand) continue;
+    if (cand->getSupport() == this) return cand;
+  }
+  return 0;
+}
+
 Direction Hex::getDirection (Line const * const dat) const {
   switch (getDirection(dat->oneEnd())) {
   case LeftUp:    if (Left == getDirection(dat->twoEnd())) return NorthWest; return North; 

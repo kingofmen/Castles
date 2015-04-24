@@ -15,7 +15,9 @@ class Player : public Iterable<Player>, public Named<Player>, public EconActor {
 public:
   Player (bool h, std::string d, std::string n);
   ~Player ();
-  
+
+  bool isEnemy (Player const* const other) {return this != other;}
+  bool isFriendly (Player const* const other) {return this == other;}
   bool isHuman () const {return human;}
   void getAction (); 
   bool turnEnded () const {return doneWithTurn;}
