@@ -127,6 +127,15 @@ int Hex::recruit (Player* forhim, MilUnitTemplate const* const recruitType, MilU
   return village->produceRecruits(recruitType, target, out); 
 }
 
+GoodsHolder Hex::loot (double lootRatio) {
+  GoodsHolder ret;
+  if (village) ret += village->loot(lootRatio);
+  if (farms)   ret += farms->loot(lootRatio);
+  if (forest)  ret += forest->loot(lootRatio);
+  if (mine)    ret += mine->loot(lootRatio);
+  return ret;
+}
+
 int Hex::numMovesTo (Hex const * const dat) const {
   int xdist = pos.first - dat->pos.first;
   int ydist = pos.second - dat->pos.second;
@@ -703,15 +712,7 @@ void Hex::setMirrorState () {
   else mirror->castle = 0;
 }
 
-void Hex::unitTests () {
-  // Test that production goes and food eventually
-  // gets to the village.
-  Hex* testHex = new Hex(1000, 1000, Plain);
-  Village* testVillage = Village::getTestVillage(1000);
-  testHex->setVillage(testVillage);  
-  Farmland* testFarm = Farmland::getTestFarm(30);
-  testHex->setFarm(testFarm);
-}
+void Hex::unitTests () {}
 
 bool Hex::colonise (Line* lin, MilUnit* unit, Outcome out) {
   // Sanity checks 
@@ -918,6 +919,18 @@ double Line::traverseSupplies (double& amount, Player* side, Geography* previous
   double loss = Geography::traverseSupplies(amount, side, previous);
   if (previous) graphicsInfo->traverseSupplies(flow * (previous == vex1 ? 1 : -1), loss);
   return loss;
+}
+
+Hex* Hex::getTestHex (bool vi, bool fa, bool fo, bool mi) {
+  static int called = 0;
+  Hex* ret = new Hex(1000 * ++called, 1000, Plain);
+  if (vi) ret->setVillage(Village::getTestVillage(1000));
+  if (fa) ret->setFarm(Farmland::getTestFarm());
+  if (fo) ret->setForest(Forest::getTestForest());
+  if (mi) ret->setMine(Mine::getTestMine());
+  ret->createVertices();
+  for (VtxIterator vex = ret->vexBegin(); vex != ret->vexEnd(); ++vex) (*vex)->createLines();
+  return ret;
 }
 
 int Hex::getTotalPopulation () const {

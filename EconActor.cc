@@ -25,6 +25,12 @@ void GoodsHolder::clear () {
   }
 }
 
+GoodsHolder GoodsHolder::loot (double lootRatio) {
+  GoodsHolder ret = (*this) * lootRatio;
+  (*this) -= ret;
+  return ret;
+}
+
 void GoodsHolder::setAmounts (GoodsHolder const* const gh) {
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     tradeGoods[**tg] = gh->getAmount(*tg);
@@ -53,6 +59,18 @@ void GoodsHolder::operator*= (const double scale) {
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     tradeGoods[**tg] *= scale;
   }
+}
+
+GoodsHolder operator* (const GoodsHolder& gh, const double scale) {
+  GoodsHolder ret(gh);
+  ret *= scale;
+  return ret;
+}
+
+GoodsHolder operator* (const double scale, const GoodsHolder& gh) {
+  GoodsHolder ret(gh);
+  ret *= scale;
+  return ret;
 }
 
 EconActor::EconActor ()

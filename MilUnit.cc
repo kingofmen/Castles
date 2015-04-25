@@ -15,6 +15,10 @@ vector<double> MilUnit::priorityLevels;
 double MilUnit::defaultDecayConstant = 1000; 
 vector<double> MilUnitTemplate::drillEffects;
 
+const double FORAGE_CASUALTY_RATE = 0.01;
+const double FORAGE_LOOT_RATE = 0.1;
+const double FORAGE_DEFENDER_LOSS_RATE = 0.25;
+
 MilUnit::MilUnit ()
   : Unit()
   , Mirrorable<MilUnit>()
@@ -288,24 +292,46 @@ void MilUnit::forage () {
   }
 
   if (0 == targets.size()) return;
+  BOOST_FOREACH(Hex* hex, targets) lootHex(hex);
+}
 
+void MilUnit::lootHex (Hex* hex) {
   double forageStrength = getForageStrength();
-  BOOST_FOREACH(Hex* hex, targets) {
-    vector<MilUnit*> defenders;
-    if (hex->getVillage()) defenders.push_back(hex->getVillage()->raiseMilitia());
-    Castle* castle = hex->getCastle();
-    if (castle) {
-      for (int i = 0; i < castle->numGarrison(); ++i) defenders.push_back(castle->getGarrison(i));
+  vector<MilUnit*> defenders;
+  if (hex->getVillage()) defenders.push_back(hex->getVillage()->raiseMilitia());
+  Castle* castle = hex->getCastle();
+  if (castle) {
+    for (int i = 0; i < castle->numGarrison(); ++i) defenders.push_back(castle->getGarrison(i));
+  }
+  for (Hex::VtxIterator vex = hex->vexBegin(); vex != hex->vexEnd(); ++vex) {
+    if ((*vex) == location) continue;
+    for (int i = 0; i < (*vex)->numUnits(); ++i) {
+      MilUnit* cand = (*vex)->getUnit(i);
+      if (cand->getOwner()->isFriendly(hex->getOwner())) defenders.push_back(cand);
     }
-    for (Hex::VtxIterator vex = hex->vexBegin(); vex != hex->vexEnd(); ++vex) {
-      if ((*vex) == location) continue;
-      for (int i = 0; i < (*vex)->numUnits(); ++i) {
-	MilUnit* cand = (*vex)->getUnit(i);
-	if (cand->getOwner()->isFriendly(hex->getOwner())) defenders.push_back(cand);
-      }
-    }
-    double defenderStrength = 0;
-    BOOST_FOREACH(MilUnit* mu, defenders) defenderStrength += mu->getForageStrength();
+  }
+  double defenderStrength = 0;
+  BOOST_FOREACH(MilUnit* mu, defenders) defenderStrength += mu->getForageStrength();
+  double ratio = forageStrength / (1 + defenderStrength);
+  // When completely dominant, we get 10% of the available supplies and take no casualties.
+  // When utterly outmatched, we get no supplies and take 1% casualties. Move linearly between
+  // these two scenarios. Scale everything by our aggression.
+
+  // Scale 0-infinity ratio onto 0-1 using arctan.
+  ratio = atan(ratio) * M_2_PI;
+  ratio *= aggression;
+
+  double casualties = takeCasualties((1.0 - ratio) * FORAGE_CASUALTY_RATE);
+  (*this) += hex->loot(FORAGE_LOOT_RATE * ratio);
+
+  // Defenders take lower casualties because they are assumed
+  // to engage only when they have local superiority.
+  if (0 == defenders.size()) return;
+  casualties *= FORAGE_DEFENDER_LOSS_RATE;
+  casualties /= defenders.size();
+  BOOST_FOREACH(MilUnit* mu, defenders) {
+    double rate = casualties / mu->totalSoldiers();
+    mu->takeCasualties(rate);
   }
 }
 
@@ -607,6 +633,23 @@ void MilUnit::unitTests () {
   }
   if (0.01 > totalExpected) throwFormatted("Expected total bid should not be zero!");
   if (0.01 > totalActual) throwFormatted("Actual total bid should not be zero!");
+
+  Hex* testHex = Hex::getTestHex();
+  Village* testVillage = testHex->getVillage();
+
+  TradeGood const* testGood = *(TradeGood::exLaborStart());
+  testVillage->deliverGoods(testGood, 1000);
+  MilUnit looter;
+  looter.addElement(unitType, youngMen);
+  looter.lootHex(testHex);
+
+  if (fabs(looter.totalSoldiers() - youngMen.getTotalPopulation()) > 1) throwFormatted("Expected no casualties in looting undefended hex, got %i -> %i",
+										       youngMen.getTotalPopulation(),
+										       looter.totalSoldiers());
+
+  if (fabs(looter.getAmount(testGood) - 1000 * FORAGE_LOOT_RATE) > 0.5) throwFormatted("Expected to loot %.2f, but got %.2f",
+										       1000 * FORAGE_LOOT_RATE,
+										       looter.getAmount(testGood));
 }
 
 void battleReport (Logger& log, BattleResult& outcome) {

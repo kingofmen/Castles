@@ -340,6 +340,7 @@ public:
 
   void doWork (bool tick = false) {BOOST_FOREACH(W* worker, workers) worker->extractResources(tick);}
   double getAmount (TradeGood const* const tg) {double ret = 0; BOOST_FOREACH(W* f, workers) ret += f->getAmount(tg); return ret;}
+  GoodsHolder loot (double lootRatio) {GoodsHolder ret; BOOST_FOREACH(W* worker, workers) ret += worker->loot(lootRatio); return ret;}
   void setMarket (Market* market) {BOOST_FOREACH(W* worker, workers) market->registerParticipant(worker);}
 
   void setDefaultOwner (EconActor* o) {
@@ -489,6 +490,7 @@ public:
   virtual void endOfTurn ();
   virtual void setMirrorState ();
 
+  static Forest* getTestForest () {return new Forest();}
   static void unitTests ();
   
 private:
@@ -541,6 +543,7 @@ public:
   virtual void endOfTurn ();
   virtual void setMirrorState ();
 
+  static Mine* getTestMine () {return new Mine();}
   static void unitTests ();
 private: 
   Mine (Mine* other);

@@ -280,9 +280,8 @@ Village* Village::getTestVillage (int pop) {
 }
 
 void Village::unitTests () {
-  Hex* testHex = Hex::getHex(1000, 1000);
-  Village* testVillage = getTestVillage(1000); // 1000 20-year-old males... wonder what they do for entertainment?
-  testHex->setVillage(testVillage);
+  Hex* testHex = Hex::getTestHex(true, false, false, false);
+  Village* testVillage = testHex->getVillage();
   GoodsHolder prices;
   vector<MarketBid*> bidlist;
   prices.deliverGoods(TradeGood::Labor, 1);
@@ -586,9 +585,8 @@ int Farmland::getTotalFields () const {
 }
 
 void Farmland::unitTests () {
-  Hex* testHex = Hex::getHex(1000, 1000);
-  Farmland* testFarm = getTestFarm();
-  testHex->setFarm(testFarm);
+  Hex* testHex = Hex::getTestHex(false, true, false, false);
+  Farmland* testFarm = testHex->getFarm();
   // Stupidest imaginable test, but did actually catch a problem, so...
   if ((int) testFarm->workers.size() != numOwners) {
     sprintf(errorMessage, "Farm should have %i Farmers, has %i", numOwners, testFarm->workers.size());
@@ -1152,15 +1150,17 @@ double Forester::outputOfBlock (int block) const {
 }
 
 void Forest::unitTests () {
-  Hex* testHex = Hex::getHex(1000, 1000);
-  Forest testForest;
-  testHex->setForest(&testForest);
-  if ((int) testForest.workers.size() != numOwners) {
-    sprintf(errorMessage, "Forest should have %i Workers, has %i", numOwners, testForest.workers.size());
+  Hex* testHex = Hex::getTestHex(false, false, true, false);
+  Forest* testForest = testHex->getForest();
+  if ((int) testForest->workers.size() != numOwners) {
+    sprintf(errorMessage, "Forest should have %i Workers, has %i", numOwners, testForest->workers.size());
     throw string(errorMessage);
   }
 
-  testForest.workers[0]->unitTests();
+  Forester* testForester = testForest->workers[0];
+  testForester->unitTests();
+  delete testForest;
+  if (testForester->theMarket) throw string("Expected forester to have been unregistered");
 }
 
 void Forester::unitTests () {
@@ -1716,11 +1716,13 @@ void Mine::unitTests () {
     sprintf(errorMessage, "Expected at least 3 MineStatus entries, got %i", MineStatus::numTypes());
     throw string(errorMessage);
   }
-  Hex* testHex = Hex::getHex(1000, 1000);
-  Mine testMine;
-  testHex->setMine(&testMine);
-  if ((int) testMine.workers.size() != numOwners) throwFormatted("Mine should have %i Workers, has %i", numOwners, testMine.workers.size());
-  testMine.workers[0]->unitTests();
+  Hex* testHex = Hex::getTestHex(false, false, false, true);
+  Mine* testMine = testHex->getMine();
+  if ((int) testMine->workers.size() != numOwners) throwFormatted("Mine should have %i Workers, has %i", numOwners, testMine->workers.size());
+  Miner* testMiner = testMine->workers[0];
+  testMiner->unitTests();
+  delete testMine;
+  if (testMiner->theMarket) throw string("Expected miner to have been unregistered");
 }
 
 void Miner::unitTests () {

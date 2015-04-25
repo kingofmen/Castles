@@ -96,7 +96,7 @@ public:
   void setExtMod (double ext);
   void setFightingFraction (double frac = 1.0) {fightFraction = frac;} 
   void dropExtMod () {modStack.pop();} 
-  void setAggression (double a) {aggression = max(a, min(a, 0.01));} 
+  void setAggression (double a) {aggression = min(1.0, max(a, 0.01));} 
 
   int totalSoldiers () const; 
   double calcStrength (double decayConstant, double MilUnitElement::*field);
@@ -123,6 +123,7 @@ private:
 
   void consumeSupplies ();
   void forage ();
+  void lootHex (Hex* hex);
   void recalcElementAttributes (); 
   int takeCasualties (double rate);
   void getShockRange (double shkRatio, double firRatio, double mobRatio, double& shkPercent, double& firPercent) const;

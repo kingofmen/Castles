@@ -51,6 +51,7 @@ public:
   Village*               getVillage () {return village;}
   LineIterator           linBegin () {return lines.begin();}
   LineIterator           linEnd   () {return lines.end();}
+  GoodsHolder            loot (double lootRatio);
   int                    numMovesTo (Hex const * const dat) const;
   int                    numPops () const {return units.size();}
   void                   raid (MilUnit* raiders, Outcome out);
@@ -74,6 +75,7 @@ public:
   static TerrainType getType (char t);
   static pair<int, int> getNeighbourCoordinates (pair<int, int> pos, Direction dere);
   static Hex* getHex (int x, int y);
+  static Hex* getTestHex (bool vi = true, bool fa = true, bool fo = true, bool mi = true);
   static void clear ();
   static void createHex (int x, int y, TerrainType t);
   static void unitTests ();
