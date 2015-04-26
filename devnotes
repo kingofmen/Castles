@@ -21,7 +21,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
  * Three-resource economy
    - Initialise F*Status and f*erMaps from text files or statically.
    - Fix Miner capitalSize
-   - Disambiguate 'clear' methods.
+   - Disambiguate 'clear' methods. (check)
    - Think up better names for 'fields' and 'extractResources'
    - Change producers to be regular EconActors who sell their goods, but supply owners with money. (check)
    - Forest
@@ -55,7 +55,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      . Marginal declines in production (check)
    - Allow maintenance in addition to production (check)
    - Use EconActor discount rate in Forester chopping decisions
-   - Remove boss from Forester.
+   - Remove boss from Forester. (check)
    - Set workableBlocks from save for all buildings.
    - The EconActor owner of Farmer, etc, is not mirrored. So if you do a workFoo, the *real* owner gets the output. Problem. (fixed)
    - Markets aren't mirrored either. So running mirrors may affect real production volumes.
@@ -67,7 +67,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Restore clearing of land
    - Normalisation
    - Ending of contracts (check)
-   - MilUnits as EconActors
+   - MilUnits as EconActors (check)
    - Dilution of capital (check)
    - Decay of goods
    - Trade

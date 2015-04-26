@@ -29,7 +29,7 @@ static map<string, int Forester::*> foresterMap;
 static map<string, int Miner::*> minerMap;
 
 void readGoodsHolder (Object* goodsObject, GoodsHolder& goods) {
-  goods.clear();
+  goods.zeroGoods();
   if (!goodsObject) return;
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {    
     goods.deliverGoods((*tg), goodsObject->safeGetFloat((*tg)->getName()));

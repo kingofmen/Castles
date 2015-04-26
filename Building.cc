@@ -313,7 +313,7 @@ void Village::unitTests () {
   TradeGood const* theGood = *(TradeGood::exLaborStart());
   maslowLevels[0]->setAmount(theGood, 0.1);
   maslowLevels[1]->setAmount(theGood, 0.1);
-  prices.clear();
+  prices.zeroGoods();
   prices.setAmount(TradeGood::Labor, 1);
   prices.setAmount(theGood, 5);
   // Buying 0.2 food now costs 1 labour. The village should be unwilling
@@ -359,7 +359,7 @@ void Village::unitTests () {
   bidlist.clear();
   testVillage->getBids(prices, bidlist);
   if (3 != bidlist.size()) throwFormatted("Expected 3 bids (third time), got %i, reason %s", bidlist.size(), testVillage->stopReason.c_str());
-  theBids.clear();
+  theBids.zeroGoods();
   BOOST_FOREACH(MarketBid* mb, bidlist) theBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
   double woodExpected = maslowLevels[0]->getAmount(nextGood) * testVillage->consumption();
   double woodBought = theBids.getAmount(nextGood);
@@ -433,9 +433,12 @@ int MilitiaTradition::getUnitTypeAmount (MilUnitTemplate const* const ut) const 
 
 
 void MilitiaTradition::setMirrorState () {
+  Logger::logStream(DebugStartup) << __FILE__ << ":" << __LINE__ << "\n";
   militia->setMirrorState();  
   mirror->militia = militia->getMirror();
+  mirror->militiaStrength.clear();
   for (map<MilUnitTemplate const* const, int>::iterator i = militiaStrength.begin(); i != militiaStrength.end(); ++i) {
+    Logger::logStream(DebugStartup) << "Setting " << (*i).first->getName() << " to " << (*i).second << "\n";
     mirror->militiaStrength[(*i).first] = (*i).second;
   }
   mirror->drillLevel = drillLevel; 
@@ -524,11 +527,11 @@ MilUnit* Village::raiseMilitia () {
 				    << milTrad->militia->getGraphicsInfo()->strengthString("  ");
   }
 
-  milTrad->increaseTradition();  
-  return milTrad->militia; 
+  milTrad->increaseTradition();
+  return milTrad->militia;
 }
 
-Farmland::Farmland () 
+Farmland::Farmland ()
   : Building(1, 5, 1e6)
   , Mirrorable<Farmland>()
   , Collective<Farmer, FieldStatus, 10>()
@@ -613,7 +616,7 @@ void Farmer::unitTests () {
   if (0 >= blockInfo->blockSize) throw new string("Farmer expected positive block size");
   // Note that this is not static, it's run on a particular Farmer.
   GoodsHolder oldCapital(*capital);
-  capital->clear();
+  capital->zeroGoods();
   TradeGood const* testCapGood = 0;
   for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
     if ((*tg) == output) continue;
@@ -1168,7 +1171,7 @@ void Forester::unitTests () {
   if (!output) throw string("Forest output has not been set.");
   if (0 >= blockInfo->blockSize) throw new string("Expected positive block size");
   GoodsHolder oldCapital(*capital);
-  capital->clear();
+  capital->zeroGoods();
   TradeGood const* testCapGood = 0;
   for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
     if ((*tg) == output) continue;
@@ -1208,7 +1211,7 @@ void Forester::unitTests () {
   Forest::_labourToHarvest = 1; // 100 harvestable fields, which we want done this turn.
   GoodsHolder prices;
   vector<MarketBid*> bidlist;
-  GoodsHolder::clear();
+  zeroGoods();
   if (0 < getAmount(testCapGood)) throwFormatted("Expected not to have any more capital after clearing; found %f %i", getAmount(testCapGood), testCapGood->getIdx());
   prices.deliverGoods(TradeGood::Labor, 1);
   prices.deliverGoods(testCapGood, 1);
@@ -1460,6 +1463,7 @@ void Forest::setMirrorState () {
 void Village::setMirrorState () {
   women.setMirrorState();
   males.setMirrorState();
+  Logger::logStream(DebugStartup) << __FILE__ << ":" << __LINE__ << "\n";
   milTrad->setMirrorState();
   mirror->milTrad = milTrad->getMirror();
   mirror->consumptionLevel = consumptionLevel;
@@ -1731,7 +1735,7 @@ void Miner::unitTests () {
   // Note that this is not static, it's run on a particular Miner.
   GoodsHolder oldCapital(*capital);
   TradeGood const* testCapGood = 0;
-  capital->clear();
+  capital->zeroGoods();
   for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
     testCapGood = (*tg);
     capital->setAmount((*tg), 0.1);

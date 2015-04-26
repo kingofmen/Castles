@@ -675,7 +675,7 @@ void Vertex::setMirrorState () {
 
 void Hex::setMirrorState () {
   mirror->owner = owner;
-  
+  Logger::logStream(DebugStartup) << __FILE__ << ":" << __LINE__ << "\n";
   if (farms) {
     farms->setMirrorState();
     mirror->farms = farms->getMirror();
@@ -685,6 +685,7 @@ void Hex::setMirrorState () {
     mirror->farms = 0; 
   }
   if (village) {
+    Logger::logStream(DebugStartup) << __FILE__ << ":" << __LINE__ << "\n";
     village->setMirrorState();
     mirror->village = village->getMirror();
   }

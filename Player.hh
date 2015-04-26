@@ -31,8 +31,9 @@ public:
   static void advancePlayer () {currentPlayer = nextPlayer();}
   static Player* getCurrentPlayer () {return currentPlayer;}
   static Player* nextPlayer ();
-  
-private: 
+  static Player* getTestPlayer ();
+
+  private: 
   bool human;
   bool doneWithTurn;
   std::string name;

@@ -19,12 +19,6 @@ GoodsHolder::GoodsHolder (const GoodsHolder& other)
   setAmounts(other);
 }
 
-void GoodsHolder::clear () {
-  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
-    tradeGoods[**tg] = 0;
-  }
-}
-
 GoodsHolder GoodsHolder::loot (double lootRatio) {
   GoodsHolder ret = (*this) * lootRatio;
   (*this) -= ret;
@@ -40,6 +34,12 @@ void GoodsHolder::setAmounts (GoodsHolder const* const gh) {
 void GoodsHolder::setAmounts (const GoodsHolder& gh) {
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     tradeGoods[**tg] = gh.getAmount(*tg);
+  }
+}
+
+void GoodsHolder::zeroGoods () {
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+    tradeGoods[**tg] = 0;
   }
 }
 
@@ -140,7 +140,7 @@ void EconActor::dunAndPay () {
     getPaid(victim, amountToPay);
   }
 
-  soldThisTurn.clear();
+  soldThisTurn.zeroGoods();
   
   if ((Calendar::Winter == Calendar::getCurrentSeason()) && (owner)) {
     double amountToPay = 0.5 * getAmount(TradeGood::Money);

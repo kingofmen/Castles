@@ -220,6 +220,8 @@ double MilUnit::calcStrength (double lifetime, double MilUnitElement::*field) {
   // units contributing first.
   // Higher lifetime is better.
 
+  if (0 == forces.size()) return 0;
+  if (0 == totalSoldiers()) return 0;
   double gamma = 1.0 / lifetime; 
 
   sort(forces.begin(), forces.end(), deref<MilUnitElement>(member_lt(field)));
@@ -232,8 +234,8 @@ double MilUnit::calcStrength (double lifetime, double MilUnitElement::*field) {
     ret += curr * (exp(-gamma*totalStrength) - exp(-gamma*(totalStrength + nums)));
     totalStrength += nums;
   }
-  ret *= lifetime; 
-  return 1 + ret; 
+  ret *= lifetime;
+  return 1 + ret;
 }
 
 void MilUnit::endOfTurn () {
@@ -319,10 +321,10 @@ void MilUnit::lootHex (Hex* hex) {
 
   // Scale 0-infinity ratio onto 0-1 using arctan.
   ratio = atan(ratio) * M_2_PI;
-  ratio *= aggression;
 
-  double casualties = takeCasualties((1.0 - ratio) * FORAGE_CASUALTY_RATE);
-  (*this) += hex->loot(FORAGE_LOOT_RATE * ratio);
+  double casualties = takeCasualties((1.0 - ratio) * FORAGE_CASUALTY_RATE * aggression);
+  Logger::logStream(DebugStartup) << "Looting " << hex->getName() << " with " << forageStrength << ", " << defenderStrength << " " << hex->getVillage()->getMilitia()->getStrength(*(MilUnitTemplate::start())) << " " << ratio << " " << casualties << "\n";
+  (*this) += hex->loot(FORAGE_LOOT_RATE * ratio * aggression);
 
   // Defenders take lower casualties because they are assumed
   // to engage only when they have local superiority.
@@ -587,6 +589,8 @@ void MilUnit::setPriorityLevels (vector<double> newPs) {
 }
 
 void MilUnit::unitTests () {
+  Player* playerOne = Player::getTestPlayer();
+  Player* playerTwo = Player::getTestPlayer();
   AgeTracker youngMen;
   youngMen.addPop(1000, 16);
   MilUnit testOne;
@@ -636,20 +640,78 @@ void MilUnit::unitTests () {
 
   Hex* testHex = Hex::getTestHex();
   Village* testVillage = testHex->getVillage();
+  testHex->setOwner(playerTwo);
 
   TradeGood const* testGood = *(TradeGood::exLaborStart());
-  testVillage->deliverGoods(testGood, 1000);
+  testVillage->setAmount(testGood, 1000);
+  testHex->setMirrorState(); // Loot the mirror to avoid side effects of raising militia.
   MilUnit looter;
+  looter.setOwner(playerOne);
   looter.addElement(unitType, youngMen);
-  looter.lootHex(testHex);
+  looter.setAggression(1.0);
+  int oldSojers = looter.totalSoldiers();
+  looter.lootHex(testHex->getMirror());
 
-  if (fabs(looter.totalSoldiers() - youngMen.getTotalPopulation()) > 1) throwFormatted("Expected no casualties in looting undefended hex, got %i -> %i",
-										       youngMen.getTotalPopulation(),
-										       looter.totalSoldiers());
+  // With no defenders we should take very low casualties and get 10% loot.
+  int sojers = looter.totalSoldiers();
+  if (fabs(sojers - oldSojers) > 0.005*sojers) throwFormatted("Expected low casualties in looting undefended hex, got %i -> %i, %.2f",
+							      oldSojers,
+							      sojers,
+							      looter.getForageStrength());
 
-  if (fabs(looter.getAmount(testGood) - 1000 * FORAGE_LOOT_RATE) > 0.5) throwFormatted("Expected to loot %.2f, but got %.2f",
+  if (fabs(looter.getAmount(testGood) - 1000 * FORAGE_LOOT_RATE) > 1.0) throwFormatted("Expected to loot %.2f %s, but got %.2f",
 										       1000 * FORAGE_LOOT_RATE,
+										       testGood->getName().c_str(),
 										       looter.getAmount(testGood));
+
+  // No defenders and half aggression - half loot.
+  looter.zeroGoods();
+  looter.setAggression(0.5);
+  testVillage->setAmount(testGood, 1000);
+  testHex->setMirrorState();
+  oldSojers = looter.totalSoldiers();
+  looter.lootHex(testHex->getMirror());
+  sojers = looter.totalSoldiers();
+  if (fabs(sojers - oldSojers) > 0.005*sojers) throwFormatted("Expected low casualties in looting undefended hex again, got %i -> %i, %.2f",
+							      oldSojers,
+							      sojers,
+							      looter.getForageStrength());
+
+  if (fabs(looter.getAmount(testGood) - 1000 * FORAGE_LOOT_RATE * 0.5) > 1.0) throwFormatted("Expected to loot %.2f %s, but got %.2f",
+											     1000 * FORAGE_LOOT_RATE * 0.5,
+											     testGood->getName().c_str(),
+											     looter.getAmount(testGood));
+  // Once more, with defense!
+  looter.zeroGoods();
+  looter.setAggression(1.0);
+  MilUnit defense;
+  defense.addElement(unitType, youngMen);
+  defense.setOwner(playerTwo);
+  testHex->getVertex(0)->addUnit(&defense);
+  testVillage->setAmount(testGood, 1000);
+  testHex->setMirrorState();
+  testHex->getVertex(0)->setMirrorState();
+  oldSojers = looter.totalSoldiers();
+  looter.lootHex(testHex->getMirror());
+  sojers = looter.totalSoldiers();
+  if (fabs(sojers - oldSojers) < 0.005*sojers) throwFormatted("Expected some casualties in looting defended hex, got %i -> %i, %.2f vs %.2f",
+							      oldSojers,
+							      sojers,
+							      looter.getForageStrength(),
+							      defense.getForageStrength());
+
+  if (fabs(sojers - oldSojers) > 0.01*sojers) throwFormatted("Didn't expect that many casualties in looting defended hex, got %i -> %i, %.2f vs %.2f",
+							     oldSojers,
+							     sojers,
+							     looter.getForageStrength(),
+							     defense.getForageStrength());
+
+  if (fabs(looter.getAmount(testGood) - 1000 * FORAGE_LOOT_RATE * 0.5) > 1.0) throwFormatted("Expected to loot %.2f %s, but got %.2f",
+											     1000 * FORAGE_LOOT_RATE * 0.5,
+											     testGood->getName().c_str(),
+											     looter.getAmount(testGood));
+  Player::clear();
+  delete testHex;
 }
 
 void battleReport (Logger& log, BattleResult& outcome) {

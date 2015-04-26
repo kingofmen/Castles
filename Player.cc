@@ -490,3 +490,9 @@ Player* Player::nextPlayer () {
   return (*pl); 
 }
 
+Player* Player::getTestPlayer () {
+  static int playerNum = 0;
+  static char names[100];
+  sprintf(names, "Test player %i", ++playerNum);
+  return new Player(false, names, names);
+}

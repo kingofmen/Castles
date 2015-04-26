@@ -38,7 +38,6 @@ struct GoodsHolder {
 public:
   GoodsHolder ();
   GoodsHolder (const GoodsHolder& other);
-  void         clear        ();
   double       getAmount    (unsigned int idx) const {return tradeGoods[idx];}
   double       getAmount    (TradeGood const* const tg) const {return tradeGoods[*tg];}
   void         deliverGoods (TradeGood const* const tg, double amount) {tradeGoods[*tg] += amount;}
@@ -46,6 +45,7 @@ public:
   void         setAmount    (TradeGood const* const tg, double amount) {tradeGoods[*tg] = amount;}
   void         setAmounts   (GoodsHolder const* const gh);
   void         setAmounts   (const GoodsHolder& gh);
+  void         zeroGoods    ();
 
   void operator-= (const GoodsHolder& other);
   void operator+= (const GoodsHolder& other);

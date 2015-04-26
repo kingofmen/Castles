@@ -35,7 +35,7 @@ Market::Market () {
 }
 
 void Market::executeContracts () {
-  volume.clear();
+  volume.zeroGoods();
   BOOST_FOREACH(MarketContract* mc, contracts) mc->clear();
   while (true) {
     double traded = 0;
@@ -50,8 +50,8 @@ void Market::executeContracts () {
 }
 
 void Market::holdMarket () {
-  consumed.clear();
-  produced.clear();
+  consumed.zeroGoods();
+  produced.zeroGoods();
   vector<MarketBid*> bidlist;
   vector<MarketBid*> notMatched;
   BOOST_FOREACH(EconActor* ea, participants) ea->getBids(prices, bidlist);
@@ -116,7 +116,7 @@ void Market::adjustPrices (vector<MarketBid*>& notMatched) {
   // upwards if there are leftover buyers, downwards if there
   // are leftover sellers.
 
-  demand.clear();
+  demand.zeroGoods();
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     BOOST_FOREACH(MarketBid* mb, notMatched) {
       if (mb->tradeGood != (*tg)) continue;
@@ -206,9 +206,9 @@ void Market::unitTests () {
   // Check stability of prices with ideal buyer and seller.
   testMarket.participants.clear();
   testMarket.contracts.clear();
-  testMarket.volume.clear();
-  testMarket.prices.clear();
-  testMarket.demand.clear();
+  testMarket.volume.zeroGoods();
+  testMarket.prices.zeroGoods();
+  testMarket.demand.zeroGoods();
 
   class Labourer : public EconActor {
   public:
@@ -258,8 +258,8 @@ void Market::unitTests () {
     for (int i = 0; i < 25; ++i) {
       double oldLabourPrice = testMarket.prices.getAmount(TradeGood::Labor);
       double oldFoodPrice = testMarket.prices.getAmount(food);
-      testMarket.volume.clear();
-      testMarket.demand.clear();
+      testMarket.volume.zeroGoods();
+      testMarket.demand.zeroGoods();
       testMarket.holdMarket();
       if (0 < testMarket.contracts.size()) throwFormatted("Contracts of duration 1 should have been removed, found %i", testMarket.contracts.size());
       if (testMarket.volume.getAmount(food) < 0.01) throwFormatted("With prices (%f, %f), iteration %i had tiny volume %f for %s",
