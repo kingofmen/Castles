@@ -41,6 +41,7 @@ public:
   double       getAmount    (unsigned int idx) const {return tradeGoods[idx];}
   double       getAmount    (TradeGood const* const tg) const {return tradeGoods[*tg];}
   void         deliverGoods (TradeGood const* const tg, double amount) {tradeGoods[*tg] += amount;}
+  void         deliverGoods (const GoodsHolder& gh);
   GoodsHolder  loot         (double lootRatio);
   void         setAmount    (TradeGood const* const tg, double amount) {tradeGoods[*tg] = amount;}
   void         setAmounts   (GoodsHolder const* const gh);
@@ -56,6 +57,7 @@ private:
 
 GoodsHolder operator* (const GoodsHolder& gh, const double scale);
 GoodsHolder operator* (const double scale, const GoodsHolder& gh);
+double operator* (const GoodsHolder& gh1, const GoodsHolder& gh2);
 
 struct ContractInfo : public Iterable<ContractInfo> {
   ContractInfo () : Iterable<ContractInfo>(this) {}

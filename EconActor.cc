@@ -19,6 +19,12 @@ GoodsHolder::GoodsHolder (const GoodsHolder& other)
   setAmounts(other);
 }
 
+void GoodsHolder::deliverGoods (const GoodsHolder& gh) {
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+    tradeGoods[**tg] += gh.getAmount(*tg);
+  }
+}
+
 GoodsHolder GoodsHolder::loot (double lootRatio) {
   GoodsHolder ret = (*this) * lootRatio;
   (*this) -= ret;
@@ -70,6 +76,14 @@ GoodsHolder operator* (const GoodsHolder& gh, const double scale) {
 GoodsHolder operator* (const double scale, const GoodsHolder& gh) {
   GoodsHolder ret(gh);
   ret *= scale;
+  return ret;
+}
+
+double operator* (const GoodsHolder& gh1, const GoodsHolder& gh2) {
+  double ret = 0;
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+    ret += gh1.getAmount(*tg) * gh2.getAmount(*tg);
+  }
   return ret;
 }
 

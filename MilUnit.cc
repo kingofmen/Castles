@@ -323,7 +323,6 @@ void MilUnit::lootHex (Hex* hex) {
   ratio = atan(ratio) * M_2_PI;
 
   double casualties = takeCasualties((1.0 - ratio) * FORAGE_CASUALTY_RATE * aggression);
-  Logger::logStream(DebugStartup) << "Looting " << hex->getName() << " with " << forageStrength << ", " << defenderStrength << " " << hex->getVillage()->getMilitia()->getStrength(*(MilUnitTemplate::start())) << " " << ratio << " " << casualties << "\n";
   (*this) += hex->loot(FORAGE_LOOT_RATE * ratio * aggression);
 
   // Defenders take lower casualties because they are assumed

@@ -127,7 +127,7 @@ private:
   void recalcElementAttributes (); 
   int takeCasualties (double rate);
   void getShockRange (double shkRatio, double firRatio, double mobRatio, double& shkPercent, double& firPercent) const;
-  
+
   Vertex* location; 
   Vertices rear;
   vector<MilUnitElement*> forces;

@@ -81,6 +81,7 @@ Castle::~Castle () {
     (*i)->destroyIfReal();
   }
   garrison.clear();
+  fieldForce.clear();
 }
 
 void Castle::addGarrison (MilUnit* p) {
@@ -89,7 +90,8 @@ void Castle::addGarrison (MilUnit* p) {
   p->setLocation(0);
   p->setExtMod(siegeModifier); // Fortification bonus
   p->leaveMarket();
-  support->registerParticipant(p);
+  vector<MilUnit*>::iterator loc = find(fieldForce.begin(), fieldForce.end(), p);
+  if (loc != fieldForce.end()) fieldForce.erase(loc);
 }
 
 void Castle::callForSurrender (MilUnit* siegers, Outcome out) {
@@ -111,19 +113,82 @@ void Castle::callForSurrender (MilUnit* siegers, Outcome out) {
 }
 
 void Castle::endOfTurn () {
+  distributeSupplies();
 }
 
 void Castle::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
+  vector<MarketBid*> unitBids;
+  GoodsHolder allBids;
+  orders.clear();
+  BOOST_FOREACH(MilUnit* mu, garrison) {
+    unitBids.clear();
+    mu->getBids(prices, unitBids);
+    BOOST_FOREACH(MarketBid* mb, unitBids) {
+      orders[mu].deliverGoods(mb->tradeGood, mb->amountToBuy);
+      allBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
+      delete mb;
+    }
+  }
+  BOOST_FOREACH(MilUnit* mu, fieldForce) {
+    unitBids.clear();
+    mu->getBids(prices, unitBids);
+    BOOST_FOREACH(MarketBid* mb, unitBids) {
+      orders[mu].deliverGoods(mb->tradeGood, mb->amountToBuy);
+      allBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
+      delete mb;
+    }  
+  }
 
+  double totalMoneyNeeded = allBids * prices;
+  if (totalMoneyNeeded < 0.001) return;
+  double ratio = getAmount(TradeGood::Money) / totalMoneyNeeded;
+  if (ratio > 1) ratio = 1;
+
+  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+    if (0.01 > allBids.getAmount(*tg)) continue;
+    bidlist.push_back(new MarketBid((*tg), allBids.getAmount(*tg) * ratio, this, 1));
+  }
 }
 
-void Castle::supplyGarrison () {
-  if (0 == garrison.size()) return; 
+void Castle::deliverToUnit (MilUnit* unit, const GoodsHolder& goods) {
+  if (find(garrison.begin(), garrison.end(), unit) != garrison.end()) {
+    // It's right here in the castle, just hand it over.
+    unit->deliverGoods(goods);
+    (*this) -= goods;
+    return;
+  }
+  // Field force, more difficult.
+  // TODO
+  unit->deliverGoods(goods);
+  (*this) -= goods;
+}
+
+void Castle::distributeSupplies () {
+  if (0 == garrison.size()) return;
+  GoodsHolder totalBids;
+  for (map<MilUnit*, GoodsHolder>::const_iterator bid = orders.begin(); bid != orders.end(); ++bid) {
+    totalBids += (*bid).second;
+  }
+
+  for (map<MilUnit*, GoodsHolder>::iterator bid = orders.begin(); bid != orders.end(); ++bid) {
+    for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+      double amountWanted = (*bid).second.getAmount(*tg);
+      double amountAvailable = getAmount(*tg);
+      if (amountWanted <= amountAvailable) continue;
+      amountWanted /= totalBids.getAmount(*tg);
+      amountWanted *= amountAvailable;
+      (*bid).second.setAmount((*tg), amountWanted);
+    }
+  }
+  for (map<MilUnit*, GoodsHolder>::const_iterator bid = orders.begin(); bid != orders.end(); ++bid) {
+    deliverToUnit((*bid).first, (*bid).second);
+  }
 }
 
 MilUnit* Castle::removeGarrison () {
  MilUnit* ret = garrison.back();
  garrison.pop_back();
+ fieldForce.push_back(ret);
  ret->dropExtMod(); // No longer gets fortification bonus. 
  return ret;
  }
@@ -433,7 +498,6 @@ int MilitiaTradition::getUnitTypeAmount (MilUnitTemplate const* const ut) const 
 
 
 void MilitiaTradition::setMirrorState () {
-  Logger::logStream(DebugStartup) << __FILE__ << ":" << __LINE__ << "\n";
   militia->setMirrorState();  
   mirror->militia = militia->getMirror();
   mirror->militiaStrength.clear();
@@ -1463,7 +1527,6 @@ void Forest::setMirrorState () {
 void Village::setMirrorState () {
   women.setMirrorState();
   males.setMirrorState();
-  Logger::logStream(DebugStartup) << __FILE__ << ":" << __LINE__ << "\n";
   milTrad->setMirrorState();
   mirror->milTrad = milTrad->getMirror();
   mirror->consumptionLevel = consumptionLevel;

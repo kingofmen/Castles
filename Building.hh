@@ -214,8 +214,7 @@ public:
   MilUnit* removeUnit (MilUnit* r);
   virtual void setOwner (Player* p);
   void setRecruitType (const MilUnitTemplate* m) {recruitType = m;}
-  const MilUnitTemplate* getRecruitType () const {return recruitType;} 
-  void supplyGarrison (); 
+  const MilUnitTemplate* getRecruitType () const {return recruitType;}
   virtual void setMirrorState ();
   
   static const int maxGarrison; 
@@ -225,8 +224,13 @@ protected:
   
 private:
   Castle (Castle* other);   
-  
-  vector<MilUnit*> garrison;
+
+  void deliverToUnit (MilUnit* unit, const GoodsHolder& goods);
+  void distributeSupplies ();
+
+  vector<MilUnit*> garrison;   // Units within the castle, drawing on its supplies.
+  vector<MilUnit*> fieldForce; // Units outside, but still supported from here.
+  map<MilUnit*, GoodsHolder> orders;
   Hex* support;
   Line* location; 
   const MilUnitTemplate* recruitType;

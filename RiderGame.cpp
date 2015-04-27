@@ -221,20 +221,6 @@ void WarfareGame::endOfTurn () {
   for (Line::Iterator lin = Line::start(); lin != Line::final(); ++lin) (*lin)->endOfTurn();
   for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) (*vex)->endOfTurn();
 
-  // TODO: Clear or refresh the cache (routeMaps) every so often. 
-  
-  // Trade
-  for (Player::Iter p = Player::start(); p != Player::final(); ++p) {
-    vector<Castle*> sources;
-    //vector<MilUnit*> sinks;
-    findCastles(sources, (*p));
-    //findUnits(sinks, (*p));
-
-    for (vector<Castle*>::iterator c = sources.begin(); c != sources.end(); ++c) {
-      (*c)->supplyGarrison(); 
-    }
-  }
-
   // Supply consumption, strength calculation
   for (MilUnit::Iterator mil = MilUnit::start(); mil != MilUnit::final(); ++mil) (*mil)->endOfTurn();
 
