@@ -857,11 +857,12 @@ void MilUnitGraphicsInfo::updateSprites (MilStrength* dat) {
     firstSprites++;
     for (int i = 1; i < types; ++i) {
       if (forces[i]->strength < forces[0]->strength/firstSprites) break;
+      if ((int) spriteIndices.size() >= numSprites) break;
       spriteIndices.push_back(indexMap[forces[i]->unittype]);
     }
   }
 
-  assert(spriteIndices.size() < allFormations.size()); 
+  assert(spriteIndices.size() < allFormations.size());
   for (unsigned int i = 0; i < spriteIndices.size(); ++i) {
     formation.push_back(allFormations[spriteIndices.size()][i]);
   }
