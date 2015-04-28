@@ -579,6 +579,19 @@ void MilUnit::setExtMod (double extMod) {
   modStack.push(modStack.size() > 0 ? modStack.top()*extMod : extMod);
 }
 
+MilUnitTemplate const* MilUnit::getTestType () {
+  static MilUnitTemplate const* unitType = *MilUnitTemplate::start();
+  return unitType;
+}
+
+MilUnit* MilUnit::getTestUnit () {
+  static AgeTracker youngMen;
+  if (0 == youngMen.getTotalPopulation()) youngMen.addPop(1000, 16);
+
+  MilUnit* ret = new MilUnit();
+  ret->addElement(getTestType(), youngMen);
+  return ret;
+}
 
 void MilUnit::setPriorityLevels (vector<double> newPs) {
  priorityLevels.clear();
@@ -590,32 +603,29 @@ void MilUnit::setPriorityLevels (vector<double> newPs) {
 void MilUnit::unitTests () {
   Player* playerOne = Player::getTestPlayer();
   Player* playerTwo = Player::getTestPlayer();
-  AgeTracker youngMen;
-  youngMen.addPop(1000, 16);
-  MilUnit testOne;
-  MilUnit testTwo;
-  MilUnitTemplate const* unitType = *MilUnitTemplate::start();
-  testOne.addElement(unitType, youngMen);
-  testTwo.addElement(unitType, youngMen);
+  MilUnit* testOne = getTestUnit();
+  MilUnit* testTwo = getTestUnit();
+  MilUnitTemplate const* unitType = getTestType();
   if (2 > unitType->supplyLevels.size()) throwFormatted("Expected %s to have at least 2 supply levels, found %i",
 							unitType->getName().c_str(),
 							unitType->supplyLevels.size());
   supIter betterSupply = unitType->supplyLevels.begin();
   ++betterSupply;
-  testOne.forces.back()->supply = betterSupply;
-  testOne.recalcElementAttributes();
-  testTwo.recalcElementAttributes();
-  double casualtiesOne = testOne.calcBattleCasualties(&testTwo);
-  double casualtiesTwo = testTwo.calcBattleCasualties(&testOne);
+  testOne->forces.back()->supply = betterSupply;
+  testOne->recalcElementAttributes();
+  testTwo->recalcElementAttributes();
+  double casualtiesOne = testOne->calcBattleCasualties(testTwo);
+  double casualtiesTwo = testTwo->calcBattleCasualties(testOne);
   if (casualtiesTwo <= casualtiesOne) throwFormatted("Expected unsupplied unit to take heavier casualties, but found %.2f vs %.2f",
 						     casualtiesOne,
 						     casualtiesTwo);
 
-  testOne.setAmount(TradeGood::Money, 1000000);
+  testOne->setAmount(TradeGood::Money, 1000000);
   GoodsHolder prices;
   vector<MarketBid*> bidlist;
   for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) prices.setAmount((*tg), 1);
-  testOne.getBids(prices, bidlist);
+  testOne->getBids(prices, bidlist);
+  if (0 == bidlist.size()) throwFormatted("Expected unit to bid on goods");
   GoodsHolder actualBids;
   BOOST_FOREACH(MarketBid* mb, bidlist) actualBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
   GoodsHolder expectedBids;
@@ -644,73 +654,75 @@ void MilUnit::unitTests () {
   TradeGood const* testGood = *(TradeGood::exLaborStart());
   testVillage->setAmount(testGood, 1000);
   testHex->setMirrorState(); // Loot the mirror to avoid side effects of raising militia.
-  MilUnit looter;
-  looter.setOwner(playerOne);
-  looter.addElement(unitType, youngMen);
-  looter.setAggression(1.0);
-  int oldSojers = looter.totalSoldiers();
-  looter.lootHex(testHex->getMirror());
+  MilUnit* looter = getTestUnit();
+  looter->setOwner(playerOne);
+  looter->setAggression(1.0);
+  int oldSojers = looter->totalSoldiers();
+  looter->lootHex(testHex->getMirror());
 
   // With no defenders we should take very low casualties and get 10% loot.
-  int sojers = looter.totalSoldiers();
+  int sojers = looter->totalSoldiers();
   if (fabs(sojers - oldSojers) > 0.005*sojers) throwFormatted("Expected low casualties in looting undefended hex, got %i -> %i, %.2f",
 							      oldSojers,
 							      sojers,
-							      looter.getForageStrength());
+							      looter->getForageStrength());
 
-  if (fabs(looter.getAmount(testGood) - 1000 * FORAGE_LOOT_RATE) > 1.0) throwFormatted("Expected to loot %.2f %s, but got %.2f",
-										       1000 * FORAGE_LOOT_RATE,
-										       testGood->getName().c_str(),
-										       looter.getAmount(testGood));
+  if (fabs(looter->getAmount(testGood) - 1000 * FORAGE_LOOT_RATE) > 1.0) throwFormatted("Expected to loot %.2f %s, but got %.2f",
+											1000 * FORAGE_LOOT_RATE,
+											testGood->getName().c_str(),
+											looter->getAmount(testGood));
 
   // No defenders and half aggression - half loot.
-  looter.zeroGoods();
-  looter.setAggression(0.5);
+  looter->zeroGoods();
+  looter->setAggression(0.5);
   testVillage->setAmount(testGood, 1000);
   testHex->setMirrorState();
-  oldSojers = looter.totalSoldiers();
-  looter.lootHex(testHex->getMirror());
-  sojers = looter.totalSoldiers();
+  oldSojers = looter->totalSoldiers();
+  looter->lootHex(testHex->getMirror());
+  sojers = looter->totalSoldiers();
   if (fabs(sojers - oldSojers) > 0.005*sojers) throwFormatted("Expected low casualties in looting undefended hex again, got %i -> %i, %.2f",
 							      oldSojers,
 							      sojers,
-							      looter.getForageStrength());
+							      looter->getForageStrength());
 
-  if (fabs(looter.getAmount(testGood) - 1000 * FORAGE_LOOT_RATE * 0.5) > 1.0) throwFormatted("Expected to loot %.2f %s, but got %.2f",
-											     1000 * FORAGE_LOOT_RATE * 0.5,
-											     testGood->getName().c_str(),
-											     looter.getAmount(testGood));
+  if (fabs(looter->getAmount(testGood) - 1000 * FORAGE_LOOT_RATE * 0.5) > 1.0) throwFormatted("Expected to loot %.2f %s, but got %.2f",
+											      1000 * FORAGE_LOOT_RATE * 0.5,
+											      testGood->getName().c_str(),
+											      looter->getAmount(testGood));
   // Once more, with defense!
-  looter.zeroGoods();
-  looter.setAggression(1.0);
-  MilUnit defense;
-  defense.addElement(unitType, youngMen);
-  defense.setOwner(playerTwo);
-  testHex->getVertex(0)->addUnit(&defense);
+  looter->zeroGoods();
+  looter->setAggression(1.0);
+  MilUnit* defense = getTestUnit();
+  defense->setOwner(playerTwo);
+  testHex->getVertex(0)->addUnit(defense);
   testVillage->setAmount(testGood, 1000);
   testHex->setMirrorState();
   testHex->getVertex(0)->setMirrorState();
-  oldSojers = looter.totalSoldiers();
-  looter.lootHex(testHex->getMirror());
-  sojers = looter.totalSoldiers();
+  oldSojers = looter->totalSoldiers();
+  looter->lootHex(testHex->getMirror());
+  sojers = looter->totalSoldiers();
   if (fabs(sojers - oldSojers) < 0.005*sojers) throwFormatted("Expected some casualties in looting defended hex, got %i -> %i, %.2f vs %.2f",
 							      oldSojers,
 							      sojers,
-							      looter.getForageStrength(),
-							      defense.getForageStrength());
+							      looter->getForageStrength(),
+							      defense->getForageStrength());
 
   if (fabs(sojers - oldSojers) > 0.01*sojers) throwFormatted("Didn't expect that many casualties in looting defended hex, got %i -> %i, %.2f vs %.2f",
 							     oldSojers,
 							     sojers,
-							     looter.getForageStrength(),
-							     defense.getForageStrength());
+							     looter->getForageStrength(),
+							     defense->getForageStrength());
 
-  if (fabs(looter.getAmount(testGood) - 1000 * FORAGE_LOOT_RATE * 0.5) > 1.0) throwFormatted("Expected to loot %.2f %s, but got %.2f",
-											     1000 * FORAGE_LOOT_RATE * 0.5,
-											     testGood->getName().c_str(),
-											     looter.getAmount(testGood));
+  if (fabs(looter->getAmount(testGood) - 1000 * FORAGE_LOOT_RATE * 0.5) > 1.0) throwFormatted("Expected to loot %.2f %s, but got %.2f",
+											      1000 * FORAGE_LOOT_RATE * 0.5,
+											      testGood->getName().c_str(),
+											      looter->getAmount(testGood));
   Player::clear();
   delete testHex;
+  delete testOne;
+  delete testTwo;
+  delete looter;
+  delete defense;
 }
 
 void battleReport (Logger& log, BattleResult& outcome) {

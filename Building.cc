@@ -120,9 +120,12 @@ void Castle::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   vector<MarketBid*> unitBids;
   GoodsHolder allBids;
   orders.clear();
+  double availableMoney = getAmount(TradeGood::Money);
   BOOST_FOREACH(MilUnit* mu, garrison) {
     unitBids.clear();
+    mu->deliverGoods(TradeGood::Money, availableMoney);
     mu->getBids(prices, unitBids);
+    mu->deliverGoods(TradeGood::Money, -availableMoney);
     BOOST_FOREACH(MarketBid* mb, unitBids) {
       orders[mu].deliverGoods(mb->tradeGood, mb->amountToBuy);
       allBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
@@ -131,7 +134,9 @@ void Castle::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   }
   BOOST_FOREACH(MilUnit* mu, fieldForce) {
     unitBids.clear();
+    mu->deliverGoods(TradeGood::Money, availableMoney);
     mu->getBids(prices, unitBids);
+    mu->deliverGoods(TradeGood::Money, -availableMoney);
     BOOST_FOREACH(MarketBid* mb, unitBids) {
       orders[mu].deliverGoods(mb->tradeGood, mb->amountToBuy);
       allBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
@@ -212,6 +217,31 @@ void Castle::recruit (Outcome out) {
       target->setOwner(getOwner()); 
     }
   }
+}
+
+void Castle::unitTests () {
+  Hex* testHex = Hex::getTestHex();
+  Castle* testCastle = new Castle(testHex, *(testHex->linBegin()));
+  MilUnit* garrison = MilUnit::getTestUnit();
+  testCastle->addGarrison(garrison);
+  testCastle->setAmount(TradeGood::Money, 1e6);
+  GoodsHolder prices;
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) prices.setAmount((*tg), 1);
+  vector<MarketBid*> bidlist;
+  testCastle->getBids(prices, bidlist);
+  if (0 == bidlist.size()) throwFormatted("Expected garrisoned Castle to make bids, got none");
+
+  BOOST_FOREACH(MarketBid* mb, bidlist) testCastle->deliverGoods(mb->tradeGood, mb->amountToBuy);
+  testCastle->distributeSupplies();
+  BOOST_FOREACH(MarketBid* mb, bidlist) {
+    if (fabs(garrison->getAmount(mb->tradeGood) - mb->amountToBuy) > 0.01) throwFormatted("Expected garrison unit to get %.2f %s, but got %.2f",
+											  mb->amountToBuy,
+											  mb->tradeGood->getName().c_str(),
+											  garrison->getAmount(mb->tradeGood));
+  }
+
+  delete testCastle;
+  delete testHex;
 }
 
 void Building::setOwner (Player* p) {

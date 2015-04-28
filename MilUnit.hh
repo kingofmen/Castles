@@ -115,6 +115,8 @@ public:
   void incPriority (bool up = true) {setPriority(priority + (up ? 1 : -1));}
   void setPriority (int p) {if (p < 0) priority = 0; else if (p >= (int) priorityLevels.size()) priority = priorityLevels.size() - 1; else priority = p;}
 
+  static MilUnitTemplate const* getTestType();
+  static MilUnit* getTestUnit ();
   static void setPriorityLevels (vector<double> newPs);
   static void unitTests ();
 

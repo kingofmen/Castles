@@ -320,6 +320,7 @@ void WarfareGame::unitTests (string fname) {
   callTestFunction("Forest",   &Forest::unitTests);
   callTestFunction("Mine",     &Mine::unitTests);
   callTestFunction("MilUnit",  &MilUnit::unitTests);
+  callTestFunction("Castle",  &Castle::unitTests);
 
   Logger::logStream(DebugStartup) << passed << " of " << tests << " tests passed.\n";
 }

@@ -218,7 +218,8 @@ public:
   virtual void setMirrorState ();
   
   static const int maxGarrison; 
-  static double getSiegeMod () {return siegeModifier;} 
+  static double getSiegeMod () {return siegeModifier;}
+  static void unitTests ();
 
 protected:
   
