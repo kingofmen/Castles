@@ -214,8 +214,6 @@ private:
 
   void selectObject ();
   
-  static char* popText (PopUnit* dat); 
-  
   WarfareGame* currentGame;
   Hex* selectedHex;
   Line* selectedLine; 

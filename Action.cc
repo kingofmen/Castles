@@ -2,7 +2,6 @@
 #include "Player.hh"
 #include "RiderGame.hh"
 #include "Hex.hh"
-#include "PopUnit.hh"
 #include "MilUnit.hh" 
 #include "Logger.hh" 
 #include <cassert> 

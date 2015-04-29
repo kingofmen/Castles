@@ -12,7 +12,6 @@
 #include "UtilityFunctions.hh"
 #include "Directions.hh"
 
-class PopUnit;
 class MilUnit;
 class MilUnitTemplate;
 class Player;
@@ -26,10 +25,8 @@ public:
   ~Hex ();
 
   typedef vector<Line*>::iterator LineIterator;
-  typedef vector<PopUnit*>::iterator PopIterator;
   typedef vector<Vertex*>::iterator VtxIterator;
 
-  void                   addPop (PopUnit* p) {units.push_back(p);}
   bool                   colonise (Line* lin, MilUnit* unit, Outcome out);
   void                   createVertices ();
   void                   endOfTurn ();
@@ -53,9 +50,7 @@ public:
   LineIterator           linEnd   () {return lines.end();}
   GoodsHolder            loot (double lootRatio);
   int                    numMovesTo (Hex const * const dat) const;
-  int                    numPops () const {return units.size();}
   void                   raid (MilUnit* raiders, Outcome out);
-  PopUnit*               removePop () {PopUnit* ret = units.back(); units.pop_back(); return ret;}
   void                   repair (Outcome out);
   void                   setNeighbour (Direction d, Hex* dat);
   void                   setOwner (Player* p);
@@ -88,7 +83,6 @@ private:
   vector<Line*> lines;
   vector<Vertex*> vertices;
   vector<Hex*> neighbours;
-  vector<PopUnit*> units;
   pair<int, int> pos;
   TerrainType myType;
   Player* owner;

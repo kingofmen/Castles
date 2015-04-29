@@ -1,5 +1,4 @@
 #include "Hex.hh" 
-#include "PopUnit.hh"
 #include "MilUnit.hh" 
 #include <string> 
 #include "Player.hh" 
@@ -528,9 +527,6 @@ Vertices Vertex::getDirection (Vertex const * const ofdis) const {
 
 void Hex::setOwner (Player* p) {
   owner = p;
-  for (std::vector<PopUnit*>::iterator pop = units.begin(); pop != units.end(); ++pop) {
-    (*pop)->setOwner(p); 
-  }
 }
 
 void Vertex::addUnit (MilUnit* dat) {

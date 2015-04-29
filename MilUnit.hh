@@ -1,13 +1,16 @@
 #ifndef MILUNIT_HH
 #define MILUNIT_HH
 
-#include <vector>
+#include <list>
 #include <stack> 
-#include "PopUnit.hh"
+#include <vector>
 #include "Logger.hh" 
 #include "AgeTracker.hh"
+#include "Directions.hh"
+#include "EconActor.hh"
+#include "Hex.hh"
+#include "Mirrorable.hh"
 #include "UtilityFunctions.hh"
-#include "EconActor.hh" 
 
 class Vertex; 
 struct BattleResult; 
@@ -63,6 +66,17 @@ public:
   MilUnitTemplate const * unitType;
   AgeTracker* soldiers;
   vector<SupplyLevel>::const_iterator supply;
+};
+
+class Unit {
+public: 
+  Unit () {}
+  ~Unit() {}
+
+  void setOwner (Player* p) {player = p;}
+  Player* getOwner () {return player;}
+private:
+  Player* player; 
 };
 
 class MilUnit : public Unit, public EconActor, public Mirrorable<MilUnit>, public Named<MilUnit, false>, public MilStrength, public Iterable<MilUnit> {
