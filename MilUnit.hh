@@ -70,13 +70,21 @@ public:
 
 class Unit {
 public: 
-  Unit () {}
+  Unit ();
   ~Unit() {}
 
+  virtual void setLocation (Vertex* dat) = 0;
   void setOwner (Player* p) {player = p;}
+  void setRear (Vertices r) {rear = r;}
+  Vertex* getLocation () {return location;}
   Player* getOwner () {return player;}
+  Vertices getRear () const {return rear;}
+
+protected:
+  Vertex* location;
+  Vertices rear;
 private:
-  Player* player; 
+  Player* player;
 };
 
 class MilUnit : public Unit, public EconActor, public Mirrorable<MilUnit>, public Named<MilUnit, false>, public MilStrength, public Iterable<MilUnit> {
@@ -111,15 +119,10 @@ public:
   void setFightingFraction (double frac = 1.0) {fightFraction = frac;} 
   void dropExtMod () {modStack.pop();} 
   void setAggression (double a) {aggression = min(1.0, max(a, 0.01));} 
-
+  virtual void setLocation (Vertex* dat);
   int totalSoldiers () const; 
   double calcStrength (double decayConstant, double MilUnitElement::*field);
-  void setLocation (Vertex* dat);
   virtual void setMirrorState ();
-  void setRear (Vertices r) {rear = r;}
-
-  Vertex* getLocation () {return location;} 
-  Vertices getRear () const {return rear;} 
 
   MilUnitElement* getElement (MilUnitTemplate const* ut);
   MilUnitGraphicsInfo const* getGraphicsInfo () {return graphicsInfo;}  
@@ -144,8 +147,6 @@ private:
   int takeCasualties (double rate);
   void getShockRange (double shkRatio, double firRatio, double mobRatio, double& shkPercent, double& firPercent) const;
 
-  Vertex* location; 
-  Vertices rear;
   vector<MilUnitElement*> forces;
   int priority;
   std::stack<double> modStack;
@@ -174,6 +175,19 @@ struct BattleResult {
   double shockPercent;
   double rangePercent;
   Outcome dieRoll;
+};
+
+class TransportUnit : public Unit, public EconActor, public Iterable<TransportUnit>, Mirrorable<TransportUnit> {
+  friend class StaticInitialiser;
+  friend class Mirrorable<TransportUnit>;
+public:
+  TransportUnit ();
+  ~TransportUnit ();
+
+  virtual void setLocation (Vertex* dat);
+  virtual void setMirrorState ();
+private:
+  TransportUnit (TransportUnit* other);
 };
 
 void battleReport (Logger& log, BattleResult& outcome); 

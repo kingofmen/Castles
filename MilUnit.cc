@@ -19,13 +19,16 @@ const double FORAGE_CASUALTY_RATE = 0.01;
 const double FORAGE_LOOT_RATE = 0.1;
 const double FORAGE_DEFENDER_LOSS_RATE = 0.25;
 
+Unit::Unit ()
+  : location(0)
+  , rear(Left)
+{}
+
 MilUnit::MilUnit ()
   : Unit()
   , Mirrorable<MilUnit>()
   , Named<MilUnit, false>()
   , Iterable<MilUnit>(this)
-  , location(0)
-  , rear(Left)
   , priority(4)
   , fightFraction(1.0)
   , aggression(0.25)
@@ -38,7 +41,6 @@ MilUnit::MilUnit (MilUnit* other)
   , Mirrorable<MilUnit>(other)
   , Named<MilUnit, false>()
   , Iterable<MilUnit>(0)
-  , rear(other->rear)
   , graphicsInfo(0)
 {}
 
@@ -170,7 +172,7 @@ void MilUnit::setLocation (Vertex* dat) {
 
 void MilUnit::setMirrorState () {
   mirror->setOwner(getOwner());
-  mirror->rear = rear;
+  mirror->setRear(getRear());
   mirror->priority = priority;
   mirror->modStack = modStack;
   mirror->aggression = aggression;   
@@ -740,4 +742,28 @@ void battleReport (Logger& log, BattleResult& outcome) {
   log << "Fought with: " << strbuffer << "\n"
       << "Casualties: " << outcome.attackerInfo.casualties << " / " << outcome.defenderInfo.casualties << "\n"
       << "Result: " << (VictoGlory == outcome.attackerSuccess ? "VictoGlory!" : "Failure.") << "\n"; 
+}
+
+TransportUnit::TransportUnit ()
+  : Unit()
+  , EconActor()
+  , Iterable<TransportUnit>(this)
+  , Mirrorable<TransportUnit>()
+{}
+
+TransportUnit::~TransportUnit () {}
+
+TransportUnit::TransportUnit (TransportUnit* other)
+  : Unit()
+  , EconActor()
+  , Iterable<TransportUnit>(0)
+  , Mirrorable<TransportUnit>(other)
+{}
+
+void TransportUnit::setLocation (Vertex* loc) {
+  location = loc;
+}
+
+void TransportUnit::setMirrorState () {
+  setEconMirrorState(mirror);
 }
