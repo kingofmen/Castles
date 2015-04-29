@@ -14,7 +14,6 @@ INPUT(
 ./release\MilUnit.o
 ./release\Mirrorable.o
 ./release\Player.o
-./release\PopUnit.o
 ./release\RiderGame.o
 ./release\RoadButton.o
 ./release\StaticInitialiser.o

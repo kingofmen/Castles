@@ -5,7 +5,6 @@
 #include "glextensions.h"
 #include <GL/glu.h> 
 #include <cassert> 
-#include "PopUnit.hh"
 #include "MilUnit.hh" 
 #include "Hex.hh"
 #include "Logger.hh" 

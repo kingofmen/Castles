@@ -4,7 +4,6 @@
 #include <list>
 #include "boost/function.hpp"
 #include "boost/bind.hpp"
-#include "PopUnit.hh"
 #include "Market.hh"
 #include "MilUnit.hh"
 #include "Hex.hh"

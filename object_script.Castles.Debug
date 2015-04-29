@@ -14,7 +14,6 @@ INPUT(
 ./debug\MilUnit.o
 ./debug\Mirrorable.o
 ./debug\Player.o
-./debug\PopUnit.o
 ./debug\RiderGame.o
 ./debug\RoadButton.o
 ./debug\StaticInitialiser.o
