@@ -150,8 +150,9 @@ void Castle::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   if (ratio > 1) ratio = 1;
 
   for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
-    if (0.01 > allBids.getAmount(*tg)) continue;
-    bidlist.push_back(new MarketBid((*tg), allBids.getAmount(*tg) * ratio, this, 1));
+    double amount = allBids.getAmount(*tg) * ratio - getAmount(*tg);
+    if (0.01 > amount) continue;
+    bidlist.push_back(new MarketBid((*tg), amount, this, 1));
   }
 }
 
