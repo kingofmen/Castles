@@ -32,6 +32,7 @@ public:
   static MilUnit*  buildMilUnit (Object* mInfo);
   static void      buildMilUnitTemplates (Object* info);
   static Village*  buildVillage (Object* fInfo);
+  static void      clearTempMaps ();
   static void      createActionProbabilities (Object* info);
   static void      createPlayer (Object* info);   
   static void      loadAiConstants (Object* info);

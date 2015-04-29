@@ -120,7 +120,7 @@ WarfareGame* WarfareGame::createGame (string filename) {
 
   objvec hexinfos = game->getValue("hexinfo");
   for (objiter hinfo = hexinfos.begin(); hinfo != hexinfos.end(); ++hinfo) {
-    StaticInitialiser::buildHex(*hinfo); 
+    StaticInitialiser::buildHex(*hinfo);
   }
 
   objvec units = game->getValue("unit");
@@ -128,9 +128,10 @@ WarfareGame* WarfareGame::createGame (string filename) {
     StaticInitialiser::buildMilUnit(*unit);
   }
 
-  Player::setCurrentPlayerByName(game->safeGetString("currentplayer"));  
+  Player::setCurrentPlayerByName(game->safeGetString("currentplayer"));
   assert(Player::getCurrentPlayer());
   updateGreatestMilStrength();
+  StaticInitialiser::clearTempMaps();
   return currGame; 
 }
 

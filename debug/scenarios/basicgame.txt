@@ -917,6 +917,7 @@ unit = {
     strength = { 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 }
   }
   name = "Player 1 Army"
+  support = 2
 }
 
 unit = {
@@ -929,5 +930,6 @@ unit = {
     strength = { 70 70 70 70 70 70 70 70 70 70 70 70 70 70 70 }
   }
   name = "Player 2 Army"
+  support = 4
 }
 

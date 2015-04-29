@@ -28,6 +28,8 @@ static map<string, int Forester::*> foresterMap;
 // static const map<string, int Forester::*> foresterMap = {{"tended", &Forester::tendedGroves}};
 static map<string, int Miner::*> minerMap;
 
+static map<int, Castle*> castleMap;
+
 void readGoodsHolder (Object* goodsObject, GoodsHolder& goods) {
   goods.zeroGoods();
   if (!goodsObject) return;
@@ -53,6 +55,10 @@ void StaticInitialiser::createCalculator (Object* info, Action::Calculator* ret)
   assert(ret->results[Good] >= ret->results[Neutral]);
   assert(ret->results[Neutral] >= ret->results[Bad]);
   assert(ret->results[Bad] >= ret->results[Disaster]);
+}
+
+void StaticInitialiser::clearTempMaps () {
+  castleMap.clear();
 }
 
 void StaticInitialiser::createActionProbabilities (Object* info) {
@@ -451,6 +457,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     }
     lin->addCastle(castle);
     initialiseEcon(castle, cinfo);
+    castleMap[castle->getIdx()] = castle;
   }
 
   Object* priceInfo = hInfo->safeGetObject("prices");
@@ -593,6 +600,12 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
   m->setName(mInfo->safeGetString("name", "\"Unknown Soldiers\"")); 
 
   initialiseEcon(m, mInfo);
+  int supportingCastleId = mInfo->safeGetInt("support", -1);
+  if (supportingCastleId != -1) {
+    Castle* castle = castleMap[supportingCastleId];
+    if (castle) castle->fieldForce.push_back(m);
+    else Logger::logStream(DebugStartup) << "Bad supporting-castle ID " << supportingCastleId << " for unit " << m->getIdx() << ", ignoring.\n";
+  }
   return m; 
 }
 
@@ -1224,6 +1237,7 @@ void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
 
   writeEconActorIntoObject(unit, obj);
   obj->setLeaf("priority", unit->priority);
+  if (castleMap[unit->getIdx()]) obj->setLeaf("support", castleMap[unit->getIdx()]->getIdx());
 }
 
 void StaticInitialiser::writeAgeInfoToObject (AgeTracker& age, Object* obj, int skip) {
@@ -1307,7 +1321,8 @@ void StaticInitialiser::writeGameToFile (string fname) {
       hexInfo->setLeaf("player", castle->getOwner()->getName());
       Object* castleObject = new Object("castle");
       hexInfo->setValue(castleObject);
-      writeEconActorIntoObject(castle, castleObject); 
+      writeEconActorIntoObject(castle, castleObject);
+      for (vector<MilUnit*>::iterator i = castle->fieldForce.begin(); i != castle->fieldForce.end(); ++i) castleMap[(*i)->getIdx()] = castle;
       castleObject->setLeaf("pos", getDirectionName((*hex)->getDirection(*lin)));
       castleObject->setLeaf("recruiting", castle->recruitType->getName());
       for (unsigned int i = 0; (int) i < castle->numGarrison(); ++i) {
@@ -1395,5 +1410,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
   ofstream writer;
   writer.open(fname.c_str());
   writer << (*game) << std::endl;
-  writer.close(); 
+  writer.close();
+
+  clearTempMaps();
 }
