@@ -767,3 +767,7 @@ void TransportUnit::setLocation (Vertex* loc) {
 void TransportUnit::setMirrorState () {
   setEconMirrorState(mirror);
 }
+
+void TransportUnit::endOfTurn () {
+  
+}

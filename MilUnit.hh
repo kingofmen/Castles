@@ -184,10 +184,13 @@ public:
   TransportUnit ();
   ~TransportUnit ();
 
+  void endOfTurn ();
   virtual void setLocation (Vertex* dat);
   virtual void setMirrorState ();
 private:
   TransportUnit (TransportUnit* other);
+
+  MilUnit* target;
 };
 
 void battleReport (Logger& log, BattleResult& outcome); 

@@ -650,16 +650,6 @@ bool LineGraphicsInfo::isInside (double x, double y) const {
   return true; 
 }
 
-void LineGraphicsInfo::traverseSupplies (double amount, double lost) {
-  if (fabs(amount) < 0.001) return;
-  flow += amount;
-  loss += lost;
-  amount = 1.0 / fabs(amount);
-  loss   = 1.0 / (0.001 + loss);
-  if (maxFlow > amount) maxFlow = amount;
-  if (maxLoss > loss) maxLoss = loss;
-}
-
 void LineGraphicsInfo::endTurn () {
   maxFlow = 1;
   maxLoss = 1;

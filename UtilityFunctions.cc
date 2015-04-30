@@ -138,6 +138,12 @@ void doublet::operator*= (double scale) {
   this->y() *= scale;
 }
 
+doublet& doublet::operator= (const boost::tuple<double, double, double>& rhs) {
+  this->x() = boost::get<0>(rhs);
+  this->y() = boost::get<1>(rhs);
+  return *this;
+}
+
 void doublet::rotate (double degrees, const doublet& around) {
   (*this) -= around;
   double newx = this->x() * cos(degToRad(degrees)) - this->y() * sin(degToRad(degrees));

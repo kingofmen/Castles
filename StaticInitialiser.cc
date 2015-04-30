@@ -1060,12 +1060,16 @@ void StaticInitialiser::makeGraphicsInfoObjects () {
       Vertex* vex = (*h)->vertices[i];
       if (vex->graphicsInfo) continue;
       vex->graphicsInfo = new VertexGraphicsInfo(vex, (*h)->getGraphicsInfo(), convertToVertex(i));
+      vex->position = vex->graphicsInfo->position;
+      vex->mirror->position = vex->graphicsInfo->position;
     }
     if ((*h)->village) (*h)->setGraphicsVillage((*h)->village);
     if ((*h)->farms) (*h)->setGraphicsFarm((*h)->farms); 
   }
   for (Line::Iterator l = Line::start(); l != Line::final(); ++l) {
     (*l)->graphicsInfo = new LineGraphicsInfo((*l), (*l)->vex1->getDirection((*l)->vex2));
+    (*l)->position = (*l)->graphicsInfo->position;
+    (*l)->mirror->position = (*l)->graphicsInfo->position;
     if ((*l)->getCastle()) (*l)->addGraphicCastle((*l)->getCastle()); 
   }
 }

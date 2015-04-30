@@ -55,12 +55,14 @@ struct doublet : public boost::tuple<double, double> {
   double  norm  () const {return sqrt(pow(this->x(), 2) + pow(this->y(), 2));}
   void    normalise ();
   void    rotate (double degrees, const doublet& around = zero);
+  double  distance (const doublet& other) const {return sqrt(pow(x() - other.x(), 2) + pow(y() - other.y(), 2));}
 
+  doublet& operator= (const boost::tuple<double, double, double>& rhs);
   void operator/= (double scale);
-  void operator*= (double scale);  
+  void operator*= (double scale);
   void operator-= (const doublet& other);
   void operator+= (const doublet& other);
-  //void operator+= (const triplet& other);  
+  //void operator+= (const triplet& other);
 
 private:
   static const doublet zero; 

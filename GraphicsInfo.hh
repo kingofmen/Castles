@@ -225,7 +225,7 @@ public:
   virtual void describe (QTextStream& str) const;  
   triplet getCorner (int i) const {switch (i) {case 0: return corner1; case 1: return corner2; default: return corner3;}}
   Vertex* getVertex () const {return myVertex;} 
-  bool isInside (double x, double y) const; 
+  bool isInside (double x, double y) const;
   static Iterator begin () {return allVertexGraphics.begin();}
   static Iterator end   () {return allVertexGraphics.end();}
   
@@ -248,7 +248,7 @@ public:
 
   typedef vector<LineGraphicsInfo*>::const_iterator Iterator;
   
-  void addCastle (HexGraphicsInfo const* supportInfo);
+  void    addCastle (HexGraphicsInfo const* supportInfo);
   virtual void describe (QTextStream& str) const;  
   double  getAngle () const {return angle;}
   void    getCastlePosition (double& xpos, double& ypos, double& zpos) const; 
@@ -257,8 +257,7 @@ public:
   Line*   getLine () const {return myLine;} 
   double  getLossRatio () const {return loss * maxLoss;}
   triplet getNormal () const {return normal;}; 
-  void traverseSupplies (double amount, double loss);
-  bool isInside (double x, double y) const; 
+  bool    isInside (double x, double y) const;
   
   static void endTurn ();
   static Iterator begin () {return allLineGraphics.begin();}

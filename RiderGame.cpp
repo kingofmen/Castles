@@ -147,71 +147,6 @@ void WarfareGame::findCastles (vector<Castle*>& ret, Player* p) {
   }
 }
 
-struct Route {
-  vector<Geography*> route;
-  double distance;
-  Castle* source;
-  Vertex* target; 
-};
-
-map<Player*, map<Geography*, map<Geography*, Route*> > > routeMap;
-
-void findRoute (Geography* source, Geography* destination, Player* side, double maxRisk) {
-  set<Geography*> open;
-  for (Vertex::Iterator v = Vertex::start(); v != Vertex::final(); ++v) (*v)->clearGeography();
-  for (Line::Iterator l = Line::start(); l != Line::final(); ++l) (*l)->clearGeography();
-  
-  open.insert(source);
-  source->distFromStart = 0;
-  source->previous = 0;
-  double inverseRisk = 1.0 / (1 - maxRisk); 
-  while (0 < open.size()) {
-    // Find lowest-cost node in open list
-    Geography* bestOpen = (*(open.begin())); 
-    double lowestEstimate = bestOpen->distFromStart + bestOpen->heuristicDistance(destination); 
-    for (set<Geography*>::iterator g = open.begin(); g != open.end(); ++g) {
-      // Pretend that all estimated traversals are maximally risky. This overestimates the cost
-      // but that's fine for an A* heuristic. 
-      double curr = (*g)->distFromStart + (*g)->heuristicDistance(destination) * inverseRisk; 
-      if (lowestEstimate < curr) continue;
-      bestOpen = (*g);
-      lowestEstimate = curr; 
-    }
-
-    bestOpen->closed = true;
-    open.erase(bestOpen); 
-    vector<Geography*> neibs;
-    bestOpen->getNeighbours(neibs);
-    for (vector<Geography*>::iterator n = neibs.begin(); n != neibs.end(); ++n) {
-      double currRisk = (*n)->traversalRisk(side);
-      if (currRisk > maxRisk) {
-	(*n)->closed = true;
-	continue; 
-      }
-      double currCost = bestOpen->distFromStart + (*n)->traversalCost(side) / (1 - (*n)->traversalRisk(side));  
-      if ((*n) == destination) {
-	// Construct the Route and add it to routeMap;
-	Route* ret = new Route();
-	ret->distance = currCost; 
-	routeMap[side][source][destination] = ret;
-	ret->route.push_back(*n); 
-	Geography* curr = bestOpen; 
-	while (curr) {
-	  ret->route.push_back(curr); 
-	  ret->distance += curr->distFromStart;
-	  curr = curr->previous;
-	}
-	return; 
-      }
-      if (currCost > (*n)->distFromStart) continue;
-
-      (*n)->previous = bestOpen;
-      (*n)->distFromStart = currCost;
-      open.insert(*n); 
-    }
-  }
-}
-
 void WarfareGame::endOfTurn () {
   updateGreatestMilStrength();
   for (ContractInfo::Iter c = ContractInfo::start(); c != ContractInfo::final(); ++c) (*c)->execute();
@@ -220,7 +155,8 @@ void WarfareGame::endOfTurn () {
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
   for (Line::Iterator lin = Line::start(); lin != Line::final(); ++lin) (*lin)->endOfTurn();
   for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) (*vex)->endOfTurn();
-
+  // Supply convoys
+  for (TransportUnit::Iter tu = TransportUnit::start(); tu != TransportUnit::final(); ++tu) (*tu)->endOfTurn();
   // Supply consumption, strength calculation
   for (MilUnit::Iterator mil = MilUnit::start(); mil != MilUnit::final(); ++mil) (*mil)->endOfTurn();
 

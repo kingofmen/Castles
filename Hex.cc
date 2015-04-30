@@ -30,7 +30,7 @@ Vertex::Vertex (Vertex* other)
   , Named<Vertex>()
   , Iterable<Vertex>(1)
   , groupNum(other->groupNum)
-  , graphicsInfo(0)    
+  , graphicsInfo(0)
 {
   neighbours.resize(NoVertex);
 }
@@ -538,23 +538,12 @@ void Vertex::endOfTurn () {
 
 }
 
-void Vertex::getNeighbours (vector<Geography*>& ret) {
-  for (Hex::LineIterator l = beginLines(); l != endLines(); ++l) if ((*l) && (!(*l)->closed)) ret.push_back(*l);
+double Vertex::heuristicDistance (Vertex* other) const {
+  return position.distance(other->position);
 }
 
-double Geography::heuristicDistance (Geography* other) const {
-  return sqrt(pow(position.first - other->position.first, 2) + pow(position.second - other->position.second, 2));
-}
-
-Geography::~Geography () {} 
-
-double Vertex::traversalCost (Player* side) const {
+double Vertex::traversalCost (Vertex* dat) const {
   return 1; 
-}
-
-double Vertex::traversalRisk (Player* side) const {
-  if ((0 < units.size()) && (units[0]->getOwner() != side)) return 0.99;
-  return 0.01; 
 }
 
 QString Vertex::toString () {
@@ -594,8 +583,6 @@ Line::Line (Vertex* one, Vertex* two, Hex* hone, Hex* thwo)
   mirror->vex2 = vex2->getMirror();
   mirror->hex1 = hex1->getMirror();
   if (hex2) mirror->hex2 = hex2->getMirror();
-  position.first = 0.5*(vex1->position.first + vex2->position.first);
-  position.second = 0.5*(vex1->position.second + vex2->position.second);
 }
 
 // Mirror constructor
@@ -608,7 +595,7 @@ Line::Line (Line* other)
   , hex1(0)
   , hex2(0)
   , castle(0)
-  , graphicsInfo(0)    
+  , graphicsInfo(0)
 {}
     
 Line::~Line () {
@@ -877,45 +864,6 @@ void Line::endOfTurn () {
   castle->endOfTurn(); 
 }
 
-void Line::getNeighbours (vector<Geography*>& ret) {
-  if (!vex1->closed) ret.push_back(vex1);
-  if (!vex2->closed) ret.push_back(vex2);
-}
-
-double Line::traversalCost (Player* side) const { 
-  return 1; 
-}
-
-double Line::traversalRisk (Player* side) const {
-  if ((castle) && (castle->getOwner() != side)) return 0.99;
-  return 0.01; 
-}
-
-
-void Geography::clearGeography () {
-  closed = false;
-  previous = 0;
-  distFromStart = 1e100;
-}
-
-double Geography::traverseSupplies (double& amount, Player* side, Geography* previous) {
-  double loss = traversalCost(side);
-  //Logger::logStream(DebugSupply) << "Traversed " << (int) (*g) << " at cost " << (*g)->traversalCost(*p) << "\n"; 
-  double lossChance = traversalRisk(side);
-  double roll = rand();
-  roll /= RAND_MAX;
-  if (roll < lossChance) loss += amount*0.9;
-  amount -= loss;
-  return loss; 
-}
-
-double Line::traverseSupplies (double& amount, Player* side, Geography* previous) {
-  double flow = amount;
-  double loss = Geography::traverseSupplies(amount, side, previous);
-  if (previous) graphicsInfo->traverseSupplies(flow * (previous == vex1 ? 1 : -1), loss);
-  return loss;
-}
-
 Hex* Hex::getTestHex (bool vi, bool fa, bool fo, bool mi) {
   static int called = 0;
   Hex* ret = new Hex(1000 * ++called, 1000, Plain);
@@ -931,4 +879,52 @@ Hex* Hex::getTestHex (bool vi, bool fa, bool fo, bool mi) {
 int Hex::getTotalPopulation () const {
   if (village) return village->getTotalPopulation();
   return 0; 
+}
+
+void Vertex::findRoute (vector<Vertex*>& vertices, Vertex* destination) {
+  set<Vertex*> open;
+  set<Vertex*> closed;
+  map<Vertex*, double> distance;
+  map<Vertex*, Vertex*> previous;
+
+  open.insert(this);
+  distance[this] = 0;
+  previous[this] = 0;
+
+  while (0 < open.size()) {
+    // Find lowest-cost node in open list.
+    Vertex* bestOpen = (*(open.begin()));
+    double lowestEstimate = distance[bestOpen] + bestOpen->heuristicDistance(destination);
+    for (set<Vertex*>::iterator g = open.begin(); g != open.end(); ++g) {
+      double curr = distance[*g] + (*g)->heuristicDistance(destination);
+      if (lowestEstimate < curr) continue;
+      bestOpen = (*g);
+      lowestEstimate = curr;
+    }
+
+    open.erase(bestOpen);
+    closed.insert(bestOpen);
+    // Add non-closed neighbours of the best open node to the open
+    // list unless we have previously found a shorter path to them.
+    // If any of them is the destination, end.
+    for (NeighbourIterator n = bestOpen->beginNeighbours(); n != bestOpen->endNeighbours(); ++n) {
+      if (!(*n)) continue;
+      if (closed.count(*n)) continue;
+      if ((*n) == destination) {
+	vertices.push_back(*n);
+	Vertex* curr = bestOpen;
+	while (curr) {
+	  vertices.push_back(curr);
+	  curr = previous[curr];
+	}
+	return;
+      }
+      double currCost = distance[bestOpen] + bestOpen->traversalCost(*n);
+      if ((distance.count(*n)) && (currCost > distance[*n])) continue;
+
+      previous[*n] = bestOpen;
+      distance[*n] = currCost;
+      open.insert(*n);
+    }
+  }
 }

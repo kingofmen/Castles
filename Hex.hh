@@ -95,25 +95,7 @@ private:
   int arableLand;
 };
 
-class Geography {
-public:
-  Geography () {}
-  virtual ~Geography ();
-  virtual void getNeighbours (vector<Geography*>& ret) = 0;
-  double heuristicDistance (Geography* other) const;
-  virtual double traversalCost (Player* side) const = 0;
-  virtual double traversalRisk (Player* side) const = 0;
-  virtual double traverseSupplies (double& amount, Player* side, Geography* previous);
-  void clearGeography ();
-
-  pair<double, double> position;
-  double distFromStart;
-  Geography* previous;
-  bool closed;
-};
-
-
-class Vertex : public Mirrorable<Vertex>, public Named<Vertex>, public Geography, public Iterable<Vertex> {
+class Vertex : public Mirrorable<Vertex>, public Named<Vertex>, public Iterable<Vertex> {
   friend class Mirrorable<Vertex>;
   friend class StaticInitialiser;
   friend class Hex;
@@ -144,12 +126,11 @@ public:
   UnitIterator      endUnits () {return units.end();}
 
   VertexGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;}
-  virtual void getNeighbours (vector<Geography*>& ret);
-  virtual double traversalCost (Player* side) const;
-  virtual double traversalRisk (Player* side) const;
+  double traversalCost (Vertex* dat) const;
 
   double supplyNeeded () const;
   bool isLand () const;
+  void findRoute (vector<Vertex*>& vertices, Vertex* destination);
   Hex* getHex (int i) {return hexes[i];}
   void createLines ();
   void forceRetreat (Castle*& c, Vertex*& v);
@@ -160,15 +141,18 @@ public:
 private:
   Vertex (Vertex* other);
 
+  double heuristicDistance (Vertex* other) const;
+
   vector<Vertex*> neighbours;
   vector<Hex*> hexes;
   vector<Line*> lines;
   vector<MilUnit*> units;
   int groupNum;
   VertexGraphicsInfo* graphicsInfo;
+  doublet position;
 };
 
-class Line : public Mirrorable<Line>, public Named<Line>, public Geography, public Iterable<Line> {
+class Line : public Mirrorable<Line>, public Named<Line>, public Iterable<Line> {
   friend class Mirrorable<Line>;
   friend class StaticInitialiser;
 public:
@@ -189,10 +173,6 @@ public:
   LineGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;}
   virtual void setMirrorState ();
 
-  virtual void getNeighbours (vector<Geography*>& ret);
-  virtual double traversalCost (Player* side) const;
-  virtual double traversalRisk (Player* side) const;
-  virtual double traverseSupplies (double& amount, Player* side, Geography* previous);
   static void clear ();
 
 private:
@@ -204,6 +184,7 @@ private:
   Hex* hex2;
   Castle* castle;
   LineGraphicsInfo* graphicsInfo;
+  doublet position;
 };
 
 #endif
