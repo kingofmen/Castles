@@ -163,9 +163,10 @@ void Castle::deliverToUnit (MilUnit* unit, const GoodsHolder& goods) {
     return;
   }
   // Field force, more difficult.
-  // TODO
-  unit->deliverGoods(goods);
+  TransportUnit* tu = new TransportUnit(unit);
+  tu->deliverGoods(goods);
   (*this) -= goods;
+  tu->setLocation(getLocation()->oneEnd());
 }
 
 void Castle::distributeSupplies () {

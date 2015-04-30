@@ -14,6 +14,7 @@ typedef std::vector<MilUnitElement*>::const_reverse_iterator CRElmIter;
 vector<double> MilUnit::priorityLevels; 
 double MilUnit::defaultDecayConstant = 1000; 
 vector<double> MilUnitTemplate::drillEffects;
+vector<TransportUnit*> TransportUnit::forDeletion;
 
 const double FORAGE_CASUALTY_RATE = 0.01;
 const double FORAGE_LOOT_RATE = 0.1;
@@ -744,11 +745,12 @@ void battleReport (Logger& log, BattleResult& outcome) {
       << "Result: " << (VictoGlory == outcome.attackerSuccess ? "VictoGlory!" : "Failure.") << "\n"; 
 }
 
-TransportUnit::TransportUnit ()
+TransportUnit::TransportUnit (MilUnit* t)
   : Unit()
   , EconActor()
   , Iterable<TransportUnit>(this)
   , Mirrorable<TransportUnit>()
+  , target(t)
 {}
 
 TransportUnit::~TransportUnit () {}
@@ -765,6 +767,8 @@ void TransportUnit::setLocation (Vertex* loc) {
 }
 
 void TransportUnit::setMirrorState () {
+  mirror->target = target->getMirror();
+  mirror->setLocation(getLocation()->getMirror());
   setEconMirrorState(mirror);
 }
 
@@ -788,7 +792,12 @@ void TransportUnit::endOfTurn () {
     setLocation(route.back());
     if (getLocation() != destination) continue;
     target->deliverGoods(*this);
-    delete this;
+    forDeletion.push_back(this);
     break;
   }
+}
+
+void TransportUnit::cleanUp () {
+  BOOST_FOREACH(TransportUnit* tu, forDeletion) tu->destroyIfReal();
+  forDeletion.clear();
 }

@@ -157,6 +157,7 @@ void WarfareGame::endOfTurn () {
   for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) (*vex)->endOfTurn();
   // Supply convoys
   for (TransportUnit::Iter tu = TransportUnit::start(); tu != TransportUnit::final(); ++tu) (*tu)->endOfTurn();
+  TransportUnit::cleanUp();
   // Supply consumption, strength calculation
   for (MilUnit::Iterator mil = MilUnit::start(); mil != MilUnit::final(); ++mil) (*mil)->endOfTurn();
 

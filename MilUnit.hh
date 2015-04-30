@@ -181,16 +181,20 @@ class TransportUnit : public Unit, public EconActor, public Iterable<TransportUn
   friend class StaticInitialiser;
   friend class Mirrorable<TransportUnit>;
 public:
-  TransportUnit ();
+  TransportUnit (MilUnit* t);
   ~TransportUnit ();
 
   void endOfTurn ();
   virtual void setLocation (Vertex* dat);
   virtual void setMirrorState ();
+
+  static void cleanUp ();
 private:
   TransportUnit (TransportUnit* other);
 
   MilUnit* target;
+
+  static vector<TransportUnit*> forDeletion;
 };
 
 void battleReport (Logger& log, BattleResult& outcome); 
