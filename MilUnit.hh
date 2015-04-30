@@ -189,6 +189,7 @@ public:
   virtual void setMirrorState ();
 
   static void cleanUp ();
+
 private:
   TransportUnit (TransportUnit* other);
 

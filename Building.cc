@@ -170,7 +170,7 @@ void Castle::deliverToUnit (MilUnit* unit, const GoodsHolder& goods) {
 }
 
 void Castle::distributeSupplies () {
-  if (0 == garrison.size()) return;
+  if (0 == orders.size()) return;
   GoodsHolder totalBids;
   for (map<MilUnit*, GoodsHolder>::const_iterator bid = orders.begin(); bid != orders.end(); ++bid) {
     totalBids += (*bid).second;
@@ -241,8 +241,27 @@ void Castle::unitTests () {
 											  garrison->getAmount(mb->tradeGood));
   }
 
+  if (0 < TransportUnit::totalAmount()) throwFormatted("Did not expect any TransportUnits");
+  testCastle->removeGarrison();
+  garrison->setLocation(testCastle->getLocation()->twoEnd());
+  garrison->zeroGoods();
+  BOOST_FOREACH(MarketBid* mb, bidlist) testCastle->deliverGoods(mb->tradeGood, mb->amountToBuy);
+  testCastle->distributeSupplies();
+  if (1 != TransportUnit::totalAmount()) throwFormatted("Expected Castle to create one TransportUnit, found %i", TransportUnit::totalAmount());
+  TransportUnit::Iter tu = TransportUnit::start();
+  (*tu)->endOfTurn();
+  TransportUnit::cleanUp();
+  if (0 < TransportUnit::totalAmount()) throwFormatted("Expected TransportUnit to reach destination and destroy itself");
+  BOOST_FOREACH(MarketBid* mb, bidlist) {
+    if (fabs(garrison->getAmount(mb->tradeGood) - mb->amountToBuy) > 0.01) throwFormatted("Expected field unit to get %.2f %s, but got %.2f",
+											  mb->amountToBuy,
+											  mb->tradeGood->getName().c_str(),
+											  garrison->getAmount(mb->tradeGood));
+  }
+
   delete testCastle;
   delete testHex;
+  delete garrison;
 }
 
 void Building::setOwner (Player* p) {

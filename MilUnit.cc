@@ -792,7 +792,7 @@ void TransportUnit::endOfTurn () {
     setLocation(route.back());
     if (getLocation() != destination) continue;
     target->deliverGoods(*this);
-    forDeletion.push_back(this);
+    forDeletion.push_back(this); // Can't destroy here, messes up iterators.
     break;
   }
 }
