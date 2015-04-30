@@ -769,5 +769,26 @@ void TransportUnit::setMirrorState () {
 }
 
 void TransportUnit::endOfTurn () {
-  
+  Vertex* destination = target->getLocation();
+  if (!destination) {
+    // Indicates that the target has gone into garrison. Ignore for now.
+    return;
+  }
+
+  vector<Vertex*> route;
+  getLocation()->findRoute(route, destination);
+  if (0 == route.size()) {
+    // Couldn't find a way to get there; ignore.
+    return;
+  }
+
+  for (int i = 0; i < 3; ++i) {
+    route.pop_back(); // Route begins with current vertex, so strip that off.
+    if (0 == route.size()) break; // This should never happen.
+    setLocation(route.back());
+    if (getLocation() != destination) continue;
+    target->deliverGoods(*this);
+    delete this;
+    break;
+  }
 }
