@@ -37,6 +37,7 @@ public:
   virtual ~Mirrorable () {if (real == this) delete mirror;}
   virtual void setMirrorState () = 0; 
   T* getMirror () {return mirror;}
+  T const* getMirror () const {return mirror;}
   T* getReal () {return real;}
   void destroyIfReal () {if (isReal()) delete this;}
   AiValue value; 

@@ -86,6 +86,7 @@ Castle::~Castle () {
 void Castle::addGarrison (MilUnit* p) {
   assert(p); 
   garrison.push_back(p);
+  p->setCastle(this);
   p->setLocation(0);
   p->setExtMod(siegeModifier); // Fortification bonus
   p->leaveMarket();
@@ -192,18 +193,23 @@ void Castle::distributeSupplies () {
 }
 
 MilUnit* Castle::removeGarrison () {
- MilUnit* ret = garrison.back();
- garrison.pop_back();
- fieldForce.push_back(ret);
- ret->dropExtMod(); // No longer gets fortification bonus. 
- return ret;
- }
+  if (0 == garrison.size()) return 0;
+  MilUnit* ret = garrison.back();
+  garrison.pop_back();
+  fieldForce.push_back(ret);
+  ret->setCastle(0);
+  ret->dropExtMod(); // No longer gets fortification bonus. 
+  return ret;
+}
 
 MilUnit* Castle::removeUnit (MilUnit* dat) {
   std::vector<MilUnit*>::iterator target = std::find(garrison.begin(), garrison.end(), dat);
   if (target == garrison.end()) return 0;
   MilUnit* ret = (*target);
-  garrison.erase(target); 
+  garrison.erase(target);
+  ret->setCastle(0);
+  fieldForce.push_back(ret);
+  ret->dropExtMod(); // No longer gets fortification bonus. 
   return ret; 
 }
 

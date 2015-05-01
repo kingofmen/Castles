@@ -205,7 +205,7 @@ public:
   void callForSurrender (MilUnit* siegers, Outcome out); 
   virtual void endOfTurn ();
   virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
-  Line* getLocation () {return location;}
+  Line* getLocation () const {return location;}
   MilUnit* getGarrison (unsigned int i) {if (i >= garrison.size()) return 0; return garrison[i];}
   Hex* getSupport () {return support;}
   int numGarrison () const {return garrison.size();}

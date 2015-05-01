@@ -538,10 +538,6 @@ void Vertex::endOfTurn () {
 
 }
 
-double Vertex::heuristicDistance (Vertex* other) const {
-  return position.distance(other->position);
-}
-
 double Vertex::traversalCost (Vertex* dat) const {
   return 1; 
 }
@@ -881,7 +877,15 @@ int Hex::getTotalPopulation () const {
   return 0; 
 }
 
-void Vertex::findRoute (vector<Vertex*>& vertices, Vertex* destination) {
+double Vertex::CastleDistance::operator ()(Vertex* dat) const {
+  return dat->position.distance(target->getLocation()->getPosition());
+}
+
+bool Vertex::CastleFinder::operator ()(Vertex* dat) const {
+  return ((dat == target->getLocation()->oneEnd()) || (dat == target->getLocation()->twoEnd()));
+}
+
+void Vertex::findRoute (vector<Vertex*>& vertices, const GoalChecker& gc, const DistanceHeuristic& heuristic) {
   set<Vertex*> open;
   set<Vertex*> closed;
   map<Vertex*, double> distance;
@@ -894,9 +898,9 @@ void Vertex::findRoute (vector<Vertex*>& vertices, Vertex* destination) {
   while (0 < open.size()) {
     // Find lowest-cost node in open list.
     Vertex* bestOpen = (*(open.begin()));
-    double lowestEstimate = distance[bestOpen] + bestOpen->heuristicDistance(destination);
+    double lowestEstimate = distance[bestOpen] + heuristic(bestOpen);
     for (set<Vertex*>::iterator g = open.begin(); g != open.end(); ++g) {
-      double curr = distance[*g] + (*g)->heuristicDistance(destination);
+      double curr = distance[*g] + heuristic(*g);
       if (lowestEstimate < curr) continue;
       bestOpen = (*g);
       lowestEstimate = curr;
@@ -910,7 +914,7 @@ void Vertex::findRoute (vector<Vertex*>& vertices, Vertex* destination) {
     for (NeighbourIterator n = bestOpen->beginNeighbours(); n != bestOpen->endNeighbours(); ++n) {
       if (!(*n)) continue;
       if (closed.count(*n)) continue;
-      if ((*n) == destination) {
+      if (gc(*n)) {
 	vertices.push_back(*n);
 	Vertex* curr = bestOpen;
 	while (curr) {

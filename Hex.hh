@@ -128,9 +128,41 @@ public:
   VertexGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;}
   double traversalCost (Vertex* dat) const;
 
+  struct DistanceHeuristic {
+    virtual double operator ()(Vertex* dat) const = 0;
+  };
+
+  struct VertexDistance : public DistanceHeuristic {
+    VertexDistance (Vertex* t) : target(t) {}
+    virtual double operator ()(Vertex* dat) const {  return target->position.distance(dat->position);}
+    Vertex* target;
+  };
+
+  struct CastleDistance : public DistanceHeuristic {
+    CastleDistance (Castle const* c) : target(c) {}
+    virtual double operator ()(Vertex* dat) const;
+    Castle const* target;
+  };
+
+  struct GoalChecker {
+    virtual bool operator ()(Vertex* dat) const = 0;
+  };
+
+  struct VertexEquality : public GoalChecker {
+    VertexEquality (Vertex* t) : target(t) {}
+    virtual bool operator ()(Vertex* dat) const {return dat == target;}
+    Vertex* target;
+  };
+
+  struct CastleFinder : public GoalChecker {
+    CastleFinder (Castle const* c) : target(c) {}
+    virtual bool operator ()(Vertex* dat) const;
+    Castle const* target;
+  };
+
   double supplyNeeded () const;
   bool isLand () const;
-  void findRoute (vector<Vertex*>& vertices, Vertex* destination);
+  void findRoute (vector<Vertex*>& vertices, const GoalChecker& gc, const DistanceHeuristic& heuristic);
   Hex* getHex (int i) {return hexes[i];}
   void createLines ();
   void forceRetreat (Castle*& c, Vertex*& v);
@@ -140,8 +172,6 @@ public:
 
 private:
   Vertex (Vertex* other);
-
-  double heuristicDistance (Vertex* other) const;
 
   vector<Vertex*> neighbours;
   vector<Hex*> hexes;
@@ -164,6 +194,7 @@ public:
   Vertex* oneEnd () const {return vex1;}
   Vertex* twoEnd () const {return vex2;}
   Vertex* getVtx (int idx) {return (idx == 0 ? vex1 : vex2);}
+  doublet getPosition () const {return position;}
   Hex* oneHex () {return hex1;}
   Hex* twoHex () {return hex2;}
   Hex* otherHex (Hex* dat);

@@ -12,6 +12,7 @@
 #include "Mirrorable.hh"
 #include "UtilityFunctions.hh"
 
+class Castle;
 class Vertex; 
 struct BattleResult; 
 
@@ -109,6 +110,7 @@ public:
   double calcRoutCasualties (MilUnit* const adversary);
   double effectiveMobility (MilUnit* const versus);
   virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
+  Castle const* getCastle () const {return castle;}
   double getDecayConstant () const {return defaultDecayConstant * (modStack.size() > 0 ? modStack.top() : 1);}
   double getForageStrength ();
   int getFightingModifier (MilUnit* const adversary);
@@ -118,7 +120,8 @@ public:
   void setExtMod (double ext);
   void setFightingFraction (double frac = 1.0) {fightFraction = frac;} 
   void dropExtMod () {modStack.pop();} 
-  void setAggression (double a) {aggression = min(1.0, max(a, 0.01));} 
+  void setAggression (double a) {aggression = min(1.0, max(a, 0.01));}
+  void setCastle (Castle const* c) {castle = c;}
   virtual void setLocation (Vertex* dat);
   int totalSoldiers () const; 
   double calcStrength (double decayConstant, double MilUnitElement::*field);
@@ -153,6 +156,7 @@ private:
   double fightFraction;  // For use in hypotheticals: If this unit were at X% strength. 
   MilUnitGraphicsInfo* graphicsInfo; 
   double aggression;
+  Castle const* castle;
   
   static vector<double> priorityLevels;
   static double defaultDecayConstant; 

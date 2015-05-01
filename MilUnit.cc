@@ -33,6 +33,7 @@ MilUnit::MilUnit ()
   , priority(4)
   , fightFraction(1.0)
   , aggression(0.25)
+  , castle(0)
 {
   graphicsInfo = new MilUnitGraphicsInfo(this);
 }
@@ -176,8 +177,9 @@ void MilUnit::setMirrorState () {
   mirror->setRear(getRear());
   mirror->priority = priority;
   mirror->modStack = modStack;
-  mirror->aggression = aggression;   
-  mirror->fightFraction = fightFraction; 
+  mirror->aggression = aggression;
+  mirror->fightFraction = fightFraction;
+  mirror->castle = castle ? castle->getMirror() : 0;
 
   mirror->forces.clear();
   for (ElmIter i = forces.begin(); i != forces.end(); ++i) {
@@ -774,18 +776,23 @@ void TransportUnit::setMirrorState () {
 
 void TransportUnit::endOfTurn () {
   Vertex* destination = target->getLocation();
-  if (!destination) {
-    // Indicates that the target has gone into garrison. Ignore for now.
-    return;
+  vector<Vertex*> route;
+  if (destination) {
+    getLocation()->findRoute(route, Vertex::VertexEquality(destination), Vertex::VertexDistance(destination));
+  }
+  else {
+    // Indicates that the target has gone into garrison.
+    Castle const* castle = target->getCastle();
+    if (!castle) throwFormatted("Unit with neither location nor castle");
+    getLocation()->findRoute(route, Vertex::CastleFinder(castle), Vertex::CastleDistance(castle));
   }
 
-  vector<Vertex*> route;
-  getLocation()->findRoute(route, destination);
   if (0 == route.size()) {
     // Couldn't find a way to get there; ignore.
     return;
   }
 
+  destination = route[0];
   for (int i = 0; i < 3; ++i) {
     route.pop_back(); // Route begins with current vertex, so strip that off.
     if (0 == route.size()) break; // This should never happen.
