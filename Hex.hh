@@ -18,7 +18,7 @@ class Player;
 class Vertex;
 class Line;
 
-class Hex : public Mirrorable<Hex>, public Named<Hex>, public Iterable<Hex>, public Market {
+class Hex : public Mirrorable<Hex>, public Named<Hex>, public Iterable<Hex> {
   friend class Mirrorable<Hex>;
   friend class StaticInitialiser;
 public:
@@ -38,6 +38,7 @@ public:
   Forest*                getForest () {return forest;}
   HexGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;}
   Line*                  getLine (Direction dir) {return lines[dir];}
+  Market*                getMarket () const;
   Mine*                  getMine () {return mine;}
   Player*                getOwner () {return owner;}
   pair<int, int>         getPos () const {return pos;}
@@ -93,6 +94,7 @@ private:
   Village* village;
   Castle* castle;
   int arableLand;
+  Vertex* marketVtx;
 };
 
 class Vertex : public Mirrorable<Vertex>, public Named<Vertex>, public Iterable<Vertex> {
@@ -113,6 +115,7 @@ public:
   MilUnit* getUnit (int i) {if (i >= (int) units.size()) return 0; if (i < 0) return 0; return units[i];}
   Line* getLine (Vertex* otherend);
   Vertices getDirection (Vertex const * const dat) const;
+  Market* getMarket () const {return theMarket;}
   Vertex* getNeighbour (int i) {return neighbours[i];}
   void endOfTurn ();
   QString toString ();
@@ -180,6 +183,7 @@ private:
   int groupNum;
   VertexGraphicsInfo* graphicsInfo;
   doublet position;
+  Market* theMarket;
 };
 
 class Line : public Mirrorable<Line>, public Named<Line>, public Iterable<Line> {

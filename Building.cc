@@ -67,7 +67,7 @@ Castle::Castle (Hex* dat, Line* lin)
 {
   recruitType = *(MilUnitTemplate::start());
   setMirrorState();
-  support->registerParticipant(this);
+  support->getMarket()->registerParticipant(this);
 }
 
 Castle::Castle (Castle* other)

@@ -27,8 +27,18 @@ void MarketContract::pay () {
   --remainingTime;
 }
 
-Market::Market () {
+Market::Market ()
+  : Mirrorable<Market>()
+{
   // Initialise all prices to 1.
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+    prices.setAmount((*tg), 1);
+  }
+}
+
+Market::Market (Market* other)
+  : Mirrorable<Market>(other)
+{
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     prices.setAmount((*tg), 1);
   }
@@ -297,6 +307,10 @@ void Market::registerParticipant (EconActor* ea) {
   if (find(participants.begin(), participants.end(), ea) != participants.end()) return;
   participants.push_back(ea);
   ea->theMarket = this;
+}
+
+void Market::setMirrorState () {
+  mirror->prices.setAmounts(prices);
 }
 
 void Market::unRegisterParticipant (EconActor* ea) {

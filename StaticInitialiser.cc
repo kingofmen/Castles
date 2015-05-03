@@ -403,25 +403,29 @@ Hex* findHex (Object* info) {
   int y = info->safeGetInt("y", -1);
   if (0 > y) return 0;
   Hex* hex = Hex::getHex(x, y);
-  return hex; 
+  return hex;
 }
 
 Line* findLine (Object* info, Hex* hex) {
   string pos = info->safeGetString("pos", "nowhere");
-  if (pos == "nowhere") return 0; 
+  if (pos == "nowhere") return 0;
   Direction dir = getDirection(pos);
   if (NoDirection == dir) return 0;
-  assert(hex->getLine(dir)); 
-  return hex->getLine(dir); 
+  assert(hex->getLine(dir));
+  return hex->getLine(dir);
+}
+
+Vertex* findVertex (string pos, Hex* hex) {
+  Vertices dir = getVertex(pos);
+  if (NoVertex == dir) return 0;
+  assert(hex->getVertex(dir));
+  return hex->getVertex(dir);
 }
 
 Vertex* findVertex (Object* info, Hex* hex) {
   string pos = info->safeGetString("vtx", "nowhere");
-  if (pos == "nowhere") return 0;   
-  Vertices dir = getVertex(pos); 
-  if (NoVertex == dir) return 0; 
-  assert(hex->getVertex(dir)); 
-  return hex->getVertex(dir); 
+  if (pos == "nowhere") return 0;
+  return findVertex(pos, hex);
 }
 
 void StaticInitialiser::initialiseBuilding (Building* build, Object* info) {
@@ -438,6 +442,12 @@ void StaticInitialiser::buildHex (Object* hInfo) {
   Player* owner = Player::findByName(ownername);
   if (owner) hex->setOwner(owner);
 
+  string marketDirection = hInfo->safeGetString("market", "notfound");
+  if (marketDirection == "notfound") throwFormatted("Hex (%i, %i) has no market direction", hex->getPos().first, hex->getPos().second);
+  hex->marketVtx = findVertex(marketDirection, hex);
+  if (!hex->marketVtx) throwFormatted("Hex (%i, %i) has no market vertex", hex->getPos().first, hex->getPos().second);
+  if (!hex->marketVtx->theMarket) hex->marketVtx->theMarket = new Market();
+  
   Object* cinfo = hInfo->safeGetObject("castle");
   if (cinfo) {
     Line* lin = findLine(cinfo, hex);
@@ -461,7 +471,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
   }
 
   Object* priceInfo = hInfo->safeGetObject("prices");
-  readGoodsHolder(priceInfo, hex->prices);
+  if (priceInfo) readGoodsHolder(priceInfo, hex->marketVtx->theMarket->prices);
   
   Object* fInfo = hInfo->safeGetObject("village");
   if (fInfo) {
@@ -1312,6 +1322,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
   hexgrid->setLeaf("y", maxy+1);
   game->setValue(hexgrid); 
 
+  map<Vertex*, bool> writtenMarkets;
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
     Object* hexInfo = new Object("hexinfo");
     game->setValue(hexInfo);
@@ -1348,7 +1359,11 @@ void StaticInitialiser::writeGameToFile (string fname) {
       */
     }
 
-    writeGoodsHolderIntoObject((*hex)->prices, hexInfo->getNeededObject("prices"));
+    hexInfo->setLeaf("market", getVertexName((*hex)->getDirection((*hex)->marketVtx)));
+    if (!writtenMarkets[(*hex)->marketVtx]) {
+      writeGoodsHolderIntoObject((*hex)->getMarket()->prices, hexInfo->getNeededObject("prices"));
+      writtenMarkets[(*hex)->marketVtx] = true;
+    }
 
     Village* village = (*hex)->getVillage();
     if (village) {

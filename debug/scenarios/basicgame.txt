@@ -32,6 +32,7 @@ hexinfo = {
   x = 0
   y = 0
   player = adri
+  market = Right
   castle = {
     id = 2
     goods = {
@@ -143,6 +144,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Left
   castle = {
     id = 4
     pos = NorthWest
@@ -212,6 +214,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Left
   village = {
     id = 6
     males = { 
@@ -262,6 +265,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 7
     males = {
@@ -312,6 +316,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 8
     males = {
@@ -363,6 +368,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 9
     males = {
@@ -413,6 +419,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 10
     males = {
@@ -463,6 +470,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 11
     males = {
@@ -513,6 +521,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 12
     males = {
@@ -563,6 +572,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 13
     males = {
@@ -613,6 +623,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 14
     males = {
@@ -663,6 +674,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 15
     males = {
@@ -713,6 +725,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 16
     males = {
@@ -763,6 +776,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 17
     males = {
@@ -813,6 +827,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 18
     males = {
@@ -863,6 +878,7 @@ hexinfo = {
     iron   = 5
     wood   = 5
   }
+  market = Right
   village = {
     id = 19
     males = {

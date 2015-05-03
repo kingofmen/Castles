@@ -152,9 +152,9 @@ void WarfareGame::endOfTurn () {
   for (ContractInfo::Iter c = ContractInfo::start(); c != ContractInfo::final(); ++c) (*c)->execute();
   LineGraphicsInfo::endTurn(); 
 
+  for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) (*vex)->endOfTurn();
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
   for (Line::Iterator lin = Line::start(); lin != Line::final(); ++lin) (*lin)->endOfTurn();
-  for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) (*vex)->endOfTurn();
   // Supply convoys
   for (TransportUnit::Iter tu = TransportUnit::start(); tu != TransportUnit::final(); ++tu) (*tu)->endOfTurn();
   TransportUnit::cleanUp();
@@ -273,25 +273,27 @@ void WarfareGame::functionalTests (string fname) {
   map<TradeGood const*, double> consumed;
   map<TradeGood const*, double> produced;
   GoodsHolder startingPrices;
-  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) startingPrices.setAmount((*tg), testHex->getPrice(*tg));
+  Market* testMarket = testHex->getMarket();
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) startingPrices.setAmount((*tg), testMarket->getPrice(*tg));
 
   while (Calendar::Winter != Calendar::getCurrentSeason()) {
     Logger::logStream(DebugStartup) << Calendar::toString() << "\n";
     labourAvailable.push_back(testHex->getVillage()->production());
+    testMarket->holdMarket();
     testHex->endOfTurn();
     Logger::logStream(DebugStartup) << testHex->getVillage()->getBidStatus() << "\n";
-    labourUsed.push_back(testHex->getVolume(TradeGood::Labor));
+    labourUsed.push_back(testMarket->getVolume(TradeGood::Labor));
     employment.push_back(labourUsed.back() / labourAvailable.back());
     for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
-      goodsPrices[*tg].push_back(testHex->getPrice(*tg));
-      produced[*tg] += testHex->getProduced(*tg);
-      consumed[*tg] += testHex->getConsumed(*tg);
+      goodsPrices[*tg].push_back(testMarket->getPrice(*tg));
+      produced[*tg] += testMarket->getProduced(*tg);
+      consumed[*tg] += testMarket->getConsumed(*tg);
       Logger::logStream(DebugStartup) << (*tg)->getName()        << "\t"
-				      << testHex->getPrice(*tg)  << "\t"
-				      << testHex->getDemand(*tg) << "\t"
-				      << testHex->getVolume(*tg) << "\t"
-				      << testHex->getProduced(*tg) << "\t"
-				      << testHex->getConsumed(*tg) << "\t"
+				      << testMarket->getPrice(*tg)  << "\t"
+				      << testMarket->getDemand(*tg) << "\t"
+				      << testMarket->getVolume(*tg) << "\t"
+				      << testMarket->getProduced(*tg) << "\t"
+				      << testMarket->getConsumed(*tg) << "\t"
 				      << testHex->getVillage()->getAmount(*tg) << "\t"
 				      << "\n";
     }

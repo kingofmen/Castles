@@ -40,7 +40,8 @@ hexinfo = {
     }
     pos = SouthEast
   }
- 
+
+  market = DownRight
   prices = {
     labour = 10
     food   = 10
@@ -127,12 +128,6 @@ hexinfo = {
   x = 0
   y = 1
   player = assa 
-  prices = {
-    labour = 10
-    food   = 9
-    iron   = 5
-    wood   = 5
-  }
   castle = {
     id = 4
     pos = NorthWest
@@ -145,6 +140,7 @@ hexinfo = {
       type = fixed 
     }
   } 
+  market = DownRight
   village = {
     id = 5
     males = { 

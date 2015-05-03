@@ -164,10 +164,16 @@ void MilUnit::setLocation (Vertex* dat) {
   location = dat;
   leaveMarket();
   if (location) {
-    for (Vertex::HexIterator hex = location->beginHexes(); hex != location->endHexes(); ++hex) {
-      if ((*hex)->getOwner()->isFriendly(getOwner())) continue;
-      (*hex)->registerParticipant(this);
-      break;
+    if (location->getMarket()) location->getMarket()->registerParticipant(this);
+    else {
+      for (Vertex::NeighbourIterator vex = location->beginNeighbours(); vex != location->endNeighbours(); ++vex) {
+	if (!(*vex)) continue;
+	Market* theMarket = (*vex)->getMarket();
+	if (!theMarket) continue;
+	if (((*vex)->getUnit(0)) && ((*vex)->getUnit(0)->getOwner()->isEnemy(getOwner()))) continue;
+	theMarket->registerParticipant(this);
+	break;
+      }
     }
   }
 }

@@ -2,6 +2,7 @@
 #define MARKET_HH
 
 #include "EconActor.hh"
+#include "Mirrorable.hh"
 #include "UtilityFunctions.hh"
 
 struct MarketBid {
@@ -32,9 +33,10 @@ struct MarketContract {
   double accumulatedMissing;
 };
 
-class Market {
+class Market : public Mirrorable<Market> {
   friend class HexGraphicsInfo;
   friend class StaticInitialiser;
+  friend class Mirrorable<Market>;
 public:
   Market ();
   ~Market () {}
@@ -49,9 +51,12 @@ public:
   double getPrice    (TradeGood const* const tg) const {return prices.getAmount(tg);}
   double getProduced (TradeGood const* const tg) const {return produced.getAmount(tg);}
   double getVolume   (TradeGood const* const tg) const {return volume.getAmount(tg);}
+  virtual void setMirrorState ();
 
   static void unitTests ();
 private:
+  Market (Market* other);
+
   void adjustPrices(vector<MarketBid*>& notMatched);
   void executeContracts ();
   void makeContracts(vector<MarketBid*>& bids, vector<MarketBid*>& notMatched);

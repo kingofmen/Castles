@@ -20,7 +20,8 @@ Vertex::Vertex ()
   , Named<Vertex>()
   , Iterable<Vertex>(this)
   , groupNum(0)
-  , graphicsInfo(0)    
+  , graphicsInfo(0)
+  , theMarket(0)
 {
   neighbours.resize(NoVertex);
 }
@@ -31,6 +32,7 @@ Vertex::Vertex (Vertex* other)
   , Iterable<Vertex>(1)
   , groupNum(other->groupNum)
   , graphicsInfo(0)
+  , theMarket(0)
 {
   neighbours.resize(NoVertex);
 }
@@ -59,6 +61,7 @@ Hex::Hex (int x, int y, TerrainType t)
   , mine(0)
   , village(0)
   , castle(0)
+  , marketVtx(0)
 {
   initialise();
 
@@ -81,7 +84,8 @@ Hex::Hex (Hex* other)
   , forest(0)
   , mine(0)
   , village(0)
-  , castle(0)    
+  , castle(0)
+  , marketVtx(0)
 {}
 
 void Hex::initialise () {
@@ -148,6 +152,9 @@ int Hex::numMovesTo (Hex const * const dat) const {
   return abs(xdist) + std::max(0, abs(ydist) - maxYchange); 
 }
 
+Market* Hex::getMarket () const {
+  return marketVtx->getMarket();
+}
 
 std::pair<int, int> Hex::getPos (Direction dat) const {
   std::pair<int, int> ret = getPos(); 
@@ -252,7 +259,7 @@ void Hex::createVertices () {
 
 void Hex::setFarm (Farmland* f) {
   farms = f;
-  farms->setMarket(this);
+  farms->setMarket(getMarket());
   if (village) {
     farms->setDefaultOwner(village);
     village->setFarm(farms);
@@ -262,7 +269,7 @@ void Hex::setFarm (Farmland* f) {
 
 void Hex::setForest (Forest* f) {
   forest = f;
-  forest->setMarket(this);
+  forest->setMarket(getMarket());
   if (village) forest->setDefaultOwner(village);
 }
 
@@ -276,13 +283,13 @@ void Hex::setGraphicsVillage (Village* f) {
 
 void Hex::setMine (Mine* m) {
   mine = m;
-  mine->setMarket(this);
+  mine->setMarket(getMarket());
   if (village) mine->setDefaultOwner(village);
 }
 
 void Hex::setVillage (Village* f) {
   village = f;
-  registerParticipant(village);
+  getMarket()->registerParticipant(village);
   if (farms) {
     village->setFarm(farms);
     farms->setDefaultOwner(village); 
@@ -482,13 +489,9 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
 }
 
 void Hex::endOfTurn () {
-  // Farms buy labor and tools.
-  holdMarket();
-  // Use them to work the fields, and perhaps deliver food to owners.
   if (farms)  farms-> endOfTurn();
   if (forest) forest->endOfTurn();
   if (mine)   mine->  endOfTurn();
-  // Who then consume.
   if (village) village->endOfTurn();
 }
 
@@ -535,7 +538,7 @@ void Vertex::addUnit (MilUnit* dat) {
 }
 
 void Vertex::endOfTurn () {
-
+  if (theMarket) theMarket->holdMarket();
 }
 
 double Vertex::traversalCost (Vertex* dat) const {
@@ -650,6 +653,8 @@ void Vertex::setMirrorState () {
     units[0]->setMirrorState();
     mirror->units.push_back(units[0]->getMirror());
   }
+  if (theMarket) mirror->theMarket = theMarket->getMirror();
+  else mirror->theMarket = 0;
 }
 
 void Hex::setMirrorState () {
@@ -688,6 +693,8 @@ void Hex::setMirrorState () {
   }
   if (castle) mirror->castle = castle->getMirror();
   else mirror->castle = 0;
+
+  mirror->marketVtx = marketVtx->getMirror();
 }
 
 void Hex::unitTests () {}
@@ -863,12 +870,14 @@ void Line::endOfTurn () {
 Hex* Hex::getTestHex (bool vi, bool fa, bool fo, bool mi) {
   static int called = 0;
   Hex* ret = new Hex(1000 * ++called, 1000, Plain);
+  ret->createVertices();
+  for (VtxIterator vex = ret->vexBegin(); vex != ret->vexEnd(); ++vex) (*vex)->createLines();
+  ret->marketVtx = ret->vertices[0];
+  ret->marketVtx->theMarket = new Market();
   if (vi) ret->setVillage(Village::getTestVillage(1000));
   if (fa) ret->setFarm(Farmland::getTestFarm());
   if (fo) ret->setForest(Forest::getTestForest());
   if (mi) ret->setMine(Mine::getTestMine());
-  ret->createVertices();
-  for (VtxIterator vex = ret->vexBegin(); vex != ret->vexEnd(); ++vex) (*vex)->createLines();
   return ret;
 }
 
