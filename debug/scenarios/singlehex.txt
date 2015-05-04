@@ -86,15 +86,6 @@ hexinfo = {
     worker = { goods = { money = 10000 food = 125000 } id = 13 clear = 100 owner = 3}
     worker = { goods = { money = 10000 food = 125000 } id = 14 clear = 100 owner = 3}
     worker = { goods = { money = 10000 food = 125000 } id = 15 clear = 100 owner = 3}
-
-    clear = { 100 100 100 100 100 100 100 100 100 100 } 
-    ready = { 0 0 0 0 0 0 0 0 0 0 } 
-    sowed =  { 0 0 0 0 0 0 0 0 0 0 } 
-    ripe1 =  { 0 0 0 0 0 0 0 0 0 0 } 
-    ripe2 =  { 0 0 0 0 0 0 0 0 0 0 } 
-    ripe3 =  { 0 0 0 0 0 0 0 0 0 0 } 
-    ended = { 0 0 0 0 0 0 0 0 0 0 } 
-    owner = { 3 3 3 3 3 3 3 3 3 3 }
   }
   forest = {
     worker = { goods = { money = 10000 wood = 250 } id = 16 owner = 3 tended = 0 wild = 100 climax = 1000}
@@ -140,7 +131,7 @@ hexinfo = {
       type = fixed 
     }
   } 
-  market = DownRight
+  market = UpRight
   village = {
     id = 5
     males = { 
@@ -165,30 +156,20 @@ hexinfo = {
       militia = 5
     }
     goods = {
-      food = 600000 
-      money = 100
+      money = 250000
     }
   }
   farmland = {
-    worker = { goods = { } id = 36 clear = 100 owner = 5}
-    worker = { goods = { } id = 37 clear = 100 owner = 5}
-    worker = { goods = { } id = 38 clear = 100 owner = 5}
-    worker = { goods = { } id = 39 clear = 100 owner = 5}
-    worker = { goods = { } id = 40 clear = 100 owner = 4}
-    worker = { goods = { } id = 41 clear = 100 owner = 4}
-    worker = { goods = { } id = 42 clear = 100 owner = 4}
-    worker = { goods = { } id = 43 clear = 100 owner = 1}
-    worker = { goods = { } id = 44 clear = 100 owner = 1}
-    worker = { goods = { } id = 45 clear = 100 owner = 1}
-
-    clear = { 100 100 100 100 100 100 100 100 100 100 } 
-    ready = { 0 0 0 0 0 0 0 0 0 0 } 
-    sowed = { 0 0 0 0 0 0 0 0 0 0 } 
-    ripe1 = { 0 0 0 0 0 0 0 0 0 0 } 
-    ripe2 = { 0 0 0 0 0 0 0 0 0 0 } 
-    ripe3 = { 0 0 0 0 0 0 0 0 0 0 } 
-    ended = { 0 0 0 0 0 0 0 0 0 0 } 
-    owner = { 5 5 5 5 4 4 4 1 1 1 }
+    worker = { goods = { money = 10000 food = 125000 } id = 36 clear = 100 owner = 5}
+    worker = { goods = { money = 10000 food = 125000 } id = 37 clear = 100 owner = 5}
+    worker = { goods = { money = 10000 food = 125000 } id = 38 clear = 100 owner = 5}
+    worker = { goods = { money = 10000 food = 125000 } id = 39 clear = 100 owner = 5}
+    worker = { goods = { money = 10000 food = 125000 } id = 40 clear = 100 owner = 4}
+    worker = { goods = { money = 10000 food = 125000 } id = 41 clear = 100 owner = 4}
+    worker = { goods = { money = 10000 food = 125000 } id = 42 clear = 100 owner = 4}
+    worker = { goods = { money = 10000 food = 125000 } id = 43 clear = 100 owner = 1}
+    worker = { goods = { money = 10000 food = 125000 } id = 44 clear = 100 owner = 1}
+    worker = { goods = { money = 10000 food = 125000 } id = 45 clear = 100 owner = 1}
   }
 }
 

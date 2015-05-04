@@ -265,6 +265,7 @@ void WarfareGame::unitTests (string fname) {
 void WarfareGame::functionalTests (string fname) {
   callTestFunction(string("Creating game from file") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
   Hex* testHex = Hex::getHex(0, 0);
+  Hex* testHex2 = Hex::getHex(0, 1);
   int counter = 0;
   vector<double> labourUsed;
   vector<double> labourAvailable;
@@ -279,11 +280,12 @@ void WarfareGame::functionalTests (string fname) {
   while (Calendar::Winter != Calendar::getCurrentSeason()) {
     Logger::logStream(DebugStartup) << Calendar::toString() << "\n";
     labourAvailable.push_back(testHex->getVillage()->production());
-    testMarket->holdMarket();
-    testHex->endOfTurn();
+    for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) (*vex)->endOfTurn();
+    for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
     Logger::logStream(DebugStartup) << testHex->getVillage()->getBidStatus() << "\n";
     labourUsed.push_back(testMarket->getVolume(TradeGood::Labor));
     employment.push_back(labourUsed.back() / labourAvailable.back());
+    Logger::logStream(DebugStartup) << "Good\tPrice\tDemand\tVolume\tProduce\tConsume\tAmount\n";
     for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
       goodsPrices[*tg].push_back(testMarket->getPrice(*tg));
       produced[*tg] += testMarket->getProduced(*tg);

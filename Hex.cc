@@ -42,6 +42,7 @@ Vertex::~Vertex () {
     (*u)->destroyIfReal();
   }
   units.clear();
+  if (theMarket) theMarket->destroyIfReal();
 }
 
 void Hex::createHex (int x, int y, TerrainType t) {
