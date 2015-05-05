@@ -266,7 +266,6 @@ void WarfareGame::functionalTests (string fname) {
   callTestFunction(string("Creating game from file") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
   Hex* testHex = Hex::getHex(0, 0);
   Hex* testHex2 = Hex::getHex(0, 1);
-  int counter = 0;
   vector<double> labourUsed;
   vector<double> labourAvailable;
   vector<double> employment;
@@ -300,8 +299,8 @@ void WarfareGame::functionalTests (string fname) {
 				      << "\n";
     }
     Calendar::newWeekBegins();
-    counter++;
   }
+
   doublet labourInfo = calcMeanAndSigma(labourUsed);
   Logger::logStream(DebugStartup) << "Work done : " << labourInfo.x() << " +- " << labourInfo.y() << "\n";
   labourInfo = calcMeanAndSigma(employment);

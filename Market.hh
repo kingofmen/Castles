@@ -18,10 +18,11 @@ struct MarketContract {
   MarketContract (MarketBid* one, MarketBid* two, double p, unsigned int duration);
   ~MarketContract ();
 
-  void   clear ();
-  double execute ();
-  bool   isValid () const {return ((remainingTime > 0) && (accumulatedMissing < amount));}
-  void   pay ();
+  void    clear ();
+  double  execute ();
+  doublet execute (MarketContract* other);
+  bool    isValid () const {return ((remainingTime > 0) && (accumulatedMissing < amount));}
+  void    pay ();
 
   EconActor* recipient;
   EconActor* producer;
@@ -31,6 +32,10 @@ struct MarketContract {
   double price;
   unsigned int remainingTime;
   double accumulatedMissing;
+
+private:
+  double deliver (double amountWanted);
+  double remaining () const {return amount - delivered;}
 };
 
 class Market : public Mirrorable<Market> {

@@ -6,17 +6,41 @@ void MarketContract::clear () {
   delivered = 0;
 }
 
+double MarketContract::deliver (double amountWanted) {
+  double amountAvailable = producer->produceForContract(tradeGood, amountWanted);
+  delivered += amountAvailable;
+  Logger::logStream(DebugStartup) << producer->getIdx() << " delivering " << amountAvailable << " of " << remaining() << " " << tradeGood->getName() << " to " << recipient->getIdx() << " " << recipient->getAmount(TradeGood::Money) << "\n";
+  recipient->deliverGoods(tradeGood, amountAvailable);
+  if (recipient->getAmount(tradeGood) < 0) throw (string("Negative ") + tradeGood->getName() + " after delivery");
+  return amountAvailable;
+}
+
 double MarketContract::execute () {
-  double amountWanted = amount - delivered;
+  double amountWanted = remaining();
   if (amountWanted < 0.001) return 0;
   double moneyAvailable = recipient->getAmount(TradeGood::Money);
   if (moneyAvailable < amountWanted * price) moneyAvailable += producer->extendCredit(recipient, (amountWanted*price - moneyAvailable));
   if (moneyAvailable < amountWanted * price) amountWanted = moneyAvailable / price;
-  double amountAvailable = producer->produceForContract(tradeGood, amountWanted);
-  delivered += amountAvailable;
-  recipient->deliverGoods(tradeGood, amountAvailable);
-  if (recipient->getAmount(tradeGood) < 0) throw (string("Negative ") + tradeGood->getName() + " after delivery");
-  return amountAvailable;
+  return deliver(amountWanted);
+}
+
+doublet MarketContract::execute (MarketContract* other) {
+  // A pair of contracts that amount to barter, eg labour for food.
+  // Executing these directly, without going through money, is an
+  // optimisation; it avoids having a large amount of small deliveries
+  // if one of the parties has little money.
+
+  if (recipient != other->producer) return doublet(0, 0);
+  if (producer != other->recipient) return doublet(0, 0);
+
+  double amountWanted = remaining();
+  if (amountWanted < 0.001) return doublet(0, 0);
+
+  double otherWanted = other->remaining();
+  if (otherWanted < 0.001) return doublet(0, 0);
+
+  double moneyToExchange = min(amountWanted * price, otherWanted * price);
+  return doublet(deliver(moneyToExchange / price), other->deliver(moneyToExchange / other->price));
 }
 
 void MarketContract::pay () {
@@ -47,8 +71,20 @@ Market::Market (Market* other)
 void Market::executeContracts () {
   volume.zeroGoods();
   BOOST_FOREACH(MarketContract* mc, contracts) mc->clear();
-  while (true) {
-    double traded = 0;
+  for (vector<MarketContract*>::iterator c1 = contracts.begin(); c1 != contracts.end(); ++c1) {
+    for (vector<MarketContract*>::iterator c2 = c1 + 1; c2 != contracts.end(); ++c2) {
+      if (((*c1)->recipient == (*c2)->producer) && ((*c2)->recipient == (*c1)->producer)) {
+	doublet traded = (*c1)->execute(*c2);
+	volume.deliverGoods((*c1)->tradeGood, traded.x());
+	volume.deliverGoods((*c2)->tradeGood, traded.y());
+      }
+    }
+  }
+
+  int counter = 0;
+  double traded = 0;
+  for (counter = 0; counter < 10000; ++counter) {
+    traded = 0;
     BOOST_FOREACH(MarketContract* mc, contracts) {
       double currTrade = mc->execute();
       traded += currTrade;
