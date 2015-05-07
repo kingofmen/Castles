@@ -3,13 +3,13 @@
 #include "boost/bind.hpp"
 
 void MarketContract::clear () {
+  cashPaid = 0;
   delivered = 0;
 }
 
 double MarketContract::deliver (double amountWanted) {
   double amountAvailable = producer->produceForContract(tradeGood, amountWanted);
   delivered += amountAvailable;
-  Logger::logStream(DebugStartup) << producer->getIdx() << " delivering " << amountAvailable << " of " << remaining() << " " << tradeGood->getName() << " to " << recipient->getIdx() << " " << recipient->getAmount(TradeGood::Money) << "\n";
   recipient->deliverGoods(tradeGood, amountAvailable);
   if (recipient->getAmount(tradeGood) < 0) throw (string("Negative ") + tradeGood->getName() + " after delivery");
   return amountAvailable;
@@ -18,7 +18,10 @@ double MarketContract::deliver (double amountWanted) {
 double MarketContract::execute () {
   double amountWanted = remaining();
   if (amountWanted < 0.001) return 0;
-  double moneyAvailable = recipient->getAmount(TradeGood::Money);
+  double moneyAvailable = min(recipient->getAmount(TradeGood::Money), amountWanted * price);
+  recipient->deliverGoods(TradeGood::Money, -moneyAvailable);
+  producer->deliverGoods(TradeGood::Money, moneyAvailable);
+  cashPaid += moneyAvailable;
   if (moneyAvailable < amountWanted * price) moneyAvailable += producer->extendCredit(recipient, (amountWanted*price - moneyAvailable));
   if (moneyAvailable < amountWanted * price) amountWanted = moneyAvailable / price;
   return deliver(amountWanted);
@@ -28,7 +31,7 @@ doublet MarketContract::execute (MarketContract* other) {
   // A pair of contracts that amount to barter, eg labour for food.
   // Executing these directly, without going through money, is an
   // optimisation; it avoids having a large amount of small deliveries
-  // if one of the parties has little money.
+  // if the parties have little money and credit.
 
   if (recipient != other->producer) return doublet(0, 0);
   if (producer != other->recipient) return doublet(0, 0);
@@ -40,12 +43,14 @@ doublet MarketContract::execute (MarketContract* other) {
   if (otherWanted < 0.001) return doublet(0, 0);
 
   double moneyToExchange = min(amountWanted * price, otherWanted * price);
+  cashPaid += moneyToExchange;
+  other->cashPaid += moneyToExchange;
   return doublet(deliver(moneyToExchange / price), other->deliver(moneyToExchange / other->price));
 }
 
 void MarketContract::pay () {
-  double moneyAvailable = recipient->getAmount(TradeGood::Money);
-  if (moneyAvailable > delivered * price) moneyAvailable = delivered * price;
+  double moneyOwed = max(delivered * price - cashPaid, 0.0);
+  double moneyAvailable = min(recipient->getAmount(TradeGood::Money), moneyOwed);
   producer->getPaid(recipient, moneyAvailable);
   accumulatedMissing += (amount - delivered);
   --remainingTime;
@@ -362,6 +367,7 @@ MarketContract::MarketContract (MarketBid* one, MarketBid* two, double p, unsign
   , producer(two->bidder)
   , tradeGood(one->tradeGood)
   , amount(min(fabs(one->amountToBuy), fabs(two->amountToBuy)))
+  , cashPaid(0)
   , delivered(0)
   , price(p)
   , remainingTime(rmt)

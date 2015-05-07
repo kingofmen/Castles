@@ -28,6 +28,7 @@ struct MarketContract {
   EconActor* producer;
   const TradeGood* tradeGood;
   double amount;
+  double cashPaid;
   double delivered;
   double price;
   unsigned int remainingTime;
