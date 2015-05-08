@@ -74,7 +74,7 @@ public:
   Unit ();
   ~Unit() {}
 
-  virtual void setLocation (Vertex* dat) = 0;
+  virtual void setLocation (Vertex* dat) {location = dat;}
   void setOwner (Player* p) {player = p;}
   void setRear (Vertices r) {rear = r;}
   Vertex* getLocation () {return location;}
@@ -189,7 +189,6 @@ public:
   ~TransportUnit ();
 
   void endOfTurn ();
-  virtual void setLocation (Vertex* dat);
   virtual void setMirrorState ();
 
   static void cleanUp ();
@@ -200,6 +199,29 @@ private:
   MilUnit* target;
 
   static vector<TransportUnit*> forDeletion;
+};
+
+class TradeUnit : public Unit, public EconActor, public Iterable<TradeUnit>, Mirrorable<TradeUnit> {
+  friend class StaticInitialiser;
+  friend class Mirrorable<TradeUnit>;
+public:
+  TradeUnit ();
+  ~TradeUnit ();
+
+  void endOfTurn ();
+  virtual void setLocation (Vertex* dat);
+  virtual void setMirrorState ();
+
+private:
+  TradeUnit (TradeUnit* other);
+
+  struct MarketFinder : public Vertex::GoalChecker {
+    MarketFinder (TradeUnit const* const t) : boss(t) {}
+    virtual bool operator ()(Vertex* dat) const;
+    TradeUnit const* const boss;
+  };
+
+  GoodsHolder lastPricesPaid;
 };
 
 void battleReport (Logger& log, BattleResult& outcome); 

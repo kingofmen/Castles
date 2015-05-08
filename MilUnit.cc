@@ -770,10 +770,6 @@ TransportUnit::TransportUnit (TransportUnit* other)
   , Mirrorable<TransportUnit>(other)
 {}
 
-void TransportUnit::setLocation (Vertex* loc) {
-  location = loc;
-}
-
 void TransportUnit::setMirrorState () {
   mirror->target = target->getMirror();
   mirror->setLocation(getLocation()->getMirror());
@@ -813,4 +809,40 @@ void TransportUnit::endOfTurn () {
 void TransportUnit::cleanUp () {
   BOOST_FOREACH(TransportUnit* tu, forDeletion) tu->destroyIfReal();
   forDeletion.clear();
+}
+
+TradeUnit::TradeUnit ()
+  : Unit()
+  , EconActor()
+  , Iterable<TradeUnit>(this)
+  , Mirrorable<TradeUnit>()
+{}
+
+TradeUnit::~TradeUnit () {}
+
+TradeUnit::TradeUnit (TradeUnit* other)
+  : Unit()
+  , EconActor()
+  , Iterable<TradeUnit>(0)
+  , Mirrorable<TradeUnit>(other)
+{}
+
+void TradeUnit::setMirrorState () {
+  mirror->setLocation(getLocation()->getMirror());
+  setEconMirrorState(mirror);
+}
+
+bool TradeUnit::MarketFinder::operator ()(Vertex* dat) const {
+  if (dat->getMarket()) return true;
+  return false;
+}
+
+void TradeUnit::endOfTurn () {
+  vector<Vertex*> route;
+  getLocation()->findRoute(route, MarketFinder(this), Vertex::NoHeuristic());
+}
+
+void TradeUnit::setLocation (Vertex* dat) {
+  if (dat->getMarket()) dat->getMarket()->registerParticipant(this);
+  else leaveMarket();
 }

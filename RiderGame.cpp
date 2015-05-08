@@ -152,6 +152,7 @@ void WarfareGame::endOfTurn () {
   for (ContractInfo::Iter c = ContractInfo::start(); c != ContractInfo::final(); ++c) (*c)->execute();
   LineGraphicsInfo::endTurn(); 
 
+  for (TradeUnit::Iterator tu = TradeUnit::start(); tu != TradeUnit::final(); ++tu) (*tu)->endOfTurn();
   for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) (*vex)->endOfTurn();
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
   for (Line::Iterator lin = Line::start(); lin != Line::final(); ++lin) (*lin)->endOfTurn();

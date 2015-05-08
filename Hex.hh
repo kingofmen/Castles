@@ -135,9 +135,13 @@ public:
     virtual double operator ()(Vertex* dat) const = 0;
   };
 
+  struct NoHeuristic : public DistanceHeuristic {
+    virtual double operator ()(Vertex* dat) const {return 0;}
+  };
+
   struct VertexDistance : public DistanceHeuristic {
     VertexDistance (Vertex* t) : target(t) {}
-    virtual double operator ()(Vertex* dat) const {  return target->position.distance(dat->position);}
+    virtual double operator ()(Vertex* dat) const {return target->position.distance(dat->position);}
     Vertex* target;
   };
 
