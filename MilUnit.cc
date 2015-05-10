@@ -833,8 +833,10 @@ void TradeUnit::setMirrorState () {
 }
 
 bool TradeUnit::MarketFinder::operator ()(Vertex* dat) const {
-  if (dat->getMarket()) return true;
-  return false;
+  if (!dat->getMarket()) return false;
+  if (dat == boss->mostRecentMarket) return false;
+  if (find(verboten.begin(), verboten.end(), dat) != verboten.end()) return false;
+  return true;
 }
 
 void TradeUnit::endOfTurn () {
@@ -842,7 +844,92 @@ void TradeUnit::endOfTurn () {
   getLocation()->findRoute(route, MarketFinder(this), Vertex::NoHeuristic());
 }
 
+void TradeUnit::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
+  // Buy one good that we can sell dearer. Sell anything that's more expensive
+  // here than where we picked it up.
+
+  MarketFinder mf(this);
+  vector<Vertex*> route;
+  Market* cand1 = 0; int dist1 = 0;
+  Market* cand2 = 0; int dist2 = 0;
+  Market* cand3 = 0; int dist3 = 0;
+  getLocation()->findRoute(route, mf, Vertex::NoHeuristic());
+  if (0 < route.size()) {
+    cand1 = route[0]->getMarket();
+    mf.verboten.push_back(route[0]);
+    dist1 = route.size();
+  }
+  if (cand1) {
+    route.clear();
+    getLocation()->findRoute(route, mf, Vertex::NoHeuristic());
+    if (0 < route.size()) {
+      cand2 = route[0]->getMarket();
+      mf.verboten.push_back(route[0]);
+      dist2 = route.size();
+    }
+  }
+  if (cand2) {
+    route.clear();
+    getLocation()->findRoute(route, mf, Vertex::NoHeuristic());
+    if (0 < route.size()) {
+      cand3 = route[0]->getMarket();
+      dist3 = route.size();
+    }
+  }
+
+  TradeGood::Iter goodToBuy = TradeGood::final();
+  double profitPerDistance = 0;
+  if (cand1) {
+    double bestDiff = 0;
+    for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+      double currDiff = cand1->getPrice(*tg) - prices.getAmount(*tg);
+      if (currDiff < bestDiff) continue;
+      bestDiff = currDiff;
+      goodToBuy = tg;
+    }
+    profitPerDistance = (bestDiff / dist1);
+  }
+  if (cand2) {
+    double bestDiff = 0;
+    TradeGood::Iter localBest = TradeGood::final();
+    for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+      double currDiff = cand2->getPrice(*tg) - prices.getAmount(*tg);
+      if (currDiff < bestDiff) continue;
+      bestDiff = currDiff;
+      localBest = tg;
+    }
+    if (bestDiff > profitPerDistance * dist1) {
+      profitPerDistance = bestDiff / dist2;
+      dist1 = dist2;
+      goodToBuy = localBest;
+    }
+  }
+  if (cand3) {
+    double bestDiff = 0;
+    TradeGood::Iter localBest = TradeGood::final();
+    for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+      double currDiff = cand3->getPrice(*tg) - prices.getAmount(*tg);
+      if (currDiff < bestDiff) continue;
+      bestDiff = currDiff;
+      localBest = tg;
+    }
+    if (bestDiff > profitPerDistance * dist1) goodToBuy = localBest;
+  }
+
+  for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
+    if (tg == goodToBuy) {
+      bidlist.push_back(new MarketBid((*tg), getAmount(TradeGood::Money) / prices.getAmount(*tg), this));
+      continue;
+    }
+    if (prices.getAmount(*tg) <= lastPricesPaid.getAmount(*tg)) continue;
+    bidlist.push_back(new MarketBid((*tg), -getAmount(*tg), this));
+  }
+}
+
 void TradeUnit::setLocation (Vertex* dat) {
-  if (dat->getMarket()) dat->getMarket()->registerParticipant(this);
+  if (dat->getMarket()) {
+    dat->getMarket()->registerParticipant(this);
+    mostRecentMarket = dat;
+  }
   else leaveMarket();
 }

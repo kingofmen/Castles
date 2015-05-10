@@ -209,6 +209,7 @@ public:
   ~TradeUnit ();
 
   void endOfTurn ();
+  virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
   virtual void setLocation (Vertex* dat);
   virtual void setMirrorState ();
 
@@ -219,9 +220,12 @@ private:
     MarketFinder (TradeUnit const* const t) : boss(t) {}
     virtual bool operator ()(Vertex* dat) const;
     TradeUnit const* const boss;
+    vector<Vertex*> verboten;
   };
 
   GoodsHolder lastPricesPaid;
+  Vertex* mostRecentMarket;
+  Vertex* tradingTarget;
 };
 
 void battleReport (Logger& log, BattleResult& outcome); 
