@@ -238,6 +238,7 @@ void Castle::unitTests () {
   testCastle->getBids(prices, bidlist);
   if (0 == bidlist.size()) throwFormatted("Expected garrisoned Castle to make bids, got none");
 
+  unsigned int initialUnits = TransportUnit::totalAmount();
   BOOST_FOREACH(MarketBid* mb, bidlist) testCastle->deliverGoods(mb->tradeGood, mb->amountToBuy);
   testCastle->distributeSupplies();
   BOOST_FOREACH(MarketBid* mb, bidlist) {
@@ -247,17 +248,17 @@ void Castle::unitTests () {
 											  garrison->getAmount(mb->tradeGood));
   }
 
-  if (0 < TransportUnit::totalAmount()) throwFormatted("Did not expect any TransportUnits");
+  if (initialUnits != TransportUnit::totalAmount()) throwFormatted("Expected %i TransportUnits, found %i", initialUnits, TransportUnit::totalAmount());
   testCastle->removeGarrison();
   garrison->setLocation(testCastle->getLocation()->twoEnd());
   garrison->zeroGoods();
   BOOST_FOREACH(MarketBid* mb, bidlist) testCastle->deliverGoods(mb->tradeGood, mb->amountToBuy);
   testCastle->distributeSupplies();
-  if (1 != TransportUnit::totalAmount()) throwFormatted("Expected Castle to create one TransportUnit, found %i", TransportUnit::totalAmount());
+  if (initialUnits + 1 != TransportUnit::totalAmount()) throwFormatted("Expected Castle to create one TransportUnit, found %i", TransportUnit::totalAmount());
   TransportUnit::Iter tu = TransportUnit::start();
   (*tu)->endOfTurn();
   TransportUnit::cleanUp();
-  if (0 < TransportUnit::totalAmount()) throwFormatted("Expected TransportUnit to reach destination and destroy itself");
+  if (initialUnits != TransportUnit::totalAmount()) throwFormatted("Expected TransportUnit to reach destination and destroy itself");
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if (fabs(garrison->getAmount(mb->tradeGood) - mb->amountToBuy) > 0.01) throwFormatted("Expected field unit to get %.2f %s, but got %.2f",
 											  mb->amountToBuy,

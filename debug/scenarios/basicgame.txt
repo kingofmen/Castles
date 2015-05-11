@@ -42,6 +42,7 @@ hexinfo = {
     pos = SouthEast
     garrison = {
       id = 22
+      player = adri
       pikemen = {
         strength = { 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 }
       }
@@ -150,6 +151,7 @@ hexinfo = {
     pos = NorthWest
     garrison = {
       id = 203
+      player = assa
       pikemen = {
         strength = { 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 }
       }
@@ -949,3 +951,16 @@ unit = {
   support = 4
 }
 
+transportUnit = {
+  id = 204
+  player = adri
+  target = 20
+  x = 0
+  y = 0
+  vtx = DownRight
+  goods = {
+    food = 1000
+    iron = 100
+    wood = 100
+  }
+}

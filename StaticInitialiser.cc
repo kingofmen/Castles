@@ -29,6 +29,7 @@ static map<string, int Forester::*> foresterMap;
 static map<string, int Miner::*> minerMap;
 
 static map<int, Castle*> castleMap;
+static map<int, MilUnit*> unitMap;
 
 void readGoodsHolder (Object* goodsObject, GoodsHolder& goods) {
   goods.zeroGoods();
@@ -59,6 +60,7 @@ void StaticInitialiser::createCalculator (Object* info, Action::Calculator* ret)
 
 void StaticInitialiser::clearTempMaps () {
   castleMap.clear();
+  unitMap.clear();
 }
 
 void StaticInitialiser::createActionProbabilities (Object* info) {
@@ -432,6 +434,12 @@ void StaticInitialiser::initialiseBuilding (Building* build, Object* info) {
   build->marginFactor = info->safeGetFloat("marginalDecline", build->marginFactor);
 }
 
+void StaticInitialiser::setPlayer (Unit* unit, Object* mInfo) {
+  Player* owner = Player::findByName(mInfo->safeGetString("player"));
+  if (!owner) throwFormatted("Unit %i without owner", unit->getIdx());
+  unit->setOwner(owner);
+}
+
 void StaticInitialiser::writeBuilding (Object* bInfo, Building* build) {
   bInfo->setLeaf("marginalDecline", build->marginFactor);
 }
@@ -600,8 +608,6 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
   }
   m->setPriority(mInfo->safeGetInt("priority", defaultUnitPriority));
 
-  Player* owner = Player::findByName(mInfo->safeGetString("player"));
-  if (owner) m->setOwner(owner);
   Hex* hex = findHex(mInfo);
   if (hex) {
     Vertex* vtx = findVertex(mInfo, hex);
@@ -610,6 +616,8 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
   m->setName(mInfo->safeGetString("name", "\"Unknown Soldiers\"")); 
 
   initialiseEcon(m, mInfo);
+  setPlayer(m, mInfo);
+  unitMap[m->getIdx()] = m;
   int supportingCastleId = mInfo->safeGetInt("support", -1);
   if (supportingCastleId != -1) {
     Castle* castle = castleMap[supportingCastleId];
@@ -694,6 +702,22 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
     }
   }
   MilUnitTemplate::freeze();
+}
+
+void StaticInitialiser::buildTradeUnit (Object* mInfo) {}
+
+void StaticInitialiser::buildTransportUnit (Object* mInfo) {
+  MilUnit* mu = unitMap[mInfo->safeGetInt("target", -1)];
+  if (!mu) throwFormatted("Transport unit %i without target", mInfo->safeGetInt("id", -666));
+
+  TransportUnit* tUnit = new TransportUnit(mu);
+  initialiseEcon(tUnit, mInfo);
+  Hex* hex = findHex(mInfo);
+  if (!hex) throwFormatted("Transport unit %i without Hex", tUnit->getIdx());
+  Vertex* vtx = findVertex(mInfo, hex);
+  if (!vtx) throwFormatted("Transport unit %i without Vertex", tUnit->getIdx());
+  tUnit->setLocation(vtx);
+  setPlayer(tUnit, mInfo);
 }
 
 Village* StaticInitialiser::buildVillage (Object* fInfo) {
@@ -1236,6 +1260,20 @@ void StaticInitialiser::setUItexts (Object* tInfo) {
   }
 }
 
+void StaticInitialiser::writeUnitLocation (Unit* unit, Object* obj) {
+  Vertex* vtx = unit->getLocation();
+  if (!vtx) return;
+  int counter = 0;
+  Hex* hex = vtx->getHex(counter++);
+  while (!hex) {
+    hex = vtx->getHex(counter++);
+    assert(counter <= 6);
+  }
+  obj->setLeaf("x", hex->getPos().first);
+  obj->setLeaf("y", hex->getPos().second);
+  obj->setLeaf("vtx", getVertexName(hex->getDirection(vtx)));
+}
+
 void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
   obj->setLeaf("name", unit->getName());
   obj->setLeaf("player", unit->getOwner()->getName());
@@ -1251,7 +1289,15 @@ void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
 
   writeEconActorIntoObject(unit, obj);
   obj->setLeaf("priority", unit->priority);
+  writeUnitLocation(unit, obj);
   if (castleMap[unit->getIdx()]) obj->setLeaf("support", castleMap[unit->getIdx()]->getIdx());
+}
+
+void StaticInitialiser::writeTransportUnitToObject (TransportUnit* unit, Object* obj) {
+  obj->setLeaf("target", unit->target->getIdx());
+  obj->setLeaf("player", unit->getOwner()->getName());
+  writeUnitLocation(unit, obj);
+  writeEconActorIntoObject(unit, obj);
 }
 
 void StaticInitialiser::writeAgeInfoToObject (AgeTracker& age, Object* obj, int skip) {
@@ -1412,20 +1458,17 @@ void StaticInitialiser::writeGameToFile (string fname) {
     if (0 == (*vtx)->numUnits()) continue;
     MilUnit* unit = (*vtx)->getUnit(0); 
     Object* uinfo = new Object("unit");
-    int counter = 0;
-    Hex* hex = (*vtx)->getHex(counter++);
-    while (!hex) {
-      hex = (*vtx)->getHex(counter++);
-      assert(counter <= 6); 
-    }
-    uinfo->setLeaf("x", hex->getPos().first);
-    uinfo->setLeaf("y", hex->getPos().second);
     uinfo->setLeaf("player", unit->getOwner()->getName());
-    uinfo->setLeaf("vtx", getVertexName(hex->getDirection(*vtx)));
     writeUnitToObject(unit, uinfo); 
     game->setValue(uinfo);
   }
- 
+
+  for (TransportUnit::Iter tu = TransportUnit::start(); tu != TransportUnit::final(); ++tu) {
+    Object* tuInfo = new Object("transportUnit");
+    writeTransportUnitToObject((*tu), tuInfo);
+    game->setValue(tuInfo);
+  }
+
   ofstream writer;
   writer.open(fname.c_str());
   writer << (*game) << std::endl;

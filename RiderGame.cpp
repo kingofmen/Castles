@@ -123,9 +123,11 @@ WarfareGame* WarfareGame::createGame (string filename) {
   }
 
   objvec units = game->getValue("unit");
-  for (objiter unit = units.begin(); unit != units.end(); ++unit) {
-    StaticInitialiser::buildMilUnit(*unit);
-  }
+  for (objiter unit = units.begin(); unit != units.end(); ++unit) StaticInitialiser::buildMilUnit(*unit);
+  units = game->getValue("transportUnit");
+  for (objiter unit = units.begin(); unit != units.end(); ++unit) StaticInitialiser::buildTransportUnit(*unit);
+  units = game->getValue("tradeUnit");
+  for (objiter unit = units.begin(); unit != units.end(); ++unit) StaticInitialiser::buildTradeUnit(*unit);
 
   Player::setCurrentPlayerByName(game->safeGetString("currentplayer"));
   assert(Player::getCurrentPlayer());
@@ -159,6 +161,8 @@ void WarfareGame::endOfTurn () {
   // Supply convoys
   for (TransportUnit::Iter tu = TransportUnit::start(); tu != TransportUnit::final(); ++tu) (*tu)->endOfTurn();
   TransportUnit::cleanUp();
+  // Trade
+  for (TradeUnit::Iter tu = TradeUnit::start(); tu != TradeUnit::final(); ++tu) (*tu)->endOfTurn();
   // Supply consumption, strength calculation
   for (MilUnit::Iterator mil = MilUnit::start(); mil != MilUnit::final(); ++mil) (*mil)->endOfTurn();
 
@@ -240,16 +244,15 @@ void callTestFunction (string testName, void (*fPtr) ()) {
   callTestFunction(testName, function<void()>(fPtr));
 }
 
-
 void WarfareGame::unitTests (string fname) {
   ofstream writer;
   writer.open("parseroutput.txt");
   setOutputStream(&writer);
   string savename(".\\savegames\\testsave.txt");
-  callTestFunction(string("Creating game from file") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
+  callTestFunction(string("Creating game from file ") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
   callTestFunction("EconActor", &EconActor::unitTests);
   callTestFunction("Running a turn", function<void()>(bind(&WarfareGame::endOfTurn, WarfareGame::currGame)));
-  callTestFunction(string("Writing to file") + savename, function<void()>(bind(&StaticInitialiser::writeGameToFile, savename)));
+  callTestFunction(string("Writing to file ") + savename, function<void()>(bind(&StaticInitialiser::writeGameToFile, savename)));
   callTestFunction(string("Loading from savegame again ") + fname, function<void()>(bind(&WarfareGame::createGame, savename)));
   callTestFunction("Hex",       &Hex::unitTests);
   callTestFunction("Market",    &Market::unitTests);
@@ -266,7 +269,6 @@ void WarfareGame::unitTests (string fname) {
 void WarfareGame::functionalTests (string fname) {
   callTestFunction(string("Creating game from file") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
   Hex* testHex = Hex::getHex(0, 0);
-  Hex* testHex2 = Hex::getHex(0, 1);
   vector<double> labourUsed;
   vector<double> labourAvailable;
   vector<double> employment;

@@ -21,7 +21,8 @@ const double FORAGE_LOOT_RATE = 0.1;
 const double FORAGE_DEFENDER_LOSS_RATE = 0.25;
 
 Unit::Unit ()
-  : location(0)
+  : EconActor()
+  , location(0)
   , rear(Left)
 {}
 
@@ -755,7 +756,6 @@ void battleReport (Logger& log, BattleResult& outcome) {
 
 TransportUnit::TransportUnit (MilUnit* t)
   : Unit()
-  , EconActor()
   , Iterable<TransportUnit>(this)
   , Mirrorable<TransportUnit>()
   , target(t)
@@ -765,7 +765,6 @@ TransportUnit::~TransportUnit () {}
 
 TransportUnit::TransportUnit (TransportUnit* other)
   : Unit()
-  , EconActor()
   , Iterable<TransportUnit>(0)
   , Mirrorable<TransportUnit>(other)
 {}
@@ -813,7 +812,6 @@ void TransportUnit::cleanUp () {
 
 TradeUnit::TradeUnit ()
   : Unit()
-  , EconActor()
   , Iterable<TradeUnit>(this)
   , Mirrorable<TradeUnit>()
 {}
@@ -822,7 +820,6 @@ TradeUnit::~TradeUnit () {}
 
 TradeUnit::TradeUnit (TradeUnit* other)
   : Unit()
-  , EconActor()
   , Iterable<TradeUnit>(0)
   , Mirrorable<TradeUnit>(other)
 {}

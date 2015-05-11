@@ -69,7 +69,7 @@ public:
   vector<SupplyLevel>::const_iterator supply;
 };
 
-class Unit {
+class Unit : public EconActor {
 public: 
   Unit ();
   ~Unit() {}
@@ -88,7 +88,7 @@ private:
   Player* player;
 };
 
-class MilUnit : public Unit, public EconActor, public Mirrorable<MilUnit>, public Named<MilUnit, false>, public MilStrength, public Iterable<MilUnit> {
+class MilUnit : public Unit, public Mirrorable<MilUnit>, public Named<MilUnit, false>, public MilStrength, public Iterable<MilUnit> {
   friend class Mirrorable<MilUnit>;
   friend class StaticInitialiser;
   friend class MilUnitGraphicsInfo; 
@@ -181,7 +181,7 @@ struct BattleResult {
   Outcome dieRoll;
 };
 
-class TransportUnit : public Unit, public EconActor, public Iterable<TransportUnit>, Mirrorable<TransportUnit> {
+class TransportUnit : public Unit, public Iterable<TransportUnit>, Mirrorable<TransportUnit> {
   friend class StaticInitialiser;
   friend class Mirrorable<TransportUnit>;
 public:
@@ -201,7 +201,7 @@ private:
   static vector<TransportUnit*> forDeletion;
 };
 
-class TradeUnit : public Unit, public EconActor, public Iterable<TradeUnit>, Mirrorable<TradeUnit> {
+class TradeUnit : public Unit, public Iterable<TradeUnit>, Mirrorable<TradeUnit> {
   friend class StaticInitialiser;
   friend class Mirrorable<TradeUnit>;
 public:
