@@ -430,6 +430,13 @@ Vertex* findVertex (Object* info, Hex* hex) {
   return findVertex(pos, hex);
 }
 
+Vertex* findVertex (Object* info) {
+  if (!info) return 0;
+  Hex* hex = findHex(info);
+  if (!hex) return 0;
+  return findVertex(info, hex);
+}
+
 void StaticInitialiser::initialiseBuilding (Building* build, Object* info) {
   build->marginFactor = info->safeGetFloat("marginalDecline", build->marginFactor);
 }
@@ -704,7 +711,16 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
   MilUnitTemplate::freeze();
 }
 
-void StaticInitialiser::buildTradeUnit (Object* mInfo) {}
+void StaticInitialiser::buildTradeUnit (Object* mInfo) {
+  TradeUnit* tu = new TradeUnit();
+  initialiseEcon(tu, mInfo);
+  readGoodsHolder(mInfo->getNeededObject("lastPrices"), tu->lastPricesPaid);
+  tu->setLocation(findVertex(mInfo));
+  if (!tu->getLocation()) throwFormatted("Trade unit %i without location", tu->getIdx());
+  tu->mostRecentMarket = findVertex(mInfo->safeGetObject("mostRecent"));
+  tu->tradingTarget = findVertex(mInfo->safeGetObject("tradingTarget"));
+  setPlayer(tu, mInfo);
+}
 
 void StaticInitialiser::buildTransportUnit (Object* mInfo) {
   MilUnit* mu = unitMap[mInfo->safeGetInt("target", -1)];
@@ -1260,8 +1276,7 @@ void StaticInitialiser::setUItexts (Object* tInfo) {
   }
 }
 
-void StaticInitialiser::writeUnitLocation (Unit* unit, Object* obj) {
-  Vertex* vtx = unit->getLocation();
+void StaticInitialiser::writeVertex (Vertex* vtx, Object* obj) {
   if (!vtx) return;
   int counter = 0;
   Hex* hex = vtx->getHex(counter++);
@@ -1272,6 +1287,10 @@ void StaticInitialiser::writeUnitLocation (Unit* unit, Object* obj) {
   obj->setLeaf("x", hex->getPos().first);
   obj->setLeaf("y", hex->getPos().second);
   obj->setLeaf("vtx", getVertexName(hex->getDirection(vtx)));
+}
+
+void StaticInitialiser::writeUnitLocation (Unit* unit, Object* obj) {
+  writeVertex(unit->getLocation(), obj);
 }
 
 void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
@@ -1291,6 +1310,15 @@ void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
   obj->setLeaf("priority", unit->priority);
   writeUnitLocation(unit, obj);
   if (castleMap[unit->getIdx()]) obj->setLeaf("support", castleMap[unit->getIdx()]->getIdx());
+}
+
+void StaticInitialiser::writeTradeUnitToObject (TradeUnit* unit, Object* obj) {
+  obj->setLeaf("player", unit->getOwner()->getName());
+  writeUnitLocation(unit, obj);
+  writeEconActorIntoObject(unit, obj);
+  writeGoodsHolderIntoObject(unit->lastPricesPaid, obj->getNeededObject("lastPrices"));
+  writeVertex(unit->mostRecentMarket, obj->getNeededObject("mostRecent"));
+  writeVertex(unit->tradingTarget, obj->getNeededObject("tradingTarget"));
 }
 
 void StaticInitialiser::writeTransportUnitToObject (TransportUnit* unit, Object* obj) {
@@ -1466,6 +1494,12 @@ void StaticInitialiser::writeGameToFile (string fname) {
   for (TransportUnit::Iter tu = TransportUnit::start(); tu != TransportUnit::final(); ++tu) {
     Object* tuInfo = new Object("transportUnit");
     writeTransportUnitToObject((*tu), tuInfo);
+    game->setValue(tuInfo);
+  }
+
+  for (TradeUnit::Iter tu = TradeUnit::start(); tu != TradeUnit::final(); ++tu) {
+    Object* tuInfo = new Object("tradeUnit");
+    writeTradeUnitToObject((*tu), tuInfo);
     game->setValue(tuInfo);
   }
 

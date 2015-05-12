@@ -10,6 +10,7 @@ class Market;
 class MilUnit;
 class MilUnitTemplate;
 class Object;
+class TradeUnit;
 class TransportUnit;
 class Unit;
 class Village;
@@ -47,6 +48,7 @@ public:
   static void      writeGameToFile (string fname);
   static void      writeAgeInfoToObject (AgeTracker& age, Object* obj, int skip = 0);  
   static void      writeUnitToObject (MilUnit* unit, Object* obj);
+  static void      writeTradeUnitToObject (TradeUnit* unit, Object* obj);
   static void      writeTransportUnitToObject (TransportUnit* unit, Object* obj);
   
 private:
@@ -111,6 +113,7 @@ private:
   static void writeEconActorIntoObject (EconActor* econ, Object* info);
   static void writeBuilding (Object* bInfo, Building* build);
   static void writeUnitLocation (Unit* unit, Object* obj);
+  static void writeVertex (Vertex* vtx, Object* obj);
   
   static int defaultUnitPriority;
 }; 

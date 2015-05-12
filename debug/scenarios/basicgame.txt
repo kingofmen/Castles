@@ -964,3 +964,17 @@ transportUnit = {
     wood = 100
   }
 }
+
+tradeUnit = {
+  id = 205
+  player = adri
+  target = 20
+  x = 0
+  y = 0
+  vtx = DownLeft
+  goods = {
+    food = 1000
+    iron = 100
+    wood = 100
+  }
+}

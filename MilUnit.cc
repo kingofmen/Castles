@@ -814,6 +814,8 @@ TradeUnit::TradeUnit ()
   : Unit()
   , Iterable<TradeUnit>(this)
   , Mirrorable<TradeUnit>()
+  , mostRecentMarket(0)
+  , tradingTarget(0)
 {}
 
 TradeUnit::~TradeUnit () {}
@@ -822,11 +824,15 @@ TradeUnit::TradeUnit (TradeUnit* other)
   : Unit()
   , Iterable<TradeUnit>(0)
   , Mirrorable<TradeUnit>(other)
+  , mostRecentMarket(0)
+  , tradingTarget(0)
 {}
 
 void TradeUnit::setMirrorState () {
   mirror->setLocation(getLocation()->getMirror());
   setEconMirrorState(mirror);
+  mirror->mostRecentMarket = mostRecentMarket ? mostRecentMarket->getMirror() : 0;
+  mirror->tradingTarget = tradingTarget ? tradingTarget->getMirror() : 0;
 }
 
 bool TradeUnit::MarketFinder::operator ()(Vertex* dat) const {
@@ -924,6 +930,7 @@ void TradeUnit::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist)
 }
 
 void TradeUnit::setLocation (Vertex* dat) {
+  location = dat;
   if (dat->getMarket()) {
     dat->getMarket()->registerParticipant(this);
     mostRecentMarket = dat;
