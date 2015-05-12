@@ -258,12 +258,16 @@ void Castle::unitTests () {
   TransportUnit::Iter tu = TransportUnit::start();
   (*tu)->endOfTurn();
   TransportUnit::cleanUp();
-  if (initialUnits != TransportUnit::totalAmount()) throwFormatted("Expected TransportUnit to reach destination and destroy itself");
+  if (initialUnits != TransportUnit::totalAmount()) throwFormatted("Expected TransportUnit to reach destination and destroy itself, %i -> %i",
+								   initialUnits,
+								   TransportUnit::totalAmount());
   BOOST_FOREACH(MarketBid* mb, bidlist) {
-    if (fabs(garrison->getAmount(mb->tradeGood) - mb->amountToBuy) > 0.01) throwFormatted("Expected field unit to get %.2f %s, but got %.2f",
+    if (fabs(garrison->getAmount(mb->tradeGood) - mb->amountToBuy) > 0.01) throwFormatted("Expected field unit to get %.2f %s, but got %.2f (%i -> %i)",
 											  mb->amountToBuy,
 											  mb->tradeGood->getName().c_str(),
-											  garrison->getAmount(mb->tradeGood));
+											  garrison->getAmount(mb->tradeGood),
+											  initialUnits,
+											  TransportUnit::totalAmount());
   }
 
   delete testCastle;

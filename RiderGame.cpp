@@ -25,8 +25,12 @@ using namespace boost;
 WarfareGame* WarfareGame::currGame = 0; 
 bool testingBool = true;
 
-WarfareGame::WarfareGame () {
-  // Clear hexes, vertices, etc
+WarfareGame::WarfareGame () {}
+
+template <class T> void destroyAll () {
+  vector<T*> toDestroy; // Transfer here to avoid zapping iterator.
+  for (typename T::rIter t = T::rstart(); t != T::rfinal(); ++t) toDestroy.push_back(*t);
+  BOOST_FOREACH(T* t, toDestroy) t->destroyIfReal();
 }
 
 WarfareGame::~WarfareGame () {
@@ -34,6 +38,8 @@ WarfareGame::~WarfareGame () {
   Hex::clear();
   Line::clear();
   Player::clear();
+  destroyAll<TransportUnit>();
+  destroyAll<TradeUnit>();
   EconActor::clear();
   currGame = 0;
 }
@@ -254,6 +260,7 @@ void WarfareGame::unitTests (string fname) {
   callTestFunction("Running a turn", function<void()>(bind(&WarfareGame::endOfTurn, WarfareGame::currGame)));
   callTestFunction(string("Writing to file ") + savename, function<void()>(bind(&StaticInitialiser::writeGameToFile, savename)));
   callTestFunction(string("Loading from savegame again ") + fname, function<void()>(bind(&WarfareGame::createGame, savename)));
+  delete currGame;
   callTestFunction("Hex",       &Hex::unitTests);
   callTestFunction("Market",    &Market::unitTests);
   callTestFunction("Village",   &Village::unitTests);

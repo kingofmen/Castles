@@ -181,12 +181,12 @@ struct BattleResult {
   Outcome dieRoll;
 };
 
-class TransportUnit : public Unit, public Iterable<TransportUnit>, Mirrorable<TransportUnit> {
+class TransportUnit : public Unit, public Iterable<TransportUnit>, public Mirrorable<TransportUnit> {
   friend class StaticInitialiser;
   friend class Mirrorable<TransportUnit>;
 public:
   TransportUnit (MilUnit* t);
-  ~TransportUnit ();
+  virtual ~TransportUnit ();
 
   void endOfTurn ();
   virtual void setMirrorState ();
@@ -201,12 +201,12 @@ private:
   static vector<TransportUnit*> forDeletion;
 };
 
-class TradeUnit : public Unit, public Iterable<TradeUnit>, Mirrorable<TradeUnit> {
+class TradeUnit : public Unit, public Iterable<TradeUnit>, public Mirrorable<TradeUnit> {
   friend class StaticInitialiser;
   friend class Mirrorable<TradeUnit>;
 public:
   TradeUnit ();
-  ~TradeUnit ();
+  virtual ~TradeUnit ();
 
   void endOfTurn ();
   virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);

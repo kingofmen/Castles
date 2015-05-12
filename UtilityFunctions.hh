@@ -176,7 +176,7 @@ template <class T> class Iterable {
   static unsigned int totalAmount () {return allThings.size();}
   static void clear () {
     while (0 < totalAmount()) {
-      delete allThings[0];
+      delete allThings.back();
     }
   }
   
