@@ -77,8 +77,8 @@ public:
   virtual void setLocation (Vertex* dat) {location = dat;}
   void setOwner (Player* p) {player = p;}
   void setRear (Vertices r) {rear = r;}
-  Vertex* getLocation () {return location;}
-  Player* getOwner () {return player;}
+  Vertex* getLocation () const {return location;}
+  Player* getOwner () const {return player;}
   Vertices getRear () const {return rear;}
 
 protected:
@@ -216,6 +216,8 @@ public:
 private:
   TradeUnit (TradeUnit* other);
 
+  void findTradeTarget ();
+
   struct MarketFinder : public Vertex::GoalChecker {
     MarketFinder (TradeUnit const* const t) : boss(t) {}
     virtual bool operator ()(Vertex* dat) const;
@@ -226,6 +228,7 @@ private:
   GoodsHolder lastPricesPaid;
   Vertex* mostRecentMarket;
   Vertex* tradingTarget;
+  TradeGood::Iter goodToBuy;
 };
 
 void battleReport (Logger& log, BattleResult& outcome); 

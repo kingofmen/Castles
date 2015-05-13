@@ -55,6 +55,7 @@ public:
   double getConsumed (TradeGood const* const tg) const {return consumed.getAmount(tg);}
   double getDemand   (TradeGood const* const tg) const {return demand.getAmount(tg);}
   double getPrice    (TradeGood const* const tg) const {return prices.getAmount(tg);}
+  void   getPrices   (GoodsHolder& p)            const {p.setAmounts(prices);}
   double getProduced (TradeGood const* const tg) const {return produced.getAmount(tg);}
   double getVolume   (TradeGood const* const tg) const {return volume.getAmount(tg);}
   virtual void setMirrorState ();

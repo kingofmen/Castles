@@ -895,6 +895,10 @@ bool Vertex::CastleFinder::operator ()(Vertex* dat) const {
   return ((dat == target->getLocation()->oneEnd()) || (dat == target->getLocation()->twoEnd()));
 }
 
+void Vertex::findRouteToVertex (vector<Vertex*>& vertices, Vertex const* targetVertex) {
+  findRoute(vertices, VertexEquality(targetVertex), VertexDistance(targetVertex));
+}
+
 void Vertex::findRoute (vector<Vertex*>& vertices, const GoalChecker& gc, const DistanceHeuristic& heuristic) {
   set<Vertex*> open;
   set<Vertex*> closed;

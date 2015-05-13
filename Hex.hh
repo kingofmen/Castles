@@ -140,9 +140,9 @@ public:
   };
 
   struct VertexDistance : public DistanceHeuristic {
-    VertexDistance (Vertex* t) : target(t) {}
+    VertexDistance (Vertex const* t) : target(t) {}
     virtual double operator ()(Vertex* dat) const {return target->position.distance(dat->position);}
-    Vertex* target;
+    Vertex const* target;
   };
 
   struct CastleDistance : public DistanceHeuristic {
@@ -156,9 +156,9 @@ public:
   };
 
   struct VertexEquality : public GoalChecker {
-    VertexEquality (Vertex* t) : target(t) {}
+    VertexEquality (Vertex const* t) : target(t) {}
     virtual bool operator ()(Vertex* dat) const {return dat == target;}
-    Vertex* target;
+    Vertex const* target;
   };
 
   struct CastleFinder : public GoalChecker {
@@ -170,6 +170,7 @@ public:
   double supplyNeeded () const;
   bool isLand () const;
   void findRoute (vector<Vertex*>& vertices, const GoalChecker& gc, const DistanceHeuristic& heuristic);
+  void findRouteToVertex (vector<Vertex*>& vertices, Vertex const* targetVertex);
   Hex* getHex (int i) {return hexes[i];}
   void createLines ();
   void forceRetreat (Castle*& c, Vertex*& v);
