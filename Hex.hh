@@ -167,6 +167,7 @@ public:
     Castle const* target;
   };
 
+  void setMarket (Market* tm) {theMarket = tm;}
   double supplyNeeded () const;
   bool isLand () const;
   void findRoute (vector<Vertex*>& vertices, const GoalChecker& gc, const DistanceHeuristic& heuristic);

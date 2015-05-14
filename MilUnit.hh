@@ -213,6 +213,7 @@ public:
   virtual void setLocation (Vertex* dat);
   virtual void setMirrorState ();
 
+  static void unitTests ();
 private:
   TradeUnit (TradeUnit* other);
 

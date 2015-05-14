@@ -874,7 +874,7 @@ Hex* Hex::getTestHex (bool vi, bool fa, bool fo, bool mi) {
   ret->createVertices();
   for (VtxIterator vex = ret->vexBegin(); vex != ret->vexEnd(); ++vex) (*vex)->createLines();
   ret->marketVtx = ret->vertices[0];
-  ret->marketVtx->theMarket = new Market();
+  ret->marketVtx->setMarket(new Market());
   if (vi) ret->setVillage(Village::getTestVillage(1000));
   if (fa) ret->setFarm(Farmland::getTestFarm());
   if (fo) ret->setForest(Forest::getTestForest());

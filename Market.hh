@@ -59,7 +59,8 @@ public:
   double getProduced (TradeGood const* const tg) const {return produced.getAmount(tg);}
   double getVolume   (TradeGood const* const tg) const {return volume.getAmount(tg);}
   virtual void setMirrorState ();
-
+  void setPriceForUnitTestOnly (TradeGood const* const tg, double p) {prices.setAmount(tg, p);}
+  
   static void unitTests ();
 private:
   Market (Market* other);

@@ -948,6 +948,7 @@ void TradeUnit::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist)
       continue;
     }
     if (prices.getAmount(*tg) <= lastPricesPaid.getAmount(*tg)) continue;
+    if (getAmount(*tg) < 1) continue;
     bidlist.push_back(new MarketBid((*tg), -getAmount(*tg), this));
   }
 }
@@ -959,4 +960,61 @@ void TradeUnit::setLocation (Vertex* dat) {
     mostRecentMarket = dat;
   }
   else leaveMarket();
+}
+
+void TradeUnit::unitTests () {
+  Hex* testHex = Hex::getTestHex();
+  Vertex* originalVertex = 0;
+  Vertex* testVertex1 = 0;
+  Vertex* testVertex2 = 0;
+  for (Hex::VtxIterator vex = testHex->vexBegin(); vex != testHex->vexEnd(); ++vex) {
+    if ((*vex)->getMarket()) {
+      originalVertex = (*vex);
+      continue;
+    }
+    if (!testVertex1) {
+      testVertex1 = (*vex);
+      testVertex1->setMarket(new Market());
+      continue;
+    }
+    testVertex2 = (*vex);
+    testVertex2->setMarket(new Market());
+    break;
+  }
+
+  if (!originalVertex) throwFormatted("Test Hex without Market");
+  if (!testVertex1) throwFormatted("No test market 1");
+  if (!testVertex2) throwFormatted("No test market 2");
+  if (originalVertex == testVertex1) throwFormatted("Original and test market 1 equal");
+  if (originalVertex == testVertex2) throwFormatted("Original and test market 2 equal");
+  if (testVertex1 == testVertex2) throwFormatted("Test markets 1 and 2 equal");
+
+  Market* market1 = originalVertex->getMarket();
+  Market* market2 = testVertex1->getMarket();
+  Market* market3 = testVertex2->getMarket();
+
+  TradeGood::Iter testGoodIter = TradeGood::exLaborStart();
+  TradeGood const* testGood = *testGoodIter;
+  market1->setPriceForUnitTestOnly(testGood, 1);
+  market2->setPriceForUnitTestOnly(testGood, 1);
+  market3->setPriceForUnitTestOnly(testGood, 3);
+
+  TradeUnit* testUnit = new TradeUnit();
+  testUnit->setAmount(TradeGood::Money, 100);
+  testUnit->setLocation(originalVertex);
+  testUnit->findTradeTarget();
+  if (testUnit->tradingTarget != testVertex2) throwFormatted("Expected to trade to market 2");
+  if (testUnit->goodToBuy != testGoodIter) throwFormatted("Expected to trade %s, got %s", testGood->getName().c_str(), (*testUnit->goodToBuy)->getName().c_str());
+
+  GoodsHolder prices;
+  market1->getPrices(prices);
+  vector<MarketBid*> bidlist;
+  testUnit->getBids(prices, bidlist);
+  if (1 != bidlist.size()) throwFormatted("Expected 1 bid, got %i", bidlist.size());
+  MarketBid* testBid = bidlist[0];
+  if (testBid->tradeGood != testGood) throwFormatted("Expected bid for %s, got %s", testGood->getName().c_str(), testBid->tradeGood->getName().c_str());
+
+  testUnit->endOfTurn();
+  if (testUnit->getLocation() != testVertex2) throwFormatted("Expected trade unit to reach target");
+  if (testUnit->theMarket != market3) throwFormatted("Trade unit should be registered in market 3");
 }
