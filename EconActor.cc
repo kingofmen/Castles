@@ -121,20 +121,9 @@ void EconActor::produce (TradeGood const* const tg, double amount) {
 void ContractInfo::execute () const {
   if (!recipient) return;
   if (!source) return;
-  double amountWanted = amount;
-  switch (delivery) {
-  default:
-  case Fixed:
-    break;
-  case Percentage:
-  case SurplusPercentage:
-    amountWanted *= source->getAmount(tradeGood);
-    break;
-  }
-  Logger::logStream(Logger::Debug) << source->getIdx() << " contract with " << recipient->getIdx() << " " << amountWanted << "\n"; 
-  amountWanted = min(source->getAmount(tradeGood), amountWanted);
-  recipient->deliverGoods(tradeGood, amountWanted);
-  source->deliverGoods(tradeGood, -amountWanted);
+
+  double delivered = source->produceForTaxes(tradeGood, amount, delivery);
+  recipient->deliverGoods(tradeGood, delivered);
 }
 
 double EconActor::availableCredit (EconActor* const applicant) const {
@@ -188,6 +177,13 @@ double EconActor::produceForContract (TradeGood const* const tg, double amount) 
   amount = min(amount, getAmount(tg));
   deliverGoods(tg, -amount);
   registerSale(tg, amount);
+  return amount;
+}
+
+double EconActor::produceForTaxes (TradeGood const* const tg, double amount, ContractInfo::AmountType taxType) {
+  if (ContractInfo::Percentage == taxType) amount *= getAmount(tg);
+  amount = min(amount, getAmount(tg));
+  deliverGoods(tg, -amount);
   return amount;
 }
 

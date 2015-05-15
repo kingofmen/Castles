@@ -280,6 +280,7 @@ public:
   int getTotalPopulation () const {return males.getTotalPopulation() + women.getTotalPopulation();}
   MilUnit* raiseMilitia ();
   virtual double produceForContract (TradeGood const* const tg, double amount);
+  virtual double produceForTaxes (TradeGood const* const tg, double amount, ContractInfo::AmountType taxType);
   int produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll);
   double production () const;
   virtual void setMirrorState ();  

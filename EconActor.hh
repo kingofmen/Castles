@@ -95,6 +95,7 @@ public:
   double getPromised (TradeGood const* const tg) {return promisedToDeliver.getAmount(tg);}
   void leaveMarket ();
   virtual double produceForContract (TradeGood const* const tg, double amount);
+  virtual double produceForTaxes (TradeGood const* const tg, double amount, ContractInfo::AmountType taxType);
   EconActor* getEconOwner () const {return owner;}
   bool isOwnedBy (EconActor const* const cand) const {return cand == owner;}
   void registerContract (MarketContract const* const contract);

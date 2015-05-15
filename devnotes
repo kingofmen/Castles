@@ -21,58 +21,21 @@ Next gameplay iteration (thoughts, not all to be implemented):
  * Three-resource economy
    - Initialise F*Status and f*erMaps from text files or statically.
    - Fix Miner capitalSize
-   - Disambiguate 'clear' methods. (check)
    - Think up better names for 'fields' and 'extractResources'
-   - Change producers to be regular EconActors who sell their goods, but supply owners with money. (check)
-   - Forest
-     . Internal (check)
-     . Initialisation (check)
-     . Read from save (check)
-     . Write to save (check)
-     . Unit tests (check)
-   - Unify Forest and Farmland (check, as far as it goes)
-   - Mine
-     . Internal (check)
-     . Initialisation (check)
-     . Read from save (check)
-     . Write to save (check)
-     . Unit tests (check)
-   - Write and read in save:
-     . Market prices (check)
-     . Contracts
-     . Marginal declines (check)
-     . Block sizes (check)
-   - Close the loop: Make Village consume the food it gets and have effects on birth/death rate (check)
-   - Get rid of old supplies stuff
+   - Load and save contracts
    - Allow additional production from additional labour
    - Enforce that output cannot be capital
    - Fix Schlemiel in Farmland fillBlock
-   - Make farms buy labour for integer number of fields (check)
-   - Make Farmland and Forest statuses enums (check)
-   - Margin effects (check)
-     . Block sizes in production (check)
-     . Block calculations (check)
-     . Marginal declines in production (check)
-   - Allow maintenance in addition to production (check)
    - Use EconActor discount rate in Forester chopping decisions
-   - Remove boss from Forester. (check)
    - Set workableBlocks from save for all buildings.
-   - The EconActor owner of Farmer, etc, is not mirrored. So if you do a workFoo, the *real* owner gets the output. Problem. (fixed)
-   - Markets aren't mirrored either. So running mirrors may affect real production volumes. (Fixed - now they are mirrored.)
-   - Castle as EconActor (check)
    - Threshold effect on capital
-   - Make Markets exist in Vertexes - share between Hexes! (check)
    - Discount rate on Maslow levels, eg do I prefer level 2 now and 0 tomorrow, or 1 both days? Also, seasonal awareness.
    - More GUI insight for testing purposes
    - Restore clearing of land
    - Normalisation
-   - Ending of contracts (check)
-   - MilUnits as EconActors (check)
-   - Dilution of capital (check)
    - Decay of goods
-   - Trade
-   - Forced labour
-   - Taxation
+   - Forced labour (check)
+   - Taxation (check)
    - Player interaction
  * Sieges
  * Command points

@@ -581,11 +581,22 @@ double Village::produceForContract (TradeGood const* const tg, double amount) {
   if (amount < 0) throw string("Cannot produce negative amount");
   if (tg == TradeGood::Labor) {
     amount = min(amount, production());
-    if (amount < 0) throw string("Cannot work more than production");    
+    if (amount < 0) throw string("Cannot work more than production");
     workedThisTurn += amount;
     return amount;
   }
   return EconActor::produceForContract(tg, amount);
+}
+
+double Village::produceForTaxes (TradeGood const* const tg, double amount, ContractInfo::AmountType taxType) {
+  if (tg == TradeGood::Labor) {
+    if (ContractInfo::Percentage == taxType) amount *= production();
+    amount = min(amount, production());
+    if (amount < 0) throw string("Cannot work more than production");
+    workedThisTurn += amount;
+    return amount;
+  }
+  return EconActor::produceForTaxes(tg, amount, taxType);
 }
 
 void Village::endOfTurn () {
