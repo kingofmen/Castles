@@ -268,9 +268,10 @@ void initialiseContract (ContractInfo* contract, Object* info) {
 
   contract->recipient = EconActor::getByIndex(info->safeGetUint("target")); 
   contract->amount = info->safeGetFloat("amount", 0);
-  if (info->safeGetString("type") == "fixed") contract->delivery = ContractInfo::Fixed;
-  else if (info->safeGetString("type") == "percentage") contract->delivery = ContractInfo::Percentage; 
-  else if (info->safeGetString("type") == "surplus_percentage") contract->delivery = ContractInfo::SurplusPercentage;
+  string taxType = info->safeGetString("type", "unknown");
+  if (taxType == "fixed") contract->delivery = ContractInfo::Fixed;
+  else if (taxType == "percentage") contract->delivery = ContractInfo::Percentage;
+  else throwFormatted("Tax should have type fixed or percentage, found %s", taxType.c_str());
   contract->tradeGood = TradeGood::getByName(info->safeGetString("good"));
 }
 
@@ -1340,11 +1341,29 @@ void StaticInitialiser::writeAgeInfoToObject (AgeTracker& age, Object* obj, int 
   }
 }
 
+void StaticInitialiser::writeContractInfoIntoObject (ContractInfo* contract, Object* info) {
+  info->setLeaf("target", contract->recipient->getIdx());
+  info->setLeaf("amount", contract->amount);
+  string taxType = "unknown";
+  switch (contract->delivery) {
+  default:
+  case ContractInfo::Fixed:      taxType = "fixed";      break;
+  case ContractInfo::Percentage: taxType = "percentage"; break;
+  }
+  info->setLeaf("type", taxType);
+  info->setLeaf("good", contract->tradeGood->getName());
+}
+
 void StaticInitialiser::writeEconActorIntoObject (EconActor* econ, Object* info) {
   info->setLeaf("id", econ->getIdx());
   writeGoodsHolderIntoObject(*econ, info->getNeededObject("goods"));
   if (econ->getEconOwner()) info->setLeaf("owner", econ->getEconOwner()->getIdx());
   info->setLeaf("discountRate", econ->discountRate);
+  for (vector<ContractInfo*>::iterator ob = econ->obligations.begin(); ob != econ->obligations.end(); ++ob) {
+    Object* contract = new Object("contract");
+    info->setValue(contract);
+    writeContractInfoIntoObject((*ob), contract);
+  }
 }
 
 void StaticInitialiser::writeGoodsHolderIntoObject (const GoodsHolder& goodsHolder, Object* info) {

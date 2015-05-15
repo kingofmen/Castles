@@ -35,7 +35,9 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Normalisation
    - Decay of goods
    - Forced labour (check)
-   - Taxation (check)
+   - Taxation
+     . Unit tests
+     . Write to save (check)
    - Player interaction
  * Sieges
  * Command points

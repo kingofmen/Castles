@@ -62,7 +62,7 @@ double operator* (const GoodsHolder& gh1, const GoodsHolder& gh2);
 struct ContractInfo : public Iterable<ContractInfo> {
   ContractInfo () : Iterable<ContractInfo>(this) {}
   void execute () const;
-  enum AmountType {Fixed, Percentage, SurplusPercentage};
+  enum AmountType {Fixed, Percentage};
   TradeGood const* tradeGood;
   double amount;
   AmountType delivery;

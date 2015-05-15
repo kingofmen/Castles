@@ -110,6 +110,7 @@ private:
   static double interpolate (double xfrac, double yfrac, int width, int height, double* heightMap);
   static void setPlayer (Unit* unit, Object* mInfo);
   static void writeGoodsHolderIntoObject (const GoodsHolder& goodsHolder, Object* info);
+  static void writeContractInfoIntoObject (ContractInfo* contract, Object* info);
   static void writeEconActorIntoObject (EconActor* econ, Object* info);
   static void writeBuilding (Object* bInfo, Building* build);
   static void writeUnitLocation (Unit* unit, Object* obj);
