@@ -88,7 +88,7 @@ hexinfo = {
       food = 600000 
       money = 100
     }
-    contract = {
+    obligation = {
       amount = 0.5
       type = percentage
       good = labour

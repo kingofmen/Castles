@@ -22,21 +22,21 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Initialise F*Status and f*erMaps from text files or statically.
    - Fix Miner capitalSize
    - Think up better names for 'fields' and 'extractResources'
-   - Load and save contracts
+   - Load and save market contracts (check)
    - Allow additional production from additional labour
    - Enforce that output cannot be capital
    - Fix Schlemiel in Farmland fillBlock
    - Use EconActor discount rate in Forester chopping decisions
    - Set workableBlocks from save for all buildings.
    - Threshold effect on capital
-   - Discount rate on Maslow levels, eg do I prefer level 2 now and 0 tomorrow, or 1 both days? Also, seasonal awareness.
+   - Substitution in Maslow levels
    - More GUI insight for testing purposes
    - Restore clearing of land
    - Normalisation
    - Decay of goods
    - Forced labour (check)
-   - Taxation
-     . Unit tests
+   - Taxation (check)
+     . Unit tests (check)
      . Write to save (check)
    - Player interaction
  * Sieges

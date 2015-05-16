@@ -16,6 +16,7 @@ struct MarketBid {
 
 struct MarketContract {
   MarketContract (MarketBid* one, MarketBid* two, double p, unsigned int duration);
+  MarketContract (EconActor* s, EconActor* r, double p, unsigned int rmt, const TradeGood* tg, double amt);
   ~MarketContract ();
 
   void    clear ();

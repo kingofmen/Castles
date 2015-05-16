@@ -30,6 +30,10 @@ static map<string, int Miner::*> minerMap;
 
 static map<int, Castle*> castleMap;
 static map<int, MilUnit*> unitMap;
+static map<unsigned int, vector<MarketContract*> > contractMap;
+static map<unsigned int, vector<ContractInfo*> > obligationMap;
+static map<int, vector<EconActor*> > econOwnerMap;
+static map<EconActor*, vector<MarketContract*> > marketContractMap;
 
 void readGoodsHolder (Object* goodsObject, GoodsHolder& goods) {
   goods.zeroGoods();
@@ -61,6 +65,15 @@ void StaticInitialiser::createCalculator (Object* info, Action::Calculator* ret)
 void StaticInitialiser::clearTempMaps () {
   castleMap.clear();
   unitMap.clear();
+  contractMap.clear();
+  obligationMap.clear();
+  econOwnerMap.clear();
+  for (map<EconActor*, vector<MarketContract*> >::iterator con = marketContractMap.begin(); con != marketContractMap.end(); ++con) {
+    Market* theMarket = (*con).first->theMarket;
+    if (!theMarket) throwFormatted("EconActor %i has contracts but no market", (*con).first->getIdx());
+    BOOST_FOREACH(MarketContract* mc, (*con).second) theMarket->contracts.push_back(mc);
+  }
+  marketContractMap.clear();
 }
 
 void StaticInitialiser::createActionProbabilities (Object* info) {
@@ -262,17 +275,32 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Village::femaleSurplusZero = popInfo->safeGetFloat("femaleSurplusZero", Village::femaleSurplusZero);    
 }
 
-void initialiseContract (ContractInfo* contract, Object* info) {
-  if (!info) return; 
-  if (!contract) return;
+void initialiseObligation (ContractInfo* contract, Object* info) {
+  if (!info) throwFormatted("initialiseObligation called with null info object");
+  if (!contract) throwFormatted("initialiseObligation called with null contract object");
 
-  contract->recipient = EconActor::getByIndex(info->safeGetUint("target")); 
+  unsigned int recId = info->safeGetUint("target");
+  contract->recipient = EconActor::getByIndex(recId);
+  if (!contract->recipient) obligationMap[recId].push_back(contract);
   contract->amount = info->safeGetFloat("amount", 0);
   string taxType = info->safeGetString("type", "unknown");
   if (taxType == "fixed") contract->delivery = ContractInfo::Fixed;
   else if (taxType == "percentage") contract->delivery = ContractInfo::Percentage;
   else throwFormatted("Tax should have type fixed or percentage, found %s", taxType.c_str());
   contract->tradeGood = TradeGood::getByName(info->safeGetString("good"));
+}
+
+MarketContract* createContract (EconActor* econ, Object* info) {
+  MarketContract* contract = new MarketContract(econ,
+						EconActor::getByIndex(info->safeGetUint("recipient")),
+						info->safeGetFloat("price"),
+						info->safeGetInt("remaining"),
+						TradeGood::getByName(info->safeGetString("good")),
+						info->safeGetFloat("amount"));
+  contract->accumulatedMissing = info->safeGetFloat("missedPayments");
+  if (!contract->recipient) contractMap[info->safeGetUint("recipient")].push_back(contract);
+
+  return contract;
 }
 
 void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
@@ -283,27 +311,42 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
   }
   econ->setIdx(id);
 
-  static map<Object*, ContractInfo*> unFilled;
-  objvec toRemove;
-  for (map<Object*, ContractInfo*>::iterator un = unFilled.begin(); un != unFilled.end(); ++un) {
-    if ((*un).first->safeGetUint("recipient") != id) continue;
-    (*un).second->recipient = econ;
-    toRemove.push_back((*un).first);
-  }
-  for (objiter tr = toRemove.begin(); tr != toRemove.end(); ++tr) unFilled.erase(*tr); 
-  
-  objvec contracts = info->getValue("contract");
+  objvec contracts = info->getValue("obligation");
   for (objiter cInfo = contracts.begin(); cInfo != contracts.end(); ++cInfo) {
     ContractInfo* contract = new ContractInfo();
-    initialiseContract(contract, *cInfo);
-    if (!contract->recipient) unFilled[*cInfo] = contract;
+    initialiseObligation(contract, *cInfo);
     contract->source = econ;
     econ->addObligation(contract);
+  }
+  contracts = info->getValue("contract");
+  for (objiter cInfo = contracts.begin(); cInfo != contracts.end(); ++cInfo) {
+    MarketContract* mc = createContract(econ, *cInfo);
+    if (econ->theMarket) econ->theMarket->contracts.push_back(mc);
+    else marketContractMap[econ].push_back(mc);
+  }
+
+  if (0 < contractMap[id].size()) {
+    BOOST_FOREACH(MarketContract* mc, contractMap[id]) mc->recipient = econ;
+    contractMap[id].clear();
+  }
+
+  if (0 < obligationMap[id].size()) {
+    BOOST_FOREACH(ContractInfo* mc, obligationMap[id]) mc->recipient = econ;
+    obligationMap[id].clear();
   }
 
   readGoodsHolder(info->safeGetObject("goods"), *econ);
   int ownerIdx = info->safeGetInt("owner", -1);
-  if (ownerIdx >= 0) econ->setEconOwner(EconActor::getByIndex(ownerIdx));
+  if (ownerIdx >= 0) {
+    EconActor* owner = EconActor::getByIndex(ownerIdx);
+    if (owner) econ->setEconOwner(owner);
+    else econOwnerMap[ownerIdx].push_back(econ);
+  }
+  if (0 < econOwnerMap[id].size()) {
+    BOOST_FOREACH(EconActor* ec, econOwnerMap[id]) ec->setEconOwner(econ);
+    econOwnerMap[id].clear();
+  }
+
   econ->discountRate = info->safeGetFloat("discountRate", econ->discountRate);
 }
 
@@ -1341,7 +1384,16 @@ void StaticInitialiser::writeAgeInfoToObject (AgeTracker& age, Object* obj, int 
   }
 }
 
-void StaticInitialiser::writeContractInfoIntoObject (ContractInfo* contract, Object* info) {
+void StaticInitialiser::writeContractInfoIntoObject (MarketContract* contract, Object* info) {
+  info->setLeaf("recipient", contract->recipient->getIdx());
+  info->setLeaf("price", contract->price);
+  info->setLeaf("remaining", contract->remainingTime);
+  info->setLeaf("good", contract->tradeGood->getName());
+  info->setLeaf("amount", contract->amount);
+  info->setLeaf("missedPayments", contract->accumulatedMissing);
+}
+
+void StaticInitialiser::writeObligationInfoIntoObject (ContractInfo* contract, Object* info) {
   info->setLeaf("target", contract->recipient->getIdx());
   info->setLeaf("amount", contract->amount);
   string taxType = "unknown";
@@ -1359,10 +1411,18 @@ void StaticInitialiser::writeEconActorIntoObject (EconActor* econ, Object* info)
   writeGoodsHolderIntoObject(*econ, info->getNeededObject("goods"));
   if (econ->getEconOwner()) info->setLeaf("owner", econ->getEconOwner()->getIdx());
   info->setLeaf("discountRate", econ->discountRate);
-  for (vector<ContractInfo*>::iterator ob = econ->obligations.begin(); ob != econ->obligations.end(); ++ob) {
-    Object* contract = new Object("contract");
+  BOOST_FOREACH(ContractInfo* ci, econ->obligations) {
+    Object* contract = new Object("obligation");
     info->setValue(contract);
-    writeContractInfoIntoObject((*ob), contract);
+    writeObligationInfoIntoObject(ci, contract);
+  }
+  if (econ->theMarket) {
+    BOOST_FOREACH(MarketContract* mc, econ->theMarket->contracts) {
+      if (mc->producer != econ) continue;
+      Object* contract = new Object("contract");
+      info->setValue(contract);
+      writeContractInfoIntoObject(mc, contract);
+    }
   }
 }
 
@@ -1439,17 +1499,6 @@ void StaticInitialiser::writeGameToFile (string fname) {
 	writeUnitToObject(castle->getGarrison(i), garrObject);
 	writeEconActorIntoObject(castle->getGarrison(i), garrObject); 
       }
-      /*
-      Object* taxObject = new Object("taxes");
-      castleObject->setValue(taxObject);
-      taxObject->setLeaf("amount", castle->taxExtraction.amount);
-      switch (castle->taxExtraction.delivery) {
-      default: 
-      case ContractInfo::Fixed:             taxObject->setLeaf("type", "fixed"); break;
-      case ContractInfo::Percentage:        taxObject->setLeaf("type", "percentage"); break;
-      case ContractInfo::SurplusPercentage: taxObject->setLeaf("type", "surplus_percentage"); break;
-      }
-      */
     }
 
     hexInfo->setLeaf("market", getVertexName((*hex)->getDirection((*hex)->marketVtx)));

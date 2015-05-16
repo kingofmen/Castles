@@ -361,6 +361,20 @@ void Market::unRegisterParticipant (EconActor* ea) {
   ea->theMarket = 0;
 }
 
+MarketContract::MarketContract (EconActor* s, EconActor* r, double p, unsigned int rmt, const TradeGood* tg, double amt)
+  : producer(s)
+  , recipient(r)
+  , tradeGood(tg)
+  , amount(amt)
+  , cashPaid(0)
+  , delivered(0)
+  , price(p)
+  , remainingTime(rmt)
+  , accumulatedMissing(0)
+{
+  producer->registerContract(this);
+  if (recipient) recipient->registerContract(this);
+}
 
 MarketContract::MarketContract (MarketBid* one, MarketBid* two, double p, unsigned int rmt) 
   : recipient(one->bidder)
