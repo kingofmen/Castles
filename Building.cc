@@ -505,6 +505,28 @@ void Village::unitTests () {
   
   consume[20] = oldConsume;
   delete testVillage;
+
+  testVillage = getTestVillage(100);
+  testVillage->zeroGoods();
+  double production = testVillage->production();
+  ContractInfo labourContract;
+  labourContract.source = testVillage;
+  labourContract.recipient = testVillage;
+  labourContract.amount = 0.25;
+  labourContract.delivery = ContractInfo::Percentage;
+  labourContract.tradeGood = TradeGood::Labor;
+  labourContract.execute();
+  if (fabs(testVillage->getAmount(TradeGood::Labor) - production*labourContract.amount) > 1) throwFormatted("Expected to get %.2f labour from percentage, but got %.2f",
+													    production*labourContract.amount,
+													    testVillage->getAmount(TradeGood::Labor));
+  testVillage->zeroGoods();
+  labourContract.amount = 10;
+  labourContract.delivery = ContractInfo::Fixed;
+  labourContract.execute();
+  if (fabs(testVillage->getAmount(TradeGood::Labor) - labourContract.amount) > 1) throwFormatted("Expected to get %.2f labour from fixed tax, but got %.2f",
+												 labourContract.amount,
+												 testVillage->getAmount(TradeGood::Labor));
+
 }
 
 string Village::getBidStatus () const {

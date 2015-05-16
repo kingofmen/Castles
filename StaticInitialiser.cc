@@ -298,7 +298,7 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
     initialiseContract(contract, *cInfo);
     if (!contract->recipient) unFilled[*cInfo] = contract;
     contract->source = econ;
-    econ->obligations.push_back(contract);
+    econ->addObligation(contract);
   }
 
   readGoodsHolder(info->safeGetObject("goods"), *econ);

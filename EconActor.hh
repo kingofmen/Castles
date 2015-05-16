@@ -86,6 +86,7 @@ public:
   EconActor ();
   ~EconActor ();
 
+  void addObligation (ContractInfo* ci) {obligations.push_back(ci);}
   double availableCredit (EconActor* const applicant) const;
   void dunAndPay ();
   double extendCredit (EconActor* const applicant, double amountWanted);
