@@ -369,11 +369,10 @@ protected:
 };
 
 class FieldStatus : public Enumerable<const FieldStatus> {
+  friend class StaticInitialiser;
 public:
-  FieldStatus (string n, int rl, bool lastOne = false);
+  FieldStatus (string n, int rl, int y);
   ~FieldStatus ();
-
-  static void initialise();
 
   static FieldStatus const* Clear;
   static FieldStatus const* Ready;
@@ -382,6 +381,8 @@ public:
   static FieldStatus const* Ripe2;
   static FieldStatus const* Ripe3;
   static FieldStatus const* Ended;
+
+  int yield;
 };
 
 class Farmer : public Industry<Farmer>, public Mirrorable<Farmer> {
@@ -408,9 +409,6 @@ private:
   static int _labourToClear;
   static int _labourToWeed;
   static int _labourToReap;
-  static int _cropsFrom3;
-  static int _cropsFrom2;
-  static int _cropsFrom1;
 };
 
 class Farmland : public Building, public Mirrorable<Farmland>, public Collective<Farmer, FieldStatus, 10> {

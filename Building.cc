@@ -34,9 +34,6 @@ int Farmer::_labourToPlow   = 10;
 int Farmer::_labourToClear  = 100;
 int Farmer::_labourToWeed   = 3;
 int Farmer::_labourToReap   = 10;
-int Farmer::_cropsFrom3     = 1000;
-int Farmer::_cropsFrom2     = 500;
-int Farmer::_cropsFrom1     = 100;
 
 ForestStatus const* ForestStatus::Clear = 0;
 ForestStatus const* ForestStatus::Planted = 0;
@@ -728,7 +725,7 @@ double Farmer::outputOfBlock (int block) const {
   // May be inaccurate for the last block. TODO: It would be good to have
   // an expectation value instead, with a discount rate and accounting for
   // the current state of the block.
-  return _cropsFrom3 * blockInfo->blockSize;
+  return FieldStatus::Ripe3->yield * blockInfo->blockSize;
 }
 
 Farmland* Farmland::getTestFarm (int numFields) {
@@ -944,10 +941,10 @@ void Farmer::unitTests () {
 	    fields[*FieldStatus::Ripe3]);
     throw string(errorMessage);
   }
-  if (fabs(getAmount(output) - _cropsFrom3*1400) > 1) {
-    sprintf(errorMessage, "Expected to have %f %s, but have %f", _cropsFrom3*1400.0, output->getName().c_str(), getAmount(output));
-    throw string(errorMessage);
-  }
+  if (fabs(getAmount(output) - FieldStatus::Ripe3->yield*1400) > 1) throwFormatted("Expected to have %f %s, but have %f",
+										   FieldStatus::Ripe3->yield*1400.0,
+										   output->getName().c_str(),
+										   getAmount(output));
 
   blockInfo->blockSize = 5;
   fields[*FieldStatus::Ended] = 6;
@@ -1144,7 +1141,7 @@ void Farmer::extractResources (bool /* tick */) {
     double totalHarvested = 0;
     availableLabour -= harvest * _labourToReap * capFactor;
     for (int i = 0; i < harvest; ++i) {
-      totalHarvested += _cropsFrom3 * marginFactor;
+      totalHarvested += FieldStatus::Ripe3->yield * marginFactor;
       if (++counter >= blockInfo->blockSize) {
 	counter = 0;
 	marginFactor *= blockInfo->marginFactor;
@@ -1156,7 +1153,7 @@ void Farmer::extractResources (bool /* tick */) {
     harvest = min(fields[*FieldStatus::Ripe2], (int) floor(availableLabour / (_labourToReap * capFactor)));
     availableLabour -= harvest * _labourToReap * capFactor;
     for (int i = 0; i < harvest; ++i) {
-      totalHarvested += _cropsFrom2 * marginFactor;
+      totalHarvested += FieldStatus::Ripe2->yield * marginFactor;
       if (++counter >= blockInfo->blockSize) {
 	counter = 0;
 	marginFactor *= blockInfo->marginFactor;
@@ -1168,7 +1165,7 @@ void Farmer::extractResources (bool /* tick */) {
     harvest = min(fields[*FieldStatus::Ripe1], (int) floor(availableLabour / (_labourToReap * capFactor)));
     availableLabour -= harvest * _labourToReap * capFactor;
     for (int i = 0; i < harvest; ++i) {
-      totalHarvested += _cropsFrom1 * marginFactor;
+      totalHarvested += FieldStatus::Ripe1->yield * marginFactor;
       if (++counter >= blockInfo->blockSize) {
 	counter = 0;
 	marginFactor *= blockInfo->marginFactor;
@@ -1723,9 +1720,9 @@ double Farmland::possibleProductionThisTurn () const {
   if (Calendar::Autumn != Calendar::getCurrentSeason()) return 0;
   double ret = 0;
   BOOST_FOREACH(Farmer* farmer, workers) {
-    ret += farmer->fields[*FieldStatus::Ripe1] * Farmer::_cropsFrom1;
-    ret += farmer->fields[*FieldStatus::Ripe2] * Farmer::_cropsFrom2;
-    ret += farmer->fields[*FieldStatus::Ripe3] * Farmer::_cropsFrom3;
+    ret += farmer->fields[*FieldStatus::Ripe1] * FieldStatus::Ripe1->yield;
+    ret += farmer->fields[*FieldStatus::Ripe2] * FieldStatus::Ripe2->yield;
+    ret += farmer->fields[*FieldStatus::Ripe3] * FieldStatus::Ripe3->yield;
   }
   return ret;
 }
@@ -1822,22 +1819,12 @@ MineStatus::MineStatus (string n, int rl, bool lastOne)
 
 MineStatus::~MineStatus () {}
 
-FieldStatus::FieldStatus (string n, int rl, bool lastOne)
-  : Enumerable<const FieldStatus>(this, n, lastOne)
+FieldStatus::FieldStatus (string n, int rl, int y)
+  : Enumerable<const FieldStatus>(this, n, false)
+  , yield(y)
 {}
 
 FieldStatus::~FieldStatus () {}
-
-void FieldStatus::initialise() {
-  Enumerable<const FieldStatus>::clear();
-  FieldStatus::Clear = new FieldStatus("clear", 0, false);
-  FieldStatus::Ready = new FieldStatus("ready", 0, false);
-  FieldStatus::Sowed = new FieldStatus("sowed", 0, false);
-  FieldStatus::Ripe1 = new FieldStatus("ripe1", 0, false);
-  FieldStatus::Ripe2 = new FieldStatus("ripe2", 0, false);
-  FieldStatus::Ripe3 = new FieldStatus("ripe3", 0, false);
-  FieldStatus::Ended = new FieldStatus("ended", 0, true);
-}
 
 ForestStatus::ForestStatus (string n, int rl, bool lastOne)
   : Enumerable<const ForestStatus>(this, n, lastOne)

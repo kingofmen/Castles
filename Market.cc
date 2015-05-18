@@ -65,6 +65,11 @@ Market::Market ()
   }
 }
 
+Market::~Market () {
+  // Just in case some complete idiot hasn't deleted them already, so they don't try to unregister.
+  participants.clear(); 
+}
+
 Market::Market (Market* other)
   : Mirrorable<Market>(other)
 {
