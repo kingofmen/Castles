@@ -382,6 +382,7 @@ public:
   static FieldStatus const* Ripe3;
   static FieldStatus const* Ended;
 
+  int requiredLabour;
   int yield;
 };
 
@@ -404,11 +405,7 @@ private:
   void fillBlock (int block, vector<int>& theBlock) const;
   vector<int> fields;
 
-  static int _labourToSow;
-  static int _labourToPlow;
   static int _labourToClear;
-  static int _labourToWeed;
-  static int _labourToReap;
 };
 
 class Farmland : public Building, public Mirrorable<Farmland>, public Collective<Farmer, FieldStatus, 10> {

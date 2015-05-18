@@ -190,15 +190,12 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
     string name = (*fs).second;
     FieldStatus const** ptrLoc = (*fs).first;
     Object* statusInfo = farmInfo->getNeededObject(name);
+    int labour = statusInfo->safeGetInt("labour");
     int yield = statusInfo->safeGetInt("yield");
-    (*ptrLoc) = new FieldStatus(name, 0, yield);
+    (*ptrLoc) = new FieldStatus(name, labour, yield);
   }
   Enumerable<const FieldStatus>::freeze();
-  Farmer::_labourToSow    = farmInfo->safeGetInt("labourToSow",    Farmer::_labourToSow);
-  Farmer::_labourToPlow   = farmInfo->safeGetInt("labourToPlow",   Farmer::_labourToPlow);
   Farmer::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmer::_labourToClear);
-  Farmer::_labourToWeed   = farmInfo->safeGetInt("labourToWeed",   Farmer::_labourToWeed);
-  Farmer::_labourToReap   = farmInfo->safeGetInt("labourToReap",   Farmer::_labourToReap);
   initialiseIndustry<Farmer>(farmInfo);
   
   Object* forestInfo       = popInfo->getNeededObject("forest");
