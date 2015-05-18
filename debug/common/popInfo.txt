@@ -147,6 +147,28 @@ farmland = {
     wood = 0.1
   }
 
+  clear = {
+    yield = 0
+  }
+  ready = {
+    yield = 1
+  }
+  sowed = {
+    yield = 10
+  }
+  ripe1 = {
+    yield = 500
+  }
+  ripe2 = {
+    yield = 750
+  }
+  ripe3 = {
+    yield = 1000
+  }
+  ended = {
+    yield = 0
+  }
+
   output = food
   productionCycle = 42
 }

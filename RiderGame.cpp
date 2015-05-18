@@ -34,13 +34,13 @@ template <class T> void destroyAll () {
 }
 
 WarfareGame::~WarfareGame () {
-  Vertex::clear();
-  Hex::clear();
-  Line::clear();
-  Player::clear();
   destroyAll<TransportUnit>();
   destroyAll<TradeUnit>();
+  Player::clear();
   EconActor::clear();
+  Hex::clear();
+  Line::clear();
+  Vertex::clear();
   currGame = 0;
 }
 

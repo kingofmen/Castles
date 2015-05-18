@@ -174,15 +174,31 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Castle::siegeModifier = popInfo->safeGetFloat("siegeModifier", Castle::siegeModifier);
 
   Object* farmInfo          = popInfo->getNeededObject("farmland");
-  FieldStatus::initialise();
+  Enumerable<const FieldStatus>::clear();
+  Enumerable<const FieldStatus>::thaw();
+  // Don't use a map - need guaranteed ordering.
+  vector<pair<FieldStatus const**, string> > fsMap;
+  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Clear, "clear"));
+  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Ready, "ready"));
+  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Sowed, "sowed"));
+  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Ripe1, "ripe1"));
+  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Ripe2, "ripe2"));
+  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Ripe3, "ripe3"));
+  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Ended, "ended"));
+
+  for (vector<pair<FieldStatus const**, string> >::iterator fs = fsMap.begin(); fs != fsMap.end(); ++fs) {
+    string name = (*fs).second;
+    FieldStatus const** ptrLoc = (*fs).first;
+    Object* statusInfo = farmInfo->getNeededObject(name);
+    int yield = statusInfo->safeGetInt("yield");
+    (*ptrLoc) = new FieldStatus(name, 0, yield);
+  }
+  Enumerable<const FieldStatus>::freeze();
   Farmer::_labourToSow    = farmInfo->safeGetInt("labourToSow",    Farmer::_labourToSow);
   Farmer::_labourToPlow   = farmInfo->safeGetInt("labourToPlow",   Farmer::_labourToPlow);
   Farmer::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmer::_labourToClear);
   Farmer::_labourToWeed   = farmInfo->safeGetInt("labourToWeed",   Farmer::_labourToWeed);
   Farmer::_labourToReap   = farmInfo->safeGetInt("labourToReap",   Farmer::_labourToReap);
-  Farmer::_cropsFrom3     = farmInfo->safeGetInt("cropsFrom3",     Farmer::_cropsFrom3);
-  Farmer::_cropsFrom2     = farmInfo->safeGetInt("cropsFrom2",     Farmer::_cropsFrom2);
-  Farmer::_cropsFrom1     = farmInfo->safeGetInt("cropsFrom1",     Farmer::_cropsFrom1);
   initialiseIndustry<Farmer>(farmInfo);
   
   Object* forestInfo       = popInfo->getNeededObject("forest");
@@ -326,7 +342,10 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
   }
 
   if (0 < contractMap[id].size()) {
-    BOOST_FOREACH(MarketContract* mc, contractMap[id]) mc->recipient = econ;
+    BOOST_FOREACH(MarketContract* mc, contractMap[id]) {
+      mc->recipient = econ;
+      econ->registerContract(mc);
+    }
     contractMap[id].clear();
   }
 

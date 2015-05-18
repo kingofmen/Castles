@@ -46,7 +46,7 @@ class Market : public Mirrorable<Market> {
   friend class Mirrorable<Market>;
 public:
   Market ();
-  ~Market () {}
+  ~Market ();
 
   void holdMarket ();
   void registerParticipant (EconActor* ea);
