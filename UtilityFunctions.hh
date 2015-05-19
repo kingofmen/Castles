@@ -179,7 +179,7 @@ template <class T> class Iterable {
       delete allThings.back();
     }
   }
-  
+
  private:
   static vector<T*> allThings;
 };

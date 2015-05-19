@@ -1133,42 +1133,22 @@ void Farmer::extractResources (bool /* tick */) {
     int block = fields[*FieldStatus::Ended] / blockInfo->blockSize;
     int counter = fields[*FieldStatus::Ended] - block*blockInfo->blockSize;
     double marginFactor = pow(blockInfo->marginFactor, block);
-    int harvest = min(fields[*FieldStatus::Ripe3], (int) floor(availableLabour / (FieldStatus::Ripe3->requiredLabour * capFactor)));
     double totalHarvested = 0;
-    availableLabour -= harvest * FieldStatus::Ripe3->requiredLabour * capFactor;
-    for (int i = 0; i < harvest; ++i) {
-      totalHarvested += FieldStatus::Ripe3->yield * marginFactor;
-      if (++counter >= blockInfo->blockSize) {
-	counter = 0;
-	marginFactor *= blockInfo->marginFactor;
+    for (FieldStatus::rIter fs = FieldStatus::rstart(); fs != FieldStatus::rfinal(); ++fs) {
+      if (1 > (*fs)->yield) continue;
+      if (1 > fields[**fs]) continue;
+      int harvest = min(fields[**fs], (int) floor(availableLabour / ((*fs)->requiredLabour * capFactor)));
+      availableLabour -= harvest * (*fs)->requiredLabour * capFactor;
+      for (int i = 0; i < harvest; ++i) {
+	totalHarvested += (*fs)->yield * marginFactor;
+	if (++counter >= blockInfo->blockSize) {
+	  counter = 0;
+	  marginFactor *= blockInfo->marginFactor;
+	}
       }
+      fields[**fs] -= harvest;
+      fields[*FieldStatus::Ended] += harvest;
     }
-    fields[*FieldStatus::Ripe3] -= harvest;
-    fields[*FieldStatus::Ended] += harvest;
-    
-    harvest = min(fields[*FieldStatus::Ripe2], (int) floor(availableLabour / (FieldStatus::Ripe2->requiredLabour * capFactor)));
-    availableLabour -= harvest * FieldStatus::Ripe2->requiredLabour * capFactor;
-    for (int i = 0; i < harvest; ++i) {
-      totalHarvested += FieldStatus::Ripe2->yield * marginFactor;
-      if (++counter >= blockInfo->blockSize) {
-	counter = 0;
-	marginFactor *= blockInfo->marginFactor;
-      }
-    }
-    fields[*FieldStatus::Ripe2] -= harvest;
-    fields[*FieldStatus::Ended] += harvest;
-    
-    harvest = min(fields[*FieldStatus::Ripe1], (int) floor(availableLabour / (FieldStatus::Ripe1->requiredLabour * capFactor)));
-    availableLabour -= harvest * FieldStatus::Ripe1->requiredLabour * capFactor;
-    for (int i = 0; i < harvest; ++i) {
-      totalHarvested += FieldStatus::Ripe1->yield * marginFactor;
-      if (++counter >= blockInfo->blockSize) {
-	counter = 0;
-	marginFactor *= blockInfo->marginFactor;
-      }
-    }
-    fields[*FieldStatus::Ripe1] -= harvest;
-    fields[*FieldStatus::Ended] += harvest;
 
     produce(output, totalHarvested);
     break;
