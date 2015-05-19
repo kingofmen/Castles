@@ -1150,7 +1150,6 @@ void Farmer::extractResources (bool /* tick */) {
       fields[**fs] -= harvest;
       fields[*FieldStatus::Ended] += harvest;
     }
-
     produce(output, totalHarvested);
     break;
   }
@@ -1158,7 +1157,7 @@ void Farmer::extractResources (bool /* tick */) {
 
   double usedLabour = availableLabour - getAmount(TradeGood::Labor);
   deliverGoods(TradeGood::Labor, usedLabour);
-  if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after extractResources");
+  if (getAmount(TradeGood::Labor) < -0.001) throwFormatted("Negative labour %f %f %f after extractResources", getAmount(TradeGood::Labor), availableLabour, usedLabour);
 }
 
 void Farmer::fillBlock (int block, vector<int>& theBlock) const {

@@ -288,28 +288,34 @@ void WarfareGame::functionalTests (string fname) {
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) startingPrices.setAmount((*tg), testMarket->getPrice(*tg));
 
   while (Calendar::Winter != Calendar::getCurrentSeason()) {
-    Logger::logStream(DebugStartup) << Calendar::toString() << "\n";
-    labourAvailable.push_back(testHex->getVillage()->production());
-    for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) (*vex)->endOfTurn();
-    for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
-    Logger::logStream(DebugStartup) << testHex->getVillage()->getBidStatus() << "\n";
-    labourUsed.push_back(testMarket->getVolume(TradeGood::Labor));
-    employment.push_back(labourUsed.back() / labourAvailable.back());
-    Logger::logStream(DebugStartup) << "Good\tPrice\tDemand\tVolume\tProduce\tConsume\tAmount\n";
-    for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
-      goodsPrices[*tg].push_back(testMarket->getPrice(*tg));
-      produced[*tg] += testMarket->getProduced(*tg);
-      consumed[*tg] += testMarket->getConsumed(*tg);
-      Logger::logStream(DebugStartup) << (*tg)->getName()        << "\t"
-				      << testMarket->getPrice(*tg)  << "\t"
-				      << testMarket->getDemand(*tg) << "\t"
-				      << testMarket->getVolume(*tg) << "\t"
-				      << testMarket->getProduced(*tg) << "\t"
-				      << testMarket->getConsumed(*tg) << "\t"
-				      << testHex->getVillage()->getAmount(*tg) << "\t"
-				      << "\n";
+    try {
+      Logger::logStream(DebugStartup) << Calendar::toString() << "\n";
+      labourAvailable.push_back(testHex->getVillage()->production());
+      for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) (*vex)->endOfTurn();
+      for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
+      Logger::logStream(DebugStartup) << testHex->getVillage()->getBidStatus() << "\n";
+      labourUsed.push_back(testMarket->getVolume(TradeGood::Labor));
+      employment.push_back(labourUsed.back() / labourAvailable.back());
+      Logger::logStream(DebugStartup) << "Good\tPrice\tDemand\tVolume\tProduce\tConsume\tAmount\n";
+      for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+	goodsPrices[*tg].push_back(testMarket->getPrice(*tg));
+	produced[*tg] += testMarket->getProduced(*tg);
+	consumed[*tg] += testMarket->getConsumed(*tg);
+	Logger::logStream(DebugStartup) << (*tg)->getName()        << "\t"
+					<< testMarket->getPrice(*tg)  << "\t"
+					<< testMarket->getDemand(*tg) << "\t"
+					<< testMarket->getVolume(*tg) << "\t"
+					<< testMarket->getProduced(*tg) << "\t"
+					<< testMarket->getConsumed(*tg) << "\t"
+					<< testHex->getVillage()->getAmount(*tg) << "\t"
+					<< "\n";
+      }
+      Calendar::newWeekBegins();
     }
-    Calendar::newWeekBegins();
+    catch (string problem) {
+      Logger::logStream(DebugStartup) << "Failed with error " << problem << "\n";
+      break;
+    }
   }
 
   doublet labourInfo = calcMeanAndSigma(labourUsed);

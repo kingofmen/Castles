@@ -490,9 +490,9 @@ std::pair<int, int> Hex::getNeighbourCoordinates (std::pair<int, int> pos, Direc
 }
 
 void Hex::endOfTurn () {
-  if (farms)  farms-> endOfTurn();
-  if (forest) forest->endOfTurn();
-  if (mine)   mine->  endOfTurn();
+  if (farms)   farms-> endOfTurn();
+  if (forest)  forest->endOfTurn();
+  if (mine)    mine->  endOfTurn();
   if (village) village->endOfTurn();
 }
 
