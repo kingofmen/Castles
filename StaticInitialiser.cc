@@ -190,9 +190,11 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
     string name = (*fs).second;
     FieldStatus const** ptrLoc = (*fs).first;
     Object* statusInfo = farmInfo->getNeededObject(name);
-    int labour = statusInfo->safeGetInt("labour");
+    int springLabour = statusInfo->safeGetInt("springLabour");
+    int summerLabour = statusInfo->safeGetInt("summerLabour");
+    int autumnLabour = statusInfo->safeGetInt("autumnLabour");
     int yield = statusInfo->safeGetInt("yield");
-    (*ptrLoc) = new FieldStatus(name, labour, yield);
+    (*ptrLoc) = new FieldStatus(name, springLabour, summerLabour, autumnLabour, yield);
   }
   Enumerable<const FieldStatus>::freeze();
   Farmer::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmer::_labourToClear);

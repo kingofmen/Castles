@@ -142,31 +142,45 @@ farmland = {
 
   clear = {
     yield = 0
-    labour = 20
+    springLabour = 20
+    summerLabour = 0
+    autumnLabour = 0
   }
   ready = {
     yield = 1
-    labour = 100
+    springLabour = 100
+    summerLabour = 0
+    autumnLabour = 10
   }
   sowed = {
     yield = 10
-    labour = 25
+    springLabour = 0
+    summerLabour = 25
+    autumnLabour = 10
   }
   ripe1 = {
     yield = 500
-    labour = 100
+    springLabour = 0
+    summerLabour = 25
+    autumnLabour = 100
   }
   ripe2 = {
     yield = 750
-    labour = 100
+    springLabour = 0
+    summerLabour = 25
+    autumnLabour = 100
   }
   ripe3 = {
     yield = 1000
-    labour = 100
+    springLabour = 0
+    summerLabour = 25
+    autumnLabour = 100
   }
   ended = {
     yield = 0
-    labour = 0
+    springLabour = 0
+    summerLabour = 0
+    autumnLabour = 0
   }
 
   output = food

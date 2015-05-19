@@ -809,10 +809,10 @@ void Farmer::unitTests () {
 							    laborNeededWithCapital);
   deliverGoods(testCapGood, -1);
 
-  int oldLabourToSow  = FieldStatus::Clear->requiredLabour;
-  int oldLabourToPlow = FieldStatus::Ready->requiredLabour;
-  int oldLabourToWeed = FieldStatus::Sowed->requiredLabour;
-  int oldLabourToReap = FieldStatus::Ripe3->requiredLabour;
+  int oldLabourToSow  = FieldStatus::Clear->springLabour;
+  int oldLabourToPlow = FieldStatus::Ready->springLabour;
+  int oldLabourToWeed = FieldStatus::Sowed->summerLabour;
+  int oldLabourToReap = FieldStatus::Ripe3->autumnLabour;
   GoodsHolder prices;
   vector<MarketBid*> bidlist;
   double foundLabour  = 0;
@@ -820,8 +820,8 @@ void Farmer::unitTests () {
   double foundOutput  = 0;
 
   // Check that we bid for integer numbers of fields.
-  ((FieldStatus*) FieldStatus::Clear)->requiredLabour = 21; // Unit test breaks const-ness; bah.
-  ((FieldStatus*) FieldStatus::Ready)->requiredLabour = 23;
+  ((FieldStatus*) FieldStatus::Clear)->springLabour = 21; // Unit test breaks const-ness; bah.
+  ((FieldStatus*) FieldStatus::Ready)->springLabour = 23;
   prices.setAmount(TradeGood::Labor, 10);
   prices.setAmount(testCapGood, 100000);
   prices.setAmount(output, 100000);
@@ -829,11 +829,11 @@ void Farmer::unitTests () {
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if (mb->tradeGood == TradeGood::Labor) foundLabour += mb->amountToBuy;
   }
-  double expected = fields[*FieldStatus::Clear] * (FieldStatus::Clear->requiredLabour + FieldStatus::Ready->requiredLabour) / Calendar::turnsToNextSeason();
+  double expected = fields[*FieldStatus::Clear] * (FieldStatus::Clear->springLabour + FieldStatus::Ready->springLabour) / Calendar::turnsToNextSeason();
   if (fabs(foundLabour - expected) > 0.1) throwFormatted("Expected to buy %i * (%i + %i) / %i = %.2f, but got %.2f",
 							 fields[*FieldStatus::Clear],
-							 FieldStatus::Clear->requiredLabour,
-							 FieldStatus::Ready->requiredLabour,
+							 FieldStatus::Clear->springLabour,
+							 FieldStatus::Ready->springLabour,
 							 Calendar::turnsToNextSeason(),
 							 expected,
 							 foundLabour);
@@ -844,10 +844,10 @@ void Farmer::unitTests () {
   // 7 labor with 1400 iron. At labour price 210, that's net-present-value of 14700. So,
   // there should be a bid for iron if the price is below 10-ish, but not if
   // it is above.
-  ((FieldStatus*) FieldStatus::Clear)->requiredLabour = 0;
-  ((FieldStatus*) FieldStatus::Ready)->requiredLabour = 1;
-  ((FieldStatus*) FieldStatus::Sowed)->requiredLabour = 0;
-  ((FieldStatus*) FieldStatus::Ripe3)->requiredLabour = 0;
+  ((FieldStatus*) FieldStatus::Clear)->springLabour = 0;
+  ((FieldStatus*) FieldStatus::Ready)->springLabour = 1;
+  ((FieldStatus*) FieldStatus::Sowed)->summerLabour = 0;
+  ((FieldStatus*) FieldStatus::Ripe3)->autumnLabour = 0;
   // Expect to produce 1400 * 700 / 42 food per turn, using 100 labour;
   // that's 233.3 output per labour. So price of 210 is 10% profit.
   prices.setAmount(TradeGood::Labor, 210);
@@ -900,8 +900,8 @@ void Farmer::unitTests () {
   owner = this;
   int canonicalBlocks = numBlocks();
   // Avoid div-by-zero issue.
-  ((FieldStatus*) FieldStatus::Ripe3)->requiredLabour = 1;
-  ((FieldStatus*) FieldStatus::Sowed)->requiredLabour = 0;
+  ((FieldStatus*) FieldStatus::Ripe3)->autumnLabour = 1;
+  ((FieldStatus*) FieldStatus::Sowed)->springLabour = 0;
   while (Calendar::getCurrentSeason() != Calendar::Winter) {
     int currentBlocks = numBlocks();
     if (currentBlocks != canonicalBlocks) {
@@ -1042,10 +1042,10 @@ void Farmer::unitTests () {
   }
 
   Calendar::newYearBegins();
-  ((FieldStatus*) FieldStatus::Clear)->requiredLabour = oldLabourToSow;
-  ((FieldStatus*) FieldStatus::Ready)->requiredLabour = oldLabourToPlow;
-  ((FieldStatus*) FieldStatus::Sowed)->requiredLabour = oldLabourToWeed;
-  ((FieldStatus*) FieldStatus::Ripe3)->requiredLabour = oldLabourToReap;
+  ((FieldStatus*) FieldStatus::Clear)->springLabour = oldLabourToSow;
+  ((FieldStatus*) FieldStatus::Ready)->springLabour = oldLabourToPlow;
+  ((FieldStatus*) FieldStatus::Sowed)->summerLabour = oldLabourToWeed;
+  ((FieldStatus*) FieldStatus::Ripe3)->autumnLabour = oldLabourToReap;
   capital->setAmounts(oldCapital);
 }
 
@@ -1073,24 +1073,17 @@ void Farmer::extractResources (bool /* tick */) {
   case Calendar::Spring:
     // In spring we clear new fields, plow and sow existing ones.
     while (true) {
-      if ((availableLabour >= FieldStatus::Clear->requiredLabour*capFactor) && (fields[*FieldStatus::Ready] > 0)) {
+      if ((availableLabour >= FieldStatus::Clear->springLabour*capFactor) && (fields[*FieldStatus::Ready] > 0)) {
 	fields[*FieldStatus::Ready]--;
 	fields[*FieldStatus::Sowed]++;
-	availableLabour -= FieldStatus::Clear->requiredLabour*capFactor;
+	availableLabour -= FieldStatus::Clear->springLabour*capFactor;
       }
-      else if ((availableLabour >= FieldStatus::Ready->requiredLabour*capFactor) && (fields[*FieldStatus::Clear] > 0)) {
+      else if ((availableLabour >= FieldStatus::Ready->springLabour*capFactor) && (fields[*FieldStatus::Clear] > 0)) {
 	fields[*FieldStatus::Clear]--;
 	fields[*FieldStatus::Ready]++;
-	availableLabour -= FieldStatus::Ready->requiredLabour*capFactor;
+	availableLabour -= FieldStatus::Ready->springLabour*capFactor;
       }
-      /*
-      // TODO: Move clearing of fields somewhere else, or divide assigned land up between farmers.
-      else if ((availableLabour >= _labourToClear*capFactor) &&
-      (total - fields[*FieldStatus::Clear] - fields[*FieldStatus::Ready] - fields[*FieldStatus::Sowed] - fields[*FieldStatus::Ripe1] - fields[*FieldStatus::Ripe2] - fields[*FieldStatus::Ripe3] - fields[*FieldStatus::Ended] > 0)) {
-      fields[*FieldStatus::Clear]++;
-      availableLabour -= _labourToClear*capFactor;
-      }
-      */
+      // TODO: Clearing of new land
       else break; 
     }
     break;
@@ -1103,8 +1096,8 @@ void Farmer::extractResources (bool /* tick */) {
     int untendedRipe1 = fields[*FieldStatus::Ripe1]; fields[*FieldStatus::Ripe1] = 0;
     int untendedRipe2 = fields[*FieldStatus::Ripe2]; fields[*FieldStatus::Ripe2] = 0;
     int untendedRipe3 = fields[*FieldStatus::Ripe3]; fields[*FieldStatus::Ripe3] = 0;
-    while (availableLabour >= FieldStatus::Sowed->requiredLabour * capFactor * weatherModifier) {
-      availableLabour -= FieldStatus::Sowed->requiredLabour * capFactor * weatherModifier;
+    while (availableLabour >= FieldStatus::Sowed->summerLabour * capFactor * weatherModifier) {
+      availableLabour -= FieldStatus::Sowed->summerLabour * capFactor * weatherModifier;
       if (fields[*FieldStatus::Sowed] > 0) {
 	fields[*FieldStatus::Sowed]--;
 	fields[*FieldStatus::Ripe1]++;
@@ -1137,8 +1130,8 @@ void Farmer::extractResources (bool /* tick */) {
     for (FieldStatus::rIter fs = FieldStatus::rstart(); fs != FieldStatus::rfinal(); ++fs) {
       if (1 > (*fs)->yield) continue;
       if (1 > fields[**fs]) continue;
-      int harvest = min(fields[**fs], (int) floor(availableLabour / ((*fs)->requiredLabour * capFactor)));
-      availableLabour -= harvest * (*fs)->requiredLabour * capFactor;
+      int harvest = min(fields[**fs], (int) floor(availableLabour / ((*fs)->autumnLabour * capFactor)));
+      availableLabour -= harvest * (*fs)->autumnLabour * capFactor;
       for (int i = 0; i < harvest; ++i) {
 	totalHarvested += (*fs)->yield * marginFactor;
 	if (++counter >= blockInfo->blockSize) {
@@ -1204,14 +1197,14 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
   case Calendar::Spring:
     // In spring we clear new fields, plow and sow existing ones.
     // Fields move from Clear to Ready to Sowed.
-    searchForMatch(jobs, capFactor*(FieldStatus::Ready->requiredLabour + FieldStatus::Clear->requiredLabour), theBlock[*FieldStatus::Clear], Calendar::turnsToNextSeason());
-    searchForMatch(jobs, capFactor*FieldStatus::Clear->requiredLabour, theBlock[*FieldStatus::Ready], Calendar::turnsToNextSeason());
-    prodCycleLabour  = theBlock[*FieldStatus::Ready] * FieldStatus::Clear->requiredLabour;
-    prodCycleLabour += theBlock[*FieldStatus::Clear] * (FieldStatus::Ready->requiredLabour + FieldStatus::Clear->requiredLabour);
+    searchForMatch(jobs, capFactor*(FieldStatus::Ready->springLabour + FieldStatus::Clear->springLabour), theBlock[*FieldStatus::Clear], Calendar::turnsToNextSeason());
+    searchForMatch(jobs, capFactor*FieldStatus::Clear->springLabour, theBlock[*FieldStatus::Ready], Calendar::turnsToNextSeason());
+    prodCycleLabour  = theBlock[*FieldStatus::Ready] * FieldStatus::Clear->springLabour;
+    prodCycleLabour += theBlock[*FieldStatus::Clear] * (FieldStatus::Ready->springLabour + FieldStatus::Clear->springLabour);
     // A full season of weeding - assume that all the fields will be sowed.
-    prodCycleLabour += ret + (theBlock[*FieldStatus::Ready] + theBlock[*FieldStatus::Clear] + theBlock[*FieldStatus::Sowed]) * FieldStatus::Sowed->requiredLabour * Calendar::turnsPerSeason();
+    prodCycleLabour += ret + (theBlock[*FieldStatus::Ready] + theBlock[*FieldStatus::Clear] + theBlock[*FieldStatus::Sowed]) * FieldStatus::Sowed->summerLabour * Calendar::turnsPerSeason();
     // And assume that they all reach reaping.
-    prodCycleLabour += (theBlock[*FieldStatus::Ready] + theBlock[*FieldStatus::Clear] + theBlock[*FieldStatus::Sowed]) * FieldStatus::Ripe3->requiredLabour;
+    prodCycleLabour += (theBlock[*FieldStatus::Ready] + theBlock[*FieldStatus::Clear] + theBlock[*FieldStatus::Sowed]) * FieldStatus::Ripe3->autumnLabour;
     break;
 
   case Calendar::Summer:
@@ -1219,15 +1212,15 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
     // like plowing, sowing, and harvesting. It must be re-done
     // each turn.
     
-    searchForMatch(jobs, capFactor*FieldStatus::Sowed->requiredLabour, theBlock[*FieldStatus::Sowed] + theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3], 1);
-    prodCycleLabour  = (theBlock[*FieldStatus::Sowed] + theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3]) * FieldStatus::Sowed->requiredLabour * Calendar::turnsToNextSeason();
-    prodCycleLabour += (theBlock[*FieldStatus::Sowed] + theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3]) * FieldStatus::Ripe3->requiredLabour;
+    searchForMatch(jobs, capFactor*FieldStatus::Sowed->summerLabour, theBlock[*FieldStatus::Sowed] + theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3], 1);
+    prodCycleLabour  = (theBlock[*FieldStatus::Sowed] + theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3]) * FieldStatus::Sowed->summerLabour * Calendar::turnsToNextSeason();
+    prodCycleLabour += (theBlock[*FieldStatus::Sowed] + theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3]) * FieldStatus::Ripe3->autumnLabour;
     break;
       
   case Calendar::Autumn:
     // All reaping is equal. 
-    prodCycleLabour = (theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3]) * FieldStatus::Ripe3->requiredLabour;
-    searchForMatch(jobs, capFactor*FieldStatus::Ripe3->requiredLabour, theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3], Calendar::turnsToNextSeason());
+    prodCycleLabour = (theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3]) * FieldStatus::Ripe3->autumnLabour;
+    searchForMatch(jobs, capFactor*FieldStatus::Ripe3->autumnLabour, theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3], Calendar::turnsToNextSeason());
     break; 
   }
 
@@ -1795,9 +1788,11 @@ MineStatus::MineStatus (string n, int rl, bool lastOne)
 
 MineStatus::~MineStatus () {}
 
-FieldStatus::FieldStatus (string n, int rl, int y)
+FieldStatus::FieldStatus (string n, int sprl, int suml, int autl, int y)
   : Enumerable<const FieldStatus>(this, n, false)
-  , requiredLabour(rl)
+  , springLabour(sprl)
+  , summerLabour(suml)
+  , autumnLabour(autl)
   , yield(y)
 {}
 

@@ -371,7 +371,7 @@ protected:
 class FieldStatus : public Enumerable<const FieldStatus> {
   friend class StaticInitialiser;
 public:
-  FieldStatus (string n, int rl, int y);
+  FieldStatus (string n, int sprl, int suml, int autl, int y);
   ~FieldStatus ();
 
   static FieldStatus const* Clear;
@@ -382,7 +382,9 @@ public:
   static FieldStatus const* Ripe3;
   static FieldStatus const* Ended;
 
-  int requiredLabour;
+  int springLabour;
+  int summerLabour;
+  int autumnLabour;
   int yield;
 };
 
