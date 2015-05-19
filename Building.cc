@@ -809,8 +809,8 @@ void Farmer::unitTests () {
 							    laborNeededWithCapital);
   deliverGoods(testCapGood, -1);
 
-  int oldLabourToSow  = FieldStatus::Clear->springLabour;
-  int oldLabourToPlow = FieldStatus::Ready->springLabour;
+  int oldLabourToSow  = FieldStatus::Ready->springLabour;
+  int oldLabourToPlow = FieldStatus::Clear->springLabour;
   int oldLabourToWeed = FieldStatus::Sowed->summerLabour;
   int oldLabourToReap = FieldStatus::Ripe3->autumnLabour;
   GoodsHolder prices;
@@ -820,8 +820,8 @@ void Farmer::unitTests () {
   double foundOutput  = 0;
 
   // Check that we bid for integer numbers of fields.
-  ((FieldStatus*) FieldStatus::Clear)->springLabour = 21; // Unit test breaks const-ness; bah.
-  ((FieldStatus*) FieldStatus::Ready)->springLabour = 23;
+  ((FieldStatus*) FieldStatus::Ready)->springLabour = 21; // Unit test breaks const-ness; bah.
+  ((FieldStatus*) FieldStatus::Clear)->springLabour = 23;
   prices.setAmount(TradeGood::Labor, 10);
   prices.setAmount(testCapGood, 100000);
   prices.setAmount(output, 100000);
@@ -839,17 +839,17 @@ void Farmer::unitTests () {
 							 foundLabour);
   bidlist.clear();
 
-  // This makes us need 100 labour per Spring turn on 1400 clear fields, if capital is zero.
-  // With capital 1400 (the cap size), we need 100 * (1 - 0.1 log(2)) = 93. So we are saving
-  // 7 labor with 1400 iron. At labour price 210, that's net-present-value of 14700. So,
+  // This makes us need 200 labour per Spring turn on 1400 clear fields, if capital is zero.
+  // With capital 1400 (the cap size), we need 200 * (1 - 0.1 log(2)) = 186. So we are saving
+  // 14 labor with 1400 iron. At labour price 210, that's net-present-value of 29400. So,
   // there should be a bid for iron if the price is below 10-ish, but not if
   // it is above.
-  ((FieldStatus*) FieldStatus::Clear)->springLabour = 0;
   ((FieldStatus*) FieldStatus::Ready)->springLabour = 1;
+  ((FieldStatus*) FieldStatus::Clear)->springLabour = 1;
   ((FieldStatus*) FieldStatus::Sowed)->summerLabour = 0;
   ((FieldStatus*) FieldStatus::Ripe3)->autumnLabour = 0;
-  // Expect to produce 1400 * 700 / 42 food per turn, using 100 labour;
-  // that's 233.3 output per labour. So price of 210 is 10% profit.
+  // Expect to produce 1400 * 1000 food, using 200 labour;
+  // that's 7000 output per labour. So price of 210 is humongous profit.
   prices.setAmount(TradeGood::Labor, 210);
   prices.setAmount(testCapGood, 1);
   prices.setAmount(output, 1);
@@ -937,10 +937,18 @@ void Farmer::unitTests () {
 	    fields[*FieldStatus::Ripe3]);
     throw string(errorMessage);
   }
-  if (fabs(getAmount(output) - FieldStatus::Ripe3->yield*1400) > 1) throwFormatted("Expected to have %f %s, but have %f",
-										   FieldStatus::Ripe3->yield*1400.0,
-										   output->getName().c_str(),
-										   getAmount(output));
+  if (fabs(getAmount(output) - FieldStatus::Ripe3->yield*1400) > 1)
+    throwFormatted("Expected to have %f %s, but have %f; Clear %i, Ready %i, Sowed %i, Ripe1 %i, Ripe2 %i, Ripe3 %i, Ended %i",
+		   FieldStatus::Ripe3->yield*1400.0,
+		   output->getName().c_str(),
+		   getAmount(output),
+		   fields[*FieldStatus::Clear],
+		   fields[*FieldStatus::Ready],
+		   fields[*FieldStatus::Sowed],
+		   fields[*FieldStatus::Ripe1],
+		   fields[*FieldStatus::Ripe2],
+		   fields[*FieldStatus::Ripe3],
+		   fields[*FieldStatus::Ended]);
 
   blockInfo->blockSize = 5;
   fields[*FieldStatus::Ended] = 6;
@@ -1042,8 +1050,8 @@ void Farmer::unitTests () {
   }
 
   Calendar::newYearBegins();
-  ((FieldStatus*) FieldStatus::Clear)->springLabour = oldLabourToSow;
-  ((FieldStatus*) FieldStatus::Ready)->springLabour = oldLabourToPlow;
+  ((FieldStatus*) FieldStatus::Ready)->springLabour = oldLabourToSow;
+  ((FieldStatus*) FieldStatus::Clear)->springLabour = oldLabourToPlow;
   ((FieldStatus*) FieldStatus::Sowed)->summerLabour = oldLabourToWeed;
   ((FieldStatus*) FieldStatus::Ripe3)->autumnLabour = oldLabourToReap;
   capital->setAmounts(oldCapital);
@@ -1072,20 +1080,20 @@ void Farmer::extractResources (bool /* tick */) {
 
   case Calendar::Spring:
     // In spring we clear new fields, plow and sow existing ones.
-    while (true) {
-      if ((availableLabour >= FieldStatus::Clear->springLabour*capFactor) && (fields[*FieldStatus::Ready] > 0)) {
-	fields[*FieldStatus::Ready]--;
-	fields[*FieldStatus::Sowed]++;
-	availableLabour -= FieldStatus::Clear->springLabour*capFactor;
+    for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
+      if (1 > (*fs)->springLabour) continue;
+      if (1 > fields[**fs]) continue;
+      double workPerField = (*fs)->springLabour*capFactor;
+      FieldStatus::Iter next = fs; ++next;
+      if (next == FieldStatus::final()) break;
+      if (availableLabour >= workPerField) {
+	int numToAdvance = min(fields[**fs], (int) floor(availableLabour / workPerField));
+	fields[**fs]   -= numToAdvance;
+	fields[**next] += numToAdvance;
+	availableLabour -= numToAdvance * workPerField;
       }
-      else if ((availableLabour >= FieldStatus::Ready->springLabour*capFactor) && (fields[*FieldStatus::Clear] > 0)) {
-	fields[*FieldStatus::Clear]--;
-	fields[*FieldStatus::Ready]++;
-	availableLabour -= FieldStatus::Ready->springLabour*capFactor;
-      }
-      // TODO: Clearing of new land
-      else break; 
     }
+    // TODO: Clearing of new land
     break;
 
   case Calendar::Summer: {
