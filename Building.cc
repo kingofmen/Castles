@@ -29,6 +29,7 @@ FieldStatus const* FieldStatus::Ripe2 = 0;
 FieldStatus const* FieldStatus::Ripe3 = 0;
 FieldStatus const* FieldStatus::Ended = 0;
 
+vector<const FieldStatus*> FieldStatus::plowing;
 vector<const FieldStatus*> FieldStatus::weeding;
 vector<const FieldStatus*> FieldStatus::harvest;
 
@@ -1071,7 +1072,7 @@ void Farmer::extractResources (bool /* tick */) {
     fields[*FieldStatus::Ended] += fields[*FieldStatus::Ripe1];
     fields[*FieldStatus::Ended] += fields[*FieldStatus::Sowed];
     fields[*FieldStatus::Ended] += fields[*FieldStatus::Ready];
-    fields[*FieldStatus::Ripe3] = fields[*FieldStatus::Ripe2] = fields[*FieldStatus::Ripe1] = fields[*FieldStatus::Sowed] = fields[*FieldStatus::Ready] = 0;
+    fields[*FieldStatus::Ripe3]  = fields[*FieldStatus::Ripe2] = fields[*FieldStatus::Ripe1] = fields[*FieldStatus::Sowed] = fields[*FieldStatus::Ready] = 0;
     
     // Fallow acreage grows over.
     fields[*FieldStatus::Clear] = fields[*FieldStatus::Ended];
@@ -1080,17 +1081,14 @@ void Farmer::extractResources (bool /* tick */) {
 
   case Calendar::Spring:
     // In spring we clear new fields, plow and sow existing ones.
-    for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
-      if (1 > (*fs)->springLabour) continue;
+    for (FieldStatus::Iter fs = FieldStatus::startPlow(); fs != FieldStatus::finalPlow(); ++fs) {
       if (1 > fields[**fs]) continue;
       double workPerField = (*fs)->springLabour*capFactor;
-      FieldStatus::Iter next = fs; ++next;
-      if (next == FieldStatus::final()) break;
       if (availableLabour >= workPerField) {
-	int numToAdvance = min(fields[**fs], (int) floor(availableLabour / workPerField));
-	fields[**fs]   -= numToAdvance;
-	fields[**next] += numToAdvance;
-	availableLabour -= numToAdvance * workPerField;
+	int numToAdvance  = min(fields[**fs], (int) floor(availableLabour / workPerField));
+	fields[**fs]     -= numToAdvance;
+	fields[**fs + 1] += numToAdvance;
+	availableLabour  -= numToAdvance * workPerField;
       }
     }
     // TODO: Clearing of new land
@@ -1126,7 +1124,7 @@ void Farmer::extractResources (bool /* tick */) {
     int counter = fields[*FieldStatus::Ended] - block*blockInfo->blockSize;
     double marginFactor = pow(blockInfo->marginFactor, block);
     double totalHarvested = 0;
-    for (FieldStatus::rIter fs = FieldStatus::rstart(); fs != FieldStatus::rfinal(); ++fs) {
+    for (FieldStatus::Iter fs = FieldStatus::startReap(); fs != FieldStatus::finalReap(); ++fs) {
       if (1 > (*fs)->yield) continue;
       if (1 > fields[**fs]) continue;
       int harvest = min(fields[**fs], (int) floor(availableLabour / ((*fs)->autumnLabour * capFactor)));
@@ -1188,29 +1186,30 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
   vector<int> theBlock(FieldStatus::numTypes(), 0);
   fillBlock(block, theBlock);
 
-  double ret = 0;
   double capFactor = capitalFactor(*this);
+  prodCycleLabour = 0;
   switch (currSeason) {
   default:
-  case Calendar::Spring:
+  case Calendar::Spring: {
     // In spring we clear new fields, plow and sow existing ones.
     // Fields move from Clear to Ready to Sowed.
-    searchForMatch(jobs, capFactor*(FieldStatus::Ready->springLabour + FieldStatus::Clear->springLabour), theBlock[*FieldStatus::Clear], Calendar::turnsToNextSeason());
-    searchForMatch(jobs, capFactor*FieldStatus::Clear->springLabour, theBlock[*FieldStatus::Ready], Calendar::turnsToNextSeason());
-    prodCycleLabour  = theBlock[*FieldStatus::Ready] * FieldStatus::Clear->springLabour;
-    prodCycleLabour += theBlock[*FieldStatus::Clear] * (FieldStatus::Ready->springLabour + FieldStatus::Clear->springLabour);
-    // A full season of weeding - assume that all the fields will be sowed.
-    prodCycleLabour += ret + (theBlock[*FieldStatus::Ready] + theBlock[*FieldStatus::Clear] + theBlock[*FieldStatus::Sowed]) * FieldStatus::Sowed->summerLabour * Calendar::turnsPerSeason();
-    // And assume that they all reach reaping.
-    prodCycleLabour += (theBlock[*FieldStatus::Ready] + theBlock[*FieldStatus::Clear] + theBlock[*FieldStatus::Sowed]) * FieldStatus::Ripe3->autumnLabour;
-    break;
+    int prev = 0;
+    for (FieldStatus::Iter fs = FieldStatus::startPlow(); fs != FieldStatus::finalPlow(); ++fs) {
+      searchForMatch(jobs, capFactor * (*fs)->springLabour, prev + theBlock[**fs], Calendar::turnsToNextSeason());
+      prodCycleLabour += (prev + theBlock[**fs]) * (*fs)->springLabour;
+      prev += theBlock[**fs];
+    }
 
+    // A full season of weeding - assume that all the fields will be sowed.
+    prodCycleLabour += (prev + theBlock[*FieldStatus::Sowed]) * FieldStatus::Sowed->summerLabour * Calendar::turnsPerSeason();
+    // And assume that they all reach reaping.
+    prodCycleLabour += (prev + theBlock[*FieldStatus::Sowed]) * FieldStatus::Ripe3->autumnLabour;
+    break;
+  }
   case Calendar::Summer:
     // Weeding is special: It is not done once and finished,
     // like plowing, sowing, and harvesting. It must be re-done
     // each turn.
-
-    prodCycleLabour = 0;
     for (FieldStatus::Iter fs = FieldStatus::startWeed(); fs != FieldStatus::finalWeed(); ++fs) {
       searchForMatch(jobs, capFactor*(*fs)->summerLabour, theBlock[**fs], 1);
       prodCycleLabour += theBlock[**fs] * (*fs)->summerLabour * Calendar::turnsToNextSeason();
@@ -1219,9 +1218,10 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
     break;
       
   case Calendar::Autumn:
-    // All reaping is equal. 
-    prodCycleLabour = (theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3]) * FieldStatus::Ripe3->autumnLabour;
-    searchForMatch(jobs, capFactor*FieldStatus::Ripe3->autumnLabour, theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3], Calendar::turnsToNextSeason());
+    for (FieldStatus::Iter fs = FieldStatus::startReap(); fs != FieldStatus::finalReap(); ++fs) {
+      searchForMatch(jobs, capFactor * (*fs)->autumnLabour, theBlock[**fs], Calendar::turnsToNextSeason());
+      prodCycleLabour += (*fs)->autumnLabour * theBlock[**fs];
+    }
     break; 
   }
 
@@ -1803,6 +1803,7 @@ void FieldStatus::clear () {
   Enumerable<const FieldStatus>::clear();
   harvest.clear();
   weeding.clear();
+  plowing.clear();
 }
 
 ForestStatus::ForestStatus (string n, int rl, bool lastOne)

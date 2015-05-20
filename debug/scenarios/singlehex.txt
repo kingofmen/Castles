@@ -44,9 +44,9 @@ hexinfo = {
   market = DownRight
   prices = {
     labour = 10
-    food   = 10
-    iron   = 6
-    wood   = 3
+    food   = 11
+    iron   = 8
+    wood   = 3.8
   }
 
   village = {

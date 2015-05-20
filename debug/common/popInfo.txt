@@ -183,6 +183,7 @@ farmland = {
     autumnLabour = 0
   }
 
+  plowing = { clear ready }
   weeding = { sowed ripe1 ripe2 ripe3 }
   harvest = { ripe3 ripe2 ripe1 sowed ready }
 

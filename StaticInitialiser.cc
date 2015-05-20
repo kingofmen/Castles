@@ -211,6 +211,15 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
     if (0 >= fs->autumnLabour) continue;
     FieldStatus::harvest.push_back(fs);
   }
+
+  Object* plows = farmInfo->getNeededObject("plowing");
+  for (int i = 0; i < plows->numTokens(); ++i) {
+    const FieldStatus* fs = FieldStatus::getByName(plows->getToken(i));
+    if (!fs) continue;
+    if (0 >= fs->springLabour) continue;
+    FieldStatus::plowing.push_back(fs);
+  }
+
   Farmer::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmer::_labourToClear);
   initialiseIndustry<Farmer>(farmInfo);
   

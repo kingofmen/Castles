@@ -382,6 +382,8 @@ public:
   static FieldStatus const* Ripe3;
   static FieldStatus const* Ended;
 
+  static Iter startPlow () {return plowing.begin();}
+  static Iter finalPlow () {return plowing.end();}
   static Iter startWeed () {return weeding.begin();}
   static Iter finalWeed () {return weeding.end();}
   static Iter startReap () {return harvest.begin();}
@@ -395,6 +397,7 @@ public:
 private:
   static void clear();
 
+  static vector<const FieldStatus*> plowing;
   static vector<const FieldStatus*> weeding;
   static vector<const FieldStatus*> harvest;
 };
