@@ -183,6 +183,9 @@ farmland = {
     autumnLabour = 0
   }
 
+  weeding = { sowed ripe1 ripe2 ripe3 }
+  harvest = { ripe3 ripe2 ripe1 sowed ready }
+
   output = food
   productionCycle = 42
 }

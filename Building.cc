@@ -29,6 +29,9 @@ FieldStatus const* FieldStatus::Ripe2 = 0;
 FieldStatus const* FieldStatus::Ripe3 = 0;
 FieldStatus const* FieldStatus::Ended = 0;
 
+vector<const FieldStatus*> FieldStatus::weeding;
+vector<const FieldStatus*> FieldStatus::harvest;
+
 int Farmer::_labourToClear  = 100;
 
 ForestStatus const* ForestStatus::Clear = 0;
@@ -901,23 +904,22 @@ void Farmer::unitTests () {
   int canonicalBlocks = numBlocks();
   // Avoid div-by-zero issue.
   ((FieldStatus*) FieldStatus::Ripe3)->autumnLabour = 1;
-  ((FieldStatus*) FieldStatus::Sowed)->springLabour = 0;
+  ((FieldStatus*) FieldStatus::Sowed)->springLabour = 1;
+  ((FieldStatus*) FieldStatus::Sowed)->summerLabour = 1;
+  ((FieldStatus*) FieldStatus::Ripe3)->autumnLabour = 1;
   while (Calendar::getCurrentSeason() != Calendar::Winter) {
     int currentBlocks = numBlocks();
-    if (currentBlocks != canonicalBlocks) {
-      sprintf(errorMessage,
-	      "Expected to have %i blocks, but have %i. Clear %i, Ready %i, Sowed %i, Ripe1 %i, Ripe2 %i, Ripe3 %i, Ended %i",
-	      canonicalBlocks,
-	      currentBlocks,
-	      fields[*FieldStatus::Clear],
-	      fields[*FieldStatus::Ready],
-	      fields[*FieldStatus::Sowed],
-	      fields[*FieldStatus::Ripe1],
-	      fields[*FieldStatus::Ripe2],
-	      fields[*FieldStatus::Ripe3],
-	      fields[*FieldStatus::Ended]);
-      throw string(errorMessage);
-    }
+    if (currentBlocks != canonicalBlocks)
+      throwFormatted("Expected to have %i blocks, but have %i. Clear %i, Ready %i, Sowed %i, Ripe1 %i, Ripe2 %i, Ripe3 %i, Ended %i",
+		     canonicalBlocks,
+		     currentBlocks,
+		     fields[*FieldStatus::Clear],
+		     fields[*FieldStatus::Ready],
+		     fields[*FieldStatus::Sowed],
+		     fields[*FieldStatus::Ripe1],
+		     fields[*FieldStatus::Ripe2],
+		     fields[*FieldStatus::Ripe3],
+		     fields[*FieldStatus::Ended]);
     laborNeeded = 0;
     jobs.clear();
     for (int i = 0; i < currentBlocks; ++i) getLabourForBlock(i, jobs, laborNeeded);
@@ -925,18 +927,16 @@ void Farmer::unitTests () {
     extractResources();
     Calendar::newWeekBegins();
   }
-  if (fields[*FieldStatus::Ended] != 1400) {
-    sprintf(errorMessage,
-	    "Expected to have 1400 ended fields, but have %i. Clear %i, Ready %i, Sowed %i, Ripe1 %i, Ripe2 %i, Ripe3 %i",
-	    fields[*FieldStatus::Ended],
-	    fields[*FieldStatus::Clear],
-	    fields[*FieldStatus::Ready],
-	    fields[*FieldStatus::Sowed],
-	    fields[*FieldStatus::Ripe1],
-	    fields[*FieldStatus::Ripe2],
-	    fields[*FieldStatus::Ripe3]);
-    throw string(errorMessage);
-  }
+  if (fields[*FieldStatus::Ended] != 1400)
+    throwFormatted("Expected to have 1400 ended fields, but have %i. Clear %i, Ready %i, Sowed %i, Ripe1 %i, Ripe2 %i, Ripe3 %i",
+		   fields[*FieldStatus::Ended],
+		   fields[*FieldStatus::Clear],
+		   fields[*FieldStatus::Ready],
+		   fields[*FieldStatus::Sowed],
+		   fields[*FieldStatus::Ripe1],
+		   fields[*FieldStatus::Ripe2],
+		   fields[*FieldStatus::Ripe3]);
+
   if (fabs(getAmount(output) - FieldStatus::Ripe3->yield*1400) > 1)
     throwFormatted("Expected to have %f %s, but have %f; Clear %i, Ready %i, Sowed %i, Ripe1 %i, Ripe2 %i, Ripe3 %i, Ended %i",
 		   FieldStatus::Ripe3->yield*1400.0,
@@ -1101,32 +1101,23 @@ void Farmer::extractResources (bool /* tick */) {
     // If there isn't enough labour to tend the crops, they
     // degrade; if the weather is bad they don't advance.
     double weatherModifier = 1; // TODO: Insert weather-getting code here
-    int untendedRipe1 = fields[*FieldStatus::Ripe1]; fields[*FieldStatus::Ripe1] = 0;
-    int untendedRipe2 = fields[*FieldStatus::Ripe2]; fields[*FieldStatus::Ripe2] = 0;
-    int untendedRipe3 = fields[*FieldStatus::Ripe3]; fields[*FieldStatus::Ripe3] = 0;
-    while (availableLabour >= FieldStatus::Sowed->summerLabour * capFactor * weatherModifier) {
-      availableLabour -= FieldStatus::Sowed->summerLabour * capFactor * weatherModifier;
-      if (fields[*FieldStatus::Sowed] > 0) {
-	fields[*FieldStatus::Sowed]--;
-	fields[*FieldStatus::Ripe1]++;
-      }
-      else if (untendedRipe1 > 0) {
-	untendedRipe1--;
-	fields[*FieldStatus::Ripe2]++;
-      }
-      else if (untendedRipe2 > 0) {
-	untendedRipe2--;
-	fields[*FieldStatus::Ripe3]++;
-      }
-      else if (untendedRipe3 > 0) {
-	untendedRipe3--;
-	fields[*FieldStatus::Ripe3]++;
-      }
-      else break; 
+    static vector<int> workingSpace(FieldStatus::numTypes());
+    for (FieldStatus::Iter fs = FieldStatus::startWeed(); fs != FieldStatus::finalWeed(); ++fs) {
+      workingSpace[**fs] = fields[**fs];
+      fields[**fs] = 0;
     }
-    fields[*FieldStatus::Sowed] += untendedRipe1;
-    fields[*FieldStatus::Ripe1] += untendedRipe2;
-    fields[*FieldStatus::Ripe2] += untendedRipe3;
+
+    FieldStatus::Iter prev = FieldStatus::startWeed();
+    FieldStatus::Iter next = FieldStatus::startWeed(); ++next;
+
+    for (FieldStatus::Iter curr = FieldStatus::startWeed(); curr != FieldStatus::finalWeed(); ++curr, ++prev, ++next) {
+      if (next == FieldStatus::finalWeed()) next = curr;
+      double labourPerField = (*curr)->summerLabour * capFactor * weatherModifier;
+      int fieldsToWeed = min(workingSpace[**curr], (int) floor(availableLabour / labourPerField));
+      fields[**next] += fieldsToWeed;
+      fields[**prev] += workingSpace[**curr] - fieldsToWeed;
+      availableLabour -= fieldsToWeed * labourPerField;
+    }
     break;
   }
   case Calendar::Autumn: {
@@ -1218,10 +1209,13 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
     // Weeding is special: It is not done once and finished,
     // like plowing, sowing, and harvesting. It must be re-done
     // each turn.
-    
-    searchForMatch(jobs, capFactor*FieldStatus::Sowed->summerLabour, theBlock[*FieldStatus::Sowed] + theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3], 1);
-    prodCycleLabour  = (theBlock[*FieldStatus::Sowed] + theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3]) * FieldStatus::Sowed->summerLabour * Calendar::turnsToNextSeason();
-    prodCycleLabour += (theBlock[*FieldStatus::Sowed] + theBlock[*FieldStatus::Ripe1] + theBlock[*FieldStatus::Ripe2] + theBlock[*FieldStatus::Ripe3]) * FieldStatus::Ripe3->autumnLabour;
+
+    prodCycleLabour = 0;
+    for (FieldStatus::Iter fs = FieldStatus::startWeed(); fs != FieldStatus::finalWeed(); ++fs) {
+      searchForMatch(jobs, capFactor*(*fs)->summerLabour, theBlock[**fs], 1);
+      prodCycleLabour += theBlock[**fs] * (*fs)->summerLabour * Calendar::turnsToNextSeason();
+      prodCycleLabour += theBlock[**fs] * (*fs)->autumnLabour;
+    }
     break;
       
   case Calendar::Autumn:
@@ -1804,6 +1798,12 @@ FieldStatus::FieldStatus (string n, int sprl, int suml, int autl, int y)
 {}
 
 FieldStatus::~FieldStatus () {}
+
+void FieldStatus::clear () {
+  Enumerable<const FieldStatus>::clear();
+  harvest.clear();
+  weeding.clear();
+}
 
 ForestStatus::ForestStatus (string n, int rl, bool lastOne)
   : Enumerable<const ForestStatus>(this, n, lastOne)

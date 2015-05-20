@@ -174,7 +174,7 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Castle::siegeModifier = popInfo->safeGetFloat("siegeModifier", Castle::siegeModifier);
 
   Object* farmInfo          = popInfo->getNeededObject("farmland");
-  Enumerable<const FieldStatus>::clear();
+  FieldStatus::clear();
   Enumerable<const FieldStatus>::thaw();
   // Don't use a map - need guaranteed ordering.
   vector<pair<FieldStatus const**, string> > fsMap;
@@ -197,6 +197,20 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
     (*ptrLoc) = new FieldStatus(name, springLabour, summerLabour, autumnLabour, yield);
   }
   Enumerable<const FieldStatus>::freeze();
+  Object* weeds = farmInfo->getNeededObject("weeding");
+  for (int i = 0; i < weeds->numTokens(); ++i) {
+    const FieldStatus* fs = FieldStatus::getByName(weeds->getToken(i));
+    if (!fs) continue;
+    if (0 >= fs->summerLabour) continue;
+    FieldStatus::weeding.push_back(fs);
+  }
+  Object* reaps = farmInfo->getNeededObject("harvest");
+  for (int i = 0; i < reaps->numTokens(); ++i) {
+    const FieldStatus* fs = FieldStatus::getByName(reaps->getToken(i));
+    if (!fs) continue;
+    if (0 >= fs->autumnLabour) continue;
+    FieldStatus::harvest.push_back(fs);
+  }
   Farmer::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmer::_labourToClear);
   initialiseIndustry<Farmer>(farmInfo);
   

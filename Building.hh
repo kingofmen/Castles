@@ -382,10 +382,21 @@ public:
   static FieldStatus const* Ripe3;
   static FieldStatus const* Ended;
 
+  static Iter startWeed () {return weeding.begin();}
+  static Iter finalWeed () {return weeding.end();}
+  static Iter startReap () {return harvest.begin();}
+  static Iter finalReap () {return harvest.end();}
+
   int springLabour;
   int summerLabour;
   int autumnLabour;
   int yield;
+
+private:
+  static void clear();
+
+  static vector<const FieldStatus*> weeding;
+  static vector<const FieldStatus*> harvest;
 };
 
 class Farmer : public Industry<Farmer>, public Mirrorable<Farmer> {
