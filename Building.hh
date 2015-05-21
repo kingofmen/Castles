@@ -374,14 +374,6 @@ public:
   FieldStatus (string n, int sprl, int suml, int autl, int y);
   ~FieldStatus ();
 
-  static FieldStatus const* Clear;
-  static FieldStatus const* Ready;
-  static FieldStatus const* Sowed;
-  static FieldStatus const* Ripe1;
-  static FieldStatus const* Ripe2;
-  static FieldStatus const* Ripe3;
-  static FieldStatus const* Ended;
-
   static Iter startPlow () {return plowing.begin();}
   static Iter finalPlow () {return plowing.end();}
   static Iter startWeed () {return weeding.begin();}
@@ -419,6 +411,7 @@ public:
 private:
   Farmer(Farmer* other);
   void fillBlock (int block, vector<int>& theBlock) const;
+  string writeFieldStatus () const;
   vector<int> fields;
 
   static int _labourToClear;

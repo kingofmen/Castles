@@ -173,30 +173,21 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   initialiseMaslowHierarchy(popInfo->safeGetObject("pop_needs")); 
   Castle::siegeModifier = popInfo->safeGetFloat("siegeModifier", Castle::siegeModifier);
 
-  Object* farmInfo          = popInfo->getNeededObject("farmland");
+  Object* farmInfo = popInfo->getNeededObject("farmland");
   FieldStatus::clear();
   Enumerable<const FieldStatus>::thaw();
-  // Don't use a map - need guaranteed ordering.
-  vector<pair<FieldStatus const**, string> > fsMap;
-  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Clear, "clear"));
-  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Ready, "ready"));
-  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Sowed, "sowed"));
-  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Ripe1, "ripe1"));
-  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Ripe2, "ripe2"));
-  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Ripe3, "ripe3"));
-  fsMap.push_back(pair<FieldStatus const**, string>(&FieldStatus::Ended, "ended"));
-
-  for (vector<pair<FieldStatus const**, string> >::iterator fs = fsMap.begin(); fs != fsMap.end(); ++fs) {
-    string name = (*fs).second;
-    FieldStatus const** ptrLoc = (*fs).first;
-    Object* statusInfo = farmInfo->getNeededObject(name);
-    int springLabour = statusInfo->safeGetInt("springLabour");
-    int summerLabour = statusInfo->safeGetInt("summerLabour");
-    int autumnLabour = statusInfo->safeGetInt("autumnLabour");
-    int yield = statusInfo->safeGetInt("yield");
-    (*ptrLoc) = new FieldStatus(name, springLabour, summerLabour, autumnLabour, yield);
+  Object* statObject = farmInfo->getNeededObject("status");
+  objvec fieldStatuses = statObject->getLeaves();
+  for (objiter status = fieldStatuses.begin(); status != fieldStatuses.end(); ++status) {
+    string name = (*status)->getKey();
+    int springLabour = (*status)->safeGetInt("springLabour");
+    int summerLabour = (*status)->safeGetInt("summerLabour");
+    int autumnLabour = (*status)->safeGetInt("autumnLabour");
+    int yield = (*status)->safeGetInt("yield");
+    new FieldStatus(name, springLabour, summerLabour, autumnLabour, yield);
   }
   Enumerable<const FieldStatus>::freeze();
+  if (3 > FieldStatus::numTypes()) throwFormatted("Expected at least 3 field statuses, got %i", FieldStatus::numTypes());
   Object* weeds = farmInfo->getNeededObject("weeding");
   for (int i = 0; i < weeds->numTokens(); ++i) {
     const FieldStatus* fs = FieldStatus::getByName(weeds->getToken(i));
@@ -211,7 +202,6 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
     if (0 >= fs->autumnLabour) continue;
     FieldStatus::harvest.push_back(fs);
   }
-
   Object* plows = farmInfo->getNeededObject("plowing");
   for (int i = 0; i < plows->numTokens(); ++i) {
     const FieldStatus* fs = FieldStatus::getByName(plows->getToken(i));
@@ -219,7 +209,6 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
     if (0 >= fs->springLabour) continue;
     FieldStatus::plowing.push_back(fs);
   }
-
   Farmer::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmer::_labourToClear);
   initialiseIndustry<Farmer>(farmInfo);
   

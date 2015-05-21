@@ -281,14 +281,15 @@ void HexGraphicsInfo::describe (QTextStream& str) const {
       //<< "  Supplies    : " << village->getAvailableSupplies() << "\n";
   }
   if (farm) {
+    FieldStatus::rIter fs = FieldStatus::rstart(); // Reverse because the invocations are in reverse code order; << operator is right-to-left!
     str << "  Field status:\n"
-	<< "    Cleared : " << farm->getFieldStatus(FieldStatus::Clear) << "\n"
-	<< "    Ploughed: " << farm->getFieldStatus(FieldStatus::Ready) << "\n"
-	<< "    Sowed   : " << farm->getFieldStatus(FieldStatus::Sowed) << "\n"
-	<< "    Sparse  : " << farm->getFieldStatus(FieldStatus::Ripe1) << "\n"
-	<< "    Ripe    : " << farm->getFieldStatus(FieldStatus::Ripe2) << "\n"
-	<< "    Abundant: " << farm->getFieldStatus(FieldStatus::Ripe3) << "\n"
-	<< "    Fallow  : " << farm->getFieldStatus(FieldStatus::Ended) << "\n";
+	<< "    Cleared : " << farm->getFieldStatus(*fs++) << "\n"
+	<< "    Ploughed: " << farm->getFieldStatus(*fs++) << "\n"
+	<< "    Sowed   : " << farm->getFieldStatus(*fs++) << "\n"
+	<< "    Sparse  : " << farm->getFieldStatus(*fs++) << "\n"
+	<< "    Ripe    : " << farm->getFieldStatus(*fs++) << "\n"
+	<< "    Abundant: " << farm->getFieldStatus(*fs++) << "\n"
+	<< "    Fallow  : " << farm->getFieldStatus(*fs++) << "\n";
   }
   if (village) {
     str << "  Militia:";
@@ -948,7 +949,7 @@ FarmGraphicsInfo::FarmGraphicsInfo (Farmland* f)
 FarmGraphicsInfo::FieldInfo::FieldInfo (FieldShape f) 
   : shape(f)
   , area(-1)
-  , status(FieldStatus::Clear)
+  , status(*FieldStatus::start())
 {}
 
 double FarmGraphicsInfo::fieldArea () {
