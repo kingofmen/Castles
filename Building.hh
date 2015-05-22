@@ -371,7 +371,7 @@ protected:
 class FieldStatus : public Enumerable<const FieldStatus> {
   friend class StaticInitialiser;
 public:
-  FieldStatus (string n, int sprl, int suml, int autl, int y);
+  FieldStatus (string n, int sprl, int suml, int autl, int winl, int y);
   ~FieldStatus ();
 
   static Iter startPlow () {return plowing.begin();}
@@ -384,6 +384,7 @@ public:
   int springLabour;
   int summerLabour;
   int autumnLabour;
+  int winterLabour;
   int yield;
 
 private:
@@ -413,6 +414,8 @@ private:
   void fillBlock (int block, vector<int>& theBlock) const;
   string writeFieldStatus () const;
   vector<int> fields;
+  double extraLabour;
+  double totalWorked;
 
   static int _labourToClear;
 };

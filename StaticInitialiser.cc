@@ -23,6 +23,7 @@ ThreeDSprite* makeSprite (Object* info);
 map<MilUnitTemplate*, Object*> milUnitSpriteObjectMap;
 
 static map<string, int Farmer::*> farmerMap;
+static map<string, double Farmer::*> farmerFloatMap;
 static map<string, int Forester::*> foresterMap;
 // On changing compilers, change to this construction:
 // static const map<string, int Forester::*> foresterMap = {{"tended", &Forester::tendedGroves}};
@@ -183,8 +184,9 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
     int springLabour = (*status)->safeGetInt("springLabour");
     int summerLabour = (*status)->safeGetInt("summerLabour");
     int autumnLabour = (*status)->safeGetInt("autumnLabour");
+    int winterLabour = (*status)->safeGetInt("winterLabour");
     int yield = (*status)->safeGetInt("yield");
-    new FieldStatus(name, springLabour, summerLabour, autumnLabour, yield);
+    new FieldStatus(name, springLabour, summerLabour, autumnLabour, winterLabour, yield);
   }
   Enumerable<const FieldStatus>::freeze();
   if (3 > FieldStatus::numTypes()) throwFormatted("Expected at least 3 field statuses, got %i", FieldStatus::numTypes());
@@ -620,7 +622,11 @@ void readAgeTrackerFromObject (AgeTracker& age, Object* obj) {
 
 Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Farmland* ret = new Farmland();
-  initialiseCollective<Farmland>(ret, fInfo, farmerMap);
+  if (0 == farmerFloatMap.size()) {
+    farmerFloatMap["extraLabour"] = &Farmer::extraLabour;
+    farmerFloatMap["totalWorked"] = &Farmer::totalWorked;
+  }
+  initialiseCollective<Farmland>(ret, fInfo, farmerMap, farmerFloatMap);
   ret->countTotals();
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
   
@@ -1556,7 +1562,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
       Object* farmInfo = new Object("farmland");
       writeBuilding(farmInfo, farm);
       hexInfo->setValue(farmInfo);
-      writeCollective<Farmland>(farm, farmInfo, farmerMap);
+      writeCollective<Farmland>(farm, farmInfo, farmerMap, farmerFloatMap);
       farmInfo->setLeaf("blockSize", farm->blockSize);
     }
 

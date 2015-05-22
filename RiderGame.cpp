@@ -319,7 +319,7 @@ void WarfareGame::functionalTests (string fname) {
   }
 
   doublet labourInfo = calcMeanAndSigma(labourUsed);
-  Logger::logStream(DebugStartup) << "Work done : " << labourInfo.x() << " +- " << labourInfo.y() << "\n";
+  Logger::logStream(DebugStartup) << "\nWork done : " << labourInfo.x() << " +- " << labourInfo.y() << "\n";
   labourInfo = calcMeanAndSigma(employment);
   Logger::logStream(DebugStartup) << "Employment: " << labourInfo.x() << " +- " << labourInfo.y() << "\n";
   Logger::logStream(DebugStartup) << "Prices:\n";

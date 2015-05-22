@@ -146,42 +146,49 @@ farmland = {
       springLabour = 20
       summerLabour = 0
       autumnLabour = 0
+      winterLabour = 10
     }
     ready = {
       yield = 1
       springLabour = 100
       summerLabour = 0
       autumnLabour = 10
+      winterLabour = 10
     }
     sowed = {
       yield = 10
       springLabour = 0
       summerLabour = 25
       autumnLabour = 10
+      winterLabour = 10
     }
     ripe1 = {
       yield = 500
       springLabour = 0
       summerLabour = 25
       autumnLabour = 100
+      winterLabour = 25
     }
     ripe2 = {
       yield = 750
       springLabour = 0
       summerLabour = 25
       autumnLabour = 100
+      winterLabour = 25
     }
     ripe3 = {
       yield = 1000
       springLabour = 0
       summerLabour = 25
       autumnLabour = 100
+      winterLabour = 25
     }
     ended = {
       yield = 0
       springLabour = 0
       summerLabour = 0
       autumnLabour = 0
+      winterLabour = 0
     }
   }
   plowing = { clear ready }

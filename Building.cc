@@ -698,17 +698,23 @@ Farmer::Farmer (Farmland* b)
   : Industry<Farmer>(this, b)
   , Mirrorable<Farmer>()
   , fields(FieldStatus::numTypes(), 0)
+  , extraLabour(0)
+  , totalWorked(0)
 {}
 
 Farmer::Farmer (Farmer* other)
   : Industry<Farmer>(this, other->blockInfo)
   , Mirrorable<Farmer>(other)
   , fields(FieldStatus::numTypes(), 0)
+  , extraLabour(other->extraLabour)
+  , totalWorked(other->totalWorked)
 {}
 
 void Farmer::setMirrorState () {
   for (unsigned int i = 0; i < fields.size(); ++i) mirror->fields[i] = fields[i];
   setEconMirrorState(mirror);
+  mirror->extraLabour = extraLabour;
+  mirror->totalWorked = totalWorked;
 }
 
 Farmer::~Farmer () {}
@@ -829,10 +835,13 @@ void Farmer::unitTests () {
     if (mb->tradeGood == TradeGood::Labor) foundLabour += mb->amountToBuy;
   }
   double springLabour = 0;
-  for (FieldStatus::Iter fs = FieldStatus::startPlow(); fs != FieldStatus::finalPlow(); ++fs) springLabour += (*fs)->springLabour;
-  double expected = fields[**FieldStatus::startPlow()] * springLabour / Calendar::turnsToNextSeason();
-  if (fabs(foundLabour - expected) > 0.1) throwFormatted("Expected to buy %i * %.2f / %i = %.2f, but got %.2f",
+  FieldStatus::Iter fs = FieldStatus::startPlow();
+  double winterLabour = (*fs)->winterLabour;;
+  for (; fs != FieldStatus::finalPlow(); ++fs) springLabour += (*fs)->springLabour;
+  double expected = fields[**FieldStatus::startPlow()] * (winterLabour + springLabour / Calendar::turnsToNextSeason());
+  if (fabs(foundLabour - expected) > 0.1) throwFormatted("Expected to buy %i * (%.2f + %.2f / %i) = %.2f, but got %.2f",
 							 fields[**FieldStatus::startPlow()],
+							 winterLabour,
 							 springLabour,
 							 Calendar::turnsToNextSeason(),
 							 expected,
@@ -912,11 +921,14 @@ void Farmer::unitTests () {
 		   writeFieldStatus().c_str());
 
   FieldStatus::Iter ripeStatus = FieldStatus::startReap();
-  if (fabs(getAmount(output) - (*ripeStatus)->yield*1400) > 1)
-    throwFormatted("Expected to have %f %s, but have %f; %s",
-		   (*ripeStatus)->yield*1400.0,
+  double expectedFood = (*ripeStatus)->yield*1400 * sqrt(1 + extraLabour / totalWorked);
+  if (fabs(getAmount(output) - expectedFood) > 1)
+    throwFormatted("Expected to have %.2f %s, but have %.2f; extra %.2f, total %.2f, %s",
+		   expectedFood,
 		   output->getName().c_str(),
 		   getAmount(output),
+		   extraLabour,
+		   totalWorked,
 		   writeFieldStatus().c_str());
 
   blockInfo->blockSize = 5;
@@ -970,6 +982,9 @@ void Farmer::unitTests () {
   Calendar::setWeek(30);
   if (Calendar::Autumn != Calendar::getCurrentSeason()) throwFormatted("Expected week 30 to be Autumn");
   for (unsigned int i = 0; i < fields.size(); ++i) fields[i] = 0;
+  extraLabour = 0;
+  totalWorked = 0;
+
   setAmount(output, 0);
   fields[**ripeStatus] = blockInfo->blockSize;
   getLabourForBlock(0, jobs, fullCycleLabour);
@@ -985,6 +1000,8 @@ void Farmer::unitTests () {
   BOOST_FOREACH(double mf, marginFactors) {
     blockInfo->marginFactor = mf;
     for (int blocks = 2; blocks < 5; ++blocks) {
+      extraLabour = 0;
+      totalWorked = 0;
       fields[**endStatus] = 0;
       fields[**ripeStatus] = blocks*blockInfo->blockSize;
       double gameExpected = 0;
@@ -1025,6 +1042,7 @@ void Farmer::extractResources (bool /* tick */) {
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   double availableLabour = getAmount(TradeGood::Labor);
   double capFactor = capitalFactor(*this);
+  double totalHarvested = 0;
   const FieldStatus* endStatus = *(FieldStatus::rstart());
   switch (currSeason) {
   default:
@@ -1039,6 +1057,8 @@ void Farmer::extractResources (bool /* tick */) {
     // Fallow acreage grows over.
     fields[**(FieldStatus::start())] = fields[*endStatus];
     fields[*endStatus] = 0;
+    extraLabour = 0;
+    totalWorked = 0;
     break;
 
   case Calendar::Spring:
@@ -1085,7 +1105,6 @@ void Farmer::extractResources (bool /* tick */) {
     int block = fields[*endStatus] / blockInfo->blockSize;
     int counter = fields[*endStatus] - block*blockInfo->blockSize;
     double marginFactor = pow(blockInfo->marginFactor, block);
-    double totalHarvested = 0;
     for (FieldStatus::Iter fs = FieldStatus::startReap(); fs != FieldStatus::finalReap(); ++fs) {
       if (1 > (*fs)->yield) continue;
       if (1 > fields[**fs]) continue;
@@ -1101,14 +1120,19 @@ void Farmer::extractResources (bool /* tick */) {
       fields[**fs] -= harvest;
       fields[*endStatus] += harvest;
     }
-    produce(output, totalHarvested);
+
     break;
   }
   } // Not a typo, ends switch.
 
-  double usedLabour = availableLabour - getAmount(TradeGood::Labor);
-  deliverGoods(TradeGood::Labor, usedLabour);
-  if (getAmount(TradeGood::Labor) < -0.001) throwFormatted("Negative labour %f %f %f after extractResources", getAmount(TradeGood::Labor), availableLabour, usedLabour);
+  extraLabour += availableLabour;
+  totalWorked -= (availableLabour - getAmount(TradeGood::Labor));
+  if (totalHarvested > 0) { // This should occur after the last bits of extra and total labour have been recorded.
+    totalHarvested *= sqrt(1 + extraLabour / (0.00001 + totalWorked));
+    produce(output, totalHarvested);
+  }
+
+  setAmount(TradeGood::Labor, 0);
 }
 
 void Farmer::fillBlock (int block, vector<int>& theBlock) const {
@@ -1158,6 +1182,7 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
     int prev = 0;
     for (FieldStatus::Iter fs = FieldStatus::startPlow(); fs != FieldStatus::finalPlow(); ++fs) {
       searchForMatch(jobs, capFactor * (*fs)->springLabour, prev + theBlock[**fs], Calendar::turnsToNextSeason());
+      searchForMatch(jobs, capFactor * (*fs)->winterLabour, theBlock[**fs], 1); // Note that this is not part of the prodCycleLabour, being optional
       prodCycleLabour += (prev + theBlock[**fs]) * (*fs)->springLabour;
       prev += theBlock[**fs];
     }
@@ -1176,6 +1201,7 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
     // each turn.
     for (FieldStatus::Iter fs = FieldStatus::startWeed(); fs != FieldStatus::finalWeed(); ++fs) {
       searchForMatch(jobs, capFactor*(*fs)->summerLabour, theBlock[**fs], 1);
+      searchForMatch(jobs, capFactor * (*fs)->winterLabour, theBlock[**fs], 1); // Note that this is not part of the prodCycleLabour, being optional
       prodCycleLabour += theBlock[**fs] * (*fs)->summerLabour * Calendar::turnsToNextSeason();
       prodCycleLabour += theBlock[**fs] * (*fs)->autumnLabour;
     }
@@ -1184,6 +1210,7 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
   case Calendar::Autumn:
     for (FieldStatus::Iter fs = FieldStatus::startReap(); fs != FieldStatus::finalReap(); ++fs) {
       searchForMatch(jobs, capFactor * (*fs)->autumnLabour, theBlock[**fs], Calendar::turnsToNextSeason());
+      searchForMatch(jobs, capFactor * (*fs)->winterLabour, theBlock[**fs], 1); // Note that this is not part of the prodCycleLabour, being optional
       prodCycleLabour += (*fs)->autumnLabour * theBlock[**fs];
     }
     break; 
@@ -1746,11 +1773,12 @@ MineStatus::MineStatus (string n, int rl, bool lastOne)
 
 MineStatus::~MineStatus () {}
 
-FieldStatus::FieldStatus (string n, int sprl, int suml, int autl, int y)
+FieldStatus::FieldStatus (string n, int sprl, int suml, int autl, int winl, int y)
   : Enumerable<const FieldStatus>(this, n, false)
   , springLabour(sprl)
   , summerLabour(suml)
   , autumnLabour(autl)
+  , winterLabour(winl)
   , yield(y)
 {}
 

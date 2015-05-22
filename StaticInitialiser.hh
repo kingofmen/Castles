@@ -76,7 +76,10 @@ private:
     }
   }
 
-  template <class C> static void initialiseCollective (C* collective, Object* cInfo, map<string, int C::WorkerType::*> intMap) {
+  template <class C> static void initialiseCollective (C* collective,
+						       Object* cInfo,
+						       map<string, int C::WorkerType::*> intMap,
+						       map<string, double C::WorkerType::*> floatMap) {
     objvec wInfos = cInfo->getValue("worker");
     if ((int) wInfos.size() < C::numOwners) throwFormatted("Expected %i worker objects, found %i", C::numOwners, wInfos.size());
     for (int i = 0; i < C::numOwners; ++i) {
@@ -85,10 +88,18 @@ private:
 	collective->workers[i]->fields[**stat] = wInfos[i]->safeGetInt((*stat)->getName(), 0);
       }
       readInts<typename C::WorkerType>(collective->workers[i], wInfos[i], intMap);
+      readFloats<typename C::WorkerType>(collective->workers[i], wInfos[i], floatMap);
     }
   }
 
-  template <class C> static void writeCollective (C* collective, Object* cInfo, map<string, int C::WorkerType::*> intMap) {
+  template <class C> static void initialiseCollective (C* collective, Object* cInfo, map<string, int C::WorkerType::*> intMap) {
+    initialiseCollective<C>(collective, cInfo, intMap, map<string, double C::WorkerType::*>());
+  }
+
+  template <class C> static void writeCollective (C* collective,
+						  Object* cInfo,
+						  map<string, int C::WorkerType::*> intMap,
+						  map<string, double C::WorkerType::*> floatMap) {
     for (int i = 0; i < C::numOwners; ++i) {
       Object* worker = new Object("worker");
       cInfo->setValue(worker);
@@ -97,9 +108,14 @@ private:
 	worker->setLeaf((*fs)->getName(), collective->workers[i]->fields[**fs]);
       }
       writeInts<typename C::WorkerType>(collective->workers[i], worker, intMap);
+      writeFloats<typename C::WorkerType>(collective->workers[i], worker, floatMap);
     }
   }
 
+  template <class C> static void writeCollective (C* collective, Object* cInfo, map<string, int C::WorkerType::*> intMap) {
+    writeCollective<C>(collective, cInfo, intMap, map<string, double C::WorkerType::*>());
+  }
+  
   static Farmland* buildFarm (Object* fInfo);
   static Forest*   buildForest (Object* fInfo);
   static Mine*     buildMine (Object* mInfo);  
