@@ -1794,9 +1794,10 @@ void Miner::setMirrorState () {
 
 Miner::~Miner () {}
 
-MineStatus::MineStatus (string n, int rl, bool lastOne)
-  : Enumerable<MineStatus>(this, n, lastOne)
+MineStatus::MineStatus (string n, int rl, int wl)
+  : Enumerable<MineStatus>(this, n, false)
   , requiredLabour(rl)
+  , winterLabour(wl)
 {}
 
 MineStatus::~MineStatus () {}
@@ -1846,6 +1847,14 @@ void Mine::endOfTurn () {
 
 double Miner::getCapitalSize () const {
   return numBlocks();
+}
+
+double Miner::getWinterLabour (const GoodsHolder& prices, double expectedProd, double expectedLabour) const {
+  for (MineStatus::Iter ms = MineStatus::start(); ms != MineStatus::final(); ++ms) {
+    if (0 == fields[**ms]) continue;
+    return (*ms)->winterLabour * numBlocks();
+  }
+  return 0;
 }
 
 double Miner::outputOfBlock (int block) const {
@@ -1911,10 +1920,6 @@ void Miner::unitTests () {
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if (mb->tradeGood == TradeGood::Labor) {
       foundLabour += mb->amountToBuy;
-      if (fabs(mb->amountToBuy - status->requiredLabour) > 0.1) {
-	sprintf(errorMessage, "Expected to buy %i %s, bid is for %f", status->requiredLabour, TradeGood::Labor->getName().c_str(), mb->amountToBuy);
-	throw string(errorMessage);
-      }
     }
     else if (mb->tradeGood == testCapGood) {
       foundCapGood = true;
@@ -1939,6 +1944,11 @@ void Miner::unitTests () {
     }
   }
 
+  if (fabs(foundLabour - status->requiredLabour - status->winterLabour) > 0.1) throwFormatted("Expected to buy %i %s, bid is for %f",
+											      status->requiredLabour + status->winterLabour,
+											      TradeGood::Labor->getName().c_str(),
+											      foundLabour);
+
   getLabourForBlock(0, jobs, fullCycleLabour);
   if (0.1 > foundLabour) throwFormatted("Expected to buy %s, no bid found (%f %f)",
 					TradeGood::Labor->getName().c_str(),
@@ -1955,7 +1965,7 @@ void Miner::unitTests () {
   if (0.01 > productionOne) throw string("Expected to have some iron after extractResources");
 
   // Check that, with marginal production of zero, we get the same labor bid.
-  // That is, second block produces nothing, so should not create a bid.
+  // That is, second block produces nothing, so should not create a bid - except for winter labour.
   blockInfo->workableBlocks = 2;
   blockInfo->marginFactor = 0;
   bidlist.clear();
@@ -1964,9 +1974,9 @@ void Miner::unitTests () {
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if (mb->tradeGood == TradeGood::Labor) newFoundLabour += mb->amountToBuy;
   }
-  if (fabs(foundLabour - newFoundLabour) > 0.1) throwFormatted("With zero margin, expected to buy %f, but got %f",
-							       foundLabour,
-							       newFoundLabour);
+  if (fabs(status->winterLabour + foundLabour - newFoundLabour) > 0.1) throwFormatted("With zero margin, expected to buy %f, but got %f",
+										      foundLabour + status->winterLabour,
+										      newFoundLabour);
 
   // With no marginal decline, should buy twice as much.
   blockInfo->marginFactor = 1;
@@ -2032,21 +2042,23 @@ void Miner::extractResources (bool /*tick*/) {
   double capFactor = capitalFactor(*this);
 
   double decline = 1;
+  double mined = 0;
   for (MineStatus::Iter ms = MineStatus::start(); ms != MineStatus::final(); ++ms) {
     if (0 == fields[**ms]) continue;
     for (int i = 0; i < numBlocks(); ++i) {
       if (availableLabour < (*ms)->requiredLabour * capFactor) break;
       availableLabour -= (*ms)->requiredLabour * capFactor;
-      produce(output, Mine::_amountOfIron * decline);
+      mined += Mine::_amountOfIron * decline;
       if (0 == --fields[**ms]) break;
       decline *= blockInfo->marginFactor;
     }
 
     break;
   }
-  double usedLabour = availableLabour - getAmount(TradeGood::Labor);
-  deliverGoods(TradeGood::Labor, usedLabour);
-  if (getAmount(TradeGood::Labor) < 0) throw string("Negative labour after workFields");
+
+  mined *= extraLabourFactor(availableLabour, getAmount(TradeGood::Labor) - availableLabour);
+  produce(output, mined);
+  setAmount(TradeGood::Labor, 0);
 }
 
 void Mine::setMirrorState () {

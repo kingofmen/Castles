@@ -216,22 +216,27 @@ mine = {
   status = {
     name = surface
     requiredLabour = 10
+    winterLabour = 25
   }
   status = {
     name = easy
     requiredLabour = 25
+    winterLabour = 60
   }
   status = {
     name = medium
     requiredLabour = 50
+    winterLabour = 100
   }
   status = {
     name = deep
     requiredLabour = 100
+    winterLabour = 75
   }
   status = {
     name = modern
     requiredLabour = 1000
+    winterLabour = 500
   }
 
   capital = {

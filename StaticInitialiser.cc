@@ -242,7 +242,10 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Enumerable<MineStatus>::clear();
   objvec statuses = mineInfo->getValue("status");
   for (unsigned int i = 0; i < statuses.size(); ++i) {
-    new MineStatus(statuses[i]->safeGetString("name", "nameNotFound"), statuses[i]->safeGetInt("requiredLabour", 10));
+    string name   = statuses[i]->safeGetString("name", "nameNotFound");
+    int reqLabour = statuses[i]->safeGetInt("requiredLabour", 10);
+    int winLabour = statuses[i]->safeGetInt("winterLabour", 0);
+    new MineStatus(name, reqLabour, winLabour);
   }
   MineStatus::freeze();
   

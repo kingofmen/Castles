@@ -111,6 +111,14 @@ public:
     }
 
     double winterLabour = industry->getWinterLabour(prices, totalExpectedProduction, fullCycleLabour);
+    if (reserveLabour > winterLabour) {
+      reserveLabour -= winterLabour;
+      winterLabour = 0;
+    }
+    else {
+      winterLabour -= reserveLabour;
+      reserveLabour = 0;
+    }
     if (0 < winterLabour) bidlist.push_back(new MarketBid(TradeGood::Labor, winterLabour, this, 1));
 
     for (TradeGood::Iter tg = TradeGood::exLaborStart(); tg != TradeGood::final(); ++tg) {
@@ -528,9 +536,10 @@ private:
 class MineStatus : public Enumerable<MineStatus> {
   friend class StaticInitialiser;
 public:
-  MineStatus (string n, int rl, bool lastOne = false);
+  MineStatus (string n, int rl, int wl);
   ~MineStatus ();
   int requiredLabour;
+  int winterLabour;
 };
 
 class Miner : public Industry<Miner>, public Mirrorable<Miner> {
@@ -543,7 +552,7 @@ public:
   double outputOfBlock (int b) const;
   double getCapitalSize () const;
   void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
-  double getWinterLabour (const GoodsHolder& prices, double expectedProd, double expectedLabour) const {return 0;}
+  double getWinterLabour (const GoodsHolder& prices, double expectedProd, double expectedLabour) const;
   int numBlocks () const;
   virtual void setMirrorState ();
   void unitTests ();
