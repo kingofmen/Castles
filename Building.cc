@@ -574,7 +574,6 @@ void MilitiaTradition::setMirrorState () {
   mirror->militia = militia->getMirror();
   mirror->militiaStrength.clear();
   for (map<MilUnitTemplate const* const, int>::iterator i = militiaStrength.begin(); i != militiaStrength.end(); ++i) {
-    Logger::logStream(DebugStartup) << "Setting " << (*i).first->getName() << " to " << (*i).second << "\n";
     mirror->militiaStrength[(*i).first] = (*i).second;
   }
   mirror->drillLevel = drillLevel; 
@@ -921,7 +920,7 @@ void Farmer::unitTests () {
 		   writeFieldStatus().c_str());
 
   FieldStatus::Iter ripeStatus = FieldStatus::startReap();
-  double expectedFood = (*ripeStatus)->yield*1400 * sqrt(1 + extraLabour / totalWorked);
+  double expectedFood = (*ripeStatus)->yield*1400 * extraLabourFactor(extraLabour, totalWorked);
   if (fabs(getAmount(output) - expectedFood) > 1)
     throwFormatted("Expected to have %.2f %s, but have %.2f; extra %.2f, total %.2f, %s",
 		   expectedFood,
@@ -1128,7 +1127,7 @@ void Farmer::extractResources (bool /* tick */) {
   extraLabour += availableLabour;
   totalWorked -= (availableLabour - getAmount(TradeGood::Labor));
   if (totalHarvested > 0) { // This should occur after the last bits of extra and total labour have been recorded.
-    totalHarvested *= sqrt(1 + extraLabour / (0.00001 + totalWorked));
+    totalHarvested *= extraLabourFactor(extraLabour, totalWorked);
     produce(output, totalHarvested);
   }
 
@@ -1182,7 +1181,6 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
     int prev = 0;
     for (FieldStatus::Iter fs = FieldStatus::startPlow(); fs != FieldStatus::finalPlow(); ++fs) {
       searchForMatch(jobs, capFactor * (*fs)->springLabour, prev + theBlock[**fs], Calendar::turnsToNextSeason());
-      searchForMatch(jobs, capFactor * (*fs)->winterLabour, theBlock[**fs], 1); // Note that this is not part of the prodCycleLabour, being optional
       prodCycleLabour += (prev + theBlock[**fs]) * (*fs)->springLabour;
       prev += theBlock[**fs];
     }
@@ -1201,7 +1199,6 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
     // each turn.
     for (FieldStatus::Iter fs = FieldStatus::startWeed(); fs != FieldStatus::finalWeed(); ++fs) {
       searchForMatch(jobs, capFactor*(*fs)->summerLabour, theBlock[**fs], 1);
-      searchForMatch(jobs, capFactor * (*fs)->winterLabour, theBlock[**fs], 1); // Note that this is not part of the prodCycleLabour, being optional
       prodCycleLabour += theBlock[**fs] * (*fs)->summerLabour * Calendar::turnsToNextSeason();
       prodCycleLabour += theBlock[**fs] * (*fs)->autumnLabour;
     }
@@ -1210,13 +1207,44 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
   case Calendar::Autumn:
     for (FieldStatus::Iter fs = FieldStatus::startReap(); fs != FieldStatus::finalReap(); ++fs) {
       searchForMatch(jobs, capFactor * (*fs)->autumnLabour, theBlock[**fs], Calendar::turnsToNextSeason());
-      searchForMatch(jobs, capFactor * (*fs)->winterLabour, theBlock[**fs], 1); // Note that this is not part of the prodCycleLabour, being optional
       prodCycleLabour += (*fs)->autumnLabour * theBlock[**fs];
     }
     break; 
   }
 
   prodCycleLabour *= capFactor;
+}
+
+double Farmer::getWinterLabour (const GoodsHolder& prices, double expectedProd, double expectedLabour) const {
+  expectedLabour += totalWorked;
+  double maxPossible = 0;
+  for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
+    maxPossible += fields[**fs] * (*fs)->winterLabour;
+  }
+  double currentExtraProduction = expectedProd * extraLabourFactor(extraLabour, expectedLabour);
+  double lowestExtraProduction = expectedProd * extraLabourFactor(extraLabour + 1, expectedLabour) - currentExtraProduction;
+  if (lowestExtraProduction * prices.getAmount(output) <= prices.getAmount(TradeGood::Labor)) {
+    return 0;
+  }
+  double highestExtraProduction = expectedProd * extraLabourFactor(extraLabour + maxPossible, expectedLabour) - currentExtraProduction;
+  if (highestExtraProduction * prices.getAmount(output) >= maxPossible * prices.getAmount(TradeGood::Labor)) {
+    return maxPossible;
+  }
+  
+  double lowestFraction = 0;
+  double highestFraction = 1;
+
+  double currentFraction = 0.5 * (highestFraction + lowestFraction);
+  for (int i = 0; i < 5; ++i) {
+    double candidateProd = expectedProd * extraLabourFactor(extraLabour + currentFraction*maxPossible, expectedLabour) - currentExtraProduction;
+    if (candidateProd * prices.getAmount(output) >= currentFraction*maxPossible * prices.getAmount(TradeGood::Labor)) lowestFraction = currentFraction;
+    else highestFraction = currentFraction;
+    if (highestFraction - lowestFraction < 0.05) {
+      return currentFraction*maxPossible;
+    }
+    currentFraction = 0.5 * (highestFraction + lowestFraction);
+  }
+  return currentFraction*maxPossible;
 }
 
 Forest::Forest ()

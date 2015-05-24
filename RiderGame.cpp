@@ -277,6 +277,7 @@ void WarfareGame::unitTests (string fname) {
 void WarfareGame::functionalTests (string fname) {
   callTestFunction(string("Creating game from file") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
   Hex* testHex = Hex::getHex(0, 0);
+  Hex* otherHex = Hex::getHex(0, 1);
   vector<double> labourUsed;
   vector<double> labourAvailable;
   vector<double> employment;
@@ -285,29 +286,32 @@ void WarfareGame::functionalTests (string fname) {
   map<TradeGood const*, double> produced;
   GoodsHolder startingPrices;
   Market* testMarket = testHex->getMarket();
+  Village* testVillage = testHex->getVillage();
+  Village* otherVillage = otherHex->getVillage();
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) startingPrices.setAmount((*tg), testMarket->getPrice(*tg));
 
   while (Calendar::Winter != Calendar::getCurrentSeason()) {
     try {
       Logger::logStream(DebugStartup) << Calendar::toString() << "\n";
-      labourAvailable.push_back(testHex->getVillage()->production());
+      labourAvailable.push_back(testVillage->production() + otherVillage->production());
       for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) (*vex)->endOfTurn();
       for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) (*hex)->endOfTurn();
       Logger::logStream(DebugStartup) << testHex->getVillage()->getBidStatus() << "\n";
       labourUsed.push_back(testMarket->getVolume(TradeGood::Labor));
       employment.push_back(labourUsed.back() / labourAvailable.back());
+      testMarket->registerProduction(TradeGood::Labor, labourAvailable.back());
       Logger::logStream(DebugStartup) << "Good\tPrice\tDemand\tVolume\tProduce\tConsume\tAmount\n";
       for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
 	goodsPrices[*tg].push_back(testMarket->getPrice(*tg));
 	produced[*tg] += testMarket->getProduced(*tg);
 	consumed[*tg] += testMarket->getConsumed(*tg);
-	Logger::logStream(DebugStartup) << (*tg)->getName()        << "\t"
-					<< testMarket->getPrice(*tg)  << "\t"
-					<< testMarket->getDemand(*tg) << "\t"
-					<< testMarket->getVolume(*tg) << "\t"
-					<< testMarket->getProduced(*tg) << "\t"
-					<< testMarket->getConsumed(*tg) << "\t"
-					<< testHex->getVillage()->getAmount(*tg) << "\t"
+	Logger::logStream(DebugStartup) << (*tg)->getName()                                         << "\t"
+					<< testMarket->getPrice(*tg)                                << "\t"
+					<< (int) floor(0.5 + testMarket->getDemand(*tg))            << "\t"
+					<< (int) floor(0.5 + testMarket->getVolume(*tg))            << "\t"
+					<< (int) floor(0.5 + testMarket->getProduced(*tg))          << "\t"
+					<< (int) floor(0.5 + testMarket->getConsumed(*tg))          << "\t"
+					<< (int) floor(0.5 + testHex->getVillage()->getAmount(*tg)) << "\t"
 					<< "\n";
       }
       Calendar::newWeekBegins();
@@ -340,6 +344,7 @@ void WarfareGame::functionalTests (string fname) {
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     Logger::logStream(DebugStartup) << "  " << (*tg)->getName() << ": " << produced[*tg] << ", " << consumed[*tg] << "\n";
   }
+  Logger::logStream(DebugStartup) << "Max labor production: " << testHex->getVillage()->production() << "\n";
 
   Logger::logStream(DebugStartup) << passed << " of " << tests << " functional tests passed.\n";
 }

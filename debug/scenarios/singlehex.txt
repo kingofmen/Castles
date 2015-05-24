@@ -102,16 +102,16 @@ hexinfo = {
     minStatusToHarvest = climax
   }
   mine = {
-    worker = { goods = { money = 10000 iron = 550 } id = 26 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
-    worker = { goods = { money = 10000 iron = 550 } id = 27 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
-    worker = { goods = { money = 10000 iron = 550 } id = 28 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
-    worker = { goods = { money = 10000 iron = 550 } id = 29 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
-    worker = { goods = { money = 10000 iron = 550 } id = 30 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
-    worker = { goods = { money = 10000 iron = 550 } id = 31 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
-    worker = { goods = { money = 10000 iron = 550 } id = 32 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
-    worker = { goods = { money = 10000 iron = 550 } id = 33 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
-    worker = { goods = { money = 10000 iron = 550 } id = 34 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
-    worker = { goods = { money = 10000 iron = 550 } id = 35 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
+    worker = { goods = { money = 10000 iron = 750 } id = 26 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
+    worker = { goods = { money = 10000 iron = 750 } id = 27 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
+    worker = { goods = { money = 10000 iron = 750 } id = 28 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
+    worker = { goods = { money = 10000 iron = 750 } id = 29 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
+    worker = { goods = { money = 10000 iron = 750 } id = 30 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
+    worker = { goods = { money = 10000 iron = 750 } id = 31 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
+    worker = { goods = { money = 10000 iron = 750 } id = 32 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
+    worker = { goods = { money = 10000 iron = 750 } id = 33 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
+    worker = { goods = { money = 10000 iron = 750 } id = 34 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
+    worker = { goods = { money = 10000 iron = 750 } id = 35 surface = 1000000 easy = 1000000 medium = 10000000 deep = 100000000 modern = 1000000000 owner = 3 }
   }
 }
 
