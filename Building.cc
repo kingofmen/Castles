@@ -1215,11 +1215,21 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
   prodCycleLabour *= capFactor;
 }
 
-double Farmer::getWinterLabour (const GoodsHolder& prices, double expectedProd, double expectedLabour) const {
+double Farmer::getWinterLabour (const GoodsHolder& prices, int lastBlock, double expectedProd, double expectedLabour) const {
   expectedLabour += totalWorked;
   double maxPossible = 0;
+  int currBlock = 0;
+  int blockSize = blockInfo->blockSize;
   for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
-    maxPossible += fields[**fs] * (*fs)->winterLabour;
+    int numToUse = fields[**fs];
+    int blocks = currBlock + numToUse/blockSize;
+    if (blocks > lastBlock) {
+      numToUse = (lastBlock - currBlock) / blockSize;
+      blocks = lastBlock;
+    }
+    maxPossible += numToUse * (*fs)->winterLabour;
+    currBlock = blocks;
+    if (currBlock == lastBlock) break;
   }
   double currentExtraProduction = expectedProd * extraLabourFactor(extraLabour, expectedLabour);
   double lowestExtraProduction = expectedProd * extraLabourFactor(extraLabour + 1, expectedLabour) - currentExtraProduction;
@@ -1849,10 +1859,10 @@ double Miner::getCapitalSize () const {
   return numBlocks();
 }
 
-double Miner::getWinterLabour (const GoodsHolder& prices, double expectedProd, double expectedLabour) const {
+double Miner::getWinterLabour (const GoodsHolder& prices, int lastBlock, double expectedProd, double expectedLabour) const {
   for (MineStatus::Iter ms = MineStatus::start(); ms != MineStatus::final(); ++ms) {
     if (0 == fields[**ms]) continue;
-    return (*ms)->winterLabour * numBlocks();
+    return (*ms)->winterLabour * lastBlock;
   }
   return 0;
 }
@@ -1965,7 +1975,7 @@ void Miner::unitTests () {
   if (0.01 > productionOne) throw string("Expected to have some iron after extractResources");
 
   // Check that, with marginal production of zero, we get the same labor bid.
-  // That is, second block produces nothing, so should not create a bid - except for winter labour.
+  // That is, second block produces nothing, so should not create a bid.
   blockInfo->workableBlocks = 2;
   blockInfo->marginFactor = 0;
   bidlist.clear();
@@ -1974,9 +1984,9 @@ void Miner::unitTests () {
   BOOST_FOREACH(MarketBid* mb, bidlist) {
     if (mb->tradeGood == TradeGood::Labor) newFoundLabour += mb->amountToBuy;
   }
-  if (fabs(status->winterLabour + foundLabour - newFoundLabour) > 0.1) throwFormatted("With zero margin, expected to buy %f, but got %f",
-										      foundLabour + status->winterLabour,
-										      newFoundLabour);
+  if (fabs(foundLabour - newFoundLabour) > 0.1) throwFormatted("With zero margin, expected to buy %f, but got %f",
+							       foundLabour,
+							       newFoundLabour);
 
   // With no marginal decline, should buy twice as much.
   blockInfo->marginFactor = 1;

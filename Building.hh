@@ -64,10 +64,11 @@ public:
     double fullCycleLabour = 0;
     double totalExpectedProduction = 0;
     vector<jobInfo> jobs;
-    for (int i = 0; i < industry->numBlocks(); ++i) {
+    int lastBlock = 0;
+    for (; lastBlock < industry->numBlocks(); ++lastBlock) {
       vector<jobInfo> candidateJobs;
-      industry->getLabourForBlock(i, candidateJobs, fullCycleLabour);
-      double expectedProduction = industry->outputOfBlock(i) * marginFactor;
+      industry->getLabourForBlock(lastBlock, candidateJobs, fullCycleLabour);
+      double expectedProduction = industry->outputOfBlock(lastBlock) * marginFactor;
       totalExpectedProduction += expectedProduction;
       if (prices.getAmount(TradeGood::Labor) * fullCycleLabour < prices.getAmount(output) * expectedProduction) {
 	marginFactor *= blockInfo->marginFactor;
@@ -110,7 +111,7 @@ public:
       else bidlist.push_back(new MarketBid(TradeGood::Labor, neededPerTurn, this, turns-1));
     }
 
-    double winterLabour = industry->getWinterLabour(prices, totalExpectedProduction, fullCycleLabour);
+    double winterLabour = industry->getWinterLabour(prices, lastBlock, totalExpectedProduction, fullCycleLabour);
     if (reserveLabour > winterLabour) {
       reserveLabour -= winterLabour;
       winterLabour = 0;
@@ -420,7 +421,7 @@ public:
   double outputOfBlock (int b) const;
   double getCapitalSize () const;
   void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
-  double getWinterLabour (const GoodsHolder& prices, double expectedProd, double expectedLabour) const;
+  double getWinterLabour (const GoodsHolder& prices, int lastBlock, double expectedProd, double expectedLabour) const;
   int numBlocks () const;
   virtual void setMirrorState ();
   void unitTests ();
@@ -493,7 +494,7 @@ public:
   double outputOfBlock (int b) const;
   double getCapitalSize () const;
   void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
-  double getWinterLabour (const GoodsHolder& prices, double expectedProd, double expectedLabour) const {return 0;}
+  double getWinterLabour (const GoodsHolder& prices, int lastBlock, double expectedProd, double expectedLabour) const {return 0;}
   int numBlocks () const;
   virtual void setMirrorState ();
   void unitTests ();
@@ -552,7 +553,7 @@ public:
   double outputOfBlock (int b) const;
   double getCapitalSize () const;
   void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
-  double getWinterLabour (const GoodsHolder& prices, double expectedProd, double expectedLabour) const;
+  double getWinterLabour (const GoodsHolder& prices, int lastBlock, double expectedProd, double expectedLabour) const;
   int numBlocks () const;
   virtual void setMirrorState ();
   void unitTests ();
