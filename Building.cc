@@ -37,7 +37,6 @@ ForestStatus const* ForestStatus::Mature = 0;
 ForestStatus const* ForestStatus::Mighty = 0;
 ForestStatus const* ForestStatus::Huge = 0;
 ForestStatus const* ForestStatus::Climax = 0;
-ForestStatus const* ForestStatus::Wild = 0;
 
 int Forest::_labourToTend    = 5;
 int Forest::_labourToHarvest = 50;
@@ -1415,14 +1414,14 @@ void Forester::unitTests () {
       (fields[*ForestStatus::Huge] > 0) ||
       (fields[*ForestStatus::Climax] != 95) ||
       (fields[*ForestStatus::Planted] != 95) ||
-      (fields[*ForestStatus::Wild] != 10))
+      (wildForest != 10))
     throwFormatted("Expected (Clear, Huge, Climax, Planted, Wild) to be (%i %i %i %i %i), got (%i %i %i %i %i)",
 		   0, 0, 95, 95, 10,
 		   fields[*ForestStatus::Clear],
 		   fields[*ForestStatus::Huge],
 		   fields[*ForestStatus::Climax],
 		   fields[*ForestStatus::Planted],
-		   fields[*ForestStatus::Wild]);
+		   wildForest);
 
   getLabourForBlock(0, jobs, fullCycleLabour);
   deliverGoods(TradeGood::Labor, fullCycleLabour);
@@ -1433,7 +1432,7 @@ void Forester::unitTests () {
 					 fields[*ForestStatus::Huge],
 					 fields[*ForestStatus::Climax],
 					 fields[*ForestStatus::Planted],
-					 fields[*ForestStatus::Wild]);
+					 wildForest);
 
   for (unsigned int i = 0; i < fields.size(); ++i) fields[i] = 0;
   fields[*ForestStatus::Climax] = blockInfo->blockSize;
@@ -1525,14 +1524,14 @@ void Forester::extractResources (bool tick) {
     fields[*ForestStatus::Planted]    = fields[*ForestStatus::Clear];
     fields[*ForestStatus::Clear]      = 0;
     int wildening      = getTendedArea() - tendedGroves;
-    fields[*ForestStatus::Wild]      += wildening;
-    ForestStatus::rIter target = ForestStatus::rstart(); ++target;
+    wildForest += wildening;
+    ForestStatus::rIter target = ForestStatus::rstart();
     while (wildening > 0) {
       if (0 < fields[**target]) {
 	fields[**target]--;
 	wildening--;
       }
-      if (++target == ForestStatus::rfinal()) {target = ForestStatus::rstart(); ++target;}
+      if (++target == ForestStatus::rfinal()) target = ForestStatus::rstart();
     }
     tendedGroves = 0;
     createBlockQueue();
@@ -1578,28 +1577,22 @@ double Forester::getCapitalSize () const {
 }
 
 int Forester::getTendedArea () const {
-  return (fields[*ForestStatus::Clear] +
-	  fields[*ForestStatus::Planted] +
-	  fields[*ForestStatus::Scrub] +
-	  fields[*ForestStatus::Saplings] +
-	  fields[*ForestStatus::Young] +
-	  fields[*ForestStatus::Grown] +
-	  fields[*ForestStatus::Mature] +
-	  fields[*ForestStatus::Mighty] +
-	  fields[*ForestStatus::Huge] +
-	  fields[*ForestStatus::Climax]);
+  int ret = 0;
+  for (ForestStatus::Iter fs = ForestStatus::start(); fs != ForestStatus::final(); ++fs) {
+    ret += fields[**fs];
+  }
+  return ret;
 }
 
 int Forester::getForestArea () const {
-  return getTendedArea() + fields[*ForestStatus::Wild];
+  return getTendedArea() + wildForest;
 }
 
 void Forester::createBlockQueue () {
   myBlocks.clear();
-  for (ForestStatus::rIter i = ForestStatus::rstart(); i != ForestStatus::rfinal(); ++i) {
-    if ((*i) == ForestStatus::Wild) continue;
-    for (int j = 0; j < fields[**i]; ++j) {
-      myBlocks.push_back(*i);
+  for (ForestStatus::rIter fs = ForestStatus::rstart(); fs != ForestStatus::rfinal(); ++fs) {
+    for (int j = 0; j < fields[**fs]; ++j) {
+      myBlocks.push_back(*fs);
     }
   }
 }
@@ -1837,18 +1830,16 @@ ForestStatus::ForestStatus (string n, int rl, bool lastOne)
 ForestStatus::~ForestStatus () {}
 
 void ForestStatus::initialise() {
-  Enumerable<const ForestStatus>::clear();
-  ForestStatus::Clear    = new ForestStatus("clear",    0, false);
-  ForestStatus::Planted  = new ForestStatus("planted",  0, false);
-  ForestStatus::Scrub    = new ForestStatus("scrub",    0, false);
-  ForestStatus::Saplings = new ForestStatus("saplings", 0, false);
-  ForestStatus::Young    = new ForestStatus("young",    0, false);
-  ForestStatus::Grown    = new ForestStatus("grown",    0, false);
-  ForestStatus::Mature   = new ForestStatus("mature",   0, false);
-  ForestStatus::Mighty   = new ForestStatus("mighty",   0, false);
-  ForestStatus::Huge     = new ForestStatus("huge",     0, false);
-  ForestStatus::Climax   = new ForestStatus("climax",   0, false);
-  ForestStatus::Wild     = new ForestStatus("wild",     0, true);
+  ForestStatus::Clear    = new ForestStatus("clear",    0);
+  ForestStatus::Planted  = new ForestStatus("planted",  0);
+  ForestStatus::Scrub    = new ForestStatus("scrub",    0);
+  ForestStatus::Saplings = new ForestStatus("saplings", 0);
+  ForestStatus::Young    = new ForestStatus("young",    0);
+  ForestStatus::Grown    = new ForestStatus("grown",    0);
+  ForestStatus::Mature   = new ForestStatus("mature",   0);
+  ForestStatus::Mighty   = new ForestStatus("mighty",   0);
+  ForestStatus::Huge     = new ForestStatus("huge",     0);
+  ForestStatus::Climax   = new ForestStatus("climax",   0);
 }
 
 void Mine::endOfTurn () {

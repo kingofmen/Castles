@@ -465,6 +465,7 @@ private:
 };
 
 class ForestStatus : public Enumerable<const ForestStatus> {
+  friend class StaticInitialiser;
 public:
   ForestStatus (string n, int rl, bool lastOne = false);
   ~ForestStatus ();
@@ -481,7 +482,6 @@ public:
   static ForestStatus const* Mighty;
   static ForestStatus const* Huge;
   static ForestStatus const* Climax;
-  static ForestStatus const* Wild;
 };
 
 class Forester : public Industry<Forester>, public Mirrorable<Forester> {
@@ -503,6 +503,7 @@ public:
   vector<int> fields;
   vector<ForestStatus const*> myBlocks;
   int tendedGroves;
+  int wildForest;
 private:
   Forester(Forester* other);
   int getForestArea () const;

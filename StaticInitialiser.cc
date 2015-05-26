@@ -215,7 +215,10 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   initialiseIndustry<Farmer>(farmInfo);
   
   Object* forestInfo       = popInfo->getNeededObject("forest");
+  Enumerable<const FieldStatus>::thaw();
+  Enumerable<const ForestStatus>::clear();
   ForestStatus::initialise();
+  Enumerable<const FieldStatus>::freeze();
   Forest::_labourToTend    = forestInfo->safeGetInt("labourToTend", Forest::_labourToTend);
   Forest::_labourToHarvest = forestInfo->safeGetInt("labourToHarvest", Forest::_labourToHarvest);
   Forest::_labourToClear   = forestInfo->safeGetInt("labourToClear", Forest::_labourToClear);
