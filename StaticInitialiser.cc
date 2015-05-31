@@ -217,26 +217,17 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Object* forestInfo       = popInfo->getNeededObject("forest");
   Enumerable<const FieldStatus>::thaw();
   Enumerable<const ForestStatus>::clear();
-  ForestStatus::initialise();
-  Enumerable<const FieldStatus>::freeze();
-  Forest::_labourToTend    = forestInfo->safeGetInt("labourToTend", Forest::_labourToTend);
-  Forest::_labourToHarvest = forestInfo->safeGetInt("labourToHarvest", Forest::_labourToHarvest);
-  Forest::_labourToClear   = forestInfo->safeGetInt("labourToClear", Forest::_labourToClear);
-  Object* amountOfWood     = forestInfo->getNeededObject("amountOfWood");
-  Forest::_amountOfWood.clear();
-  Forest::_amountOfWood.push_back(0);
-  Forest::_amountOfWood.push_back(0);
-  Forest::_amountOfWood.push_back(1);
-  Forest::_amountOfWood.push_back(2);
-  Forest::_amountOfWood.push_back(5);
-  Forest::_amountOfWood.push_back(10);
-  Forest::_amountOfWood.push_back(25);
-  Forest::_amountOfWood.push_back(50);
-  Forest::_amountOfWood.push_back(100);
-  Forest::_amountOfWood.push_back(250);
-  for (int i = 0; i < amountOfWood->numTokens(); ++i) {
-    Forest::_amountOfWood[i] = amountOfWood->tokenAsInt(i);
+  statObject = forestInfo->getNeededObject("status");
+  fieldStatuses = statObject->getLeaves();
+  for (objiter status = fieldStatuses.begin(); status != fieldStatuses.end(); ++status) {
+    string name = (*status)->getKey();
+    int yield = (*status)->safeGetInt("yield");
+    int tendLabour = (*status)->safeGetInt("labourToTend");
+    int chopLabour = (*status)->safeGetInt("labourToHarvest");
+    new ForestStatus(name, yield, tendLabour, chopLabour);
   }
+  Enumerable<const FieldStatus>::freeze();
+  Forest::_labourToClear = forestInfo->safeGetInt("labourToClear", Forest::_labourToClear);
   initialiseIndustry<Forester>(forestInfo);
   
   Object* mineInfo       = popInfo->getNeededObject("mine");

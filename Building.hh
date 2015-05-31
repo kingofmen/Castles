@@ -467,21 +467,12 @@ private:
 class ForestStatus : public Enumerable<const ForestStatus> {
   friend class StaticInitialiser;
 public:
-  ForestStatus (string n, int rl, bool lastOne = false);
+  ForestStatus (string n, int y, int tl, int hl);
   ~ForestStatus ();
 
-  static void initialise();
-
-  static ForestStatus const* Clear;
-  static ForestStatus const* Planted;
-  static ForestStatus const* Scrub;
-  static ForestStatus const* Saplings;
-  static ForestStatus const* Young;
-  static ForestStatus const* Grown;
-  static ForestStatus const* Mature;
-  static ForestStatus const* Mighty;
-  static ForestStatus const* Huge;
-  static ForestStatus const* Climax;
+  int yield;
+  int labourToTend;
+  int labourToHarvest;
 };
 
 class Forester : public Industry<Forester>, public Mirrorable<Forester> {
@@ -528,10 +519,7 @@ public:
 private:
   Forest (Forest* other);
   int yearsSinceLastTick;
-  
-  static vector<int> _amountOfWood;
-  static int _labourToTend;    // Ensure forest doesn't go wild.
-  static int _labourToHarvest; // Extract wood, make clear.
+
   static int _labourToClear;   // Go from wild to clear.
 };
 

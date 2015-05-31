@@ -26,23 +26,7 @@ vector<const FieldStatus*> FieldStatus::weeding;
 vector<const FieldStatus*> FieldStatus::harvest;
 
 int Farmer::_labourToClear  = 100;
-
-ForestStatus const* ForestStatus::Clear = 0;
-ForestStatus const* ForestStatus::Planted = 0;
-ForestStatus const* ForestStatus::Scrub = 0;
-ForestStatus const* ForestStatus::Saplings = 0;
-ForestStatus const* ForestStatus::Young = 0;
-ForestStatus const* ForestStatus::Grown = 0;
-ForestStatus const* ForestStatus::Mature = 0;
-ForestStatus const* ForestStatus::Mighty = 0;
-ForestStatus const* ForestStatus::Huge = 0;
-ForestStatus const* ForestStatus::Climax = 0;
-
-int Forest::_labourToTend    = 5;
-int Forest::_labourToHarvest = 50;
 int Forest::_labourToClear   = 250;
-vector<int> Forest::_amountOfWood;
-
 int Mine::_amountOfIron = 50;
 
 char errorMessage[500];
@@ -1307,7 +1291,7 @@ Forester::~Forester () {}
 // expected total possibly years from now, when the trees
 // become harvestable.
 double Forester::outputOfBlock (int block) const {
-  return Forest::_amountOfWood[**(ForestStatus::rstart())] * blockInfo->blockSize;
+  return (*(ForestStatus::rstart()))->yield * blockInfo->blockSize;
 }
 
 void Forest::unitTests () {
@@ -1364,13 +1348,6 @@ void Forester::unitTests () {
 
   blockInfo->workableBlocks = 200;
   createBlockQueue();
-  // Set labour so we need 310 of it next turn.
-  // Saving about 7% of that means we should bid
-  // for capital if the capital price is below 210.
-  int oldTendLabour = Forest::_labourToTend;
-  int oldHarvestLabour = Forest::_labourToHarvest;
-  Forest::_labourToTend = 14;   // 200 fields, times 14 labour, over 14 turns, makes 210 next turn - it will try to do 15 per turn.
-  Forest::_labourToHarvest = 1; // 100 harvestable fields, which we want done this turn.
   GoodsHolder prices;
   vector<MarketBid*> bidlist;
   zeroGoods();
@@ -1403,16 +1380,26 @@ void Forester::unitTests () {
 		     capital->getAmount(testCapGood));
     }
   }
-  if (fabs(foundLabour - 310) > 0.1) throwFormatted("Expected to buy 310 %s, bid is for %f (%i %i) %f %f %i %i",
-						    TradeGood::Labor->getName().c_str(),
-						    foundLabour,
-						    fields[**clearStatus],
-						    fields[**hugeStatus],
-						    capitalFactor(*this),
-						    getAmount(testCapGood),
-						    getTendedArea(),
-						    tendedGroves);
 
+  double remainingLabour = foundLabour;
+  remainingLabour -= fields[**hugeStatus] * (*hugeStatus)->labourToHarvest;
+  if (remainingLabour < 0) throwFormatted("Should buy enough %s to harvest %i %s, but only bought %.2f",
+					  TradeGood::Labor->getName().c_str(),
+					  fields[**hugeStatus],
+					  (*hugeStatus)->getName().c_str(),
+					  foundLabour);
+
+  int expectedTendedFields = fields[**clearStatus] + fields[**hugeStatus];
+  expectedTendedFields /= Calendar::turnsToNextSeason();
+  if (expectedTendedFields * Calendar::turnsToNextSeason() < fields[**clearStatus] + fields[**hugeStatus]) ++expectedTendedFields;
+  for (int i = 0; i < expectedTendedFields; ++i) {
+    if (remainingLabour < 0.001) throwFormatted("Should buy enough %s to tend %i groves, but ran out after %i",
+						TradeGood::Labor->getName().c_str(),
+						expectedTendedFields,
+						i);
+    remainingLabour -= (*clearStatus)->labourToTend;
+  }
+  if (remainingLabour > 0.5) throwFormatted("Forester bought too much labour, total %.2f", foundLabour);
   if (!foundCapGood) throwFormatted("Expected to buy %s, no bid found", testCapGood->getName().c_str());
 
   owner = this;
@@ -1491,9 +1478,7 @@ void Forester::unitTests () {
 							    actual);
     }
   }
-  
-  Forest::_labourToTend = oldTendLabour;
-  Forest::_labourToHarvest = oldHarvestLabour;
+
   capital->setAmounts(oldCapital);
 }
 
@@ -1502,21 +1487,22 @@ void Forester::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prod
   if (Calendar::Winter == currSeason) return;
   int startIndex = block * blockInfo->blockSize;
   int endIndex   = min(startIndex + blockInfo->blockSize, (int) myBlocks.size());
-  int numToTend  = 0;
-  int numToChop  = 0;
+  prodCycleLabour = 0;
+  double capFactor = capitalFactor(*this);
   ForestStatus::rIter hugeStatus = ForestStatus::rstart(); ++hugeStatus;
   for (int i = startIndex; i < endIndex; ++i) {
-    if (i >= tendedGroves) ++numToTend;
+    if (i >= tendedGroves) {
+      searchForMatch(jobs, myBlocks[i]->labourToTend * capFactor, 1, Calendar::turnsToNextSeason());
+      prodCycleLabour += myBlocks[i]->labourToTend;
+    }
     // TODO: Get from discount rate
-    if (*myBlocks[i] >= **hugeStatus) ++numToChop;
+    if (*myBlocks[i] >= **hugeStatus) {
+      searchForMatch(jobs, myBlocks[i]->labourToHarvest * capFactor, 1, 1);
+      prodCycleLabour += myBlocks[i]->labourToHarvest;
+    }
   }
 
-  double capFactor = capitalFactor(*this);
-  prodCycleLabour  = Forest::_labourToHarvest * numToChop;
-  prodCycleLabour += Forest::_labourToTend * numToTend;
   prodCycleLabour *= capFactor;
-  searchForMatch(jobs, Forest::_labourToHarvest * capFactor, numToChop, 1);
-  searchForMatch(jobs, Forest::_labourToTend    * capFactor, numToTend, Calendar::turnsToNextSeason());
 }
 
 int Forester::numBlocks () const {
@@ -1553,8 +1539,6 @@ void Forester::extractResources (bool tick) {
   double availableLabour = getAmount(TradeGood::Labor);
   double capFactor = capitalFactor(*this);
   double decline = 1;
-  double labourPerChop = Forest::_labourToHarvest*capFactor;
-  double labourPerTend = Forest::_labourToTend*capFactor;
   double totalChopped = 0;
   ForestStatus::Iter clearStatus = ForestStatus::start();
   ForestStatus::rIter hugeStatus = ForestStatus::rstart(); ++hugeStatus;
@@ -1562,14 +1546,14 @@ void Forester::extractResources (bool tick) {
     int startIndex = block * blockInfo->blockSize;
     int endIndex   = min(startIndex + blockInfo->blockSize, (int) myBlocks.size());
     for (int i = startIndex; i < endIndex; ++i) {
-      if ((tendedGroves <= i) && (availableLabour >= labourPerTend)) {
-	availableLabour -= labourPerTend;
+      if ((tendedGroves <= i) && (availableLabour >= myBlocks[i]->labourToTend * capFactor)) {
+	availableLabour -= myBlocks[i]->labourToTend * capFactor;
 	++tendedGroves;
       }
       // TODO: Use discount rate
-      if ((*myBlocks[i] >= **hugeStatus) && (availableLabour >= labourPerChop)) {
-	availableLabour -= labourPerChop;
-	totalChopped += Forest::_amountOfWood[*myBlocks[i]] * decline;
+      if ((*myBlocks[i] >= **hugeStatus) && (availableLabour >= myBlocks[i]->labourToHarvest * capFactor)) {
+	availableLabour -= myBlocks[i]->labourToHarvest * capFactor;
+	totalChopped += myBlocks[i]->yield * decline;
 	--fields[*myBlocks[i]];
 	++fields[**clearStatus];
       }
@@ -1837,24 +1821,14 @@ void FieldStatus::clear () {
   plowing.clear();
 }
 
-ForestStatus::ForestStatus (string n, int rl, bool lastOne)
-  : Enumerable<const ForestStatus>(this, n, lastOne)
+ForestStatus::ForestStatus (string n, int y, int tl, int hl)
+  : Enumerable<const ForestStatus>(this, n, false)
+  , yield(y)
+  , labourToTend(tl)
+  , labourToHarvest(hl)
 {}
 
 ForestStatus::~ForestStatus () {}
-
-void ForestStatus::initialise() {
-  ForestStatus::Clear    = new ForestStatus("clear",    0);
-  ForestStatus::Planted  = new ForestStatus("planted",  0);
-  ForestStatus::Scrub    = new ForestStatus("scrub",    0);
-  ForestStatus::Saplings = new ForestStatus("saplings", 0);
-  ForestStatus::Young    = new ForestStatus("young",    0);
-  ForestStatus::Grown    = new ForestStatus("grown",    0);
-  ForestStatus::Mature   = new ForestStatus("mature",   0);
-  ForestStatus::Mighty   = new ForestStatus("mighty",   0);
-  ForestStatus::Huge     = new ForestStatus("huge",     0);
-  ForestStatus::Climax   = new ForestStatus("climax",   0);
-}
 
 void Mine::endOfTurn () {
   doWork();

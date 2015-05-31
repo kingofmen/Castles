@@ -200,10 +200,60 @@ farmland = {
 }
 
 forest = {
-  labourToTend    = 5
-  labourToHarvest = 50
   labourToClear   = 250
-  amountOfWood = { 0 0 1 2 5 10 25 50 100 200 }
+
+  status = {
+    clear = {
+      yield = 0
+      labourToTend = 5
+      labourToHarvest = 50
+    }
+    planted = {
+      yield = 0
+      labourToTend = 5
+      labourToHarvest = 50
+    }
+    scrub = {
+      yield = 1
+      labourToTend = 5
+      labourToHarvest = 50
+    }
+    saplings = {
+      yield = 2
+      labourToTend = 5
+      labourToHarvest = 50
+    }
+    young = {
+      yield = 5
+      labourToTend = 5
+      labourToHarvest = 50
+    }
+    grown = {
+      yield = 10
+      labourToTend = 5
+      labourToHarvest = 50
+    }
+    mature = {
+      yield = 25
+      labourToTend = 5
+      labourToHarvest = 50
+    }
+    mighty = {
+      yield = 50
+      labourToTend = 5
+      labourToHarvest = 50
+    }
+    huge = {
+      yield = 100
+      labourToTend = 5
+      labourToHarvest = 50
+    }
+    climax = {
+      yield = 200
+      labourToTend = 5
+      labourToHarvest = 50
+    }
+  }
 
   capital = {
     iron = 0.1
