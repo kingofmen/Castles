@@ -1,0 +1,108 @@
+\section{Substitution}
+
+This section outlines how the Village decides how much to buy and
+consume of goods that are partial substitutes.
+
+\subsection{Defining substitutes}
+
+A MaslowLevel may have more than one TradeGood, with relative weights,
+like so:
+\begin{verbatim}
+level = {
+  food = 0.19
+  iron = 0.01
+  mortality = 0.96
+  max_work_fraction = 0.94
+  name = "Barely fed"
+}
+\end{verbatim}
+
+\subsection{Buying substitutes}
+
+Let $x_i$ be the amount of good $i$, $y_i$ its price, and $w_i$ its
+weight, normalised so their sum is 1. Then we require
+\begin{eqnarray}
+\label{eq:constraint}
+\prod\limits_i x_i^{w_i} &=& C
+\end{eqnarray}
+where $C$ is the Village's consumption factor, and minimise the total
+price paid
+\begin{eqnarray*}
+P = \sum\limits_i x_iy_i
+\end{eqnarray*}
+under this constraint. To find the amounts to bid for we use a
+Lagrange multiplier:
+\begin{eqnarray*}
+\Lambda(\vec x, \vec y, \vec w) &=& \sum\limits_i x_iy_i -
+\lambda\left(\prod\limits_i x_i^{w_i} - C\right)\\
+\frac{\partial\Lambda}{\partial x_i} &=& y_i - \lambda w_ix^{w_i-1}\prod\limits_{j\ne i} x_j^{w_j}
+\end{eqnarray*}
+and setting the derivative to equal zero gives
+\begin{eqnarray*}
+\lambda w_ix_i^{-1}x_i^{w_i}\prod\limits_{j\ne i} x_j^{w_j} &=& y_i
+\lambda &=& \frac{x_iy_i}{w_i}\prod\limits_i x_i^{-w_i}.
+\end{eqnarray*}
+We see that when equating the $\lambda$ for different values of $i$,
+the product drops out, and (defining in passing an effective price
+$y_i'=y_i/w_i$) we get
+\begin{eqnarray}
+\label{eq:equalprice}
+x_iy_i' &=& x_jy_j'
+\end{eqnarray}
+for all $i, j$. Inserting this back into equation~\ref{eq:constraint},
+we find
+\begin{eqnarray}
+x_1^{w_1}\prod\limits_{j\ne i} \left(\frac{x_1y_1'}{y_j'}\right)^{w_j} &=& C\\
+x_1 &=& C \prod\limits_{j\ne i}\left(\frac{y_1'}{y_j'}\right)^{-w_j} \\
+\label{eq:amount}
+    &=& Cy_1'^{w_1-1} \prod\limits_{j\ne i}\left(y_j')^{w_j}
+\end{eqnarray}
+which looks fearsome but is straightforward to calculate; and from
+there we can get the other $x_i$ by inserting into
+equation~\ref{eq:equalprice}.
+
+A sanity check: Suppose two goods have equal weights 0.5, and equal
+prices 1; and suppose $C$ is 1000. Then $x_1$ is just 1000 and so is
+$x_2$, which is sensible - equal goods, equal amounts, and equal to
+the consumption capacity. Now suppose the first good has weight
+two-thirds, and the prices are still equal. Then $x_1$ becomes 1260
+and $x_2$ is 630, so the higher-weighted good is used more and the
+total is still very close to 2000. Conversely if $y_1=0.75$ and
+$y_2=1.5$, giving the same effective prices, then $x_1$ becomes 1414
+and $x_2$ 707. These all seem like sensible numbers.
+
+% (* (* 1000 (pow 1.5 -0.5) (pow 3 0.5)) 1.5 (/ 1.0 3))
+
+\subsection{Consuming substitutes}
+
+In this case there is no price to guide us. The constraint equation is
+the same, since it reflects that the total consumption should be some
+given constant. But the market prices don't necessarily reflect the
+real consumption costs. So the new problem is to satisfy equation~\ref{eq:constraint}
+while minimising the total fractional consumption $\sum\limits_i
+x_i/X_i$ where $X_i$ is the reserve of good $i$. We see that this is
+equivalent to just setting prices equal to inverse reserves, and we
+can reuse equations~\ref{eq:equalprice} and \ref{eq:amount} with the
+substitution $y_i' = \frac{1}{w_iX_i}$. By inspection we see that
+consumption is directly proportional to weight and reserves, which
+makes sense. To sanity-check the result, suppose we have equal
+amounts, say 1000, of each good, equal weights, and consumption
+capacity also 1000. Then $x_1$ is 1000 and so is $x_2$. Changing the
+weights, as before, to two-thirds and one-third, we get 1260 and 630,
+as before. Which is really bad because we assumed we had 1000 of
+each. So we will have to insert an additional clause: Don't use more
+than you have; if forced to attempt it, use everything available and redo
+the problem with one less good. However, on the assumption that we
+have 2000 of each, we get $x_1$ of 1260 again and $x_2$ of 630, so
+it's fine. If we have only 1000 of good 2, then we get 1587 and 397,
+which is also ok.
+
+%(let ((X1 2000)
+%      (c1 1000)
+%      (X2 1000) 
+%      (w1 0.6666) 
+%      (w2 (- 1 w1))
+%      (x1 (* c1 (pow (/ 1.0 (* X1 w1)) (- w1 1)) (pow (/ 1.0 (* X2 w2)) w2)))
+%      (x2 (* w2 X2 (/ 1.0 w1 X1))))
+%(* x1 x2))
+
