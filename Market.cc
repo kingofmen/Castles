@@ -11,7 +11,7 @@ double MarketContract::deliver (double amountWanted) {
   double amountAvailable = producer->produceForContract(tradeGood, amountWanted);
   delivered += amountAvailable;
   recipient->deliverGoods(tradeGood, amountAvailable);
-  if (recipient->getAmount(tradeGood) < 0) throw (string("Negative ") + tradeGood->getName() + " after delivery");
+  if (recipient->getAmount(tradeGood) < 0) throwFormatted("Negative %s (%f) after delivery", tradeGood->getName().c_str(), recipient->getAmount(tradeGood));
   return amountAvailable;
 }
 
@@ -367,8 +367,8 @@ void Market::unRegisterParticipant (EconActor* ea) {
 }
 
 MarketContract::MarketContract (EconActor* s, EconActor* r, double p, unsigned int rmt, const TradeGood* tg, double amt)
-  : producer(s)
-  , recipient(r)
+  : recipient(r)
+  , producer(s)
   , tradeGood(tg)
   , amount(amt)
   , cashPaid(0)

@@ -52,10 +52,12 @@ x_iy_i' &=& x_jy_j'
 for all $i, j$. Inserting this back into equation~\ref{eq:constraint},
 we find
 \begin{eqnarray}
-x_1^{w_1}\prod\limits_{j\ne i} \left(\frac{x_1y_1'}{y_j'}\right)^{w_j} &=& C\\
-x_1 &=& C \prod\limits_{j\ne i}\left(\frac{y_1'}{y_j'}\right)^{-w_j} \\
+x_1^{w_1}\prod\limits_{j\ne 1} \left(\frac{x_1y_1'}{y_j'}\right)^{w_j} &=& C\\
+x_1 &=& C \prod\limits_{j\ne 1}\left(\frac{y_1'}{y_j'}\right)^{-w_j} \\
 \label{eq:amount}
-    &=& Cy_1'^{w_1-1} \prod\limits_{j\ne i}\left(y_j')^{w_j}
+    &=& Cy_1'^{w_1-1} \prod\limits_{j\ne 1}\left(y_j')^{w_j}\\
+    &=& Cy_1'^{-1} \prod\limits_{j}\left(y_j')^{w_j}\\
+    &=& \frac{Cw_1}{y_1} \prod\limits_{j}\left(y_j')^{w_j}
 \end{eqnarray}
 which looks fearsome but is straightforward to calculate; and from
 there we can get the other $x_i$ by inserting into
