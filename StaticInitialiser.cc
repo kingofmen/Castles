@@ -468,6 +468,7 @@ void StaticInitialiser::initialiseMaslowHierarchy (Object* popNeeds) {
     current->maxWorkFraction = (*level)->safeGetFloat("max_work_fraction", 1.0);
     sprintf(strbuffer, "\"Goods level %i\"", counter++);
     current->name = remQuotes((*level)->safeGetString("name", strbuffer));
+    current->normalise();
     Village::maslowLevels.push_back(current);
   }
 }

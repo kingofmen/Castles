@@ -19,7 +19,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
  * Supply line interference
  * Raid/tribute/battle mapmode
  * Three-resource economy
-   - Initialise F*Status and f*erMaps from text files or statically.
+   - Initialise F*Status from text files (check)
    - Fix Miner capitalSize
    - Think up better names for 'fields' and 'extractResources'
    - Load and save market contracts (check)
@@ -29,7 +29,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Use EconActor discount rate in Forester chopping decisions
    - Set workableBlocks from save for all buildings.
    - Threshold effect on capital
-   - Substitution in Maslow levels
+   - Substitution in Maslow levels (check)
    - More GUI insight for testing purposes
    - Restore clearing of land
    - Normalisation

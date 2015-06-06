@@ -298,6 +298,20 @@ Village::~Village () {
   if (milTrad) milTrad->destroyIfReal();
 }
 
+void Village::MaslowLevel::normalise () {
+  double total = 0;
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    total += getAmount(*tg);
+  }
+  if (0 == total) throwFormatted("Maslow level %s has zero defined goods", name.c_str());
+  setAmount(TradeGood::Money, total);
+  for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+    double amount = getAmount(*tg);
+    amount /= total;
+    setAmount((*tg), amount);
+  }
+}
+
 void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   // For each level in the Maslow hierarchy,
   // see if we can sell enough labor to cover it
@@ -319,10 +333,41 @@ void Village::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   stopReason = "max consumption";
   BOOST_FOREACH(MaslowLevel const* level, maslowLevels) {
     bool canGetLevel = true;
+    GoodsHolder amountAfterSubstitution;
+    GoodsHolder effectivePrices;
+    int numGoods = 0;
+    double weightedProduct = 1;
+    TradeGood::Iter firstProduct = TradeGood::final();
+    vector<const TradeGood*> others;
+    double totalConsumption = consumptionFactor * level->getAmount(TradeGood::Money);
+    for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+      double weight = level->getAmount(*tg);
+      if (weight < 0.0001) continue;
+      ++numGoods;
+      double effPrice = prices.getAmount(*tg) / weight;
+      effectivePrices.setAmount((*tg), effPrice);
+      weightedProduct *= pow(effPrice, weight);
+      if (firstProduct == TradeGood::final()) firstProduct = tg;
+      else others.push_back(*tg);
+    }
+    if (1 == numGoods) {
+      amountAfterSubstitution.setAmount((*firstProduct), totalConsumption);
+    }
+    else {
+      // See the internaldocs section on substitutions for the math.
+      double amountOfFirst = totalConsumption * weightedProduct;
+      amountAfterSubstitution.setAmount((*firstProduct), amountOfFirst / effectivePrices.getAmount(*firstProduct));
+      for (vector<const TradeGood*>::const_iterator tg = others.begin(); tg != others.end(); ++tg) {
+	double amountOfThis = amountOfFirst / effectivePrices.getAmount(*tg);
+	amountAfterSubstitution.setAmount((*tg), amountOfThis);
+      }
+    }
+
     GoodsHolder amountToBuy;
     double labourThisLevel = 0;
+
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = level->getAmount(*tg) * consumptionFactor;
+      double amountNeeded = amountAfterSubstitution.getAmount(*tg);
       if (amountNeeded < resources.getAmount(*tg)) {
 	resources.deliverGoods((*tg), -amountNeeded);
 	continue;
@@ -411,6 +456,7 @@ void Village::unitTests () {
   TradeGood const* theGood = *(TradeGood::exLaborStart());
   maslowLevels[0]->setAmount(theGood, 0.1);
   maslowLevels[1]->setAmount(theGood, 0.1);
+  BOOST_FOREACH(MaslowLevel* ml, maslowLevels) ml->normalise();
   prices.zeroGoods();
   prices.setAmount(TradeGood::Labor, 1);
   prices.setAmount(theGood, 5);
@@ -419,19 +465,21 @@ void Village::unitTests () {
   // It should still buy the first level, however.
   bidlist.clear();
   testVillage->getBids(prices, bidlist);
-  if (2 != bidlist.size()) throwFormatted("Expected 2 bids, got %i, reason %s", bidlist.size(), testVillage->stopReason.c_str());
+  if (2 != bidlist.size()) throwFormatted("Line %i: Expected 2 bids, got %i, reason %s", __LINE__, bidlist.size(), testVillage->stopReason.c_str());
   GoodsHolder theBids;
   BOOST_FOREACH(MarketBid* mb, bidlist) theBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
   // Minus one from selling
-  double labourExpected = -1 * (maslowLevels[0]->getAmount(theGood) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor);
+  double labourExpected = -1 * (maslowLevels[0]->getAmount(TradeGood::Money) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor);
   double labourBought = theBids.getAmount(TradeGood::Labor);
-  if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected to buy %f labour, but bought %f, reason %s",
-								  labourExpected,
-								  labourBought,
+  if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Line %i: Expected to sell %f labour, but sold %f, reason %s",
+								  __LINE__,
+								  -labourExpected,
+								  -labourBought,
 								  testVillage->stopReason.c_str());
-  double foodExpected = maslowLevels[0]->getAmount(theGood) * testVillage->consumption();
+  double foodExpected = maslowLevels[0]->getAmount(TradeGood::Money) * testVillage->consumption();
   double foodBought = theBids.getAmount(theGood);
-  if (0.001 < fabs(foodExpected - foodBought)) throwFormatted("Expected to buy %i %s, but bought %f, reason %s",
+  if (0.001 < fabs(foodExpected - foodBought)) throwFormatted("Line %i: Expected to buy %f %s, but bought %f, reason %s",
+							      __LINE__,
 							      foodExpected,
 							      theGood->getName().c_str(),
 							      foodBought,
@@ -441,27 +489,34 @@ void Village::unitTests () {
   // Now the full trade, both levels, should be accepted.
   bidlist.clear();
   testVillage->getBids(prices, bidlist);
-  if (2 != bidlist.size()) throwFormatted("Expected 2 bids (second time), got %i, reason %s", bidlist.size(), testVillage->stopReason.c_str());
+  if (2 != bidlist.size()) throwFormatted("Line %i: Expected 2 bids, got %i, reason %s", __LINE__, bidlist.size(), testVillage->stopReason.c_str());
   labourBought = 0;
   BOOST_FOREACH(MarketBid* mb, bidlist) if (mb->tradeGood == TradeGood::Labor) labourBought += mb->amountToBuy;
-  labourExpected = -1 * ((maslowLevels[0]->getAmount(theGood) + maslowLevels[1]->getAmount(theGood)) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
-  if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Expected (second time) to buy %f labour, but bought %f, reason %s",
+  labourExpected = -1 * ((maslowLevels[0]->getAmount(TradeGood::Money) + maslowLevels[1]->getAmount(TradeGood::Money)) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
+  if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Line %i: Expected to buy %f labour, but bought %f, reason %s",
+								  __LINE__,
 								  labourExpected,
 								  labourBought,
 								  testVillage->stopReason.c_str());
 
+  // Substitution test. With a cheap second good in the level,
+  // the village should buy a lot of that.
   TradeGood const* nextGood = *(TradeGood::exLaborStart()+1);
+  maslowLevels[0]->setAmount(theGood, 0.1);
   maslowLevels[0]->setAmount(nextGood, 0.1);
-  
-  prices.setAmount(nextGood, 0.01); // Tiny price so it can easily buy
+  BOOST_FOREACH(MaslowLevel* ml, maslowLevels) ml->normalise();
+  prices.setAmount(nextGood, 0.1); // Tiny price so it can easily buy
   bidlist.clear();
   testVillage->getBids(prices, bidlist);
-  if (3 != bidlist.size()) throwFormatted("Expected 3 bids (third time), got %i, reason %s", bidlist.size(), testVillage->stopReason.c_str());
+  if (3 != bidlist.size()) throwFormatted("Line %i: Expected 3 bids, got %i, reason %s", __LINE__, bidlist.size(), testVillage->stopReason.c_str());
   theBids.zeroGoods();
   BOOST_FOREACH(MarketBid* mb, bidlist) theBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
-  double woodExpected = maslowLevels[0]->getAmount(nextGood) * testVillage->consumption();
+  double woodExpected = testVillage->consumption();
+  woodExpected *= pow(prices.getAmount(theGood) / maslowLevels[0]->getAmount(theGood), maslowLevels[0]->getAmount(theGood));
+  woodExpected *= pow(prices.getAmount(nextGood) / maslowLevels[0]->getAmount(nextGood), maslowLevels[0]->getAmount(nextGood));
   double woodBought = theBids.getAmount(nextGood);
-  if (0.001 < fabs(woodExpected - woodBought)) throwFormatted("Expected to buy %f %s, but bought %f, reason %s",
+  if (0.001 < fabs(woodExpected - woodBought)) throwFormatted("Line %i: Expected to buy %f %s, but bought %f, reason %s",
+							      __LINE__,
 							      woodExpected,
 							      nextGood->getName().c_str(),
 							      woodBought,
@@ -474,7 +529,30 @@ void Village::unitTests () {
   if (0 != bidlist.size()) throwFormatted("Expected 0 bids (fourth time), got %i, reason %s", bidlist.size(), testVillage->stopReason.c_str());
   sprintf(errorMessage, "too much work for %s and not enough cash", nextGood->getName().c_str());
   if (testVillage->stopReason != errorMessage) throwFormatted("Expected too much work, got %s", testVillage->stopReason.c_str());
-  
+
+  // Check that the consumption is correct.
+  maslowLevels.pop_back();
+  for (int ratio = 1; ratio < 6; ++ratio) {
+    testVillage->zeroGoods();
+    testVillage->setAmount(theGood, ratio*testVillage->consumption());
+    testVillage->setAmount(nextGood, testVillage->consumption());
+    testVillage->eatFood();
+    if (testVillage->consumptionLevel != maslowLevels[0]) throwFormatted("%s:%i Expected to reach maslow level 0", __FILE__, __LINE__);
+    double goodConsumed = ratio*testVillage->consumption() - testVillage->getAmount(theGood);
+    double nextConsumed = testVillage->consumption() - testVillage->getAmount(nextGood);
+    goodConsumed /= theGood->getConsumption();
+    nextConsumed /= nextGood->getConsumption();
+    if (0.1 < fabs(goodConsumed - ratio*nextConsumed))
+      throwFormatted("%s:%i Expected to consume %i times as much %s as %s, but consumed %.2f and %.2f",
+		     __FILE__,
+		     __LINE__,
+		     ratio,
+		     theGood->getName().c_str(),
+		     nextGood->getName().c_str(),
+		     goodConsumed,
+		     nextConsumed);
+  }
+
   consume[20] = oldConsume;
   delete testVillage;
 
@@ -499,6 +577,7 @@ void Village::unitTests () {
 												 labourContract.amount,
 												 testVillage->getAmount(TradeGood::Labor));
 
+  maslowLevels = backupLevels;
 }
 
 string Village::getBidStatus () const {
@@ -1658,19 +1737,66 @@ void Village::eatFood () {
   double consumptionFactor = consumption();
   consumptionLevel = 0;
   BOOST_FOREACH(MaslowLevel const* level, maslowLevels) {
-    bool canGetLevel = true;
+    int numGoods = 0;
+    double totalAvailable = 1;
+    TradeGood::Iter firstProduct = TradeGood::final();
+    vector<const TradeGood*> others;
+    GoodsHolder effectivePrices;
+    double weightedProduct = 1;
+    double totalConsumption = consumptionFactor * level->getAmount(TradeGood::Money);
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = level->getAmount(*tg) * consumptionFactor;
-      if (amountNeeded < 1e-6) continue;
-      if (amountNeeded <= getAmount(*tg) + 0.0001) continue;
-      canGetLevel = false;
-      break;
+      double weight = level->getAmount(*tg);
+      if (weight < 0.0001) continue;
+      ++numGoods;
+      totalAvailable *= pow(getAmount(*tg), weight);
+      double effPrice = 1.0 / (getAmount(*tg) * weight);
+      effectivePrices.setAmount((*tg), effPrice);
+      weightedProduct *= pow(effPrice, weight);
+      if (firstProduct == TradeGood::final()) firstProduct = tg;
+      else others.push_back(*tg);
     }
-    if (!canGetLevel) break;
-    for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
-      double amountNeeded = level->getAmount(*tg) * consumptionFactor;
-      EconActor::consume((*tg), amountNeeded);
+    if (totalAvailable < totalConsumption) break;
+    if (1 == numGoods) {
+      EconActor::consume((*firstProduct), totalConsumption);
     }
+    else {
+      // See substitution section in internaldocs for math.
+      others.push_back(*firstProduct);
+      GoodsHolder amountToConsume;
+      set<const TradeGood*> giveUp;
+      double renormFactor = 0;
+      while (true) {
+	bool goodAssignments = true;
+	for (vector<const TradeGood*>::const_iterator tg = others.begin(); tg != others.end(); ++tg) {
+	  if (giveUp.count(*tg)) continue;
+	  double amount = totalConsumption * weightedProduct;
+	  amount /= effectivePrices.getAmount(*tg);
+	  if (amount <= getAmount(*tg)) amountToConsume.setAmount((*tg), amount);
+	  else {
+	    amountToConsume.setAmount((*tg), getAmount(*tg));
+	    goodAssignments = false;
+	    giveUp.insert(*tg);
+	    renormFactor += level->getAmount(*tg);
+	    break;
+	  }
+	}
+	if (goodAssignments) break;
+	if (giveUp.size() == others.size()) throwFormatted("%s:%i: Unable to find good consumption assignments", __FILE__, __LINE__);
+	// Recalculate the weights, effective prices, and weightedProduct without the goods we've given up on.
+	for (vector<const TradeGood*>::const_iterator tg = others.begin(); tg != others.end(); ++tg) {
+	  if (giveUp.count(*tg)) continue;
+	  double weight = level->getAmount(*tg);
+	  weight /= (1 - renormFactor);
+	  double effPrice = 1.0 / (getAmount(*tg) * weight);
+	  effectivePrices.setAmount((*tg), effPrice);
+	  weightedProduct *= pow(effPrice, weight);
+	}
+      }
+      for (vector<const TradeGood*>::const_iterator tg = others.begin(); tg != others.end(); ++tg) {
+	EconActor::consume((*tg), amountToConsume.getAmount(*tg));
+      }
+    }
+
     consumptionLevel = level;
   }
 }

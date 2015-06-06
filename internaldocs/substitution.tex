@@ -33,8 +33,7 @@ P = \sum\limits_i x_iy_i
 under this constraint. To find the amounts to bid for we use a
 Lagrange multiplier:
 \begin{eqnarray*}
-\Lambda(\vec x, \vec y, \vec w) &=& \sum\limits_i x_iy_i -
-\lambda\left(\prod\limits_i x_i^{w_i} - C\right)\\
+\Lambda(\vec x, \vec y, \vec w) &=& \sum\limits_i x_iy_i - \lambda\left(\prod\limits_i x_i^{w_i} - C\right)\\
 \frac{\partial\Lambda}{\partial x_i} &=& y_i - \lambda w_ix^{w_i-1}\prod\limits_{j\ne i} x_j^{w_j}
 \end{eqnarray*}
 and setting the derivative to equal zero gives
@@ -42,7 +41,7 @@ and setting the derivative to equal zero gives
 \lambda w_ix_i^{-1}x_i^{w_i}\prod\limits_{j\ne i} x_j^{w_j} &=& y_i
 \lambda &=& \frac{x_iy_i}{w_i}\prod\limits_i x_i^{-w_i}.
 \end{eqnarray*}
-We see that when equating the $\lambda$ for different values of $i$,
+We see that when equating the right-hand sides
 the product drops out, and (defining in passing an effective price
 $y_i'=y_i/w_i$) we get
 \begin{eqnarray}
@@ -92,7 +91,9 @@ amounts, say 1000, of each good, equal weights, and consumption
 capacity also 1000. Then $x_1$ is 1000 and so is $x_2$. Changing the
 weights, as before, to two-thirds and one-third, we get 1260 and 630,
 as before. Which is really bad because we assumed we had 1000 of
-each. So we will have to insert an additional clause: Don't use more
+each. So we will have to\footnote{I tried doing the more general
+  Karush-Kuhn-Tucker method, but I don't have the sufficient
+  conditions for a solution to be optimal.} insert an additional clause: Don't use more
 than you have; if forced to attempt it, use everything available and redo
 the problem with one less good. However, on the assumption that we
 have 2000 of each, we get $x_1$ of 1260 again and $x_2$ of 630, so
