@@ -786,6 +786,9 @@ string MilUnitGraphicsInfo::strengthString (string indent) const {
   return buffer.str(); 
 }
 
+void MilUnitGraphicsInfo::history (QTextStream& str) const {
+  str << "History\n";
+}
 
 void MilUnitGraphicsInfo::describe (QTextStream& str) const {
   str << "Unit: \n"

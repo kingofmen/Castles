@@ -2,50 +2,50 @@
 #define WARFAREWINDOW_HH
 
 #include <QtGui>
-#include <QObject> 
+#include <QObject>
 #include "RiderGame.hh"
-#include "Player.hh" 
-#include "Logger.hh" 
-#include "Action.hh" 
+#include "Player.hh"
+#include "Logger.hh"
+#include "Action.hh"
 #include "Hex.hh"
-#include "GraphicsInfo.hh" 
+#include "GraphicsInfo.hh"
 #include <iterator>
 #include <vector>
-#include <algorithm> 
+#include <algorithm>
 
-class ThreeDSprite; 
+class ThreeDSprite;
 using namespace std;
 
-class SelectedDrawer : public QLabel {
+typedef void (GraphicsInfo::*TextFunc)(QTextStream&) const;
+
+class TextInfoDisplay : public QLabel {
 public:
-  SelectedDrawer (QWidget* p);
-  void setSelected (const GraphicsInfo* g) {gInfo = g;} 
-  void draw (); 
-  //void setSelected (Hex* s);
-  //void setSelected (Line* s);
-  //void setSelected (Vertex* s); 
-  
+  TextInfoDisplay (QWidget* p, TextFunc t);
+  void setSelected (const GraphicsInfo* g) {gInfo = g;}
+  void draw ();
+
 private:
-  const GraphicsInfo* gInfo; 
-}; 
+  const GraphicsInfo* gInfo;
+  void (GraphicsInfo::*descFunc)(QTextStream&) const;
+};
 
 class UnitInterface : public QLabel {
   Q_OBJECT
-  friend class StaticInitialiser; 
+  friend class StaticInitialiser;
 public:
   UnitInterface (QWidget* p);
-  void setUnit (MilUnit* m); 
-  void updateUnitInfo (); 
-			   
+  void setUnit (MilUnit* m);
+  void updateUnitInfo ();
+
 public slots:
   void increasePriority (int direction);
-  
-signals: 
+
+signals:
 
 private:
   QToolButton increasePriorityButton;
   QToolButton decreasePriorityButton;
-  MilUnit* unit; 
+  MilUnit* selectedUnit;
 };
 
 class CastleInterface : public QLabel {
@@ -199,7 +199,8 @@ protected:
   void wheelEvent (QWheelEvent* event); 
 private:
   GLDrawer* hexDrawer;
-  SelectedDrawer* selDrawer;
+  TextInfoDisplay* selDrawer;
+  TextInfoDisplay* histDrawer;
   UnitInterface* unitInterface;
   CastleInterface* castleInterface;
   VillageInterface* villageInterface;   

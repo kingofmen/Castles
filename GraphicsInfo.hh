@@ -31,7 +31,8 @@ public:
   typedef FieldShape::iterator pit;      
   
   triplet getPosition () const {return position;}
-  virtual void describe (QTextStream& /*str*/) const {} 
+  virtual void describe (QTextStream& /*str*/) const {}
+  virtual void history (QTextStream& str) const {}
   int getZone () const {return 0;}
   static pair<double, double> getTexCoords (triplet gameCoords, int zone); 
 
@@ -345,6 +346,7 @@ public:
   ~MilUnitGraphicsInfo ();
   
   virtual void describe (QTextStream& str) const;
+  virtual void history (QTextStream& str) const;
   string strengthString (string indent) const;  
   void updateSprites (MilStrength* dat); 
   

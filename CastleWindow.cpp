@@ -34,16 +34,17 @@ HexDrawer::HexDrawer (QWidget* p)
 
 HexDrawer::~HexDrawer () {}
 
-SelectedDrawer::SelectedDrawer (QWidget* p)
+TextInfoDisplay::TextInfoDisplay (QWidget* p, TextFunc t)
   : QLabel(p)
-  , gInfo(0) 
+  , gInfo(0)
+  , descFunc(t)
 {}
 
 UnitInterface::UnitInterface (QWidget*p)
   : QLabel(p)
   , increasePriorityButton(this)
   , decreasePriorityButton(this)
-  , unit(0)
+  , selectedUnit(0)
 {
   static QSignalMapper signalMapper; 
   setFixedSize(220, 90);
@@ -71,12 +72,12 @@ UnitInterface::UnitInterface (QWidget*p)
 }
 
 void UnitInterface::increasePriority (int direction) {
-  if (!unit) return;
-  unit->incPriority(direction > 0);
+  if (!selectedUnit) return;
+  selectedUnit->incPriority(direction > 0);
 }
 
 void UnitInterface::setUnit (MilUnit* m) {
-  unit = m;
+  selectedUnit = m;
 }
 
 CastleInterface::CastleInterface (QWidget*p)
@@ -222,16 +223,15 @@ void HexDrawer::zoom (int delta) {
   }
 }
 
-void SelectedDrawer::draw () {
-  //Logger::logStream(Logger::Debug) << "Got here\n"; 
+void TextInfoDisplay::draw () {
   if (!gInfo) {
     setText("");
     return;
   }
   QString nText;
   QTextStream str(&nText);
-  gInfo->describe(str); 
-  setText(nText); 
+  (gInfo->*descFunc)(str);
+  setText(nText);
 }
 
 
@@ -734,10 +734,15 @@ WarfareWindow::WarfareWindow (QWidget* parent)
   hexDrawer->show();
   hexDrawer->updateGL(); 
   
-  selDrawer = new SelectedDrawer(this);
+  selDrawer = new TextInfoDisplay(this, &GraphicsInfo::describe);
   selDrawer->move(15, 30);
   selDrawer->setAlignment(Qt::AlignLeft | Qt::AlignTop);
   selDrawer->show();
+
+  histDrawer = new TextInfoDisplay(this, &GraphicsInfo::history);
+  histDrawer->move(1145, 30);
+  histDrawer->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+  histDrawer->show();
 
   unitInterface = new UnitInterface(this);
   unitInterface->move(15, 400);
@@ -938,9 +943,9 @@ void WarfareWindow::paintEvent (QPaintEvent *event) {
 }
 
 void WarfareWindow::update () {
-  //Logger::logStream(Logger::Debug) << "Entering WarfareWindow::update.\n"; 
   hexDrawer->updateGL();
-  selDrawer->draw(); 
+  selDrawer->draw();
+  histDrawer->draw();
   QMainWindow::update();
 }
 
@@ -961,10 +966,14 @@ void WarfareWindow::selectObject () {
     selDrawer->setSelected(selectedVertex->getGraphicsInfo());
     MilUnit* unit = selectedVertex->getUnit(0);    
     if ((unit) && (unit->getOwner() == Player::getCurrentPlayer())) {
+      histDrawer->setSelected(unit->getGraphicsInfo());
       unitInterface->setUnit(unit); 
       unitInterface->show();
     }
-    else unitInterface->hide(); 
+    else {
+      unitInterface->hide();
+      histDrawer->setSelected(0);
+    }
   }
   else unitInterface->hide();
   

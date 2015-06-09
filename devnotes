@@ -23,7 +23,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Fix Miner capitalSize
    - Think up better names for 'fields' and 'extractResources'
    - Load and save market contracts (check)
-   - Allow additional production from additional labour
+   - Allow additional production from additional labour (check)
    - Enforce that output cannot be capital
    - Fix Schlemiel in Farmland fillBlock
    - Use EconActor discount rate in Forester chopping decisions
@@ -31,6 +31,13 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Threshold effect on capital
    - Substitution in Maslow levels (check)
    - More GUI insight for testing purposes
+     * Unit: Recent skirmishes and battles, supplies received and on hand, strength effects
+     * Village: Labour sold, supplies consumed, Maslow level, drill, taxes
+     * Farm/Forest/Mine: Labour bought, work done, expected production
+     * Market: Participants, supply and demand, volumes
+     * Trade: Production and flow of goods, employment
+     * Castle: Taxes received, supplies sent, recruitment
+     * Trade and transport units
    - Restore clearing of land
    - Normalisation
    - Decay of goods
