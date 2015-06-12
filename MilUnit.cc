@@ -306,7 +306,6 @@ void MilUnit::forage () {
     if ((*hex)->getOwner()->isEnemy(getOwner())) targets.push_back(*hex);
   }
 
-  if (0 == targets.size()) return;
   BOOST_FOREACH(Hex* hex, targets) lootHex(hex);
 }
 
@@ -347,6 +346,7 @@ void MilUnit::lootHex (Hex* hex) {
     double rate = casualties / mu->totalSoldiers();
     mu->takeCasualties(rate);
   }
+  graphicsInfo->addEvent(DisplayEvent("Skirmish", "Test"));
 }
 
 int MilUnit::takeCasualties (double rate) {

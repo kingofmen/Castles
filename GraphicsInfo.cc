@@ -26,6 +26,7 @@ unsigned int VillageGraphicsInfo::supplySpriteIndex = 0;
 int VillageGraphicsInfo::maxCows = 15;
 int VillageGraphicsInfo::suppliesPerCow = 60000;
 vector<doublet> VillageGraphicsInfo::cowPositions;
+map<const GraphicsInfo*, vector<DisplayEvent> > GraphicsInfo::recentEvents;
 
 double area (GraphicsInfo::FieldShape const& field);
 bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2); 
@@ -784,10 +785,6 @@ string MilUnitGraphicsInfo::strengthString (string indent) const {
     buffer << indent << (*m)->getName().c_str() << ": " << num << "\n";
   }
   return buffer.str(); 
-}
-
-void MilUnitGraphicsInfo::history (QTextStream& str) const {
-  str << "History\n";
 }
 
 void MilUnitGraphicsInfo::describe (QTextStream& str) const {

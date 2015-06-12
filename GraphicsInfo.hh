@@ -1,6 +1,7 @@
 #ifndef GRAPHICS_INFO_HH
 #define GRAPHICS_INFO_HH
 
+#include <deque>
 #include <vector>
 #include <QtOpenGL>
 #include <QTextStream>
@@ -19,6 +20,11 @@ class Line;
 
 enum TerrainType {Mountain = 0, Hill, Plain, Wooded, Ocean, NoTerrain}; 
 
+struct DisplayEvent {
+  DisplayEvent (string et, string de) : eventType(et), details(de) {}
+  string eventType;
+  string details;
+};
 
 class GraphicsInfo {
   friend class StaticInitialiser; 
@@ -26,16 +32,20 @@ public:
   GraphicsInfo ();
   ~GraphicsInfo ();
 
+  typedef vector<DisplayEvent>::const_iterator EventIter;
   typedef vector<triplet> FieldShape;  
   typedef FieldShape::const_iterator cpit;
   typedef FieldShape::iterator pit;      
-  
-  triplet getPosition () const {return position;}
-  virtual void describe (QTextStream& /*str*/) const {}
-  virtual void history (QTextStream& str) const {}
-  int getZone () const {return 0;}
-  static pair<double, double> getTexCoords (triplet gameCoords, int zone); 
 
+  void addEvent (DisplayEvent de) {recentEvents[this].push_back(de);}
+  virtual void describe (QTextStream& /*str*/) const {}
+  triplet getPosition () const {return position;}
+  int getZone () const {return 0;}
+
+  EventIter startRecentEvents () const {return recentEvents[this].begin();}
+  EventIter finalRecentEvents () const {return recentEvents[this].end();}
+
+  static pair<double, double> getTexCoords (triplet gameCoords, int zone); 
   static int getHeight (int x, int y);
   static void getHeightMapCoords (int& hexX, int& hexY, Vertices dir); 
 
@@ -45,6 +55,7 @@ protected:
   triplet position;
   static int zoneSide; // Size in hexes
   static double* heightMap;
+  static map<const GraphicsInfo*, vector<DisplayEvent> > recentEvents;
 
   static const double xIncrement;
   static const double yIncrement;
@@ -53,7 +64,6 @@ protected:
   static const double zSeparation;
   static const double zOffset; 
 
-  
 private:
 
 };
@@ -346,7 +356,6 @@ public:
   ~MilUnitGraphicsInfo ();
   
   virtual void describe (QTextStream& str) const;
-  virtual void history (QTextStream& str) const;
   string strengthString (string indent) const;  
   void updateSprites (MilStrength* dat); 
   

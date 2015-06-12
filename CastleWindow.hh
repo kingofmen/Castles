@@ -48,6 +48,17 @@ private:
   MilUnit* selectedUnit;
 };
 
+class EventList {
+public:
+  EventList (QWidget* p, int numEvents, int xcoord, int ycoord);
+  ~EventList ();
+  void setSelected (const GraphicsInfo* gi) {selected = gi;}
+  void draw ();
+private:
+  const GraphicsInfo* selected;
+  vector<QLabel*> events;
+};
+
 class CastleInterface : public QLabel {
   Q_OBJECT
   friend class StaticInitialiser; 
@@ -200,7 +211,7 @@ protected:
 private:
   GLDrawer* hexDrawer;
   TextInfoDisplay* selDrawer;
-  TextInfoDisplay* histDrawer;
+  EventList* histDrawer;
   UnitInterface* unitInterface;
   CastleInterface* castleInterface;
   VillageInterface* villageInterface;   

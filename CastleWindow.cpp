@@ -1,7 +1,7 @@
 #include "CastleWindow.hh"
-#include "RiderGame.hh" 
+#include "RiderGame.hh"
 #include <QPainter>
-#include <QVector2D> 
+#include <QVector2D>
 #include "glextensions.h"
 #include <GL/glu.h> 
 #include <cassert> 
@@ -69,6 +69,44 @@ UnitInterface::UnitInterface (QWidget*p)
   connect(&signalMapper, SIGNAL(mapped(int)), this, SLOT(increasePriority(int))); 
   
   hide(); 
+}
+
+EventList::EventList (QWidget* p, int numEvents, int xcoord, int ycoord)
+  : selected(0)
+{
+  for (int i = 0; i < numEvents; ++i) {
+    events.push_back(new QLabel(p));
+    events.back()->move(xcoord, ycoord + i*15);
+    events.back()->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    events.back()->show();
+  }
+}
+
+EventList::~EventList () {
+  events.clear();
+}
+
+void EventList::draw () {
+  if (!selected) {
+    BOOST_FOREACH(QLabel* ql, events) {
+      ql->setText("");
+      ql->setToolTip("");
+    }
+    return;
+  }
+
+  GraphicsInfo::EventIter evt = selected->startRecentEvents();
+  for (unsigned int label = 0; label < events.size(); ++label) {
+    if (evt == selected->finalRecentEvents()) {
+      events[label]->setText("");
+      events[label]->setToolTip("");
+    }
+    else {
+      events[label]->setText((*evt).eventType.c_str());
+      events[label]->setToolTip((*evt).details.c_str());
+      ++evt;
+    }
+  }
 }
 
 void UnitInterface::increasePriority (int direction) {
@@ -739,10 +777,7 @@ WarfareWindow::WarfareWindow (QWidget* parent)
   selDrawer->setAlignment(Qt::AlignLeft | Qt::AlignTop);
   selDrawer->show();
 
-  histDrawer = new TextInfoDisplay(this, &GraphicsInfo::history);
-  histDrawer->move(1145, 30);
-  histDrawer->setAlignment(Qt::AlignLeft | Qt::AlignTop);
-  histDrawer->show();
+  histDrawer = new EventList(this, 7, 1145, 30);
 
   unitInterface = new UnitInterface(this);
   unitInterface->move(15, 400);
