@@ -19,6 +19,7 @@ public:
   void age ();
   void clear (); 
   void die (int number);
+  void dieExactly (int number);
   int getTotalPopulation () const;
   int getPop (int age) const {return people[age];} 
   virtual void setMirrorState ();

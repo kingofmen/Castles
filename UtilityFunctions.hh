@@ -306,6 +306,7 @@ private:
 };
 
 #define REMOVE(from, dis) from.erase(find(from.begin(), from.end(), dis))
+string createString (const char* format, ...);
 void throwFormatted (const char* format, ...);
 
 #endif

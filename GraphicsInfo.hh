@@ -45,6 +45,7 @@ public:
   EventIter startRecentEvents () const {return recentEvents[this].begin();}
   EventIter finalRecentEvents () const {return recentEvents[this].end();}
 
+  static void clearRecentEvents () {recentEvents.clear();}
   static pair<double, double> getTexCoords (triplet gameCoords, int zone); 
   static int getHeight (int x, int y);
   static void getHeightMapCoords (int& hexX, int& hexY, Vertices dir); 

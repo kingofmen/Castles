@@ -55,6 +55,27 @@ void AgeTracker::die (int number) {
   }
 }
 
+void AgeTracker::dieExactly (int number) {
+  if (number <= 0) return;
+  if (number >= getTotalPopulation()) {
+    clear();
+    return;
+  }
+
+  int totalPop = getTotalPopulation();
+  while (number > 0) {
+    int roll = rand() % totalPop;
+    int count = 0;
+    for (int i = 0; i < maxAge; ++i) {
+      count += people[i];
+      if (count < roll) continue;
+      addPop(-1, i);
+      --number;
+      break;
+    }
+  }
+}
+
 int AgeTracker::getTotalPopulation () const {
   int ret = 0;
   for (int i = 0; i < maxAge; ++i) {

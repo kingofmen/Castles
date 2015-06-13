@@ -334,11 +334,19 @@ int MilStrength::getTotalStrength () const {
   return total;
 }
 
-void throwFormatted (const char* format, ...) {
-  static char errorMessage[1000];
+string createString (const char* format, ...) {
+  static char message[1000];
   va_list arglist;
   va_start(arglist, format);
-  vsprintf(errorMessage, format, arglist);
+  vsprintf(message, format, arglist);
   va_end(arglist);
-  throw string(errorMessage);
+  return string(message);
+}
+
+void throwFormatted (const char* format, ...) {
+  va_list arglist;
+  va_start(arglist, format);
+  string error = createString(format, arglist);
+  va_end(arglist);
+  throw error;
 }

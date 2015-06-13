@@ -211,21 +211,21 @@ double MilUnit::effectiveMobility (MilUnit* const versus) {
   // You, on the other hand, can't afford to split up. So
   // your effective speed is that of your slowest.
   // If the numbers were more even, though, you might split up
-  // even if you were outnumbered. 
+  // even if you were outnumbered.
   // So the effective speed of an army is equal to the Nth fastest,
   // where N is half the number of opposing soldiers.
 
-  int enemyNumber = versus->totalSoldiers(); 
+  int enemyNumber = versus->totalSoldiers();
   enemyNumber /= 2;
   sort(forces.begin(), forces.end(), deref<MilUnitElement>(member_lt(&MilUnitElement::tacmob)));
 
-  int count = 0; 
+  int count = 0;
   for (CElmIter i = forces.begin(); i != forces.end(); ++i) {
     count += (*i)->strength();
     if (count > enemyNumber) return (*i)->tacmob;
   }
 
-  return forces.back()->tacmob; 
+  return forces.back()->tacmob;
 }
 
 double MilUnit::calcStrength (double lifetime, double MilUnitElement::*field) {
@@ -235,7 +235,7 @@ double MilUnit::calcStrength (double lifetime, double MilUnitElement::*field) {
 
   if (0 == forces.size()) return 0;
   if (0 == totalSoldiers()) return 0;
-  double gamma = 1.0 / lifetime; 
+  double gamma = 1.0 / lifetime;
 
   sort(forces.begin(), forces.end(), deref<MilUnitElement>(member_lt(field)));
   double totalStrength = 0;
@@ -252,20 +252,20 @@ double MilUnit::calcStrength (double lifetime, double MilUnitElement::*field) {
 }
 
 void MilUnit::endOfTurn () {
-  if (0 == forces.size()) return; 
-  if (0 == totalSoldiers()) return; 
+  if (0 == forces.size()) return;
+  if (0 == totalSoldiers()) return;
 
   if (Calendar::Winter == Calendar::getCurrentSeason()) {
     for (ElmIter i = forces.begin(); i != forces.end(); ++i) {
       (*i)->soldiers->age();
     }
-    return; 
+    return;
   }
 
   forage();
   consumeSupplies();
   recalcElementAttributes();
-  graphicsInfo->updateSprites(this);   
+  graphicsInfo->updateSprites(this);
 }
 
 void MilUnit::consumeSupplies () {
@@ -334,19 +334,20 @@ void MilUnit::lootHex (Hex* hex) {
   // Scale 0-infinity ratio onto 0-1 using arctan.
   ratio = atan(ratio) * M_2_PI;
 
-  double casualties = takeCasualties((1.0 - ratio) * FORAGE_CASUALTY_RATE * aggression);
+  int ourCasualties = takeCasualties((1.0 - ratio) * FORAGE_CASUALTY_RATE * aggression);
   (*this) += hex->loot(FORAGE_LOOT_RATE * ratio * aggression);
 
   // Defenders take lower casualties because they are assumed
   // to engage only when they have local superiority.
   if (0 == defenders.size()) return;
-  casualties *= FORAGE_DEFENDER_LOSS_RATE;
-  casualties /= defenders.size();
+  double theirCasualties = ourCasualties * FORAGE_DEFENDER_LOSS_RATE;
+  theirCasualties /= defenders.size();
+  int totalKilled = 0;
   BOOST_FOREACH(MilUnit* mu, defenders) {
-    double rate = casualties / mu->totalSoldiers();
-    mu->takeCasualties(rate);
+    double rate = theirCasualties / mu->totalSoldiers();
+    totalKilled += mu->takeCasualties(rate);
   }
-  graphicsInfo->addEvent(DisplayEvent("Skirmish", "Test"));
+  graphicsInfo->addEvent(DisplayEvent("Skirmish", createString("Killed %i, lost %i", totalKilled, ourCasualties)));
 }
 
 int MilUnit::takeCasualties (double rate) {
@@ -364,7 +365,8 @@ int MilUnit::takeCasualties (double rate) {
   else {
     for (ElmIter i = forces.begin(); i != forces.end(); ++i) {
       int loss = 1 + (int) floor((*i)->strength() * rate * 0.01 * (100 - (*i)->defense) + 0.5);
-      (*i)->soldiers->die(loss);
+      Logger::logStream(DebugStartup) << getName() << " lost " << loss << " " << (*i)->unitType->getName() << "\n";
+      (*i)->soldiers->dieExactly(loss);
       ret += loss;
     }
     recalcElementAttributes(); 
