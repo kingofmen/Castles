@@ -78,6 +78,7 @@ EventList::EventList (QWidget* p, int numEvents, int xcoord, int ycoord)
     events.push_back(new QLabel(p));
     events.back()->move(xcoord, ycoord + i*15);
     events.back()->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    events.back()->setFixedSize(220, 15);
     events.back()->show();
   }
 }

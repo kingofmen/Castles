@@ -335,7 +335,8 @@ void MilUnit::lootHex (Hex* hex) {
   ratio = atan(ratio) * M_2_PI;
 
   int ourCasualties = takeCasualties((1.0 - ratio) * FORAGE_CASUALTY_RATE * aggression);
-  (*this) += hex->loot(FORAGE_LOOT_RATE * ratio * aggression);
+  GoodsHolder looted = hex->loot(FORAGE_LOOT_RATE * ratio * aggression);
+  (*this) += looted;
 
   // Defenders take lower casualties because they are assumed
   // to engage only when they have local superiority.
@@ -347,7 +348,11 @@ void MilUnit::lootHex (Hex* hex) {
     double rate = theirCasualties / mu->totalSoldiers();
     totalKilled += mu->takeCasualties(rate);
   }
-  graphicsInfo->addEvent(DisplayEvent("Skirmish", createString("Killed %i, lost %i", totalKilled, ourCasualties)));
+  graphicsInfo->addEvent(DisplayEvent(createString("Skirmish against %s militia", hex->getName().c_str()),
+				      createString("Killed %i, lost %i\nLoot:%s",
+						   totalKilled,
+						   ourCasualties,
+						   looted.display(2).c_str())));
 }
 
 int MilUnit::takeCasualties (double rate) {
@@ -365,7 +370,6 @@ int MilUnit::takeCasualties (double rate) {
   else {
     for (ElmIter i = forces.begin(); i != forces.end(); ++i) {
       int loss = 1 + (int) floor((*i)->strength() * rate * 0.01 * (100 - (*i)->defense) + 0.5);
-      Logger::logStream(DebugStartup) << getName() << " lost " << loss << " " << (*i)->unitType->getName() << "\n";
       (*i)->soldiers->dieExactly(loss);
       ret += loss;
     }

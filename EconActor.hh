@@ -42,6 +42,7 @@ public:
   double       getAmount    (TradeGood const* const tg) const {return tradeGoods[*tg];}
   void         deliverGoods (TradeGood const* const tg, double amount) {tradeGoods[*tg] += amount;}
   void         deliverGoods (const GoodsHolder& gh);
+  string       display      (int indent = 0) const;
   GoodsHolder  loot         (double lootRatio);
   void         setAmount    (TradeGood const* const tg, double amount) {tradeGoods[*tg] = amount;}
   void         setAmounts   (GoodsHolder const* const gh);

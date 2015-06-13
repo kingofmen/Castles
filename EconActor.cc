@@ -25,6 +25,15 @@ void GoodsHolder::deliverGoods (const GoodsHolder& gh) {
   }
 }
 
+string GoodsHolder::display (int indent) const {
+  string ret;
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
+    if (1 > getAmount(*tg)) continue;
+    ret += createString("\n%*.s%.2f ", indent, "", getAmount(*tg)) + (*tg)->getName();
+  }
+  return ret;
+}
+
 GoodsHolder GoodsHolder::loot (double lootRatio) {
   GoodsHolder ret = (*this) * lootRatio;
   (*this) -= ret;
