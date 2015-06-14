@@ -60,28 +60,21 @@ MilUnitTemplate::MilUnitTemplate (string n)
 void MilUnit::addElement (MilUnitTemplate const* const temp, AgeTracker& str) {
   assert(temp); 
 
-  //Logger::logStream(Logger::Debug) << (isReal() ? "Real " : "Mirror") << " looking for unit type " << temp->name << " " << str << " " << age << "\n"; 
   bool merged = false;
   for (ElmIter i = forces.begin(); i != forces.end(); ++i) {
     if ((*i)->unitType != temp) continue;
     (*i)->soldiers->addPop(str);
-    //Logger::logStream(Logger::Debug) << "Found, new strength " << (*i)->strength() << "\n";
     merged = true;
     break; 
   }
 
   if (!merged) {
-    //Logger::logStream(Logger::Debug) << "Not found, making new\n"; 
     MilUnitElement* nElm = new MilUnitElement(temp);
     nElm->soldiers->addPop(str); 
     forces.push_back(nElm);
   }
   recalcElementAttributes(); 
 }
-
-//void MilUnit::clear () {
-//  for (ElmIter i = forces.begin(); i != forces.end(); ++i) (*i)->strength = 0; 
-//}
 
 void MilUnit::demobilise (AgeTracker& target) {
   for (ElmIter i = forces.begin(); i != forces.end(); ++i) {
@@ -348,11 +341,11 @@ void MilUnit::lootHex (Hex* hex) {
     double rate = theirCasualties / mu->totalSoldiers();
     totalKilled += mu->takeCasualties(rate);
   }
-  graphicsInfo->addEvent(DisplayEvent(createString("Skirmish against %s militia", hex->getName().c_str()),
-				      createString("Killed %i, lost %i\nLoot:%s",
-						   totalKilled,
-						   ourCasualties,
-						   looted.display(2).c_str())));
+  if (isReal()) graphicsInfo->addEvent(DisplayEvent(createString("Skirmish against %s militia", hex->getName().c_str()),
+						    createString("Killed %i, lost %i\nLoot:%s",
+								 totalKilled,
+								 ourCasualties,
+								 looted.display(2).c_str())));
 }
 
 int MilUnit::takeCasualties (double rate) {
@@ -493,15 +486,13 @@ BattleResult MilUnit::attack (MilUnit* const adversary, Outcome dieroll) {
   // Rout occurs if one side takes more than 10% casualties.
   if (myLoss > 0.1) ret.attackerSuccess = Disaster;
   if (thLoss > 0.1) ret.attackerSuccess = VictoGlory;
+  if (isReal()) {
+    graphicsInfo->addEvent(DisplayEvent(createString("Battle against %s", adversary->getName().c_str()),
+					createString("Killed %i, lost %i",
+						     ret.attackerInfo.casualties,
+						     ret.defenderInfo.casualties)));
+  }
   return ret; 
-}
-
-void MilUnit::battleCasualties (MilUnit* const adversary) {
-  takeCasualties(calcBattleCasualties(adversary)); 
-}
-
-void MilUnit::routCasualties (MilUnit* const adversary) {
-  takeCasualties(calcRoutCasualties(adversary)); 
 }
 
 int MilUnit::getScoutingModifier (MilUnit* const adversary) {

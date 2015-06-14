@@ -18,6 +18,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Self-castling
  * Supply line interference
  * Raid/tribute/battle mapmode
+ * Reconsider turn sequence in light of recent events list.
  * Three-resource economy
    - Initialise F*Status from text files (check)
    - Fix Miner capitalSize

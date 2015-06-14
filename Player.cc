@@ -351,7 +351,6 @@ void Player::getAction () {
     }
   }
 
-  
   double bestScore = evaluate(best); 
 
   for (Vertex::Iterator vex = Vertex::start(); vex != Vertex::final(); ++vex) {

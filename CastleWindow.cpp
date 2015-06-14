@@ -1337,6 +1337,7 @@ Player* WarfareWindow::gameOver () {
 
 void WarfareWindow::humanAction (Action& act) {
   if (!currentGame) return;
+  GraphicsInfo::clearRecentEvents();
   Action::ActionResult res = act.execute();
   if ((Action::Ok != res) && (Action::AttackFails != res)) {
     Logger::logStream(Logger::Game) << "Action failed " << res << "\n";
@@ -1362,7 +1363,6 @@ void WarfareWindow::runNonHumans () {
   while (!Player::getCurrentPlayer()->isHuman()) {
     Logger::logStream(Logger::Debug) << Player::getCurrentPlayer()->getDisplayName() << "\n";
     Player::getCurrentPlayer()->getAction();
-    //Player::getCurrentPlayer()->finished(); 
     if (turnEnded()) endOfTurn();
     Player::advancePlayer();
     Logger::logStream(Logger::Debug) << Player::getCurrentPlayer()->getDisplayName() << "\n";

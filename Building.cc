@@ -730,11 +730,6 @@ MilUnit* Village::raiseMilitia () {
     }
   }
 
-  if (milTrad->isReal()) {
-    Logger::logStream(Logger::Game) << "Militia raised: \n"
-				    << milTrad->militia->getGraphicsInfo()->strengthString("  ");
-  }
-
   milTrad->increaseTradition();
   return milTrad->militia;
 }

@@ -105,7 +105,6 @@ public:
 
   // Fighting numbers:
   BattleResult attack (MilUnit* const adversary, Outcome dieroll = Neutral);  
-  void battleCasualties (MilUnit* const adversary);
   double calcBattleCasualties (MilUnit* const adversary, BattleResult* outcome = 0);
   double calcRoutCasualties (MilUnit* const adversary);
   double effectiveMobility (MilUnit* const versus);
@@ -116,7 +115,6 @@ public:
   int getFightingModifier (MilUnit* const adversary);
   int getScoutingModifier (MilUnit* const adversary);
   int getSkirmishModifier (MilUnit* const adversary);
-  void routCasualties (MilUnit* const adversary);
   void setExtMod (double ext);
   void setFightingFraction (double frac = 1.0) {fightFraction = frac;} 
   void dropExtMod () {modStack.pop();} 
