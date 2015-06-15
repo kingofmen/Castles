@@ -27,8 +27,13 @@ template <typename T, typename C> struct dereferrer {
 template <typename T, typename M> member_lt_type<T,M, std::less<M> > member_lt( M T::*ptr ) {
   return member_lt_type<T,M, std::less<M> >(ptr, std::less<M>() );
 }
-
+template <typename T, typename M> member_lt_type<T,M, std::less<M> > member_ascending( M T::*ptr ) {
+  return member_lt_type<T,M, std::less<M> >(ptr, std::less<M>() );
+}
 template <typename T, typename M, typename C> member_lt_type<T,M,C> member_lt( M T::*ptr, C cmp ) {
+  return member_lt_type<T,M,C>( ptr, cmp );
+}
+template <typename T, typename M, typename C> member_lt_type<T,M,C> member_ascending( M T::*ptr, C cmp ) {
   return member_lt_type<T,M,C>( ptr, cmp );
 }
 
@@ -38,7 +43,13 @@ template <typename T, typename M, typename C> member_lt_type<T,M,C> member_lt( M
 template <typename T, typename M> member_lt_type<T,M, std::greater<M> > member_gt( M T::*ptr ) {
   return member_lt_type<T,M, std::greater<M> >(ptr, std::greater<M>() );
 }
+template <typename T, typename M> member_lt_type<T,M, std::greater<M> > member_descending( M T::*ptr ) {
+  return member_lt_type<T,M, std::greater<M> >(ptr, std::greater<M>() );
+}
 template <typename T, typename M, typename C> member_lt_type<T,M,C> member_gt( M T::*ptr, C cmp ) {
+  return member_lt_type<T,M,C>( ptr, cmp );
+}
+template <typename T, typename M, typename C> member_lt_type<T,M,C> member_descending( M T::*ptr, C cmp ) {
   return member_lt_type<T,M,C>( ptr, cmp );
 }
 

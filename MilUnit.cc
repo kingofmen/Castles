@@ -210,7 +210,7 @@ double MilUnit::effectiveMobility (MilUnit* const versus) {
 
   int enemyNumber = versus->totalSoldiers();
   enemyNumber /= 2;
-  sort(forces.begin(), forces.end(), deref<MilUnitElement>(member_lt(&MilUnitElement::tacmob)));
+  sort(forces.begin(), forces.end(), deref<MilUnitElement>(member_descending(&MilUnitElement::tacmob)));
 
   int count = 0;
   for (CElmIter i = forces.begin(); i != forces.end(); ++i) {
@@ -415,31 +415,31 @@ double MilUnit::calcBattleCasualties (MilUnit* const adversary, BattleResult* ou
   myTotCasRate         = min(myTotCasRate / mySoldiers, 0.15);
 
   if (outcome) {
-    double thSoldiers = adversary->totalSoldiers(); 
-    double thShkCasRate = 0.03 * myShk * min(1.0, 1.0/shkRatio);  
-    double thFirCasRate = 0.01 * myFir * min(1.0, 1.0/firRatio);    
+    double thSoldiers    = adversary->totalSoldiers();
+    double thShkCasRate  = 0.03 * myShk * min(1.0, 1.0/shkRatio);
+    double thFirCasRate  = 0.01 * myFir * min(1.0, 1.0/firRatio);
     double thTotCasRate  = thShkCasRate * shkPercentage;
     thTotCasRate        += thFirCasRate * firPercentage;
     thTotCasRate         = min(thTotCasRate / thSoldiers, 0.15);
     
-    outcome->shockPercent          = shkPercentage;
-    outcome->rangePercent          = firPercentage;
+    outcome->shockPercent = shkPercentage;
+    outcome->rangePercent = firPercentage;
 
     outcome->attackerInfo.mobRatio         = mobRatio;
     outcome->attackerInfo.shock            = myShk;
     outcome->attackerInfo.range            = myFir;
     outcome->attackerInfo.lossRate         = myTotCasRate;
     outcome->attackerInfo.fightingFraction = fightFraction;
-    outcome->attackerInfo.decayConstant    = getDecayConstant(); 
+    outcome->attackerInfo.decayConstant    = getDecayConstant();
 
     outcome->defenderInfo.mobRatio         = 1 - mobRatio;
     outcome->defenderInfo.shock            = thShk;
     outcome->defenderInfo.range            = thFir;
     outcome->defenderInfo.lossRate         = thTotCasRate;
     outcome->defenderInfo.fightingFraction = adversary->fightFraction;
-    outcome->defenderInfo.decayConstant    = adversary->getDecayConstant(); 
+    outcome->defenderInfo.decayConstant    = adversary->getDecayConstant();
   }
-  
+
   return myTotCasRate;   
 }
 
@@ -486,11 +486,27 @@ BattleResult MilUnit::attack (MilUnit* const adversary, Outcome dieroll) {
   // Rout occurs if one side takes more than 10% casualties.
   if (myLoss > 0.1) ret.attackerSuccess = Disaster;
   if (thLoss > 0.1) ret.attackerSuccess = VictoGlory;
-  if (isReal()) {
-    graphicsInfo->addEvent(DisplayEvent(createString("Battle against %s", adversary->getName().c_str()),
-					createString("Killed %i, lost %i",
+  if ((isReal()) && (graphicsInfo)) {
+    graphicsInfo->addEvent(DisplayEvent(createString("Attacked %s", adversary->getName().c_str()),
+					createString("Killed %i, lost %i\nShock %.2f%%, Fire %.2f%%\nLuck: %i\nMobility ratio: %.2f%%",
+						     ret.defenderInfo.casualties,
 						     ret.attackerInfo.casualties,
-						     ret.defenderInfo.casualties)));
+						     100*ret.shockPercent,
+						     100*ret.rangePercent,
+						     dieroll,
+						     100*ret.attackerInfo.mobRatio
+						     )));
+  }
+  if ((adversary->isReal()) && (adversary->graphicsInfo)) {
+    adversary->graphicsInfo->addEvent(DisplayEvent(createString("Defended against %s", getName().c_str()),
+						   createString("Killed %i, lost %i\nShock %.2f%%, Fire %.2f%%\nAttacker luck: %i\nMobility ratio: %.2f%%",
+								ret.attackerInfo.casualties,
+								ret.defenderInfo.casualties,
+								100*ret.shockPercent,
+								100*ret.rangePercent,
+								dieroll,
+								100*ret.defenderInfo.mobRatio
+								)));
   }
   return ret; 
 }
