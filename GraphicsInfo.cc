@@ -808,7 +808,8 @@ void MilUnitGraphicsInfo::describe (QTextStream& str) const {
       << "  Priority  : " << myUnit->getPriority() << "\n"
       << "  Shock     : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::shock) << "\n"
       << "  Fire      : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::range) << "\n"
-      << "  Skirmish  : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::tacmob) << "\n";  
+      << "  Skirmish  : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::tacmob) << "\n"
+      << "  Supplies  : " << myUnit->display(4).c_str() << "\n";
 }
 
 struct SortHelper {
