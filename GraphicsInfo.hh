@@ -37,7 +37,7 @@ public:
   typedef FieldShape::const_iterator cpit;
   typedef FieldShape::iterator pit;      
 
-  void addEvent (DisplayEvent de) {recentEvents[this].push_back(de);}
+  void addEvent (DisplayEvent de);
   virtual void describe (QTextStream& /*str*/) const {}
   triplet getPosition () const {return position;}
   int getZone () const {return 0;}
@@ -45,7 +45,8 @@ public:
   EventIter startRecentEvents () const {return recentEvents[this].begin();}
   EventIter finalRecentEvents () const {return recentEvents[this].end();}
 
-  static void clearRecentEvents () {recentEvents.clear();}
+  static void accumulateEvents (bool acc = true) {accumulate = acc; Logger::logStream(DebugStartup) << "Accumulate is now " << accumulate << "\n";}
+  static void clearRecentEvents ();
   static pair<double, double> getTexCoords (triplet gameCoords, int zone); 
   static int getHeight (int x, int y);
   static void getHeightMapCoords (int& hexX, int& hexY, Vertices dir); 
@@ -57,6 +58,7 @@ protected:
   static int zoneSide; // Size in hexes
   static double* heightMap;
   static map<const GraphicsInfo*, vector<DisplayEvent> > recentEvents;
+  static map<const GraphicsInfo*, vector<DisplayEvent> > savingEvents;
 
   static const double xIncrement;
   static const double yIncrement;
@@ -66,7 +68,11 @@ protected:
   static const double zOffset; 
 
 private:
-
+  // When true, events are added to the savingEvent container as
+  // well as recentEvents. This is intended to apply to events
+  // that occur during player actions, so they don't disappear
+  // in clearEvents.
+  static bool accumulate;
 };
 
 struct MilUnitSprite {

@@ -27,6 +27,8 @@ int VillageGraphicsInfo::maxCows = 15;
 int VillageGraphicsInfo::suppliesPerCow = 60000;
 vector<doublet> VillageGraphicsInfo::cowPositions;
 map<const GraphicsInfo*, vector<DisplayEvent> > GraphicsInfo::recentEvents;
+map<const GraphicsInfo*, vector<DisplayEvent> > GraphicsInfo::savingEvents;
+bool GraphicsInfo::accumulate = true;
 
 double area (GraphicsInfo::FieldShape const& field);
 bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2); 
@@ -209,6 +211,20 @@ void GraphicsInfo::getHeightMapCoords (int& hexX, int& hexY, Vertices dir) {
 
 GraphicsInfo::GraphicsInfo () 
 {}
+
+void GraphicsInfo::addEvent (DisplayEvent de) {
+  recentEvents[this].push_back(de);
+  if (accumulate) savingEvents[this].push_back(de);
+}
+
+void GraphicsInfo::clearRecentEvents () {
+  // Throw out recent events except those which
+  // have been 'accumulated' in savingEvents - they
+  // are the ones that occurred during player actions.
+  recentEvents = savingEvents;
+  savingEvents.clear();
+  accumulate = false;
+}
 
 HexGraphicsInfo::HexGraphicsInfo  (Hex* h) 
   : GraphicsInfo()
@@ -632,8 +648,6 @@ LineGraphicsInfo::LineGraphicsInfo (Line* l, Vertices dir)
   normal = vec1.cross(vec2);
   normal.normalise();
   
-  //Logger::logStream(DebugStartup) << "Line normal " << normal.x() << " " << normal.y() << " " << normal.z() << "\n"; 
-
   ZoneGraphicsInfo::getZoneInfo(0)->addLine(this);  
   allLineGraphics.push_back(this);
 }

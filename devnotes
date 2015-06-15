@@ -18,7 +18,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Self-castling
  * Supply line interference
  * Raid/tribute/battle mapmode
- * Reconsider turn sequence in light of recent events list.
+ * Reconsider turn sequence in light of recent events list (fixed)
  * Three-resource economy
    - Initialise F*Status from text files (check)
    - Fix Miner capitalSize
@@ -32,7 +32,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Threshold effect on capital
    - Substitution in Maslow levels (check)
    - More GUI insight for testing purposes
-     * Unit: Recent skirmishes and battles, supplies received and on hand, strength effects
+     * Unit: Recent skirmishes (check) and battles, supplies received and on hand, strength effects
      * Village: Labour sold, supplies consumed, Maslow level, drill, taxes
      * Farm/Forest/Mine: Labour bought, work done, expected production
      * Market: Participants, supply and demand, volumes

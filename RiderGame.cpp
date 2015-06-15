@@ -156,6 +156,7 @@ void WarfareGame::findCastles (vector<Castle*>& ret, Player* p) {
 }
 
 void WarfareGame::endOfTurn () {
+  GraphicsInfo::clearRecentEvents();
   updateGreatestMilStrength();
   for (ContractInfo::Iter c = ContractInfo::start(); c != ContractInfo::final(); ++c) (*c)->execute();
   LineGraphicsInfo::endTurn(); 
@@ -186,6 +187,7 @@ void WarfareGame::endOfTurn () {
   }
   FarmGraphicsInfo::updateFieldStatus();
   VillageGraphicsInfo::updateVillageStatus();
+  GraphicsInfo::accumulateEvents();
 }
 
 void WarfareGame::unitComparison (string fname) {

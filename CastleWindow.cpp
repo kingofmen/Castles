@@ -871,15 +871,10 @@ void WarfareWindow::initialiseGraphics () {
   assert(gInfo); 
   StaticInitialiser::initialiseGraphics(gInfo);
   StaticInitialiser::makeZoneTextures(gInfo);
-  Logger::logStream(DebugStartup) << "makeGraphicsInfoObjects\n";
   StaticInitialiser::makeGraphicsInfoObjects();
-  Logger::logStream(DebugStartup) << "graphicsInitialisation\n";
   StaticInitialiser::graphicsInitialisation();
-  Logger::logStream(DebugStartup) << "updateFieldStatus\n";
   FarmGraphicsInfo::updateFieldStatus();
-  Logger::logStream(DebugStartup) << "updateVillageStatus\n";
   VillageGraphicsInfo::updateVillageStatus();
-  Logger::logStream(DebugStartup) << "Done with initialiseGraphics\n";
 }
 
 void GLDrawer::draw () { 
@@ -1337,7 +1332,6 @@ Player* WarfareWindow::gameOver () {
 
 void WarfareWindow::humanAction (Action& act) {
   if (!currentGame) return;
-  GraphicsInfo::clearRecentEvents();
   Action::ActionResult res = act.execute();
   if ((Action::Ok != res) && (Action::AttackFails != res)) {
     Logger::logStream(Logger::Game) << "Action failed " << res << "\n";
