@@ -108,14 +108,13 @@ public:
   BattleResult attack (MilUnit* const adversary, Outcome dieroll = Neutral);  
   double calcBattleCasualties (MilUnit* const adversary, BattleResult* outcome = 0);
   double calcRoutCasualties (MilUnit* const adversary);
+  string displayString (int indent) const;
   double effectiveMobility (MilUnit* const versus);
   virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
   Castle const* getCastle () const {return castle;}
   double getDecayConstant () const {return defaultDecayConstant * (modStack.size() > 0 ? modStack.top() : 1);}
   double getForageStrength ();
-  int getFightingModifier (MilUnit* const adversary);
   int getScoutingModifier (MilUnit* const adversary);
-  int getSkirmishModifier (MilUnit* const adversary);
   void receiveTransportUnit (TransportUnit* transport);
   void setExtMod (double ext);
   void setFightingFraction (double frac = 1.0) {fightFraction = frac;} 

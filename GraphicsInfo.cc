@@ -802,9 +802,9 @@ string MilUnitGraphicsInfo::strengthString (string indent) const {
 }
 
 void MilUnitGraphicsInfo::describe (QTextStream& str) const {
-  str << "Unit: \n"
+  str << myUnit->getName().c_str() << ":\n"
       << "  Owner: " << myUnit->getOwner()->getDisplayName().c_str() << "\n"
-      << strengthString("  ").c_str()
+      << "  Strength:" << myUnit->displayString(4).c_str() << "\n"
       << "  Priority  : " << myUnit->getPriority() << "\n"
       << "  Shock     : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::shock) << "\n"
       << "  Fire      : " << myUnit->calcStrength(myUnit->getDecayConstant(), &MilUnitElement::range) << "\n"

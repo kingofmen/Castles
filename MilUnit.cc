@@ -110,6 +110,21 @@ void MilUnit::transfer (MilUnit* target, double fraction) {
 }
 */
 
+string MilUnit::displayString (int indent) const {
+  string ret;
+  for (CElmIter i = forces.begin(); i != forces.end(); ++i) {
+    if (1 > (*i)->strength()) continue;
+    ret += createString("\n%*.s%s: %i (%s: %.2f%%)",
+			indent,
+			"",
+			(*i)->unitType->getName().c_str(),
+			(*i)->strength(),
+			(*i)->supply->name.c_str(),
+			100*(*i)->supply->fightingModifier);
+  }
+  return ret;
+}
+
 int MilUnit::getUnitTypeAmount (MilUnitTemplate const* const ut) const {
   for (CElmIter i = forces.begin(); i != forces.end(); ++i) {
     if ((*i)->unitType != ut) continue;
@@ -530,17 +545,6 @@ int MilUnit::getScoutingModifier (MilUnit* const adversary) {
   return 0;
 }
 
-int MilUnit::getSkirmishModifier (MilUnit* const adversary) {
-  double ratio = std::max(1.0, calcStrength(getDecayConstant(), &MilUnitElement::range) - adversary->calcStrength(adversary->getDecayConstant(), &MilUnitElement::defense));
-  ratio /= std::max(1.0, adversary->calcStrength(getDecayConstant(), &MilUnitElement::range) - calcStrength(adversary->getDecayConstant(), &MilUnitElement::defense));
-
-  if (ratio > 3.000) return 10;
-  if (ratio > 2.000) return 5;
-  if (ratio < 0.500) return -5;
-  if (ratio < 0.333) return -10;
-  return 0; 
-}
-
 void MilUnit::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
   list<pair<MilUnitElement const*, supIter> > levels;
   GoodsHolder availableResources(*this);
@@ -591,17 +595,6 @@ void MilUnit::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
 
 double MilUnit::getForageStrength () {
   return calcStrength(getDecayConstant(), &MilUnitElement::tacmob) + 0.5*calcStrength(getDecayConstant(), &MilUnitElement::shock);
-}
-
-int MilUnit::getFightingModifier (MilUnit* const adversary) {
-  double ratio = std::max(1.0, calcStrength(getDecayConstant(), &MilUnitElement::shock) - adversary->calcStrength(adversary->getDecayConstant(), &MilUnitElement::defense));
-  ratio /= std::max(1.0, adversary->calcStrength(getDecayConstant(), &MilUnitElement::shock) - calcStrength(adversary->getDecayConstant(), &MilUnitElement::defense));
-
-  if (ratio > 3.000) return 10;
-  if (ratio > 2.000) return 5;
-  if (ratio < 0.500) return -5;
-  if (ratio < 0.333) return -10;
-  return 0; 
 }
 
 void MilUnit::recalcElementAttributes () {
