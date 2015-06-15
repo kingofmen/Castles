@@ -14,7 +14,8 @@
 
 class Castle;
 class Vertex; 
-struct BattleResult; 
+struct BattleResult;
+class TransportUnit;
 
 struct SupplyLevel : public GoodsHolder {
   SupplyLevel (string n) : name(n), desertionModifier(1.0), fightingModifier(0.01), movementModifier(0.1) {}
@@ -115,6 +116,7 @@ public:
   int getFightingModifier (MilUnit* const adversary);
   int getScoutingModifier (MilUnit* const adversary);
   int getSkirmishModifier (MilUnit* const adversary);
+  void receiveTransportUnit (TransportUnit* transport);
   void setExtMod (double ext);
   void setFightingFraction (double frac = 1.0) {fightFraction = frac;} 
   void dropExtMod () {modStack.pop();} 

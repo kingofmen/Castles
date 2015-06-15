@@ -154,6 +154,14 @@ void MilUnitElement::setMirrorState () {
   mirror->supply     = supply;
 }
 
+void MilUnit::receiveTransportUnit (TransportUnit* transport) {
+  if ((isReal()) && (graphicsInfo)) {
+    graphicsInfo->addEvent(DisplayEvent(createString("Received supplies"),
+					createString("Delivered:") + transport->display()));
+  }
+  deliverGoods(*transport);
+}
+
 void MilUnit::setLocation (Vertex* dat) {
   location = dat;
   leaveMarket();
@@ -812,7 +820,7 @@ void TransportUnit::endOfTurn () {
     if (0 == route.size()) break; // This should never happen.
     setLocation(route.back());
     if (getLocation() != destination) continue;
-    target->deliverGoods(*this);
+    target->receiveTransportUnit(this);
     forDeletion.push_back(this); // Can't destroy here, messes up iterators.
     break;
   }
