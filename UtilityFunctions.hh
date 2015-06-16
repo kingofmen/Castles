@@ -109,7 +109,8 @@ triplet operator/ (triplet one, double scale);
 int convertFractionToInt (double fraction);
 bool intersect (double line1x1, double line1y1, double line1x2, double line1y2,
 		double line2x1, double line2y1, double line2x2, double line2y2); 
-string remQuotes (string tag); 
+string remQuotes (string tag);
+string addQuotes (string tag);
 bool contains (vector<triplet> const& polygon, triplet const& point); 
 doublet calcMeanAndSigma (vector<double>& data);
 

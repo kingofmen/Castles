@@ -212,6 +212,15 @@ string remQuotes (string tag) {
   return ret; 
 }
 
+string addQuotes (string tag) {
+  // Add surrounding quotes to tag if it doesn't already have them.
+  string ret("\"");
+  if (tag[0] == '"') ret = tag;
+  else ret += tag;
+  if (ret[ret.size() - 1] != '"') ret += "\"";
+  return ret;
+}
+
 string outcomeToString (Outcome out) {
   switch (out) {
   case Disaster:   return "Disaster";

@@ -698,7 +698,7 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
     Vertex* vtx = findVertex(mInfo, hex);
     if (vtx) vtx->addUnit(m);
   }
-  m->setName(mInfo->safeGetString("name", "\"Unknown Soldiers\"")); 
+  m->setName(remQuotes(mInfo->safeGetString("name", "\"Unknown Soldiers\"")));
 
   initialiseEcon(m, mInfo);
   setPlayer(m, mInfo);
@@ -1372,7 +1372,7 @@ void StaticInitialiser::writeUnitLocation (Unit* unit, Object* obj) {
 }
 
 void StaticInitialiser::writeUnitToObject (MilUnit* unit, Object* obj) {
-  obj->setLeaf("name", unit->getName());
+  obj->setLeaf("name", addQuotes(unit->getName()));
   obj->setLeaf("player", unit->getOwner()->getName());
   for (vector<MilUnitElement*>::iterator i = unit->forces.begin(); i != unit->forces.end(); ++i) {
     if (1 > (*i)->strength()) continue;

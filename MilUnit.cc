@@ -511,23 +511,23 @@ BattleResult MilUnit::attack (MilUnit* const adversary, Outcome dieroll) {
   if (thLoss > 0.1) ret.attackerSuccess = VictoGlory;
   if ((isReal()) && (graphicsInfo)) {
     graphicsInfo->addEvent(DisplayEvent(createString("Attacked %s", adversary->getName().c_str()),
-					createString("Killed %i, lost %i\nShock %.2f%%, Fire %.2f%%\nLuck: %i\nMobility ratio: %.2f%%",
+					createString("Killed %i, lost %i\nShock %.2f%%, Fire %.2f%%\nLuck: %s\nMobility ratio: %.2f%%",
 						     ret.defenderInfo.casualties,
 						     ret.attackerInfo.casualties,
 						     100*ret.shockPercent,
 						     100*ret.rangePercent,
-						     dieroll,
+						     outcomeToString(dieroll).c_str(),
 						     100*ret.attackerInfo.mobRatio
 						     )));
   }
   if ((adversary->isReal()) && (adversary->graphicsInfo)) {
     adversary->graphicsInfo->addEvent(DisplayEvent(createString("Defended against %s", getName().c_str()),
-						   createString("Killed %i, lost %i\nShock %.2f%%, Fire %.2f%%\nAttacker luck: %i\nMobility ratio: %.2f%%",
+						   createString("Killed %i, lost %i\nShock %.2f%%, Fire %.2f%%\nAttacker luck: %s\nMobility ratio: %.2f%%",
 								ret.attackerInfo.casualties,
 								ret.defenderInfo.casualties,
 								100*ret.shockPercent,
 								100*ret.rangePercent,
-								dieroll,
+								outcomeToString(dieroll).c_str(),
 								100*ret.defenderInfo.mobRatio
 								)));
   }

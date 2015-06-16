@@ -41,6 +41,7 @@ hexinfo = {
     }
     pos = SouthEast
     garrison = {
+      name = "Castle Garrison"
       id = 22
       player = adri
       pikemen = {
