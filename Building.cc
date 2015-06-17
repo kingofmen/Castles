@@ -1,5 +1,6 @@
 #include "Building.hh"
 #include "Hex.hh"
+#include "GraphicsInfo.hh"
 #include <algorithm> 
 #include "MilUnit.hh"
 #include "UtilityFunctions.hh"
@@ -281,8 +282,10 @@ Village::Village ()
   , farm(0)
   , consumptionLevel(maslowLevels[0])
   , workedThisTurn(0)
+  , graphicsInfo(0)
 {
   milTrad = new MilitiaTradition();
+  graphicsInfo = new VillageGraphicsInfo(this);
 }
 
 Village::Village (Village* other)
@@ -292,6 +295,7 @@ Village::Village (Village* other)
   , farm(0)
   , consumptionLevel(maslowLevels[0])
   , workedThisTurn(0)
+  , graphicsInfo(0)
 {}
 
 Village::~Village () {
@@ -661,14 +665,27 @@ double Village::produceForContract (TradeGood const* const tg, double amount) {
 }
 
 double Village::produceForTaxes (TradeGood const* const tg, double amount, ContractInfo::AmountType taxType) {
+  double ret = amount;
+  double initialAmount = getAmount(*tg);
   if (tg == TradeGood::Labor) {
-    if (ContractInfo::Percentage == taxType) amount *= production();
-    amount = min(amount, production());
-    if (amount < 0) throw string("Cannot work more than production");
-    workedThisTurn += amount;
-    return amount;
+    initialAmount = production();
+    if (ContractInfo::Percentage == taxType) ret *= initialAmount;
+    ret = min(ret, initialAmount);
+    if (ret < 0) throw string("Cannot work more than production");
+    workedThisTurn += ret;
   }
-  return EconActor::produceForTaxes(tg, amount, taxType);
+  else {
+    ret = EconActor::produceForTaxes(tg, amount, taxType);
+  }
+  if ((isReal()) && (getGraphicsInfo())) {
+    getGraphicsInfo()->addEvent(DisplayEvent("Paid taxes",
+					     createString("%.1f of %.1f (required %.1f) %s",
+							  ret,
+							  initialAmount,
+							  amount * initialAmount,
+							  tg->getName().c_str())));
+  }
+  return ret;
 }
 
 void Village::endOfTurn () {

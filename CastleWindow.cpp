@@ -989,7 +989,8 @@ void WarfareWindow::selectObject () {
   if (selectedHex) {
     selDrawer->setSelected(selectedHex->getGraphicsInfo());
     villageInterface->setVillage(selectedHex->getVillage());
-    villageInterface->show(); 
+    villageInterface->show();
+    histDrawer->setSelected(selectedHex->getVillage()->getGraphicsInfo());
   }
   else villageInterface->hide();
 

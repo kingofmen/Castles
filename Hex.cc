@@ -279,7 +279,7 @@ void Hex::setGraphicsFarm (Farmland* f) {
 }
 
 void Hex::setGraphicsVillage (Village* f) {
-  if (graphicsInfo) graphicsInfo->setVillage(new VillageGraphicsInfo(f)); 
+  if ((graphicsInfo) && (isReal())) graphicsInfo->setVillage(f->getGraphicsInfo());
 }
 
 void Hex::setMine (Mine* m) {
