@@ -33,7 +33,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Substitution in Maslow levels (check)
    - More GUI insight for testing purposes
      * Unit: Recent skirmishes (check) and battles (check), supplies received (check) and on hand (check), strength effects (check)
-     * Village: Labour sold, Maslow level (check), drill, taxes (check)
+     * Village: Labour sold, Maslow level (check), drill, taxes (check), pop changes (check)
      * Farm/Forest/Mine: Labour bought, work done, expected production
      * Market: Participants, supply and demand, volumes
      * Trade: Production and flow of goods, employment

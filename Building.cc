@@ -692,12 +692,17 @@ void Village::endOfTurn () {
   eatFood();
   workedThisTurn = 0;
 
+  int deaths = 0;
   for (int i = 0; i < AgeTracker::maxAge; ++i) {
     double fracLoss = adjustedMortality(i, true) * males.getPop(i);
-    males.addPop(-convertFractionToInt(fracLoss), i);
-    
+    int die = convertFractionToInt(fracLoss);
+    deaths += die;
+    males.addPop(-die, i);
+
     fracLoss = adjustedMortality(i, false) * women.getPop(i);
-    women.addPop(-convertFractionToInt(fracLoss), i);
+    die = convertFractionToInt(fracLoss);
+    deaths += die;
+    women.addPop(-die, i);
   }
  
   // Simplifying assumptions:
@@ -706,7 +711,7 @@ void Village::endOfTurn () {
   // No man gets more than one woman pregnant in a year 
   // Young men get the first chance at single women
 
-  double popIncrease = 0;
+  int popIncrease = 0;
   vector<int> takenWomen(AgeTracker::maxAge);
   for (int mAge = 16; mAge < AgeTracker::maxAge; ++mAge) {
     for (int fAge = 16; fAge <= mAge; ++fAge) {
@@ -721,8 +726,10 @@ void Village::endOfTurn () {
 
   males.addPop((int) floor(0.5 * popIncrease + 0.5), 0);
   women.addPop((int) floor(0.5 * popIncrease + 0.5), 0);
-
   updateMaxPop();
+  if ((isReal()) && (getGraphicsInfo())) {
+    getGraphicsInfo()->addEvent(DisplayEvent(createString("%i births, %i deaths", popIncrease, deaths), ""));
+  }
 
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter != currSeason) return;
@@ -732,7 +739,7 @@ void Village::endOfTurn () {
   milTrad->decayTradition(); 
 
   MilUnitGraphicsInfo* milGraph = (MilUnitGraphicsInfo*) milTrad->militia->getGraphicsInfo();  
-  if (milGraph) milGraph->updateSprites(milTrad);   
+  if (milGraph) milGraph->updateSprites(milTrad);
 }
 
 void Village::demobMilitia () {
