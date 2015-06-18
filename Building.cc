@@ -1748,6 +1748,7 @@ void Farmland::endOfTurn () {
 void Village::eatFood () {
   double consumptionFactor = consumption();
   consumptionLevel = 0;
+  GoodsHolder consumed;
   BOOST_FOREACH(MaslowLevel const* level, maslowLevels) {
     int numGoods = 0;
     double totalAvailable = 1;
@@ -1770,6 +1771,7 @@ void Village::eatFood () {
     if (totalAvailable < totalConsumption) break;
     if (1 == numGoods) {
       EconActor::consume((*firstProduct), totalConsumption);
+      consumed.deliverGoods((*firstProduct), totalConsumption);
     }
     else {
       // See substitution section in internaldocs for math.
@@ -1806,10 +1808,16 @@ void Village::eatFood () {
       }
       for (vector<const TradeGood*>::const_iterator tg = others.begin(); tg != others.end(); ++tg) {
 	EconActor::consume((*tg), amountToConsume.getAmount(*tg));
+	consumed.deliverGoods((*tg), amountToConsume.getAmount(*tg));
       }
     }
 
     consumptionLevel = level;
+  }
+
+  if ((isReal()) && (getGraphicsInfo())) {
+    getGraphicsInfo()->addEvent(DisplayEvent(createString("Consumption level %s", consumptionLevel->name.c_str()),
+					     createString("Goods used:%s", consumed.display().c_str())));
   }
 }
 
