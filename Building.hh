@@ -265,6 +265,7 @@ public:
   
   void increaseTradition (MilUnitTemplate const* target = 0);
   void decayTradition ();
+  string display () const;
   double getRequiredWork (); 
   virtual void setMirrorState ();
   int getDrill () {return drillLevel;}

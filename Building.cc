@@ -634,6 +634,14 @@ int MilitiaTradition::getUnitTypeAmount (MilUnitTemplate const* const ut) const 
   return ut->recruit_speed * militiaStrength.at(ut); // Use 'at' for const-ness. 
 }
 
+string MilitiaTradition::display () const {
+  string ret = "";
+  for (map<MilUnitTemplate const* const, int>::const_iterator i = militiaStrength.begin(); i != militiaStrength.end(); ++i) {
+    if (0 == (*i).second) continue;
+    ret += createString("\n%s: %i", (*i).first->getName().c_str(), (*i).second);
+  }
+  return ret;
+}
 
 void MilitiaTradition::setMirrorState () {
   militia->setMirrorState();  
@@ -729,6 +737,8 @@ void Village::endOfTurn () {
   updateMaxPop();
   if ((isReal()) && (getGraphicsInfo())) {
     getGraphicsInfo()->addEvent(DisplayEvent(createString("%i births, %i deaths", popIncrease, deaths), ""));
+    if (0.1 < milTrad->getRequiredWork()) getGraphicsInfo()->addEvent(DisplayEvent(createString("Drilled militia (%.1f labour)", milTrad->getRequiredWork()),
+										   createString("Militia strength:%s", milTrad->display().c_str())));
   }
 
   Calendar::Season currSeason = Calendar::getCurrentSeason();
