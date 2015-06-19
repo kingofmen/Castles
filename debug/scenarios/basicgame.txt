@@ -48,10 +48,6 @@ hexinfo = {
         strength = { 10 10 10 10 10 10 10 10 10 10 10 10 10 10 10 }
       }
     }
-    taxes = {
-      amount = 6000
-      type = fixed 
-    }
   }
  
   prices = {

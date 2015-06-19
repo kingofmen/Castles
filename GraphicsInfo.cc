@@ -1033,9 +1033,9 @@ void VillageGraphicsInfo::updateVillageStatus () {
     (*info)->formation.clear();
     //int numCows = min(maxCows, (int) floor((*info)->myVillage->getAvailableSupplies() / suppliesPerCow));
     int numCows = 1;
-    for (int i = 0; i < numCows; ++i) {
+    for (unsigned int i = 0; i < numCows; ++i) {
       (*info)->spriteIndices.push_back(supplySpriteIndex);
-      (*info)->formation.push_back(cowPositions[i]);
+      if (i < cowPositions.size()) (*info)->formation.push_back(cowPositions[i]);
     }
   }
 }

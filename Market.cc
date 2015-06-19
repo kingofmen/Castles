@@ -19,8 +19,8 @@ double MarketContract::execute () {
   double amountWanted = remaining();
   if (amountWanted < 0.001) return 0;
   double moneyAvailable = min(recipient->getAmount(TradeGood::Money), amountWanted * price);
-  recipient->deliverGoods(TradeGood::Money, -moneyAvailable);
-  producer->deliverGoods(TradeGood::Money, moneyAvailable);
+  recipient->sellGoods(TradeGood::Money, moneyAvailable);
+  producer->sellGoods(TradeGood::Money, -moneyAvailable);
   cashPaid += moneyAvailable;
   if (moneyAvailable < amountWanted * price) moneyAvailable += producer->extendCredit(recipient, (amountWanted*price - moneyAvailable));
   if (moneyAvailable < amountWanted * price) amountWanted = moneyAvailable / price;
@@ -108,6 +108,7 @@ void Market::executeContracts () {
 void Market::holdMarket () {
   consumed.zeroGoods();
   produced.zeroGoods();
+  BOOST_FOREACH(EconActor* ea, participants) ea->soldThisTurn.zeroGoods();
   vector<MarketBid*> bidlist;
   vector<MarketBid*> notMatched;
   BOOST_FOREACH(EconActor* ea, participants) ea->getBids(prices, bidlist);

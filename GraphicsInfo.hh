@@ -45,7 +45,7 @@ public:
   EventIter startRecentEvents () const {return recentEvents[this].begin();}
   EventIter finalRecentEvents () const {return recentEvents[this].end();}
 
-  static void accumulateEvents (bool acc = true) {accumulate = acc; Logger::logStream(DebugStartup) << "Accumulate is now " << accumulate << "\n";}
+  static void accumulateEvents (bool acc = true) {accumulate = acc;}
   static void clearRecentEvents ();
   static pair<double, double> getTexCoords (triplet gameCoords, int zone); 
   static int getHeight (int x, int y);

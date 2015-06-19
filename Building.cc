@@ -667,6 +667,7 @@ double Village::produceForContract (TradeGood const* const tg, double amount) {
     amount = min(amount, production());
     if (amount < 0) throw string("Cannot work more than production");
     workedThisTurn += amount;
+    registerSale(tg, amount);
     return amount;
   }
   return EconActor::produceForContract(tg, amount);
@@ -739,6 +740,8 @@ void Village::endOfTurn () {
     getGraphicsInfo()->addEvent(DisplayEvent(createString("%i births, %i deaths", popIncrease, deaths), ""));
     if (0.1 < milTrad->getRequiredWork()) getGraphicsInfo()->addEvent(DisplayEvent(createString("Drilled militia (%.1f labour)", milTrad->getRequiredWork()),
 										   createString("Militia strength:%s", milTrad->display().c_str())));
+    if (1 < getSold(TradeGood::Labor)) getGraphicsInfo()->addEvent(DisplayEvent("Worked for wages",
+										createString("Sold:%s", soldThisTurn.display().c_str())));
   }
 
   Calendar::Season currSeason = Calendar::getCurrentSeason();
@@ -1832,7 +1835,7 @@ void Village::eatFood () {
     consumptionLevel = level;
   }
 
-  if ((isReal()) && (getGraphicsInfo())) {
+  if ((isReal()) && (getGraphicsInfo()) && (consumptionLevel)) {
     getGraphicsInfo()->addEvent(DisplayEvent(createString("Consumption level %s", consumptionLevel->name.c_str()),
 					     createString("Goods used:%s", consumed.display().c_str())));
   }

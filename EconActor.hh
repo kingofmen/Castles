@@ -82,7 +82,7 @@ struct Bid {
 class EconActor : public Numbered<EconActor>, public GoodsHolder {
   friend class StaticInitialiser; 
   friend class Market; 
-  
+
 public: 
   EconActor ();
   ~EconActor ();
@@ -94,7 +94,9 @@ public:
   double getDiscountRate () const {return discountRate;}
   EconActor* getEconMirror () const {return econMirror;}
   void getPaid (EconActor* const payer, double amount);
-  double getPromised (TradeGood const* const tg) {return promisedToDeliver.getAmount(tg);}
+  double getPromised (TradeGood const* const tg) const {return promisedToDeliver.getAmount(tg);}
+  double getSold (TradeGood const* const tg) const {return soldThisTurn.getAmount(tg);}
+  void sellGoods (TradeGood const* const tg, double amount) {deliverGoods(tg, -amount); registerSale(tg, amount);}
   void leaveMarket ();
   virtual double produceForContract (TradeGood const* const tg, double amount);
   virtual double produceForTaxes (TradeGood const* const tg, double amount, ContractInfo::AmountType taxType);
