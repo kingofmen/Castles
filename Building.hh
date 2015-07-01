@@ -9,6 +9,7 @@
 #include "AgeTracker.hh" 
 #include "UtilityFunctions.hh" 
 #include "EconActor.hh"
+#include "GraphicsBridge.hh"
 
 class MilUnit;
 class MilUnitTemplate;
@@ -281,7 +282,7 @@ private:
   int drillLevel;
 };
 
-class Village : public Building, public EconActor, public Mirrorable<Village> { 
+class Village : public Building, public EconActor, public Mirrorable<Village>, public GraphicsBridge<Village, VillageGraphicsInfo> { 
   friend class StaticInitialiser;
   friend class Mirrorable<Village>;
   friend class VillageGraphicsInfo;
@@ -294,7 +295,6 @@ public:
   virtual void endOfTurn ();
   virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
   double getFractionOfMaxPop () const {double ret = getTotalPopulation(); ret /= maxPopulation; return min(1.0, ret);}
-  VillageGraphicsInfo* getGraphicsInfo () const {return graphicsInfo;}
   MilitiaTradition* getMilitia () {return milTrad;} 
   const MilUnitGraphicsInfo* getMilitiaGraphics () const; 
   int getTotalPopulation () const {return males.getTotalPopulation() + women.getTotalPopulation();}
@@ -349,7 +349,6 @@ private:
 
   double workedThisTurn;
   string stopReason;
-  VillageGraphicsInfo* graphicsInfo;
   static int maxPopulation; 
   static vector<double> baseMaleMortality;
   static vector<double> baseFemaleMortality;

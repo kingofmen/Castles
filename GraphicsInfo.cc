@@ -1027,6 +1027,8 @@ VillageGraphicsInfo::VillageGraphicsInfo (Village* f)
   allVillageInfos.push_back(this); 
 }
 
+VillageGraphicsInfo::~VillageGraphicsInfo () {}
+
 void VillageGraphicsInfo::updateVillageStatus () {
   for (Iterator info = begin(); info != end(); ++info) {
     (*info)->spriteIndices.clear();

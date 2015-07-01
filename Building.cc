@@ -278,24 +278,23 @@ void Castle::setMirrorState () {
 Village::Village ()
   : Building()
   , Mirrorable<Village>()
+  , GraphicsBridge<Village, VillageGraphicsInfo>(this)
   , milTrad(0)
   , farm(0)
   , consumptionLevel(maslowLevels[0])
   , workedThisTurn(0)
-  , graphicsInfo(0)
 {
   milTrad = new MilitiaTradition();
-  graphicsInfo = new VillageGraphicsInfo(this);
 }
 
 Village::Village (Village* other)
   : Building()
   , Mirrorable<Village>(other)
+  , GraphicsBridge<Village, VillageGraphicsInfo>()
   , milTrad(0)
   , farm(0)
   , consumptionLevel(maslowLevels[0])
   , workedThisTurn(0)
-  , graphicsInfo(0)
 {}
 
 Village::~Village () {
@@ -667,8 +666,7 @@ double Village::produceForContract (TradeGood const* const tg, double amount) {
     amount = min(amount, production());
     if (amount < 0) throw string("Cannot work more than production");
     workedThisTurn += amount;
-    registerSale(tg, amount);
-    return amount;
+    deliverGoods(tg, amount);
   }
   return EconActor::produceForContract(tg, amount);
 }

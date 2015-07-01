@@ -9,6 +9,7 @@
 #include "Building.hh"
 #include "ThreeDSprite.hh"
 #include "Directions.hh" 
+#include "GraphicsBridge.hh"
 
 class MilStrength; 
 class MilUnit;
@@ -19,12 +20,6 @@ class Vertex;
 class Line; 
 
 enum TerrainType {Mountain = 0, Hill, Plain, Wooded, Ocean, NoTerrain}; 
-
-struct DisplayEvent {
-  DisplayEvent (string et, string de) : eventType(et), details(de) {}
-  string eventType;
-  string details;
-};
 
 class GraphicsInfo {
   friend class StaticInitialiser; 
