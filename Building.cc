@@ -34,6 +34,7 @@ char errorMessage[500];
 
 Castle::Castle (Hex* dat, Line* lin) 
   : Mirrorable<Castle>()
+  , GraphicsBridge<Castle, CastleGraphicsInfo>(this)
   , support(dat)
   , location(lin)
   , recruitType(0) 
@@ -45,6 +46,7 @@ Castle::Castle (Hex* dat, Line* lin)
 
 Castle::Castle (Castle* other)
   : Mirrorable<Castle>(other)
+  , GraphicsBridge<Castle, CastleGraphicsInfo>()
   , support(0) // Sequence issues - this constructor is called before anything is initialised in real constructor
 {}
 
@@ -285,6 +287,7 @@ Village::Village ()
   , workedThisTurn(0)
 {
   milTrad = new MilitiaTradition();
+  initialiseGraphicsBridge();
 }
 
 Village::Village (Village* other)

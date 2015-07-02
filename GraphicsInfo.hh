@@ -34,6 +34,7 @@ public:
 
   void addEvent (DisplayEvent de);
   virtual void describe (QTextStream& /*str*/) const {}
+  triplet getNormal () const {return normal;}
   triplet getPosition () const {return position;}
   int getZone () const {return 0;}
 
@@ -50,6 +51,7 @@ public:
   
 protected:
   triplet position;
+  triplet normal;
   static int zoneSide; // Size in hexes
   static double* heightMap;
   static map<const GraphicsInfo*, vector<DisplayEvent> > recentEvents;
@@ -269,13 +271,12 @@ public:
   double  getFlowRatio () const {return flow * maxFlow;}
   Line*   getLine () const {return myLine;} 
   double  getLossRatio () const {return loss * maxLoss;}
-  triplet getNormal () const {return normal;}; 
   bool    isInside (double x, double y) const;
   
   static void endTurn ();
   static Iterator begin () {return allLineGraphics.begin();}
   static Iterator end   () {return allLineGraphics.end();}
-  
+
 private:
   double flow;
   double loss;
@@ -289,14 +290,23 @@ private:
   triplet corner2;
   triplet corner3;
   triplet corner4;
-  triplet normal; 
 
   Line* myLine; 
   
   static double maxFlow;
   static double maxLoss;
   static vector<LineGraphicsInfo*> allLineGraphics;
-}; 
+};
+
+class CastleGraphicsInfo : public GraphicsInfo {
+public:
+  CastleGraphicsInfo (Castle* castle);
+  ~CastleGraphicsInfo ();
+
+  double getAngle () const {return angle;}
+private:
+  double angle;
+};
 
 class PlayerGraphicsInfo { // Doesn't have a position, so doesn't descend from GraphicsInfo
   friend class StaticInitialiser; 

@@ -1198,7 +1198,7 @@ void StaticInitialiser::makeGraphicsInfoObjects () {
     (*l)->graphicsInfo = new LineGraphicsInfo((*l), (*l)->vex1->getDirection((*l)->vex2));
     (*l)->position = (*l)->graphicsInfo->position;
     (*l)->mirror->position = (*l)->graphicsInfo->position;
-    if ((*l)->getCastle()) (*l)->addGraphicCastle((*l)->getCastle()); 
+    if ((*l)->getCastle()) (*l)->getCastle()->initialiseGraphicsBridge();
   }
 }
 

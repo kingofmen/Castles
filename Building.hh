@@ -15,6 +15,7 @@ class MilUnit;
 class MilUnitTemplate;
 class MilUnitGraphicsInfo;
 class VillageGraphicsInfo;
+class CastleGraphicsInfo;
 class Hex;
 class Line; 
 class Player;
@@ -212,7 +213,7 @@ private:
   int assignedLand; 
 };
 
-class Castle : public Building, public EconActor, public Mirrorable<Castle> {
+class Castle : public Building, public EconActor, public Mirrorable<Castle>, public GraphicsBridge<Castle, CastleGraphicsInfo> {
   friend class Mirrorable<Castle>;
   friend class StaticInitialiser; 
 public: 

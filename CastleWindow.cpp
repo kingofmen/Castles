@@ -290,28 +290,25 @@ void GLDrawer::setTranslate (int x, int y) {
   translateY -= zoomLevel*(y*cos(radial) - x*sin(radial)); 
 }
 
-
-void GLDrawer::drawCastle (Castle* castle, LineGraphicsInfo const* dat) {
+void GLDrawer::drawCastle (Castle* castle) const {
   if (!castle) return;
+  CastleGraphicsInfo* cgi = castle->getGraphicsInfo();
+  if (!cgi) return;
 
-  double castleX = 0;
-  double castleY = 0;
-  double castleZ = 0;   
-  dat->getCastlePosition(castleX, castleY, castleZ);
-
+  triplet castlePos = cgi->getPosition();
   vector<int> texts;
-  texts.push_back(playerToTextureMap[castle->getOwner()]); 
+  texts.push_back((*(playerToTextureMap.find(castle->getOwner()))).second);
 
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
-  glTranslated(castleX, castleY, castleZ);
+  glTranslated(castlePos.x(), castlePos.y(), castlePos.z());
   
-  triplet normal = dat->getNormal();
+  triplet normal = cgi->getNormal();
   double angle = radToDeg(zaxis.angle(normal));
   triplet axis = zaxis.cross(normal); 
   glRotated(angle, axis.x(), axis.y(), axis.z());
 
-  angle = dat->getAngle();  
+  angle = cgi->getAngle();
   glRotated(angle, 0, 0, 1);
    
   //glBindTexture(GL_TEXTURE_2D, textureIDs[castleTextureIndices[3]]); 
@@ -331,7 +328,7 @@ void GLDrawer::drawLine (LineGraphicsInfo const* dat) {
   glColor4d(1.0, 1.0, 1.0, 1.0);
   glEnable(GL_TEXTURE_2D); 
   
-  drawCastle(dat->getLine()->getCastle(), dat);
+  drawCastle(dat->getLine()->getCastle());
   if (overlayMode) overlayMode->drawLine(dat); 
 }
 

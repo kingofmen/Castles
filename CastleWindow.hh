@@ -153,7 +153,7 @@ protected:
   virtual void resizeGL ();   
   
 private:
-  void drawCastle (Castle* castle, LineGraphicsInfo const* dat); 
+  void drawCastle (Castle* castle) const;
   void drawLine (LineGraphicsInfo const* dat);
   void drawHex (HexGraphicsInfo const* dat);
   void drawSprites (const SpriteContainer* info, vector<int>& texts, double angle);  

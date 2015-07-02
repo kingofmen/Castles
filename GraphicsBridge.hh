@@ -10,7 +10,7 @@ struct DisplayEvent {
 template <class Model, class View> class GraphicsBridge {
   // Helper class to hold the boilerplate code for graphics-object access.
 public:
-  GraphicsBridge (Model* m) : gameObject(m) {graphicsInfo = new View(gameObject);}
+  GraphicsBridge (Model* m) : gameObject(m), graphicsInfo(0) {}
   GraphicsBridge () : gameObject(0), graphicsInfo(0) {} // Dummy constructor for mirror objects.
   virtual ~GraphicsBridge () {
     if (graphicsInfo) delete graphicsInfo;
@@ -22,6 +22,15 @@ public:
   void reportEvent (DisplayEvent& evt) {
     if (graphicsInfo) graphicsInfo->addEvent(evt);
   }
+  void initialiseGraphicsBridge (Model* m) {
+    gameObject = m;
+    graphicsInfo = new View(gameObject);
+  }
+  void initialiseGraphicsBridge () {
+    graphicsInfo = new View(gameObject);
+  }
+
+protected:
 
 private:
   Model* gameObject;

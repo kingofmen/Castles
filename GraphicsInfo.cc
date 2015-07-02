@@ -209,8 +209,7 @@ void GraphicsInfo::getHeightMapCoords (int& hexX, int& hexY, Vertices dir) {
   hexY = realY; 
 }
 
-GraphicsInfo::GraphicsInfo () 
-{}
+GraphicsInfo::GraphicsInfo () {}
 
 void GraphicsInfo::addEvent (DisplayEvent de) {
   recentEvents[this].push_back(de);
@@ -531,6 +530,23 @@ void HexGraphicsInfo::setVillage (VillageGraphicsInfo* f) {
   villageInfo = f;
   villageInfo->generateShapes(this); 
 }
+
+CastleGraphicsInfo::CastleGraphicsInfo (Castle* castle)
+  : GraphicsInfo()
+{
+  const LineGraphicsInfo* lgi = castle->getLocation()->getGraphicsInfo();
+  const HexGraphicsInfo* hgi = castle->getSupport()->getGraphicsInfo();
+  if ((!lgi) || (!hgi)) return; // Should only happen in unit tests.
+  Logger::logStream(DebugStartup) << "Creating CGI position\n";
+  position = lgi->getPosition();
+  position += hgi->getPosition() * 0.3;
+  position /= 1.3;
+  position.z() = lgi->getPosition().z();
+  angle = lgi->getAngle();
+  normal = lgi->getNormal();
+}
+
+CastleGraphicsInfo::~CastleGraphicsInfo () {}
 
 void LineGraphicsInfo::addCastle (HexGraphicsInfo const* supportInfo) {
   castleX  = position.x();
