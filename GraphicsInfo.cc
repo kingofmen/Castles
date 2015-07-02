@@ -548,16 +548,6 @@ CastleGraphicsInfo::CastleGraphicsInfo (Castle* castle)
 
 CastleGraphicsInfo::~CastleGraphicsInfo () {}
 
-void LineGraphicsInfo::addCastle (HexGraphicsInfo const* supportInfo) {
-  castleX  = position.x();
-  castleX += 0.3*supportInfo->getPosition().x();
-  castleX /= 1.3;
-
-  castleY  = position.y();
-  castleY += 0.3*supportInfo->getPosition().y();
-  castleY /= 1.3;  
-}
-
 void LineGraphicsInfo::describe (QTextStream& str) const {
   str << "Line: " << myLine->getName().c_str() << "\n";
     //<< "  (" << corner1.x() << ", " << corner1.y() << ")\n"
@@ -570,17 +560,10 @@ void LineGraphicsInfo::describe (QTextStream& str) const {
     str << "Castle: \n"
 	<< "  Owner     : " << castle->getOwner()->getDisplayName().c_str() << "\n"
 	<< "  Recruiting: " << castle->getRecruitType()->getName().c_str() << "\n"
-      //<< "  Supplies  : " << castle->getAvailableSupplies() << "\n"
 	<< "  ";
     MilUnit* unit = castle->getGarrison(0);
     if (unit) unit->getGraphicsInfo()->describe(str);
   }
-}
-
-void LineGraphicsInfo::getCastlePosition (double& xpos, double& ypos, double& zpos) const {
-  xpos = castleX;
-  ypos = castleY;
-  zpos = position.z(); 
 }
 
 triplet LineGraphicsInfo::getCorner (int which) const {
@@ -1050,7 +1033,7 @@ void VillageGraphicsInfo::updateVillageStatus () {
     (*info)->spriteIndices.clear();
     (*info)->formation.clear();
     //int numCows = min(maxCows, (int) floor((*info)->myVillage->getAvailableSupplies() / suppliesPerCow));
-    int numCows = 1;
+    unsigned int numCows = 1;
     for (unsigned int i = 0; i < numCows; ++i) {
       (*info)->spriteIndices.push_back(supplySpriteIndex);
       if (i < cowPositions.size()) (*info)->formation.push_back(cowPositions[i]);

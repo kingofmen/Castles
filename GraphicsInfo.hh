@@ -263,10 +263,8 @@ public:
 
   typedef vector<LineGraphicsInfo*>::const_iterator Iterator;
   
-  void    addCastle (HexGraphicsInfo const* supportInfo);
   virtual void describe (QTextStream& str) const;  
   double  getAngle () const {return angle;}
-  void    getCastlePosition (double& xpos, double& ypos, double& zpos) const; 
   triplet getCorner (int which) const; 
   double  getFlowRatio () const {return flow * maxFlow;}
   Line*   getLine () const {return myLine;} 
@@ -281,9 +279,6 @@ private:
   double flow;
   double loss;
   double angle; 
-
-  double castleX;
-  double castleY; 
 
   // Clockwise order 
   triplet corner1;

@@ -627,12 +627,7 @@ void Vertex::forceRetreat (Castle*& c, Vertex*& v) {
   }
 }
 
-void Line::addGraphicCastle (Castle* dat) {
-  if (graphicsInfo) graphicsInfo->addCastle(dat->getSupport()->getGraphicsInfo());
-}
-
 void Line::addCastle (Castle* dat) {
-  addGraphicCastle(dat); 
   castle = dat;
 }
 

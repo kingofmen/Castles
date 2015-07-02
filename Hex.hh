@@ -209,7 +209,6 @@ public:
   Hex* twoHex () {return hex2;}
   Hex* otherHex (Hex* dat);
   void addCastle (Castle* dat);
-  void addGraphicCastle (Castle* dat);
   Castle* getCastle () {return castle;}
   LineGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;}
   virtual void setMirrorState ();
