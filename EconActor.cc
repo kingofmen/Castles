@@ -145,6 +145,11 @@ double EconActor::availableCredit (EconActor* const applicant) const {
   return amountAvailable;
 }
 
+void EconActor::clearRecord () {
+  soldThisTurn.zeroGoods();
+  earnedThisTurn.zeroGoods();
+}
+
 void EconActor::dunAndPay () {
   for (map<EconActor* const, double>::iterator borrower = borrowers.begin(); borrower != borrowers.end(); ++borrower) {
     EconActor* const victim = (*borrower).first;
@@ -180,10 +185,14 @@ void EconActor::leaveMarket () {
   theMarket = 0;
 }
 
+void EconActor::registerSale (TradeGood const* const tg, double amount, double price) {
+  soldThisTurn.deliverGoods(tg, amount);
+  earnedThisTurn.deliverGoods(tg, amount*price);
+}
+
 double EconActor::produceForContract (TradeGood const* const tg, double amount) {
   amount = min(amount, getAmount(tg));
   deliverGoods(tg, -amount);
-  registerSale(tg, amount);
   return amount;
 }
 

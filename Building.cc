@@ -739,7 +739,9 @@ void Village::endOfTurn () {
     if (0.1 < milTrad->getRequiredWork()) getGraphicsInfo()->addEvent(DisplayEvent(createString("Drilled militia (%.1f labour)", milTrad->getRequiredWork()),
 										   createString("Militia strength:%s", milTrad->display().c_str())));
     if (1 < getSold(TradeGood::Labor)) getGraphicsInfo()->addEvent(DisplayEvent("Worked for wages",
-										createString("Sold:%s", soldThisTurn.display().c_str())));
+										createString("Sold:%s\nIncome:%s",
+											     soldThisTurn.display().c_str(),
+											     earnedThisTurn.display().c_str())));
   }
 
   Calendar::Season currSeason = Calendar::getCurrentSeason();

@@ -96,7 +96,6 @@ public:
   void getPaid (EconActor* const payer, double amount);
   double getPromised (TradeGood const* const tg) const {return promisedToDeliver.getAmount(tg);}
   double getSold (TradeGood const* const tg) const {return soldThisTurn.getAmount(tg);}
-  void sellGoods (TradeGood const* const tg, double amount) {deliverGoods(tg, -amount); registerSale(tg, amount);}
   void leaveMarket ();
   virtual double produceForContract (TradeGood const* const tg, double amount);
   virtual double produceForTaxes (TradeGood const* const tg, double amount, ContractInfo::AmountType taxType);
@@ -112,13 +111,15 @@ public:
   static void unitTests ();
 
 protected:
-  void registerSale (TradeGood const* const tg, double amount) {soldThisTurn.deliverGoods(tg, amount);}
+  void clearRecord ();
+  void registerSale (TradeGood const* const tg, double amount, double price);
   void setEconMirrorState (EconActor* ea);
   void produce (TradeGood const* const tg, double amount);
   void consume (TradeGood const* const tg, double amount);
   
   EconActor* owner;
   GoodsHolder soldThisTurn;
+  GoodsHolder earnedThisTurn;
   GoodsHolder promisedToDeliver;
   Market* theMarket;
   EconActor* econMirror;
