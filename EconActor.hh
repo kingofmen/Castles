@@ -101,6 +101,7 @@ public:
   virtual double produceForTaxes (TradeGood const* const tg, double amount, ContractInfo::AmountType taxType);
   EconActor* getEconOwner () const {return owner;}
   bool isOwnedBy (EconActor const* const cand) const {return cand == owner;}
+  virtual void receiveTaxes (TradeGood const* const tg, double received) {deliverGoods(tg, received);}
   void registerContract (MarketContract const* const contract);
   void setEconOwner (EconActor* ea) {owner = ea;}
   void setEconMirror (EconActor* ea) {econMirror = ea;}

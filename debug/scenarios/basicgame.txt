@@ -82,7 +82,7 @@ hexinfo = {
       drill_level = 1 
     }
     goods = {
-      food = 600000 
+      food = 600000
       money = 100
     }
     obligation = {

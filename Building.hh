@@ -213,7 +213,7 @@ private:
   int assignedLand; 
 };
 
-class Castle : public Building, public EconActor, public Mirrorable<Castle>, public GraphicsBridge<Castle, CastleGraphicsInfo> {
+class Castle : public Building, public EconActor, public Mirrorable<Castle>, public GBRIDGE(Castle) {
   friend class Mirrorable<Castle>;
   friend class StaticInitialiser; 
 public: 
@@ -228,6 +228,7 @@ public:
   MilUnit* getGarrison (unsigned int i) {if (i >= garrison.size()) return 0; return garrison[i];}
   Hex* getSupport () {return support;}
   int numGarrison () const {return garrison.size();}
+  virtual void receiveTaxes (TradeGood const* const tg, double received);
   void recruit (Outcome out);  
   MilUnit* removeGarrison ();
   MilUnit* removeUnit (MilUnit* r);
@@ -283,7 +284,7 @@ private:
   int drillLevel;
 };
 
-class Village : public Building, public EconActor, public Mirrorable<Village>, public GraphicsBridge<Village, VillageGraphicsInfo> { 
+class Village : public Building, public EconActor, public Mirrorable<Village>, public GBRIDGE(Village) {
   friend class StaticInitialiser;
   friend class Mirrorable<Village>;
   friend class VillageGraphicsInfo;

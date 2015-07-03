@@ -132,7 +132,7 @@ void ContractInfo::execute () const {
   if (!source) return;
 
   double delivered = source->produceForTaxes(tradeGood, amount, delivery);
-  recipient->deliverGoods(tradeGood, delivered);
+  recipient->receiveTaxes(tradeGood, delivered);
 }
 
 double EconActor::availableCredit (EconActor* const applicant) const {

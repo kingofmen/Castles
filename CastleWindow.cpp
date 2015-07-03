@@ -1011,6 +1011,7 @@ void WarfareWindow::selectObject () {
     if ((castle) && (castle->getOwner() == Player::getCurrentPlayer())) {
       castleInterface->setCastle(castle);
       castleInterface->show();
+      histDrawer->setSelected(castle->getGraphicsInfo());
       MilUnit* unit = castle->getGarrison(0);
       if (unit) {
 	unitInterface->setUnit(unit);

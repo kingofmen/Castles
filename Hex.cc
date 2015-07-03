@@ -597,10 +597,10 @@ Line::Line (Line* other)
   , castle(0)
   , graphicsInfo(0)
 {}
-    
+
 Line::~Line () {
   if (castle) castle->destroyIfReal();
-  delete graphicsInfo; 
+  delete graphicsInfo;
 }
 
 void Vertex::forceRetreat (Castle*& c, Vertex*& v) {

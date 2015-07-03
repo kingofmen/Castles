@@ -293,7 +293,7 @@ private:
   static vector<LineGraphicsInfo*> allLineGraphics;
 };
 
-class CastleGraphicsInfo : public GraphicsInfo {
+class CastleGraphicsInfo : public GraphicsInfo, public GBRIDGE(Castle) {
 public:
   CastleGraphicsInfo (Castle* castle);
   ~CastleGraphicsInfo ();

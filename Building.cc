@@ -254,6 +254,14 @@ void Building::setOwner (Player* p) {
   owner = p;
 }
 
+void Castle::receiveTaxes (TradeGood const* const tg, double received) {
+  EconActor::receiveTaxes(tg, received);
+  if (canReport()) reportEvent(DisplayEvent("Received taxes",
+					    createString("%.1f %s",
+							 received,
+							 tg->getName().c_str())));
+}
+
 void Castle::setOwner (Player* p) {
   Building::setOwner(p);
   if (isReal()) mirror->setOwner(p); 

@@ -491,38 +491,38 @@ triplet HexGraphicsInfo::getCoords (Vertices dir) const {
   default:
   case NoVertex:  return position;
   }
-}  
+}
 
 void HexGraphicsInfo::getHeights () {
   for (Iterator h = begin(); h != end(); ++h) {
     ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(0);
 
     (*h)->position.z()         = zoneInfo->calcHeight((*h)->position.x(),        (*h)->position.y());
-    (*h)->cornerRight.z()      = zoneInfo->calcHeight((*h)->cornerRight.x(),     (*h)->cornerRight.y());	  
-    (*h)->cornerRightUp.z()    = zoneInfo->calcHeight((*h)->cornerRightUp.x(),   (*h)->cornerRightUp.y());  
-    (*h)->cornerLeftUp.z()     = zoneInfo->calcHeight((*h)->cornerLeftUp.x(),    (*h)->cornerLeftUp.y());   
-    (*h)->cornerLeft.z()       = zoneInfo->calcHeight((*h)->cornerLeft.x(),      (*h)->cornerLeft.y());     
-    (*h)->cornerLeftDown.z()   = zoneInfo->calcHeight((*h)->cornerLeftDown.x(),  (*h)->cornerLeftDown.y()); 
+    (*h)->cornerRight.z()      = zoneInfo->calcHeight((*h)->cornerRight.x(),     (*h)->cornerRight.y());
+    (*h)->cornerRightUp.z()    = zoneInfo->calcHeight((*h)->cornerRightUp.x(),   (*h)->cornerRightUp.y());
+    (*h)->cornerLeftUp.z()     = zoneInfo->calcHeight((*h)->cornerLeftUp.x(),    (*h)->cornerLeftUp.y());
+    (*h)->cornerLeft.z()       = zoneInfo->calcHeight((*h)->cornerLeft.x(),      (*h)->cornerLeft.y());
+    (*h)->cornerLeftDown.z()   = zoneInfo->calcHeight((*h)->cornerLeftDown.x(),  (*h)->cornerLeftDown.y());
     (*h)->cornerRightDown.z()  = zoneInfo->calcHeight((*h)->cornerRightDown.x(), (*h)->cornerRightDown.y());
   }
 }
 
 GraphicsInfo::FieldShape HexGraphicsInfo::getPatch (bool large) {
   vector<FieldShape>* target = large ? &biggerPatches : &spritePatches;
-  
+
   FieldShape ret = target->back();
   target->pop_back();
   if (!large) {
     for (int i = 0; i < treesPerField.back(); ++i) trees.pop_back();
     treesPerField.pop_back();
   }
-  return ret; 
+  return ret;
 }
 
 void HexGraphicsInfo::setFarm (FarmGraphicsInfo* f) {
   if (0 == spritePatches.size()) generateShapes();
   farmInfo = f;
-  farmInfo->generateShapes(this); 
+  farmInfo->generateShapes(this);
 }
 
 void HexGraphicsInfo::setVillage (VillageGraphicsInfo* f) {
@@ -533,11 +533,11 @@ void HexGraphicsInfo::setVillage (VillageGraphicsInfo* f) {
 
 CastleGraphicsInfo::CastleGraphicsInfo (Castle* castle)
   : GraphicsInfo()
+  , GBRIDGE(Castle)(castle, this)
 {
   const LineGraphicsInfo* lgi = castle->getLocation()->getGraphicsInfo();
   const HexGraphicsInfo* hgi = castle->getSupport()->getGraphicsInfo();
   if ((!lgi) || (!hgi)) return; // Should only happen in unit tests.
-  Logger::logStream(DebugStartup) << "Creating CGI position\n";
   position = lgi->getPosition();
   position += hgi->getPosition() * 0.3;
   position /= 1.3;
@@ -550,11 +550,6 @@ CastleGraphicsInfo::~CastleGraphicsInfo () {}
 
 void LineGraphicsInfo::describe (QTextStream& str) const {
   str << "Line: " << myLine->getName().c_str() << "\n";
-    //<< "  (" << corner1.x() << ", " << corner1.y() << ")\n"
-    //  << "  (" << corner2.x() << ", " << corner2.y() << ")\n"
-    //  << "  (" << corner3.x() << ", " << corner3.y() << ")\n"
-    //  << "  (" << corner4.x() << ", " << corner4.y() << ")\n"
-    //  << "  (" << normal.x() << ", " << normal.y() << ", " << normal.z() << ")\n";
   Castle* castle = myLine->getCastle();  
   if (castle) {
     str << "Castle: \n"
