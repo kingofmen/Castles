@@ -1245,11 +1245,23 @@ void Farmer::fillBlock (int block, vector<int>& theBlock) const {
   // we can do so by counting backwards from the top status
   // until we've reached block*blockSize fields.
 
-  // This is a Schlemiel's Algorithm... I should provide an iterator,
-  // or at least cache the previous block.
+  // Cache result for previous block to avoid Schlemiel when calling
+  // successive blocks for the same Farmer.
+  static const Farmer* lastFarmer = 0;
+  static int lastBlock = 0;
+  static int lastCounted = 0;
+  static FieldStatus::rIter lastStatus = FieldStatus::rstart();
+  
   int counted = 0;
   int found = 0;
-  for (FieldStatus::rIter fs = FieldStatus::rstart(); fs != FieldStatus::rfinal(); ++fs) {
+  FieldStatus::rIter fs = FieldStatus::rstart();
+
+  if ((lastFarmer == this) && (lastBlock + 1 == block)) {
+    fs = lastStatus;
+    counted = lastCounted;
+  }
+
+  for (; fs != FieldStatus::rfinal(); ++fs) {
     if (counted + fields[**fs] <= block * blockInfo->blockSize) {
       counted += fields[**fs];
       continue;
@@ -1259,6 +1271,11 @@ void Farmer::fillBlock (int block, vector<int>& theBlock) const {
     if (found >= blockInfo->blockSize) break;
     counted += theBlock[**fs];
   }
+
+  lastFarmer = this;
+  lastBlock = block;
+  lastCounted = counted;
+  lastStatus = fs;
 }
 
 double Farmer::getCapitalSize () const {

@@ -26,7 +26,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Load and save market contracts (check)
    - Allow additional production from additional labour (check)
    - Enforce that output cannot be capital
-   - Fix Schlemiel in Farmland fillBlock
+   - Fix Schlemiel in Farmland fillBlock (check)
    - Use EconActor discount rate in Forester chopping decisions
    - Set workableBlocks from save for all buildings.
    - Threshold effect on capital
