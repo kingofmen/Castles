@@ -1619,17 +1619,9 @@ void StaticInitialiser::writeGameToFile (string fname) {
 }
 
 void StaticInitialiser::unitTests () {
-  Object* badIndustry = new Object("bad_industry");
-  badIndustry->setLeaf("output", "food");
-  Object* capital = badIndustry->getNeededObject("capital");
+  Object badIndustry("bad_industry");
+  badIndustry.setLeaf("output", "food");
+  Object* capital = badIndustry.getNeededObject("capital");
   capital->setLeaf("food", "0.1");
-  try {
-    initialiseIndustry<Farmer>(badIndustry);
-  }
-  catch (const string& exception) {
-    //if (exception != "Output food cannot also be capital in bad_industry") throw;
-    
-    if (exception != createString("Output %s cannot also be capital in industry %s", Farmer::output->getName().c_str(), badIndustry->getKey().c_str())) throw;
-  }
-  delete badIndustry;
+  EXPECT_STRING(initialiseIndustry<Farmer>(&badIndustry), string("Output food cannot also be capital in industry bad_industry"));
 }

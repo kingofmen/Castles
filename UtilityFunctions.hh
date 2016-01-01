@@ -310,4 +310,12 @@ private:
 string createString (const char* format, ...);
 void throwFormatted (const char* format, ...);
 
+#define EXPECT_STRING(action, error) try { \
+    action; \
+    throw string("Expected ") + error + " but got no error."; \
+  } \
+  catch (const string& exception) { \
+    if (error != exception) throw string("Expected \n") + error + "\nbut got\n" + exception + "\n"; \
+  }
+
 #endif

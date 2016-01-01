@@ -358,7 +358,6 @@ void throwFormatted (const char* format, ...) {
   va_start(arglist, format);
   // Would like to recurse to createString, but that creates problems I don't understand.
   vsprintf(message, format, arglist);
-  Logger::logStream(DebugStartup) << message << "\n";
   va_end(arglist);
   throw string(message);
 }
