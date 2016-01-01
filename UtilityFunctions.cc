@@ -353,9 +353,12 @@ string createString (const char* format, ...) {
 }
 
 void throwFormatted (const char* format, ...) {
+  static char message[1000];
   va_list arglist;
   va_start(arglist, format);
-  string error = createString(format, arglist);
+  // Would like to recurse to createString, but that creates problems I don't understand.
+  vsprintf(message, format, arglist);
+  Logger::logStream(DebugStartup) << message << "\n";
   va_end(arglist);
-  throw error;
+  throw string(message);
 }

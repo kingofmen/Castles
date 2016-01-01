@@ -263,15 +263,16 @@ void WarfareGame::unitTests (string fname) {
   callTestFunction(string("Writing to file ") + savename, function<void()>(bind(&StaticInitialiser::writeGameToFile, savename)));
   callTestFunction(string("Loading from savegame again ") + fname, function<void()>(bind(&WarfareGame::createGame, savename)));
   delete currGame;
-  callTestFunction("Hex",       &Hex::unitTests);
-  callTestFunction("Market",    &Market::unitTests);
-  callTestFunction("Village",   &Village::unitTests);
-  callTestFunction("Farmland",  &Farmland::unitTests);
-  callTestFunction("Forest",    &Forest::unitTests);
-  callTestFunction("Mine",      &Mine::unitTests);
-  callTestFunction("MilUnit",   &MilUnit::unitTests);
-  callTestFunction("Castle",    &Castle::unitTests);
-  callTestFunction("TradeUnit", &TradeUnit::unitTests);
+  callTestFunction("Hex",        &Hex::unitTests);
+  callTestFunction("Market",     &Market::unitTests);
+  callTestFunction("Village",    &Village::unitTests);
+  callTestFunction("Farmland",   &Farmland::unitTests);
+  callTestFunction("Forest",     &Forest::unitTests);
+  callTestFunction("Mine",       &Mine::unitTests);
+  callTestFunction("MilUnit",    &MilUnit::unitTests);
+  callTestFunction("Castle",     &Castle::unitTests);
+  callTestFunction("TradeUnit",  &TradeUnit::unitTests);
+  callTestFunction("StaticInit", &StaticInitialiser::unitTests);
 
   Logger::logStream(DebugStartup) << passed << " of " << tests << " tests passed.\n";
 }

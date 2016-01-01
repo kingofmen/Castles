@@ -25,7 +25,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Think up better names for 'fields' and 'extractResources'
    - Load and save market contracts (check)
    - Allow additional production from additional labour (check)
-   - Enforce that output cannot be capital
+   - Enforce that output cannot be capital (check)
    - Fix Schlemiel in Farmland fillBlock (check)
    - Use EconActor discount rate in Forester chopping decisions
    - Set workableBlocks from save for all buildings.
@@ -50,7 +50,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
    - Player interaction
  * Sieges
  * Command points
- 
+ * Informative error messages on startup failure 
 
  
 

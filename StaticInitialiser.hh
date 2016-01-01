@@ -44,6 +44,7 @@ public:
   static void      makeGraphicsInfoObjects ();   
   static void      makeZoneTextures (Object* gInfo);
   static void      setUItexts (Object* tInfo);
+  static void      unitTests();
   
   static void      writeGameToFile (string fname);
   static void      writeAgeInfoToObject (AgeTracker& age, Object* obj, int skip = 0);  

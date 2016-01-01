@@ -165,6 +165,11 @@ template<class T> void StaticInitialiser::initialiseIndustry(Object* industryObj
   T::capital = new GoodsHolder();
   Object* capInfo = industryObject->getNeededObject("capital");
   readGoodsHolder(capInfo, *(T::capital));
+
+  if (T::capital->getAmount(T::output) != 0) {
+    throwFormatted("Output %s cannot also be capital in industry %s", T::output->getName().c_str(), industryObject->getKey().c_str());
+  }
+  
   T::inverseProductionTime = 1.0 / industryObject->safeGetInt("productionCycle", 1);
 }
 
@@ -1611,4 +1616,20 @@ void StaticInitialiser::writeGameToFile (string fname) {
   writer.close();
 
   clearTempMaps();
+}
+
+void StaticInitialiser::unitTests () {
+  Object* badIndustry = new Object("bad_industry");
+  badIndustry->setLeaf("output", "food");
+  Object* capital = badIndustry->getNeededObject("capital");
+  capital->setLeaf("food", "0.1");
+  try {
+    initialiseIndustry<Farmer>(badIndustry);
+  }
+  catch (const string& exception) {
+    //if (exception != "Output food cannot also be capital in bad_industry") throw;
+    
+    if (exception != createString("Output %s cannot also be capital in industry %s", Farmer::output->getName().c_str(), badIndustry->getKey().c_str())) throw;
+  }
+  delete badIndustry;
 }
