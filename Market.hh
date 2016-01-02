@@ -2,8 +2,11 @@
 #define MARKET_HH
 
 #include "EconActor.hh"
+#include "GraphicsBridge.hh"
 #include "Mirrorable.hh"
 #include "UtilityFunctions.hh"
+
+class MarketGraphicsInfo;
 
 struct MarketBid {
   MarketBid(TradeGood const* tg, double atb, EconActor* b, unsigned int d = 1) : tradeGood(tg), amountToBuy(atb), bidder(b), duration(d) {}
@@ -40,7 +43,7 @@ private:
   double remaining () const {return amount - delivered;}
 };
 
-class Market : public Mirrorable<Market> {
+class Market : public Mirrorable<Market>, public GBRIDGE(Market) {
   friend class HexGraphicsInfo;
   friend class StaticInitialiser;
   friend class Mirrorable<Market>;

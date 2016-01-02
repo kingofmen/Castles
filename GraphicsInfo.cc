@@ -548,6 +548,13 @@ CastleGraphicsInfo::CastleGraphicsInfo (Castle* castle)
 
 CastleGraphicsInfo::~CastleGraphicsInfo () {}
 
+MarketGraphicsInfo::MarketGraphicsInfo (Market* market)
+  : GraphicsInfo()
+  , GBRIDGE(Market)(market, this)
+{}
+
+MarketGraphicsInfo::~MarketGraphicsInfo () {}
+
 void LineGraphicsInfo::describe (QTextStream& str) const {
   str << "Line: " << myLine->getName().c_str() << "\n";
   Castle* castle = myLine->getCastle();  

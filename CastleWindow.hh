@@ -212,6 +212,7 @@ private:
   GLDrawer* hexDrawer;
   TextInfoDisplay* selDrawer;
   EventList* histDrawer;
+  EventList* marketDrawer;
   UnitInterface* unitInterface;
   CastleInterface* castleInterface;
   VillageInterface* villageInterface;   

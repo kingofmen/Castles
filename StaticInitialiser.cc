@@ -540,7 +540,10 @@ void StaticInitialiser::buildHex (Object* hInfo) {
   if (marketDirection == "notfound") throwFormatted("Hex (%i, %i) has no market direction", hex->getPos().first, hex->getPos().second);
   hex->marketVtx = findVertex(marketDirection, hex);
   if (!hex->marketVtx) throwFormatted("Hex (%i, %i) has no market vertex", hex->getPos().first, hex->getPos().second);
-  if (!hex->marketVtx->theMarket) hex->marketVtx->theMarket = new Market();
+  if (!hex->marketVtx->theMarket) {
+    hex->marketVtx->theMarket = new Market();
+    hex->marketVtx->theMarket->initialiseGraphicsBridge();
+  }
   
   Object* cinfo = hInfo->safeGetObject("castle");
   if (cinfo) {

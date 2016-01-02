@@ -303,7 +303,33 @@ private:
   double angle;
 };
 
-class PlayerGraphicsInfo { // Doesn't have a position, so doesn't descend from GraphicsInfo
+class MilUnitGraphicsInfo : public GraphicsInfo, public SpriteContainer {
+  friend class StaticInitialiser;
+public:
+  MilUnitGraphicsInfo (MilUnit* dat) : myUnit(dat) {}
+  ~MilUnitGraphicsInfo ();
+
+  virtual void describe (QTextStream& str) const;
+  string strengthString (string indent) const;
+  void updateSprites (MilStrength* dat);
+
+private:
+  MilUnit* myUnit;
+  static map<MilUnitTemplate*, int> indexMap;
+  static vector<vector<doublet> > allFormations;
+};
+
+// Following classes don't have a position, so don't descend from GraphicsInfo.
+
+// MarketGraphicsInfo needs GraphicsInfo for event lists - remove this
+// when those two tasks are disentangled.
+class MarketGraphicsInfo : public GraphicsInfo, public GBRIDGE(Market) {
+public:
+  MarketGraphicsInfo (Market* dat);
+  ~MarketGraphicsInfo ();
+};
+
+class PlayerGraphicsInfo {
   friend class StaticInitialiser; 
 public:
   PlayerGraphicsInfo ();
@@ -354,22 +380,6 @@ private:
   vector<vector<triplet> > grid; // Stores points to draw hex grid on terrain. 
   
   static vector<ZoneGraphicsInfo*> allZoneGraphics; 
-};
-
-class MilUnitGraphicsInfo : public GraphicsInfo, public SpriteContainer {
-  friend class StaticInitialiser;
-public:
-  MilUnitGraphicsInfo (MilUnit* dat) : myUnit(dat) {}  
-  ~MilUnitGraphicsInfo ();
-  
-  virtual void describe (QTextStream& str) const;
-  string strengthString (string indent) const;  
-  void updateSprites (MilStrength* dat); 
-  
-private:
-  MilUnit* myUnit;
-  static map<MilUnitTemplate*, int> indexMap;
-  static vector<vector<doublet> > allFormations; 
 };
 
 #endif

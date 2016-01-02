@@ -776,6 +776,7 @@ WarfareWindow::WarfareWindow (QWidget* parent)
   selDrawer->show();
 
   histDrawer = new EventList(this, 7, 1145, 30);
+  marketDrawer = new EventList(this, 10, 15, 500);
 
   unitInterface = new UnitInterface(this);
   unitInterface->move(15, 400);
@@ -974,6 +975,7 @@ void WarfareWindow::update () {
   hexDrawer->updateGL();
   selDrawer->draw();
   histDrawer->draw();
+  marketDrawer->draw();
   QMainWindow::update();
 }
 
@@ -988,8 +990,12 @@ void WarfareWindow::selectObject () {
     villageInterface->setVillage(selectedHex->getVillage());
     villageInterface->show();
     histDrawer->setSelected(selectedHex->getVillage()->getGraphicsInfo());
+    marketDrawer->setSelected(selectedHex->getMarket()->getGraphicsInfo());
   }
-  else villageInterface->hide();
+  else {
+    villageInterface->hide();
+    marketDrawer->setSelected(0);
+  }
 
   if (selectedVertex) {
     selDrawer->setSelected(selectedVertex->getGraphicsInfo());

@@ -1,6 +1,7 @@
 #include "Market.hh"
 #include "boost/range/algorithm/remove_if.hpp"
 #include "boost/bind.hpp"
+#include "GraphicsInfo.hh"
 
 void MarketContract::clear () {
   cashPaid = 0;
@@ -58,6 +59,7 @@ void MarketContract::pay () {
 
 Market::Market ()
   : Mirrorable<Market>()
+  , GBRIDGE(Market)(this)
 {
   // Initialise all prices to 1.
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
@@ -72,6 +74,7 @@ Market::~Market () {
 
 Market::Market (Market* other)
   : Mirrorable<Market>(other)
+  , GBRIDGE(Market)()
 {
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     prices.setAmount((*tg), 1);
@@ -124,6 +127,13 @@ void Market::holdMarket () {
   vector<MarketContract*>::iterator new_end = remove_if(contracts, !bind(&MarketContract::isValid, _1));
   for (vector<MarketContract*>::iterator i = new_end; i != contracts.end(); ++i) delete (*i);
   contracts.erase(new_end, contracts.end());
+
+  if (canReport()) {
+    for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
+      if (0 == volume.getAmount(*tg)) continue;
+      reportEvent(createString("%s : %.2f", (*tg)->getName().c_str(), prices.getAmount(*tg)), "");
+    }
+  }
 }
 
 void Market::makeContracts (vector<MarketBid*>& bids, vector<MarketBid*>& notMatched) {

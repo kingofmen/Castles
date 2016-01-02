@@ -23,6 +23,10 @@ public:
   void reportEvent (DisplayEvent evt) {
     if (graphicsInfo) graphicsInfo->addEvent(evt);
   }
+  void reportEvent (string et, string de) {
+    if (graphicsInfo) reportEvent(DisplayEvent(et, de));
+  }
+
   void initialiseGraphicsBridge (Model* m) {
     gameObject = m;
     graphicsInfo = new View(gameObject);
