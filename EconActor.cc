@@ -187,7 +187,7 @@ void EconActor::leaveMarket () {
 
 void EconActor::registerSale (TradeGood const* const tg, double amount, double price) {
   soldThisTurn.deliverGoods(tg, amount);
-  earnedThisTurn.deliverGoods(tg, amount*price);
+  earnedThisTurn.deliverGoods(TradeGood::Money, amount*price);
 }
 
 double EconActor::produceForContract (TradeGood const* const tg, double amount) {
