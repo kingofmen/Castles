@@ -110,6 +110,12 @@ void EventList::draw () {
   }
 }
 
+void EventList::setFont (const QFont& font) {
+  for (unsigned int label = 0; label < events.size(); ++label) {
+    events[label]->setFont(font);
+  }
+}
+
 void UnitInterface::increasePriority (int direction) {
   if (!selectedUnit) return;
   selectedUnit->incPriority(direction > 0);
@@ -777,6 +783,9 @@ WarfareWindow::WarfareWindow (QWidget* parent)
 
   histDrawer = new EventList(this, 7, 1145, 30);
   marketDrawer = new EventList(this, 10, 15, 500);
+  QFont fixedWidthFont("Times", 11);
+  fixedWidthFont.setFixedPitch(true);
+  marketDrawer->setFont(fixedWidthFont);
 
   unitInterface = new UnitInterface(this);
   unitInterface->move(15, 400);

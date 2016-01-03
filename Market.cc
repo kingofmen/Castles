@@ -129,9 +129,10 @@ void Market::holdMarket () {
   contracts.erase(new_end, contracts.end());
 
   if (canReport()) {
+    reportEvent("Good        Price       Volume", "");
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
       if (0 == volume.getAmount(*tg)) continue;
-      reportEvent(createString("%s : %.2f", (*tg)->getName().c_str(), prices.getAmount(*tg)), "");
+      reportEvent(createString("%-12s%-12.2f%-12.1f", (*tg)->getName().c_str(), prices.getAmount(*tg), volume.getAmount(*tg)), "");
     }
   }
 }

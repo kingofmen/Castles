@@ -52,6 +52,7 @@ class EventList {
 public:
   EventList (QWidget* p, int numEvents, int xcoord, int ycoord);
   ~EventList ();
+  void setFont (const QFont& font);
   void setSelected (const GraphicsInfo* gi) {selected = gi;}
   void draw ();
 private:
