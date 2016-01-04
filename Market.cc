@@ -132,7 +132,10 @@ void Market::holdMarket () {
     reportEvent("Good        Price       Volume", "");
     for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
       if (0 == volume.getAmount(*tg)) continue;
-      reportEvent(createString("%-12s%-12.2f%-12.1f", (*tg)->getName().c_str(), prices.getAmount(*tg), volume.getAmount(*tg)), "");
+      double offered = volume.getAmount(*tg) - min(0.0, demand.getAmount(*tg));
+      double asked   = volume.getAmount(*tg) + max(0.0, demand.getAmount(*tg));
+      reportEvent(createString("%-12s%-12.2f%-12.1f", (*tg)->getName().c_str(), prices.getAmount(*tg), volume.getAmount(*tg)),
+		  createString("Supply %.2f, demand %.2f", offered, asked));
     }
   }
 }
