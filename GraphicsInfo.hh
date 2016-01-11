@@ -27,22 +27,14 @@ public:
   GraphicsInfo ();
   ~GraphicsInfo ();
 
-  typedef vector<DisplayEvent>::const_iterator EventIter;
   typedef vector<triplet> FieldShape;  
   typedef FieldShape::const_iterator cpit;
   typedef FieldShape::iterator pit;      
 
-  void addEvent (DisplayEvent de);
-  virtual void describe (QTextStream& /*str*/) const {}
   triplet getNormal () const {return normal;}
   triplet getPosition () const {return position;}
   int getZone () const {return 0;}
 
-  EventIter startRecentEvents () const {return recentEvents[this].begin();}
-  EventIter finalRecentEvents () const {return recentEvents[this].end();}
-
-  static void accumulateEvents (bool acc = true) {accumulate = acc;}
-  static void clearRecentEvents ();
   static pair<double, double> getTexCoords (triplet gameCoords, int zone); 
   static int getHeight (int x, int y);
   static void getHeightMapCoords (int& hexX, int& hexY, Vertices dir); 
@@ -54,8 +46,6 @@ protected:
   triplet normal;
   static int zoneSide; // Size in hexes
   static double* heightMap;
-  static map<const GraphicsInfo*, vector<DisplayEvent> > recentEvents;
-  static map<const GraphicsInfo*, vector<DisplayEvent> > savingEvents;
 
   static const double xIncrement;
   static const double yIncrement;
@@ -63,6 +53,26 @@ protected:
   static const double ySeparation;
   static const double zSeparation;
   static const double zOffset; 
+};
+
+class TextInfo {
+public:
+  TextInfo () {}
+  ~TextInfo () {}
+
+  typedef vector<DisplayEvent>::const_iterator EventIter;
+
+  void addEvent (DisplayEvent de);
+  virtual void describe (QTextStream& /*str*/) const {}
+  EventIter startRecentEvents () const {return recentEvents[this].begin();}
+  EventIter finalRecentEvents () const {return recentEvents[this].end();}
+
+  static void accumulateEvents (bool acc = true) {accumulate = acc;}
+  static void clearRecentEvents ();
+
+protected:
+  static map<const TextInfo*, vector<DisplayEvent> > recentEvents;
+  static map<const TextInfo*, vector<DisplayEvent> > savingEvents;
 
 private:
   // When true, events are added to the savingEvent container as
@@ -102,7 +112,7 @@ protected:
   static vector<MilUnitSprite*> sprites;    
 }; 
 
-class FarmGraphicsInfo : public GraphicsInfo, public SpriteContainer {
+class FarmGraphicsInfo : public GraphicsInfo, public TextInfo, public SpriteContainer {
   friend class StaticInitialiser;
   friend class HexGraphicsInfo; 
 public:
@@ -148,7 +158,7 @@ private:
   static vector<FarmGraphicsInfo*> allFarmInfos;
 };
 
-class VillageGraphicsInfo : public GraphicsInfo, public SpriteContainer {
+class VillageGraphicsInfo : public GraphicsInfo, public TextInfo, public SpriteContainer {
   friend class StaticInitialiser;
   friend class HexGraphicsInfo; 
 public:
@@ -185,7 +195,7 @@ private:
 };
 
 
-class HexGraphicsInfo : public GraphicsInfo {
+class HexGraphicsInfo : public GraphicsInfo, public TextInfo {
 public:
   HexGraphicsInfo (Hex* h); 
   ~HexGraphicsInfo ();
@@ -231,7 +241,7 @@ private:
   static vector<HexGraphicsInfo*> allHexGraphics; 
 };
 
-class VertexGraphicsInfo : public GraphicsInfo {
+class VertexGraphicsInfo : public GraphicsInfo, public TextInfo {
 public:
   VertexGraphicsInfo (Vertex* v, HexGraphicsInfo const* hex, Vertices dir); 
   ~VertexGraphicsInfo ();
@@ -256,7 +266,7 @@ private:
 };
 
 
-class LineGraphicsInfo : public GraphicsInfo {
+class LineGraphicsInfo : public GraphicsInfo, public TextInfo {
 public:
   LineGraphicsInfo (Line* l, Vertices dir); 
   ~LineGraphicsInfo ();  
@@ -293,7 +303,7 @@ private:
   static vector<LineGraphicsInfo*> allLineGraphics;
 };
 
-class CastleGraphicsInfo : public GraphicsInfo, public GBRIDGE(Castle) {
+class CastleGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Castle) {
 public:
   CastleGraphicsInfo (Castle* castle);
   ~CastleGraphicsInfo ();
@@ -303,7 +313,7 @@ private:
   double angle;
 };
 
-class MilUnitGraphicsInfo : public GraphicsInfo, public SpriteContainer {
+class MilUnitGraphicsInfo : public GraphicsInfo, public TextInfo, public SpriteContainer {
   friend class StaticInitialiser;
 public:
   MilUnitGraphicsInfo (MilUnit* dat) : myUnit(dat) {}
@@ -323,7 +333,7 @@ private:
 
 // MarketGraphicsInfo needs GraphicsInfo for event lists - remove this
 // when those two tasks are disentangled.
-class MarketGraphicsInfo : public GraphicsInfo, public GBRIDGE(Market) {
+class MarketGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Market) {
 public:
   MarketGraphicsInfo (Market* dat);
   ~MarketGraphicsInfo ();
@@ -344,7 +354,7 @@ private:
   GLuint flag_texture_id; 
 };
 
-class ZoneGraphicsInfo : public GraphicsInfo {
+class ZoneGraphicsInfo : public GraphicsInfo, public TextInfo {
   friend class StaticInitialiser; 
 public:
   ZoneGraphicsInfo (); 

@@ -26,9 +26,9 @@ unsigned int VillageGraphicsInfo::supplySpriteIndex = 0;
 int VillageGraphicsInfo::maxCows = 15;
 int VillageGraphicsInfo::suppliesPerCow = 60000;
 vector<doublet> VillageGraphicsInfo::cowPositions;
-map<const GraphicsInfo*, vector<DisplayEvent> > GraphicsInfo::recentEvents;
-map<const GraphicsInfo*, vector<DisplayEvent> > GraphicsInfo::savingEvents;
-bool GraphicsInfo::accumulate = true;
+map<const TextInfo*, vector<DisplayEvent> > TextInfo::recentEvents;
+map<const TextInfo*, vector<DisplayEvent> > TextInfo::savingEvents;
+bool TextInfo::accumulate = true;
 
 double area (GraphicsInfo::FieldShape const& field);
 bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2); 
@@ -211,12 +211,12 @@ void GraphicsInfo::getHeightMapCoords (int& hexX, int& hexY, Vertices dir) {
 
 GraphicsInfo::GraphicsInfo () {}
 
-void GraphicsInfo::addEvent (DisplayEvent de) {
+void TextInfo::addEvent (DisplayEvent de) {
   recentEvents[this].push_back(de);
   if (accumulate) savingEvents[this].push_back(de);
 }
 
-void GraphicsInfo::clearRecentEvents () {
+void TextInfo::clearRecentEvents () {
   // Throw out recent events except those which
   // have been 'accumulated' in savingEvents - they
   // are the ones that occurred during player actions.

@@ -41,6 +41,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      * Trade and transport units
      * Reorganise GraphicsInfo subclasses to use GraphicsBridge
      * Disentangle GraphicsInfo proper from EventList stuff
+     * Make graphics classes Iterable
    - Restore clearing of land
    - Normalisation
    - Decay of goods

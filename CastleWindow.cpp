@@ -96,7 +96,7 @@ void EventList::draw () {
     return;
   }
 
-  GraphicsInfo::EventIter evt = selected->startRecentEvents();
+  TextInfo::EventIter evt = selected->startRecentEvents();
   for (unsigned int label = 0; label < events.size(); ++label) {
     if (evt == selected->finalRecentEvents()) {
       events[label]->setText("");
@@ -776,7 +776,7 @@ WarfareWindow::WarfareWindow (QWidget* parent)
   hexDrawer->show();
   hexDrawer->updateGL(); 
   
-  selDrawer = new TextInfoDisplay(this, &GraphicsInfo::describe);
+  selDrawer = new TextInfoDisplay(this, &TextInfo::describe);
   selDrawer->move(15, 30);
   selDrawer->setAlignment(Qt::AlignLeft | Qt::AlignTop);
   selDrawer->show();

@@ -16,17 +16,17 @@
 class ThreeDSprite;
 using namespace std;
 
-typedef void (GraphicsInfo::*TextFunc)(QTextStream&) const;
+typedef void (TextInfo::*TextFunc)(QTextStream&) const;
 
 class TextInfoDisplay : public QLabel {
 public:
   TextInfoDisplay (QWidget* p, TextFunc t);
-  void setSelected (const GraphicsInfo* g) {gInfo = g;}
+  void setSelected (const TextInfo* g) {gInfo = g;}
   void draw ();
 
 private:
-  const GraphicsInfo* gInfo;
-  void (GraphicsInfo::*descFunc)(QTextStream&) const;
+  const TextInfo* gInfo;
+  void (TextInfo::*descFunc)(QTextStream&) const;
 };
 
 class UnitInterface : public QLabel {
@@ -53,10 +53,10 @@ public:
   EventList (QWidget* p, int numEvents, int xcoord, int ycoord);
   ~EventList ();
   void setFont (const QFont& font);
-  void setSelected (const GraphicsInfo* gi) {selected = gi;}
+  void setSelected (const TextInfo* gi) {selected = gi;}
   void draw ();
 private:
-  const GraphicsInfo* selected;
+  const TextInfo* selected;
   vector<QLabel*> events;
 };
 
