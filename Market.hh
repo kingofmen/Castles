@@ -3,6 +3,7 @@
 
 #include "EconActor.hh"
 #include "GraphicsBridge.hh"
+#include "GraphicsInfo.hh"
 #include "Mirrorable.hh"
 #include "UtilityFunctions.hh"
 
@@ -43,7 +44,7 @@ private:
   double remaining () const {return amount - delivered;}
 };
 
-class Market : public Mirrorable<Market>, public GBRIDGE(Market) {
+class Market : public Mirrorable<Market>, public TBRIDGE(Market) {
   friend class HexGraphicsInfo;
   friend class StaticInitialiser;
   friend class Mirrorable<Market>;

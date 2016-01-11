@@ -59,7 +59,7 @@ void MarketContract::pay () {
 
 Market::Market ()
   : Mirrorable<Market>()
-  , GBRIDGE(Market)(this)
+  , TBRIDGE(Market)(this)
 {
   // Initialise all prices to 1.
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
@@ -74,7 +74,7 @@ Market::~Market () {
 
 Market::Market (Market* other)
   : Mirrorable<Market>(other)
-  , GBRIDGE(Market)()
+  , TBRIDGE(Market)()
 {
   for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     prices.setAmount((*tg), 1);

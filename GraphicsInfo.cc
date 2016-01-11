@@ -549,8 +549,8 @@ CastleGraphicsInfo::CastleGraphicsInfo (Castle* castle)
 CastleGraphicsInfo::~CastleGraphicsInfo () {}
 
 MarketGraphicsInfo::MarketGraphicsInfo (Market* market)
-  : GraphicsInfo()
-  , GBRIDGE(Market)(market, this)
+  : TextInfo()
+  , TBRIDGE(Market)(market, this)
 {}
 
 MarketGraphicsInfo::~MarketGraphicsInfo () {}
@@ -967,6 +967,10 @@ FarmGraphicsInfo::FieldInfo::FieldInfo (FieldShape f)
   , area(-1)
   , status(*FieldStatus::start())
 {}
+
+int FarmGraphicsInfo::FieldInfo::getIndex () const {
+  return textureIndices[*status];
+}
 
 double FarmGraphicsInfo::fieldArea () {
   double ret = 0;

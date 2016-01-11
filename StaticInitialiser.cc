@@ -542,7 +542,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
   if (!hex->marketVtx) throwFormatted("Hex (%i, %i) has no market vertex", hex->getPos().first, hex->getPos().second);
   if (!hex->marketVtx->theMarket) {
     hex->marketVtx->theMarket = new Market();
-    hex->marketVtx->theMarket->initialiseGraphicsBridge();
+    hex->marketVtx->theMarket->initialiseTextBridge();
   }
   
   Object* cinfo = hInfo->safeGetObject("castle");

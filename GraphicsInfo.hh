@@ -6,7 +6,7 @@
 #include <QtOpenGL>
 #include <QTextStream>
 #include "UtilityFunctions.hh"
-#include "Building.hh"
+//#include "Building.hh"
 #include "ThreeDSprite.hh"
 #include "Directions.hh" 
 #include "GraphicsBridge.hh"
@@ -17,7 +17,12 @@ class MilUnitTemplate;
 class Hex;
 class HexGraphicsInfo; 
 class Vertex;
-class Line; 
+class Line;
+class Farmland;
+class FieldStatus;
+class Castle;
+class Market;
+class Village;
 
 enum TerrainType {Mountain = 0, Hill, Plain, Wooded, Ocean, NoTerrain}; 
 
@@ -124,7 +129,7 @@ public:
   struct FieldInfo {
     friend class FarmGraphicsInfo; 
     FieldInfo (FieldShape s); 
-    int getIndex () const {return textureIndices[*status];}
+    int getIndex () const;
     
     cpit begin () const {return shape.begin();}
     pit  begin ()       {return shape.begin();}
@@ -329,32 +334,7 @@ private:
   static vector<vector<doublet> > allFormations;
 };
 
-// Following classes don't have a position, so don't descend from GraphicsInfo.
-
-// MarketGraphicsInfo needs GraphicsInfo for event lists - remove this
-// when those two tasks are disentangled.
-class MarketGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Market) {
-public:
-  MarketGraphicsInfo (Market* dat);
-  ~MarketGraphicsInfo ();
-};
-
-class PlayerGraphicsInfo {
-  friend class StaticInitialiser; 
-public:
-  PlayerGraphicsInfo ();
-  ~PlayerGraphicsInfo ();
-
-  int getRed () const {return qRed(colour);}
-  int getGreen () const {return qGreen(colour);}
-  int getBlue () const {return qBlue(colour);}  
-  
-private:
-  QRgb colour;
-  GLuint flag_texture_id; 
-};
-
-class ZoneGraphicsInfo : public GraphicsInfo, public TextInfo {
+class ZoneGraphicsInfo : public GraphicsInfo {
   friend class StaticInitialiser; 
 public:
   ZoneGraphicsInfo (); 
@@ -390,6 +370,31 @@ private:
   vector<vector<triplet> > grid; // Stores points to draw hex grid on terrain. 
   
   static vector<ZoneGraphicsInfo*> allZoneGraphics; 
+};
+
+// Following classes don't have a position, so don't descend from GraphicsInfo.
+
+// MarketGraphicsInfo needs GraphicsInfo for event lists - remove this
+// when those two tasks are disentangled.
+class MarketGraphicsInfo : public TextInfo, public TBRIDGE(Market) {
+public:
+  MarketGraphicsInfo (Market* dat);
+  ~MarketGraphicsInfo ();
+};
+
+class PlayerGraphicsInfo {
+  friend class StaticInitialiser; 
+public:
+  PlayerGraphicsInfo ();
+  ~PlayerGraphicsInfo ();
+
+  int getRed () const {return qRed(colour);}
+  int getGreen () const {return qGreen(colour);}
+  int getBlue () const {return qBlue(colour);}  
+  
+private:
+  QRgb colour;
+  GLuint flag_texture_id; 
 };
 
 #endif

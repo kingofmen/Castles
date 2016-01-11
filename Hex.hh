@@ -7,8 +7,8 @@
 #include <QString>
 #include <string>
 #include "Mirrorable.hh"
-#include "Building.hh"
 #include "GraphicsInfo.hh"
+#include "Building.hh"
 #include "UtilityFunctions.hh"
 #include "Directions.hh"
 

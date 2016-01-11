@@ -35,6 +35,10 @@ public:
     graphicsInfo = new View(gameObject);
   }
 
+  void initialiseTextBridge () {
+    graphicsInfo = new View();
+  }
+
 protected:
 
 private:
@@ -43,5 +47,6 @@ private:
 };
 
 #define GBRIDGE(model) GraphicsBridge<model, model ## GraphicsInfo>
+#define TBRIDGE(model) GraphicsBridge<model, TextInfo>
 
 #endif
