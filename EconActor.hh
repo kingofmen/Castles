@@ -4,7 +4,10 @@
 #include <vector>
 #include <string>
 #include <cmath>
+
+#include "GraphicsInfo.hh"
 #include "UtilityFunctions.hh"
+
 using namespace std; 
 class EconActor;
 class Market;
@@ -79,7 +82,7 @@ struct Bid {
   double price; 
 };
 
-class EconActor : public Numbered<EconActor>, public GoodsHolder {
+class EconActor : public Numbered<EconActor>, public GoodsHolder, public TextBridge {
   friend class StaticInitialiser; 
   friend class Market; 
 

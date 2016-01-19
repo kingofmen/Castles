@@ -2,9 +2,9 @@
 #define GRAPHICSBRIDGE_HH
 
 struct DisplayEvent {
-  DisplayEvent (string et, string de) : eventType(et), details(de) {}
-  string eventType;
-  string details;
+  DisplayEvent (std::string et, std::string de) : eventType(et), details(de) {}
+  std::string eventType;
+  std::string details;
 };
 
 template <class Model, class View> class GraphicsBridge {
@@ -23,7 +23,7 @@ public:
   void reportEvent (DisplayEvent evt) {
     if (graphicsInfo) graphicsInfo->addEvent(evt);
   }
-  void reportEvent (string et, string de) {
+  void reportEvent (std::string et, std::string de) {
     if (graphicsInfo) reportEvent(DisplayEvent(et, de));
   }
 

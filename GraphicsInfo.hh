@@ -87,6 +87,15 @@ private:
   static bool accumulate;
 };
 
+class TextBridge {
+public:
+  TextBridge () : textInfo(0) {}
+  void setTextInfo (TextInfo* ti) {textInfo = ti;}
+  TextInfo* getTextInfo () const {return textInfo;}
+private:
+  TextInfo* textInfo;
+};
+
 struct MilUnitSprite {
   ThreeDSprite* soldier;     // Figure for one man - will be drawn several times. 
   vector<doublet> positions; // Positions to draw the soldiers, relative to a central point.

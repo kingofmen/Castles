@@ -99,6 +99,7 @@ double operator* (const GoodsHolder& gh1, const GoodsHolder& gh2) {
 EconActor::EconActor ()
   : Numbered<EconActor>()
   , GoodsHolder()
+  , TextBridge()
   , owner(0)
   , theMarket(0)
   , obligations()
