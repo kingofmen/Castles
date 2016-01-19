@@ -492,7 +492,7 @@ public:
   double outputOfBlock (int b) const;
   double getCapitalSize () const;
   void getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const;
-  double getWinterLabour (const GoodsHolder& prices, int lastBlock, double expectedProd, double expectedLabour) const {return 0;}
+  double getWinterLabour (const GoodsHolder& /*prices*/, int /*lastBlock*/, double /*expectedProd*/, double /*expectedLabour*/) const {return 0;}
   int numBlocks () const;
   virtual void setMirrorState ();
   void unitTests ();

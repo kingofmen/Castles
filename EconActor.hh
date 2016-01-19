@@ -110,7 +110,7 @@ public:
   void setEconMirror (EconActor* ea) {econMirror = ea;}
   void unregisterContract (MarketContract const* const contract);
   
-  virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {}
+  virtual void getBids (const GoodsHolder& /*prices*/, vector<MarketBid*>& /*bidlist*/) {}
   static void clear () {Numbered<EconActor>::clear();}
   static void unitTests ();
 

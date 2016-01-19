@@ -975,7 +975,7 @@ void GLDrawer::paintGL () {
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);   
 }
 
-void WarfareWindow::paintEvent (QPaintEvent *event) {
+void WarfareWindow::paintEvent (QPaintEvent* /*event*/) {
   if (!currentGame) return;
   hexDrawer->draw(); 
 }

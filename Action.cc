@@ -198,7 +198,7 @@ void Action::makeHypothetical () {
   }
 }
 
-Action::ActionResult Action::garrison (Outcome out) {
+Action::ActionResult Action::garrison (Outcome /*out*/) {
   MilUnit* unit = start->removeUnit();
   cease->getCastle()->addGarrison(unit);
   activeRear = unit->getRear(); 
@@ -229,7 +229,7 @@ Action::ActionResult Action::attack (Outcome out) {
   return Ok; 
 }
 
-Action::ActionResult Action::mobilise (Outcome out) {
+Action::ActionResult Action::mobilise (Outcome /*out*/) {
   MilUnit* sortie = begin->getCastle()->removeGarrison();
   
   if (0 < final->numUnits()) {
@@ -268,7 +268,7 @@ Action::ActionResult Action::reinforce (Outcome out) {
   return Ok; 
 }
 
-Action::ActionResult Action::noop (Outcome out) {
+Action::ActionResult Action::noop (Outcome /*out*/) {
   return Ok;
 }
 

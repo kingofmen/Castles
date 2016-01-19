@@ -43,7 +43,10 @@ const double GraphicsInfo::zOffset     = -0.003; // Offset to get lines a little
 GraphicsInfo::~GraphicsInfo () {}
 HexGraphicsInfo::~HexGraphicsInfo () {}
 LineGraphicsInfo::~LineGraphicsInfo () {}
+FarmGraphicsInfo::~FarmGraphicsInfo () {}
+MilUnitGraphicsInfo::~MilUnitGraphicsInfo () {}
 VertexGraphicsInfo::~VertexGraphicsInfo () {}
+TextBridge::~TextBridge () {}
 
 int GraphicsInfo::zoneSide = 4;
 
@@ -210,6 +213,10 @@ void GraphicsInfo::getHeightMapCoords (int& hexX, int& hexY, Vertices dir) {
 }
 
 GraphicsInfo::GraphicsInfo () {}
+
+TextInfo::~TextInfo () {}
+
+void TextInfo::describe (QTextStream& /*str*/) const {}
 
 void TextInfo::addEvent (DisplayEvent de) {
   recentEvents[this].push_back(de);

@@ -136,7 +136,7 @@ public:
   };
 
   struct NoHeuristic : public DistanceHeuristic {
-    virtual double operator ()(Vertex* dat) const {return 0;}
+    virtual double operator ()(Vertex* /*dat*/) const {return 0;}
   };
 
   struct VertexDistance : public DistanceHeuristic {

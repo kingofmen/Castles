@@ -30,7 +30,7 @@ class GraphicsInfo {
   friend class StaticInitialiser; 
 public:
   GraphicsInfo ();
-  ~GraphicsInfo ();
+  virtual ~GraphicsInfo ();
 
   typedef vector<triplet> FieldShape;  
   typedef FieldShape::const_iterator cpit;
@@ -63,12 +63,12 @@ protected:
 class TextInfo {
 public:
   TextInfo () {}
-  ~TextInfo () {}
+  virtual ~TextInfo ();
 
   typedef vector<DisplayEvent>::const_iterator EventIter;
 
   void addEvent (DisplayEvent de);
-  virtual void describe (QTextStream& /*str*/) const {}
+  virtual void describe (QTextStream& /*str*/) const;
   EventIter startRecentEvents () const {return recentEvents[this].begin();}
   EventIter finalRecentEvents () const {return recentEvents[this].end();}
 
@@ -90,6 +90,7 @@ private:
 class TextBridge {
 public:
   TextBridge () : textInfo(0) {}
+  virtual ~TextBridge ();
   void setTextInfo (TextInfo* ti) {textInfo = ti;}
   TextInfo* getTextInfo () const {return textInfo;}
 private:
@@ -131,7 +132,7 @@ class FarmGraphicsInfo : public GraphicsInfo, public TextInfo, public SpriteCont
   friend class HexGraphicsInfo; 
 public:
   FarmGraphicsInfo (Farmland* f);
-  ~FarmGraphicsInfo ();
+  virtual ~FarmGraphicsInfo ();
   Farmland* getFarm () const {return myFarm;}
   static void updateFieldStatus (); 
 
@@ -177,7 +178,7 @@ class VillageGraphicsInfo : public GraphicsInfo, public TextInfo, public SpriteC
   friend class HexGraphicsInfo; 
 public:
   VillageGraphicsInfo (Village* f);
-  ~VillageGraphicsInfo ();
+  virtual ~VillageGraphicsInfo ();
   Village* getVillage () const {return myVillage;}
   int getHouses () const;
   static void updateVillageStatus (); 
@@ -283,7 +284,7 @@ private:
 class LineGraphicsInfo : public GraphicsInfo, public TextInfo {
 public:
   LineGraphicsInfo (Line* l, Vertices dir); 
-  ~LineGraphicsInfo ();  
+  virtual ~LineGraphicsInfo ();  
 
   typedef vector<LineGraphicsInfo*>::const_iterator Iterator;
   
@@ -331,7 +332,7 @@ class MilUnitGraphicsInfo : public GraphicsInfo, public TextInfo, public SpriteC
   friend class StaticInitialiser;
 public:
   MilUnitGraphicsInfo (MilUnit* dat) : myUnit(dat) {}
-  ~MilUnitGraphicsInfo ();
+  virtual ~MilUnitGraphicsInfo ();
 
   virtual void describe (QTextStream& str) const;
   string strengthString (string indent) const;

@@ -542,7 +542,7 @@ void Vertex::endOfTurn () {
   if (theMarket) theMarket->holdMarket();
 }
 
-double Vertex::traversalCost (Vertex* dat) const {
+double Vertex::traversalCost (Vertex* /*dat*/) const {
   return 1; 
 }
 

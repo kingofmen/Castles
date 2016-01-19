@@ -14,7 +14,7 @@ class Player : public Iterable<Player>, public Named<Player>, public EconActor {
   friend class StaticInitialiser; 
 public:
   Player (bool h, std::string d, std::string n);
-  ~Player ();
+  virtual ~Player ();
 
   bool isEnemy (Player const* const other) {return this != other;}
   bool isFriendly (Player const* const other) {return this == other;}

@@ -823,7 +823,7 @@ void Farmer::setMirrorState () {
 
 Farmer::~Farmer () {}
 
-double Farmer::outputOfBlock (int block) const {
+double Farmer::outputOfBlock (int /*block*/) const {
   // May be inaccurate for the last block. TODO: It would be good to have
   // an expectation value instead, with a discount rate and accounting for
   // the current state of the block.
@@ -1429,7 +1429,7 @@ Forester::~Forester () {}
 // Also note that this is not the return right now, but the
 // expected total possibly years from now, when the trees
 // become harvestable.
-double Forester::outputOfBlock (int block) const {
+double Forester::outputOfBlock (int /*block*/) const {
   return (*(ForestStatus::rstart()))->yield * blockInfo->blockSize;
 }
 
@@ -1785,7 +1785,7 @@ double Village::consumption () const {
   return ret; 
 }
 
-void Farmland::devastate (int devastation) {
+void Farmland::devastate (int /*devastation*/) {
 }
 
 void Farmland::endOfTurn () {
@@ -2032,7 +2032,7 @@ double Miner::getCapitalSize () const {
   return numBlocks();
 }
 
-double Miner::getWinterLabour (const GoodsHolder& prices, int lastBlock, double expectedProd, double expectedLabour) const {
+double Miner::getWinterLabour (const GoodsHolder& /*prices*/, int lastBlock, double /*expectedProd*/, double /*expectedLabour*/) const {
   for (MineStatus::Iter ms = MineStatus::start(); ms != MineStatus::final(); ++ms) {
     if (0 == fields[**ms]) continue;
     return (*ms)->winterLabour * lastBlock;
@@ -2040,7 +2040,7 @@ double Miner::getWinterLabour (const GoodsHolder& prices, int lastBlock, double 
   return 0;
 }
 
-double Miner::outputOfBlock (int block) const {
+double Miner::outputOfBlock (int /*block*/) const {
   return Mine::_amountOfIron;
 }
 
@@ -2207,7 +2207,7 @@ void Miner::unitTests () {
   capital->setAmounts(oldCapital);
 }
 
-void Miner::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
+void Miner::getLabourForBlock (int /*block*/, vector<jobInfo>& jobs, double& prodCycleLabour) const {
   double ret = 0;
   for (MineStatus::Iter ms = MineStatus::start(); ms != MineStatus::final(); ++ms) {
     if (0 == fields[**ms]) continue;
