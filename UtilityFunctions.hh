@@ -13,6 +13,8 @@
 #include <QtOpenGL>
 #include "Logger.hh"
 
+constexpr double M_2_PI = 1.57079632679;
+
 using namespace std;
 enum Outcome {Disaster = 0, Bad, Neutral, Good, VictoGlory, NumOutcomes}; 
 extern char strbuffer[1000]; 

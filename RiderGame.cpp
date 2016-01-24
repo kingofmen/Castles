@@ -235,7 +235,7 @@ void WarfareGame::unitComparison (string fname) {
 int tests = 0;
 int passed = 0;
 
-void callTestFunction (string testName, function<void()> fcn) {
+void callTestFunction (string testName, boost::function<void()> fcn) {
   Logger::logStream(DebugStartup) << "Test: " << testName << "...";
   ++tests;  
   try {
@@ -249,7 +249,7 @@ void callTestFunction (string testName, function<void()> fcn) {
 }
 
 void callTestFunction (string testName, void (*fPtr) ()) {
-  callTestFunction(testName, function<void()>(fPtr));
+  callTestFunction(testName, boost::function<void()>(fPtr));
 }
 
 void WarfareGame::unitTests (string fname) {
@@ -257,11 +257,11 @@ void WarfareGame::unitTests (string fname) {
   writer.open("parseroutput.txt");
   setOutputStream(&writer);
   string savename(".\\savegames\\testsave.txt");
-  callTestFunction(string("Creating game from file ") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
+  callTestFunction(string("Creating game from file ") + fname, boost::function<void()>(bind(&WarfareGame::createGame, fname)));
   callTestFunction("EconActor", &EconActor::unitTests);
-  callTestFunction("Running a turn", function<void()>(bind(&WarfareGame::endOfTurn, WarfareGame::currGame)));
-  callTestFunction(string("Writing to file ") + savename, function<void()>(bind(&StaticInitialiser::writeGameToFile, savename)));
-  callTestFunction(string("Loading from savegame again ") + fname, function<void()>(bind(&WarfareGame::createGame, savename)));
+  callTestFunction("Running a turn", boost::function<void()>(bind(&WarfareGame::endOfTurn, WarfareGame::currGame)));
+  callTestFunction(string("Writing to file ") + savename, boost::function<void()>(bind(&StaticInitialiser::writeGameToFile, savename)));
+  callTestFunction(string("Loading from savegame again ") + fname, boost::function<void()>(bind(&WarfareGame::createGame, savename)));
   delete currGame;
   callTestFunction("Hex",        &Hex::unitTests);
   callTestFunction("Market",     &Market::unitTests);
@@ -278,7 +278,7 @@ void WarfareGame::unitTests (string fname) {
 }
 
 void WarfareGame::functionalTests (string fname) {
-  callTestFunction(string("Creating game from file") + fname, function<void()>(bind(&WarfareGame::createGame, fname)));
+  callTestFunction(string("Creating game from file") + fname, boost::function<void()>(bind(&WarfareGame::createGame, fname)));
   Hex* testHex = Hex::getHex(0, 0);
   Hex* otherHex = Hex::getHex(0, 1);
   vector<double> labourUsed;
