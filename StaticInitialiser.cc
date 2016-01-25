@@ -542,7 +542,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
   if (!hex->marketVtx) throwFormatted("Hex (%i, %i) has no market vertex", hex->getPos().first, hex->getPos().second);
   if (!hex->marketVtx->theMarket) {
     hex->marketVtx->theMarket = new Market();
-    hex->marketVtx->theMarket->initialiseGraphicsBridge();
+    hex->marketVtx->theMarket->initialiseBridge();
   }
   
   Object* cinfo = hInfo->safeGetObject("castle");
@@ -884,7 +884,7 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
   static double lightAngle = tan(30.0 / 180.0 * M_PI); 
   static double invSize = 2.0 / GraphicsInfo::zoneSize;
 
-  ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(0);
+  ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getByIndex(0);
 
   // Seed detailed heightmap using coarse one. 
   for (int yval = 0; yval < GraphicsInfo::zoneSize; ++yval) {
@@ -896,7 +896,7 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
 						    GraphicsInfo::heightMap);
     }
   }
-  
+
   // Square/diamond fractal
   vector<QRect> squares;
   static const int modSize = 129;
@@ -915,7 +915,7 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
       touched[i][j] = 0;
     }
   }
-  
+
   static const double midValue = 1500;
   static const double dimValue = 750; 
   static const double eConst = 0; 
@@ -939,7 +939,7 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
     newValue += (curr.top() - midpoint.y() >= 0 ? modulate[(curr.top() - midpoint.y())*modSize + midpoint.x()] : 0);
     newValue += modulate[(midpoint.y())*modSize + midpoint.x()];
     newValue *= 0.25;
-    
+
     double extra = rand();
     extra /= RAND_MAX;
     extra -= eBias;    
@@ -958,7 +958,7 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
     newValue += modulate[(midpoint.y())*modSize + midpoint.x()];        
     newValue += (midpoint.y() + curr.height() < modSize ? modulate[(midpoint.y() + curr.height())*modSize + midpoint.x()] : 0);
     newValue *= 0.25;
-      
+
     extra = rand();
     extra /= RAND_MAX;
     extra -= eBias;    
@@ -969,7 +969,7 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
       modulate[(south.y())*modSize + south.x()] = newValue + extra;
       touched[south.x()][south.y()]++;
     }
-    
+
     QPoint west(curr.left(), midpoint.y());
     newValue = 0; 
     newValue += modulate[(curr.top())*modSize + curr.left()];
@@ -977,7 +977,7 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
     newValue += modulate[(midpoint.y())*modSize + midpoint.x()];        
     newValue += (midpoint.x() - curr.width() >= 0 ? modulate[(midpoint.y())*modSize + midpoint.x() - curr.width()] : 0);    
     newValue *= 0.25;
-      
+
     extra = rand();
     extra /= RAND_MAX;
     extra -= eBias;    
@@ -996,7 +996,7 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
     newValue += modulate[(midpoint.y())*modSize + midpoint.x()];            
     newValue += (midpoint.x() + curr.width() < modSize ? modulate[(midpoint.y())*modSize + midpoint.x() + curr.width()] : 0);        
     newValue *= 0.25;
-      
+
     extra = rand();
     extra /= RAND_MAX;
     extra -= eBias;    
@@ -1015,7 +1015,7 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
     newValue += modulate[(curr.top())*modSize + curr.right()+1];
     newValue += modulate[(curr.bottom()+1)*modSize + curr.right()+1];
     newValue *= 0.25;
-    
+
     extra = rand();
     extra /= RAND_MAX;
     extra -= eBias;
@@ -1035,7 +1035,6 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
     iter++; 
   }
 
-  
   for (int yval = 0; yval < GraphicsInfo::zoneSize; ++yval) {
     for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {  
       double xfrac = xval;
@@ -1046,7 +1045,6 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
     }
   }
 
-  
   for (int yval = 0; yval < GraphicsInfo::zoneSize; ++yval) {
     // First calculate all the point heights. 
     for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
@@ -1072,7 +1070,6 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
       fbo->drawTexture(point, texture); 
     }
   }
-  
 }
 
 void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, double* heightMap, int mapWidth, GLuint texture) {
@@ -1207,7 +1204,7 @@ void StaticInitialiser::makeGraphicsInfoObjects () {
     (*l)->position = (*l)->graphicsInfo->position;
     (*l)->mirror->position = (*l)->graphicsInfo->position;
     if ((*l)->getCastle()) {
-      (*l)->getCastle()->initialiseGraphicsBridge();
+      (*l)->getCastle()->initialiseBridge();
     }
   }
 }

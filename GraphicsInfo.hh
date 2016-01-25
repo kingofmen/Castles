@@ -1,12 +1,10 @@
 #ifndef GRAPHICS_INFO_HH
 #define GRAPHICS_INFO_HH
 
-#include <deque>
 #include <vector>
 #include <QtOpenGL>
 #include <QTextStream>
 #include "UtilityFunctions.hh"
-//#include "Building.hh"
 #include "ThreeDSprite.hh"
 #include "Directions.hh" 
 #include "GraphicsBridge.hh"
@@ -56,13 +54,12 @@ protected:
   static vector<MilUnitSprite*> sprites;    
 }; 
 
-class FarmGraphicsInfo : public GraphicsInfo, public TextInfo, public SpriteContainer {
+class FarmGraphicsInfo : public GraphicsInfo, public TextInfo, public GraphicsBridge<Farmland, FarmGraphicsInfo>, public SpriteContainer, public Iterable<FarmGraphicsInfo> {
   friend class StaticInitialiser;
   friend class HexGraphicsInfo; 
 public:
   FarmGraphicsInfo (Farmland* f);
   virtual ~FarmGraphicsInfo ();
-  Farmland* getFarm () const {return myFarm;}
   static void updateFieldStatus (); 
 
   struct FieldInfo {
@@ -88,27 +85,19 @@ public:
   fit start () {return fields.begin();}
   fit final () {return fields.end();}
   
-  typedef vector<FarmGraphicsInfo*>::iterator Iterator;
-  static Iterator begin () {return allFarmInfos.begin();}
-  static Iterator end () {return allFarmInfos.end();}   
-  
 private:  
   double fieldArea ();   
   void generateShapes (HexGraphicsInfo* dat);
   vector<FieldInfo> fields;
   static vector<int> textureIndices; 
-  
-  Farmland* myFarm;
-  static vector<FarmGraphicsInfo*> allFarmInfos;
 };
 
-class VillageGraphicsInfo : public GraphicsInfo, public TextInfo, public SpriteContainer {
+class VillageGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Village), public SpriteContainer, public Iterable<VillageGraphicsInfo> {
   friend class StaticInitialiser;
   friend class HexGraphicsInfo; 
 public:
   VillageGraphicsInfo (Village* f);
   virtual ~VillageGraphicsInfo ();
-  Village* getVillage () const {return myVillage;}
   int getHouses () const;
   static void updateVillageStatus (); 
   
@@ -118,11 +107,7 @@ public:
   cpit finalHouse () const {return village.end();}
   cpit startSheep () const {return pasture.begin();}
   cpit finalSheep () const {return pasture.end();}
-  
-  typedef vector<VillageGraphicsInfo*>::iterator Iterator;
-  static Iterator begin () {return allVillageInfos.begin();}
-  static Iterator end () {return allVillageInfos.end();}   
-  
+
 private:  
   double fieldArea ();   
   void generateShapes (HexGraphicsInfo* dat);
@@ -130,34 +115,26 @@ private:
   FieldShape village;
   FieldShape pasture; 
   
-  Village* myVillage;
-  static vector<VillageGraphicsInfo*> allVillageInfos;
   static unsigned int supplySpriteIndex;
   static int maxCows;
   static int suppliesPerCow; 
   static vector<doublet> cowPositions;
 };
 
-
-class HexGraphicsInfo : public GraphicsInfo, public TextInfo {
+class HexGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Hex), public Iterable<HexGraphicsInfo> {
 public:
   HexGraphicsInfo (Hex* h); 
   ~HexGraphicsInfo ();
 
-  typedef vector<HexGraphicsInfo*>::const_iterator Iterator;
-  
   virtual void describe (QTextStream& str) const;  
   triplet getCoords (Vertices v) const;
   FarmGraphicsInfo const* getFarmInfo () const {return farmInfo;}
   VillageGraphicsInfo const* getVillageInfo () const {return villageInfo;}
-  Hex* getHex () const {return myHex;}
   FieldShape getPatch (bool large = false); 
   TerrainType getTerrain () const {return terrain;}
   bool isInside (double x, double y) const;
   void setFarm (FarmGraphicsInfo* f);
   void setVillage (VillageGraphicsInfo* f);  
-  static Iterator begin () {return allHexGraphics.begin();}
-  static Iterator end   () {return allHexGraphics.end();}
   static void getHeights (); 
 
   cpit startTrees () const {return trees.begin();}
@@ -168,7 +145,6 @@ private:
   double patchArea () const;
   
   TerrainType terrain;
-  Hex* myHex;
   triplet cornerRight;
   triplet cornerRightDown;
   triplet cornerLeftDown;
@@ -181,11 +157,9 @@ private:
   vector<FieldShape> biggerPatches; // For larger shapes like drill grounds.   
   FieldShape trees; // Not a polygon.
   vector<int> treesPerField;
-  
-  static vector<HexGraphicsInfo*> allHexGraphics; 
 };
 
-class VertexGraphicsInfo : public GraphicsInfo, public TextInfo {
+class VertexGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Vertex), public Iterable<VertexGraphicsInfo> {
 public:
   VertexGraphicsInfo (Vertex* v, HexGraphicsInfo const* hex, Vertices dir); 
   ~VertexGraphicsInfo ();
@@ -193,41 +167,29 @@ public:
   typedef vector<VertexGraphicsInfo*>::const_iterator Iterator;
   virtual void describe (QTextStream& str) const;  
   triplet getCorner (int i) const {switch (i) {case 0: return corner1; case 1: return corner2; default: return corner3;}}
-  Vertex* getVertex () const {return myVertex;} 
   bool isInside (double x, double y) const;
-  static Iterator begin () {return allVertexGraphics.begin();}
-  static Iterator end   () {return allVertexGraphics.end();}
   
 private:
   // Clockwise order, with corner1 having the lowest y-coordinate. 
   triplet corner1;
   triplet corner2;
   triplet corner3;
-
-  Vertex* myVertex;
-
-  static vector<VertexGraphicsInfo*> allVertexGraphics; 
 };
 
 
-class LineGraphicsInfo : public GraphicsInfo, public TextInfo {
+class LineGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Line), public Iterable<LineGraphicsInfo> {
 public:
   LineGraphicsInfo (Line* l, Vertices dir); 
   virtual ~LineGraphicsInfo ();  
 
-  typedef vector<LineGraphicsInfo*>::const_iterator Iterator;
-  
   virtual void describe (QTextStream& str) const;  
   double  getAngle () const {return angle;}
   triplet getCorner (int which) const; 
   double  getFlowRatio () const {return flow * maxFlow;}
-  Line*   getLine () const {return myLine;} 
   double  getLossRatio () const {return loss * maxLoss;}
   bool    isInside (double x, double y) const;
   
   static void endTurn ();
-  static Iterator begin () {return allLineGraphics.begin();}
-  static Iterator end   () {return allLineGraphics.end();}
 
 private:
   double flow;
@@ -240,11 +202,8 @@ private:
   triplet corner3;
   triplet corner4;
 
-  Line* myLine; 
-  
   static double maxFlow;
   static double maxLoss;
-  static vector<LineGraphicsInfo*> allLineGraphics;
 };
 
 class CastleGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Castle) {
@@ -257,10 +216,10 @@ private:
   double angle;
 };
 
-class MilUnitGraphicsInfo : public GraphicsInfo, public TextInfo, public SpriteContainer {
+class MilUnitGraphicsInfo : public GBRIDGE(MilUnit), public TextInfo, public SpriteContainer {
   friend class StaticInitialiser;
 public:
-  MilUnitGraphicsInfo (MilUnit* dat) : myUnit(dat) {}
+  MilUnitGraphicsInfo (MilUnit* dat) : GBRIDGE(MilUnit)(dat), TextInfo() {}
   virtual ~MilUnitGraphicsInfo ();
 
   virtual void describe (QTextStream& str) const;
@@ -268,12 +227,11 @@ public:
   void updateSprites (MilStrength* dat);
 
 private:
-  MilUnit* myUnit;
   static map<MilUnitTemplate*, int> indexMap;
   static vector<vector<doublet> > allFormations;
 };
 
-class ZoneGraphicsInfo : public GraphicsInfo {
+class ZoneGraphicsInfo : public GraphicsInfo, public Iterable<ZoneGraphicsInfo>, public Numbered<ZoneGraphicsInfo> {
   friend class StaticInitialiser; 
 public:
   ZoneGraphicsInfo (); 
@@ -295,7 +253,6 @@ public:
   double getHeight (unsigned int x, unsigned int y) {return heightMap[x][y];}
   double calcHeight (double x, double y);
   static void calcGrid (); 
-  static ZoneGraphicsInfo* getZoneInfo (unsigned int which) {if (which >= allZoneGraphics.size()) return 0; return allZoneGraphics[which];}
 
   gridIt gridBegin () {return grid.begin();}
   gridIt gridEnd   () {return grid.end();}
@@ -304,18 +261,14 @@ private:
   int badLine (triplet one, triplet two);  
   void gridAdd (triplet coords);  
   void recalc ();
-  
+
   double** heightMap; 
   vector<vector<triplet> > grid; // Stores points to draw hex grid on terrain. 
-  
-  static vector<ZoneGraphicsInfo*> allZoneGraphics; 
 };
 
 // Following classes don't have a position, so don't descend from GraphicsInfo.
 
-// MarketGraphicsInfo needs GraphicsInfo for event lists - remove this
-// when those two tasks are disentangled.
-class MarketGraphicsInfo : public TextInfo, public TBRIDGE(Market) {
+class MarketGraphicsInfo : public TBRIDGE(Market) {
 public:
   MarketGraphicsInfo (Market* dat);
   ~MarketGraphicsInfo ();

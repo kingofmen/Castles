@@ -334,7 +334,7 @@ void GLDrawer::drawLine (LineGraphicsInfo const* dat) {
   glColor4d(1.0, 1.0, 1.0, 1.0);
   glEnable(GL_TEXTURE_2D); 
   
-  drawCastle(dat->getLine()->getCastle());
+  drawCastle(dat->getGameObject()->getCastle());
   if (overlayMode) overlayMode->drawLine(dat); 
 }
 
@@ -385,7 +385,7 @@ void GLDrawer::drawMilUnit (MilUnit* unit, triplet center, double angle) {
   
 
 void GLDrawer::drawVertex (VertexGraphicsInfo const* gInfo) {
-  Vertex* dat = gInfo->getVertex(); 
+  Vertex* dat = gInfo->getGameObject(); 
 
   MilUnit* unit = dat->getUnit(0);  
   if (!unit) return; 
@@ -413,7 +413,7 @@ void GLDrawer::drawZone (int which) {
   glEnable(GL_TEXTURE_2D);  
   glBindTexture(GL_TEXTURE_2D, zoneTextures[which]);
 
-  ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(which);
+  ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getByIndex(which);
 
   static const double step = 1.0 / zoneSize;
   glBegin(GL_TRIANGLES);
@@ -473,7 +473,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   if (!farmInfo) return;
   //Farmland* farm = farmInfo->getFarm();
   VillageGraphicsInfo const* villageInfo = dat->getVillageInfo(); 
-  Village* village = villageInfo->getVillage(); 
+  Village* village = villageInfo->getGameObject();
 
   glEnable(GL_TEXTURE_2D);
   for (FarmGraphicsInfo::cfit field = farmInfo->start(); field != farmInfo->final(); ++field) {
@@ -633,9 +633,9 @@ Hex* GLDrawer::findHex (double x, double y) {
   if (y > height()) return 0; 
   convertToOGL(x, y); 
 
-  for (HexGraphicsInfo::Iterator hex = HexGraphicsInfo::begin(); hex != HexGraphicsInfo::end(); ++hex) {
+  for (HexGraphicsInfo::Iterator hex = HexGraphicsInfo::start(); hex != HexGraphicsInfo::final(); ++hex) {
     if (!(*hex)->isInside(x, y)) continue;
-    return (*hex)->getHex();
+    return (*hex)->getGameObject();
   }
 
   return 0; 
@@ -648,9 +648,9 @@ Line* GLDrawer::findLine (double x, double y) {
   if (y > height()) return 0; 
   convertToOGL(x, y); 
   
-  for (LineGraphicsInfo::Iterator lin = LineGraphicsInfo::begin(); lin != LineGraphicsInfo::end(); ++lin) {
+  for (LineGraphicsInfo::Iterator lin = LineGraphicsInfo::start(); lin != LineGraphicsInfo::final(); ++lin) {
     if (!((*lin)->isInside(x, y))) continue; 
-    return (*lin)->getLine(); 
+    return (*lin)->getGameObject();
   }
   return 0;
 }
@@ -662,9 +662,9 @@ Vertex* GLDrawer::findVertex (double x, double y) {
   if (y > height()) return 0; 
   convertToOGL(x, y); 
   
-  for (VertexGraphicsInfo::Iterator vex = VertexGraphicsInfo::begin(); vex != VertexGraphicsInfo::end(); ++vex) {
+  for (VertexGraphicsInfo::Iterator vex = VertexGraphicsInfo::start(); vex != VertexGraphicsInfo::final(); ++vex) {
     if (!((*vex)->isInside(x, y))) continue;
-    return (*vex)->getVertex(); 
+    return (*vex)->getGameObject(); 
   }
   return 0;
 }
@@ -957,19 +957,19 @@ void GLDrawer::paintGL () {
   glVertex3d(-1000,  1000, 0.01);
   glEnd();
 
-  if (LineGraphicsInfo::begin() != LineGraphicsInfo::end()) drawZone(0); 
+  if (LineGraphicsInfo::start() != LineGraphicsInfo::final()) drawZone(0); 
   
   glColor4d(1.0, 1.0, 1.0, 1.0);
-  for (LineGraphicsInfo::Iterator line = LineGraphicsInfo::begin(); line != LineGraphicsInfo::end(); ++line) {
+  for (LineGraphicsInfo::Iterator line = LineGraphicsInfo::start(); line != LineGraphicsInfo::final(); ++line) {
     drawLine(*line); 
   }
   
-  for (HexGraphicsInfo::Iterator hex = HexGraphicsInfo::begin(); hex != HexGraphicsInfo::end(); ++hex) {
+  for (HexGraphicsInfo::Iterator hex = HexGraphicsInfo::start(); hex != HexGraphicsInfo::final(); ++hex) {
     drawHex(*hex); 
   }
 
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-  for (VertexGraphicsInfo::Iterator vertex = VertexGraphicsInfo::begin(); vertex != VertexGraphicsInfo::end(); ++vertex) {
+  for (VertexGraphicsInfo::Iterator vertex = VertexGraphicsInfo::start(); vertex != VertexGraphicsInfo::final(); ++vertex) {
     drawVertex(*vertex); 
   }  
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);   

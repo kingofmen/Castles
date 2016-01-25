@@ -39,9 +39,9 @@ Next gameplay iteration (thoughts, not all to be implemented):
      * Trade: Production and flow of goods, employment
      * Castle: Taxes received (check), supplies sent, recruitment, add GraphicsInfo subclass (check)
      * Trade and transport units
-     * Reorganise GraphicsInfo subclasses to use GraphicsBridge
+     * Reorganise GraphicsInfo subclasses to use GraphicsBridge (check)
      * Disentangle GraphicsInfo proper from EventList stuff (check)
-     * Make graphics classes Iterable
+     * Make graphics classes Iterable (check)
      * Split up humongous GraphicsInfo file
    - Restore clearing of land
    - Normalisation

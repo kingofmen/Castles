@@ -11,14 +11,8 @@
 
 double LineGraphicsInfo::maxFlow = 1;
 double LineGraphicsInfo::maxLoss = 1; 
-vector<HexGraphicsInfo*> HexGraphicsInfo::allHexGraphics;
-vector<VertexGraphicsInfo*> VertexGraphicsInfo::allVertexGraphics;
-vector<LineGraphicsInfo*> LineGraphicsInfo::allLineGraphics;
-vector<ZoneGraphicsInfo*> ZoneGraphicsInfo::allZoneGraphics; 
 double* GraphicsInfo::heightMap = 0; 
 vector<int> FarmGraphicsInfo::textureIndices; 
-vector<FarmGraphicsInfo*> FarmGraphicsInfo::allFarmInfos;
-vector<VillageGraphicsInfo*> VillageGraphicsInfo::allVillageInfos; 
 vector<MilUnitSprite*> SpriteContainer::sprites;
 map<MilUnitTemplate*, int> MilUnitGraphicsInfo::indexMap;
 vector<vector<doublet> > MilUnitGraphicsInfo::allFormations; 
@@ -52,15 +46,15 @@ int GraphicsInfo::zoneSide = 4;
 
 ZoneGraphicsInfo::ZoneGraphicsInfo () 
   : GraphicsInfo()
+  , Iterable<ZoneGraphicsInfo>(this)
+  , Numbered<ZoneGraphicsInfo>(this)
   , minX(10000000)
   , minY(10000000)
   , maxX(0)
   , maxY(0)  
   , width(0)
   , height(0)
-
 {
-  allZoneGraphics.push_back(this);
   heightMap = new double*[zoneSize];
   for (int i = 0; i < zoneSize; ++i) heightMap[i] = new double[zoneSize];
   recalc(); 
@@ -117,7 +111,7 @@ int ZoneGraphicsInfo::badLine (triplet one, triplet two) {
 
 void ZoneGraphicsInfo::calcGrid () {
   // Get heights for the grid objects.
-  for (vector<ZoneGraphicsInfo*>::iterator zone = allZoneGraphics.begin(); zone != allZoneGraphics.end(); ++zone) {
+  for (Iter zone = start(); zone != final(); ++zone) {
     for (gridIt i = (*zone)->grid.begin(); i != (*zone)->grid.end(); ++i) {
       // Remove empty end object.
       if (0 == (*i).size()) {
@@ -153,12 +147,10 @@ void ZoneGraphicsInfo::calcGrid () {
 
 	result.push_back(workingPoint);
 	if (hadToHalve) goto loopStart;
-
       }
 
       (*i).clear();
       (*i) = result;
-
     }
   }
 }
@@ -234,8 +226,9 @@ void TextInfo::clearRecentEvents () {
 
 HexGraphicsInfo::HexGraphicsInfo  (Hex* h) 
   : GraphicsInfo()
+  , GBRIDGE(Hex)(h, this)
+  , Iterable<HexGraphicsInfo>(this)
   , terrain(h->getType())
-  , myHex(h)
   , farmInfo(0)
 { 
   pair<int, int> hpos = h->getPos(); 
@@ -286,12 +279,12 @@ HexGraphicsInfo::HexGraphicsInfo  (Hex* h)
   hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, LeftDown); 
   cornerLeftDown.z() = zOffset + zSeparation * getHeight(hexX, hexY);
 
-  ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(0);
+  ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getByIndex(0);
   zoneInfo->addHex(this);
-  allHexGraphics.push_back(this);
 }
 
 void HexGraphicsInfo::describe (QTextStream& str) const {
+  Hex* myHex = getGameObject();
   str << "Hex " << myHex->getName().c_str() << "\n"
       << "  Owner      : " << (myHex->getOwner() ? myHex->getOwner()->getDisplayName().c_str() : "None") << "\n";
   Farmland* farm = myHex->getFarm();
@@ -326,7 +319,7 @@ void HexGraphicsInfo::describe (QTextStream& str) const {
     else str << "\n    Drill level: " << village->getMilitiaDrill() << "\n";
   }
   str << "Prices, contracts, bids:\n";
-  Market* market = myHex->getMarket();
+  Market* market = getGameObject()->getMarket();
   for (TradeGood::Iter tg = TradeGood::exMoneyStart(); tg != TradeGood::final(); ++tg) {
     str << "  " << (*tg)->getName().c_str() << " : " << market->getPrice(*tg) << ", ";
     double contract = 0;
@@ -358,7 +351,7 @@ bool HexGraphicsInfo::isInside (double x, double y) const {
 }
 
 void HexGraphicsInfo::generateShapes () {
-  ZoneGraphicsInfo* zone = ZoneGraphicsInfo::getZoneInfo(0); 
+  ZoneGraphicsInfo* zone = ZoneGraphicsInfo::getByIndex(0); 
   Vertices villageCorner = convertToVertex(rand()); 
   
   FieldShape exercis;
@@ -501,8 +494,8 @@ triplet HexGraphicsInfo::getCoords (Vertices dir) const {
 }
 
 void HexGraphicsInfo::getHeights () {
-  for (Iterator h = begin(); h != end(); ++h) {
-    ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getZoneInfo(0);
+  for (Iterator h = start(); h != final(); ++h) {
+    ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getByIndex(0);
 
     (*h)->position.z()         = zoneInfo->calcHeight((*h)->position.x(),        (*h)->position.y());
     (*h)->cornerRight.z()      = zoneInfo->calcHeight((*h)->cornerRight.x(),     (*h)->cornerRight.y());
@@ -556,13 +549,13 @@ CastleGraphicsInfo::CastleGraphicsInfo (Castle* castle)
 CastleGraphicsInfo::~CastleGraphicsInfo () {}
 
 MarketGraphicsInfo::MarketGraphicsInfo (Market* market)
-  : TextInfo()
-  , TBRIDGE(Market)(market, this)
+  : TBRIDGE(Market)(market)
 {}
 
 MarketGraphicsInfo::~MarketGraphicsInfo () {}
 
 void LineGraphicsInfo::describe (QTextStream& str) const {
+  Line* myLine = getGameObject();
   str << "Line: " << myLine->getName().c_str() << "\n";
   Castle* castle = myLine->getCastle();  
   if (castle) {
@@ -588,9 +581,11 @@ triplet LineGraphicsInfo::getCorner (int which) const {
 
 LineGraphicsInfo::LineGraphicsInfo (Line* l, Vertices dir) 
   : GraphicsInfo()
-  , myLine(l) 
+  , TextInfo()
+  , GBRIDGE(Line)(l, this)
+  , Iterable<LineGraphicsInfo>(this)
 {
-  
+  Line* myLine = getGameObject();
   const VertexGraphicsInfo* vex1 = myLine->oneEnd()->getGraphicsInfo();
   const VertexGraphicsInfo* vex2 = myLine->twoEnd()->getGraphicsInfo();
   //const HexGraphicsInfo* hex     = myLine->oneHex()->getGraphicsInfo();
@@ -655,9 +650,8 @@ LineGraphicsInfo::LineGraphicsInfo (Line* l, Vertices dir)
   vec2 -= corner1;
   normal = vec1.cross(vec2);
   normal.normalise();
-  
-  ZoneGraphicsInfo::getZoneInfo(0)->addLine(this);  
-  allLineGraphics.push_back(this);
+
+  ZoneGraphicsInfo::getByIndex(0)->addLine(this);
 }
 
 bool LineGraphicsInfo::isInside (double x, double y) const { 
@@ -678,20 +672,22 @@ bool LineGraphicsInfo::isInside (double x, double y) const {
 void LineGraphicsInfo::endTurn () {
   maxFlow = 1;
   maxLoss = 1;
-  for (vector<LineGraphicsInfo*>::iterator l = allLineGraphics.begin(); l != allLineGraphics.end(); ++l) {
+  for (Iterator l = start(); l != final(); ++l) {
     (*l)->flow = (*l)->loss = 0; 
   }
 }
 
 VertexGraphicsInfo::VertexGraphicsInfo (Vertex* v, HexGraphicsInfo const* hex, Vertices dir)
   : GraphicsInfo()
-  , myVertex(v)
+  , TextInfo()
+  , GBRIDGE(Vertex)(v, this)
+  , Iterable<VertexGraphicsInfo>(this)
 {
   corner1 = hex->getCoords(dir);
   corner2 = corner1;
   corner3 = corner1; 
 
-  pair<int, int> hexPos = hex->getHex()->getPos(); 
+  pair<int, int> hexPos = hex->getGameObject()->getPos(); 
   int hexX = hexPos.first;
   int hexY = hexPos.second;
   getHeightMapCoords(hexX, hexY, dir); 
@@ -770,11 +766,11 @@ VertexGraphicsInfo::VertexGraphicsInfo (Vertex* v, HexGraphicsInfo const* hex, V
   position.y() *= 0.333;
   position.z() *= 0.333;
 
-  ZoneGraphicsInfo::getZoneInfo(0)->addVertex(this);
-  allVertexGraphics.push_back(this); 
+  ZoneGraphicsInfo::getByIndex(0)->addVertex(this);
 }
 
 void VertexGraphicsInfo::describe (QTextStream& str) const {
+  Vertex* myVertex = getGameObject();
   str << "Vertex: " << myVertex->getName().c_str() << "\n";
   MilUnit* unit = myVertex->getUnit(0);
   if (unit) {
@@ -801,6 +797,7 @@ PlayerGraphicsInfo::~PlayerGraphicsInfo () {}
 
 string MilUnitGraphicsInfo::strengthString (string indent) const {
   ostringstream buffer;
+  MilUnit* myUnit = GBRIDGE(MilUnit)::getGameObject();
   for (MilUnitTemplate::Iterator m = MilUnitTemplate::start(); m != MilUnitTemplate::final(); ++m) {
     int num = myUnit->getUnitTypeAmount(*m);
     if (1 > num) continue;
@@ -810,6 +807,7 @@ string MilUnitGraphicsInfo::strengthString (string indent) const {
 }
 
 void MilUnitGraphicsInfo::describe (QTextStream& str) const {
+  MilUnit* myUnit = GBRIDGE(MilUnit)::getGameObject();
   str << myUnit->getName().c_str() << ":\n"
       << "  Owner: " << myUnit->getOwner()->getDisplayName().c_str() << "\n"
       << "  Strength:" << myUnit->displayString(4).c_str() << "\n"
@@ -964,10 +962,12 @@ bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape 
 }
 
 FarmGraphicsInfo::FarmGraphicsInfo (Farmland* f)
-  : myFarm(f)
-{
-  allFarmInfos.push_back(this); 
-}
+  : GraphicsInfo()
+  , TextInfo()
+  , GraphicsBridge<Farmland, FarmGraphicsInfo>(f, this)
+  , SpriteContainer()
+  , Iterable<FarmGraphicsInfo>(this)
+{}
 
 FarmGraphicsInfo::FieldInfo::FieldInfo (FieldShape f) 
   : shape(f)
@@ -994,7 +994,7 @@ double FarmGraphicsInfo::fieldArea () {
 
 void FarmGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
   double currentArea = 0;
-  while ((currentArea = fieldArea()) < myFarm->getTotalFields()) {
+  while ((currentArea = fieldArea()) < getGameObject()->getTotalFields()) {
     FieldShape testField = hex->getPatch(); 
     fields.push_back(FieldInfo(testField));
   }
@@ -1009,17 +1009,18 @@ void VillageGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
 
 
 int VillageGraphicsInfo::getHouses () const {
-  return 1 + (int) floor(myVillage->getFractionOfMaxPop() * 19 + 0.5); 
+  return 1 + (int) floor(getGameObject()->getFractionOfMaxPop() * 19 + 0.5); 
 }
 
 void FarmGraphicsInfo::updateFieldStatus () {
-  for (Iterator info = begin(); info != end(); ++info) {
+  for (Iterator info = Iterable<FarmGraphicsInfo>::start(); info != Iterable<FarmGraphicsInfo>::final(); ++info) {
+    Farmland* currFarm = (*info)->getGameObject();
     // Status of fields. 
-    double totalFieldArea = 1.0 / (*info)->myFarm->getTotalFields();
+    double totalFieldArea = 1.0 / currFarm->getTotalFields();
     double totalGraphArea = 1.0 / (*info)->fieldArea();
     fit currentField = (*info)->start(); 
     for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
-      double percentage = (*info)->myFarm->getFieldStatus(*fs);
+      double percentage = currFarm->getFieldStatus(*fs);
       percentage *= totalFieldArea;
       double assigned = 0.005; // Ignore less than half a percent.
       while (assigned < percentage) {
@@ -1034,18 +1035,20 @@ void FarmGraphicsInfo::updateFieldStatus () {
 }
 
 VillageGraphicsInfo::VillageGraphicsInfo (Village* f)
-  : myVillage(f)
-{
-  allVillageInfos.push_back(this); 
-}
+  : GraphicsInfo()
+  , TextInfo()
+  , GBRIDGE(Village)(f, this)
+  , SpriteContainer()
+  , Iterable<VillageGraphicsInfo>(this)
+{}
 
 VillageGraphicsInfo::~VillageGraphicsInfo () {}
 
 void VillageGraphicsInfo::updateVillageStatus () {
-  for (Iterator info = begin(); info != end(); ++info) {
+  for (Iterator info = Iterable<VillageGraphicsInfo>::start(); info != Iterable<VillageGraphicsInfo>::final(); ++info) {
     (*info)->spriteIndices.clear();
     (*info)->formation.clear();
-    //int numCows = min(maxCows, (int) floor((*info)->myVillage->getAvailableSupplies() / suppliesPerCow));
+    //int numCows = min(maxCows, (int) floor((*info)->getGameObject()->getAvailableSupplies() / suppliesPerCow));
     unsigned int numCows = 1;
     for (unsigned int i = 0; i < numCows; ++i) {
       (*info)->spriteIndices.push_back(supplySpriteIndex);

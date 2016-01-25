@@ -91,50 +91,38 @@ template <class Model, class View> void makeGraphicsInfo (Model*, View** graphic
 template <class Model, class View> class GraphicsBridge {
   // Helper class to hold the boilerplate code for graphics-object access.
 public:
-  GraphicsBridge (Model* m) : gameObject(m), graphicsInfo(0) {}
-  GraphicsBridge (Model* m, View* v) : gameObject(m), graphicsInfo(v) {}
-  GraphicsBridge () : gameObject(0), graphicsInfo(0) {} // Dummy constructor for mirror objects.
+  GraphicsBridge (Model* m) : gameObject(m), viewObject(0) {}
+  GraphicsBridge (Model* m, View* v) : gameObject(m), viewObject(v) {}
+  GraphicsBridge () : gameObject(0), viewObject(0) {} // Dummy constructor for mirror objects.
   virtual ~GraphicsBridge () {
-    if (graphicsInfo) delete graphicsInfo;
+    if (viewObject) delete viewObject;
   }
 
-  View* getGraphicsInfo () const {return graphicsInfo;}
+  View* getGraphicsInfo () const {return viewObject;}
   Model* getGameObject () const {return gameObject;}
-  bool canReport () const {return (0 != graphicsInfo);}
+  bool canReport () const {return (0 != viewObject);}
   void reportEvent (DisplayEvent evt) {
-    if (graphicsInfo) graphicsInfo->addEvent(evt);
+    if (viewObject) viewObject->addEvent(evt);
   }
 
   void reportEvent (std::string et, std::string de) {
-    if (graphicsInfo) reportEvent(DisplayEvent(et, de));
+    if (viewObject) reportEvent(DisplayEvent(et, de));
   }
 
-  void initialiseGraphicsBridge () {
-    makeGraphicsInfo<Model, View>(gameObject, &graphicsInfo, typename std::is_base_of<GraphicsInfo, View>::type());
-    /*
-    if () {
-      graphicsInfo = new View(gameObject);
-    }
-    else if (std::is_base_of<TextInfo, View>::value) {
-      graphicsInfo = new View();
-    }
-    */
+  void initialiseBridge () {
+    makeGraphicsInfo<Model, View>(gameObject, &viewObject, typename std::is_base_of<GraphicsInfo, View>::type());
   }
 
-  void initialiseGraphicsBridge (Model* m) {
+  void initialiseBridge (Model* m) {
     gameObject = m;
-    initialiseGraphicsBridge();
-  }
-
-  void initialiseTextBridge () {
-    graphicsInfo = new View();
+    initialiseBridge();
   }
 
 protected:
 
 private:
   Model* gameObject;
-  View* graphicsInfo;
+  View* viewObject;
 };
 
 #define GBRIDGE(model) GraphicsBridge<model, model ## GraphicsInfo>

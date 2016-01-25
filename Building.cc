@@ -295,7 +295,7 @@ Village::Village ()
   , workedThisTurn(0)
 {
   milTrad = new MilitiaTradition();
-  initialiseGraphicsBridge();
+  initialiseBridge(this);
 }
 
 Village::Village (Village* other)
