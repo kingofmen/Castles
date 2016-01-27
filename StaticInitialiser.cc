@@ -1,4 +1,5 @@
 #include "StaticInitialiser.hh"
+#include "BuildingGraphics.hh"
 #include "Parser.hh"
 #include "Player.hh" 
 #include "Building.hh"

@@ -3,6 +3,50 @@
 
 #include <type_traits>
 
+#include "ThreeDSprite.hh"
+#include "UtilityFunctions.hh"
+#include "Directions.hh"
+
+class FarmGraphicsInfo;
+class Hex;
+class HexGraphicsInfo;
+class Line;
+class MilStrength;
+class MilUnit;
+class MilUnitTemplate;
+class Vertex;
+class VillageGraphicsInfo;
+
+struct MilUnitSprite {
+  ThreeDSprite* soldier;     // Figure for one man - will be drawn several times.
+  vector<doublet> positions; // Positions to draw the soldiers, relative to a central point.
+};
+
+class SpriteContainer {
+public:
+
+  struct spriterator {
+    spriterator (int idx, SpriteContainer const* const b) : index(idx), boss(b) {}
+    MilUnitSprite* operator* () {if ((int) boss->spriteIndices.size() <= index) return sprites[0]; return sprites[boss->spriteIndices[index]];}
+    doublet getFormation () const {return boss->formation[index];}
+    void operator++ () {index++;}
+    bool operator!= (const spriterator& other) const {return index != other.index;}
+    bool operator== (const spriterator& other) const {return index == other.index;}
+
+  private:
+    int index;
+    SpriteContainer const* const boss;
+  };
+
+  spriterator start () const {return spriterator(0, this);}
+  spriterator final () const {return spriterator(spriteIndices.size(), this);}
+
+protected:
+  vector<int> spriteIndices;
+  vector<doublet> formation;
+  static vector<MilUnitSprite*> sprites;
+};
+
 struct DisplayEvent {
   DisplayEvent (std::string et, std::string de) : eventType(et), details(de) {}
   std::string eventType;
@@ -37,25 +81,25 @@ private:
 };
 
 class GraphicsInfo {
-  friend class StaticInitialiser; 
+  friend class StaticInitialiser;
 public:
   GraphicsInfo ();
   virtual ~GraphicsInfo ();
 
-  typedef vector<triplet> FieldShape;  
+  typedef vector<triplet> FieldShape;
   typedef FieldShape::const_iterator cpit;
-  typedef FieldShape::iterator pit;      
+  typedef FieldShape::iterator pit;
 
   triplet getNormal () const {return normal;}
   triplet getPosition () const {return position;}
   int getZone () const {return 0;}
 
-  static pair<double, double> getTexCoords (triplet gameCoords, int zone); 
+  static pair<double, double> getTexCoords (triplet gameCoords, int zone);
   static int getHeight (int x, int y);
-  static void getHeightMapCoords (int& hexX, int& hexY, Vertices dir); 
+  static void getHeightMapCoords (int& hexX, int& hexY, Vertices dir);
 
-  static const int zoneSize = 512; // Size in pixels (for internal purposes, not on the screen). 
-  
+  static const int zoneSize = 512; // Size in pixels (for internal purposes, not on the screen).
+
 protected:
   triplet position;
   triplet normal;
@@ -67,7 +111,7 @@ protected:
   static const double xSeparation;
   static const double ySeparation;
   static const double zSeparation;
-  static const double zOffset; 
+  static const double zOffset;
 };
 
 class TextBridge {
@@ -124,6 +168,8 @@ private:
   Model* gameObject;
   View* viewObject;
 };
+
+double area (GraphicsInfo::FieldShape const& field);
 
 #define GBRIDGE(model) GraphicsBridge<model, model ## GraphicsInfo>
 #define TBRIDGE(model) GraphicsBridge<model, TextInfo>

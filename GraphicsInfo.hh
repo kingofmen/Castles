@@ -4,122 +4,9 @@
 #include <vector>
 #include <QtOpenGL>
 #include <QTextStream>
-#include "UtilityFunctions.hh"
-#include "ThreeDSprite.hh"
-#include "Directions.hh" 
 #include "GraphicsBridge.hh"
 
-class MilStrength; 
-class MilUnit;
-class MilUnitTemplate; 
-class Hex;
-class HexGraphicsInfo; 
-class Vertex;
-class Line;
-class Farmland;
-class FieldStatus;
-class Castle;
-class Market;
-class Village;
-
 enum TerrainType {Mountain = 0, Hill, Plain, Wooded, Ocean, NoTerrain}; 
-
-struct MilUnitSprite {
-  ThreeDSprite* soldier;     // Figure for one man - will be drawn several times. 
-  vector<doublet> positions; // Positions to draw the soldiers, relative to a central point.
-};
-
-class SpriteContainer {
-public:
-
-  struct spriterator {
-    spriterator (int idx, SpriteContainer const* const b) : index(idx), boss(b) {}
-    MilUnitSprite* operator* () {if ((int) boss->spriteIndices.size() <= index) return sprites[0]; return sprites[boss->spriteIndices[index]];}
-    doublet getFormation () const {return boss->formation[index];}
-    void operator++ () {index++;}
-    bool operator!= (const spriterator& other) const {return index != other.index;}
-    bool operator== (const spriterator& other) const {return index == other.index;}    
-    
-  private:
-    int index;
-    SpriteContainer const* const boss; 
-  };
-
-  spriterator start () const {return spriterator(0, this);}
-  spriterator final () const {return spriterator(spriteIndices.size(), this);}
-  
-protected: 
-  vector<int> spriteIndices;
-  vector<doublet> formation;
-  static vector<MilUnitSprite*> sprites;    
-}; 
-
-class FarmGraphicsInfo : public GraphicsInfo, public TextInfo, public GraphicsBridge<Farmland, FarmGraphicsInfo>, public SpriteContainer, public Iterable<FarmGraphicsInfo> {
-  friend class StaticInitialiser;
-  friend class HexGraphicsInfo; 
-public:
-  FarmGraphicsInfo (Farmland* f);
-  virtual ~FarmGraphicsInfo ();
-  static void updateFieldStatus (); 
-
-  struct FieldInfo {
-    friend class FarmGraphicsInfo; 
-    FieldInfo (FieldShape s); 
-    int getIndex () const;
-    
-    cpit begin () const {return shape.begin();}
-    pit  begin ()       {return shape.begin();}
-    cpit end () const {return shape.end();}
-    pit  end ()       {return shape.end();}
-    
-  private:
-    FieldShape shape;
-    double area;
-    FieldStatus const* status;
-  };
-
-  typedef vector<FieldInfo>::const_iterator cfit;
-  typedef vector<FieldInfo>::iterator fit;
-  cfit start () const {return fields.begin();}
-  cfit final () const {return fields.end();}
-  fit start () {return fields.begin();}
-  fit final () {return fields.end();}
-  
-private:  
-  double fieldArea ();   
-  void generateShapes (HexGraphicsInfo* dat);
-  vector<FieldInfo> fields;
-  static vector<int> textureIndices; 
-};
-
-class VillageGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Village), public SpriteContainer, public Iterable<VillageGraphicsInfo> {
-  friend class StaticInitialiser;
-  friend class HexGraphicsInfo; 
-public:
-  VillageGraphicsInfo (Village* f);
-  virtual ~VillageGraphicsInfo ();
-  int getHouses () const;
-  static void updateVillageStatus (); 
-  
-  cpit startDrill () const {return exercis.begin();}
-  cpit finalDrill () const {return exercis.end();}
-  cpit startHouse () const {return village.begin();}
-  cpit finalHouse () const {return village.end();}
-  cpit startSheep () const {return pasture.begin();}
-  cpit finalSheep () const {return pasture.end();}
-
-private:  
-  double fieldArea ();   
-  void generateShapes (HexGraphicsInfo* dat);
-  FieldShape exercis;
-  FieldShape village;
-  FieldShape pasture; 
-  
-  static unsigned int supplySpriteIndex;
-  static int maxCows;
-  static int suppliesPerCow; 
-  static vector<doublet> cowPositions;
-};
 
 class HexGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Hex), public Iterable<HexGraphicsInfo> {
 public:
@@ -206,16 +93,6 @@ private:
   static double maxLoss;
 };
 
-class CastleGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Castle) {
-public:
-  CastleGraphicsInfo (Castle* castle);
-  ~CastleGraphicsInfo ();
-
-  double getAngle () const {return angle;}
-private:
-  double angle;
-};
-
 class MilUnitGraphicsInfo : public GBRIDGE(MilUnit), public TextInfo, public SpriteContainer {
   friend class StaticInitialiser;
 public:
@@ -267,12 +144,6 @@ private:
 };
 
 // Following classes don't have a position, so don't descend from GraphicsInfo.
-
-class MarketGraphicsInfo : public TBRIDGE(Market) {
-public:
-  MarketGraphicsInfo (Market* dat);
-  ~MarketGraphicsInfo ();
-};
 
 class PlayerGraphicsInfo {
   friend class StaticInitialiser; 

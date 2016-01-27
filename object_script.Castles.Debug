@@ -2,6 +2,7 @@ INPUT(
 ./debug\Action.o
 ./debug\AgeTracker.o
 ./debug\Building.o
+./debug\BuildingGraphics.o
 ./debug\Calendar.o
 ./debug\CastleWindow.o
 ./debug\Directions.o

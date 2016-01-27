@@ -1,13 +1,15 @@
 #include "Building.hh"
+
+#include <algorithm>
+#include <cassert>
+
+#include "BuildingGraphics.hh"
 #include "Hex.hh"
-#include "GraphicsInfo.hh"
-#include <algorithm> 
 #include "MilUnit.hh"
 #include "UtilityFunctions.hh"
-#include <cassert> 
-#include "Calendar.hh" 
+#include "Calendar.hh"
 
-int Village::maxPopulation = 1; 
+int Village::maxPopulation = 1;
 vector<double> Village::baseMaleMortality(AgeTracker::maxAge);
 vector<double> Village::baseFemaleMortality(AgeTracker::maxAge);
 vector<double> Village::pairChance(AgeTracker::maxAge);
@@ -19,7 +21,7 @@ double Village::femaleProduction = 0.5;
 double Village::femaleConsumption = 0.90;
 double Village::femaleSurplusEffect = -2.0;
 double Village::femaleSurplusZero = 1.0;
-double Castle::siegeModifier = 10; 
+double Castle::siegeModifier = 10;
 vector<Village::MaslowLevel*> Village::maslowLevels;
 
 vector<const FieldStatus*> FieldStatus::plowing;
@@ -32,12 +34,12 @@ int Mine::_amountOfIron = 50;
 
 char errorMessage[500];
 
-Castle::Castle (Hex* dat, Line* lin) 
+Castle::Castle (Hex* dat, Line* lin)
   : Mirrorable<Castle>()
   , GraphicsBridge<Castle, CastleGraphicsInfo>(this)
   , support(dat)
   , location(lin)
-  , recruitType(0) 
+  , recruitType(0)
 {
   recruitType = *(MilUnitTemplate::start());
   setMirrorState();
@@ -59,7 +61,7 @@ Castle::~Castle () {
 }
 
 void Castle::addGarrison (MilUnit* p) {
-  assert(p); 
+  assert(p);
   garrison.push_back(p);
   p->setCastle(this);
   p->setLocation(0);
@@ -116,7 +118,7 @@ void Castle::getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist) {
       orders[mu].deliverGoods(mb->tradeGood, mb->amountToBuy);
       allBids.deliverGoods(mb->tradeGood, mb->amountToBuy);
       delete mb;
-    }  
+    }
   }
 
   double totalMoneyNeeded = allBids * prices;
@@ -173,7 +175,7 @@ MilUnit* Castle::removeGarrison () {
   garrison.pop_back();
   fieldForce.push_back(ret);
   ret->setCastle(0);
-  ret->dropExtMod(); // No longer gets fortification bonus. 
+  ret->dropExtMod(); // No longer gets fortification bonus.
   return ret;
 }
 
@@ -184,8 +186,8 @@ MilUnit* Castle::removeUnit (MilUnit* dat) {
   garrison.erase(target);
   ret->setCastle(0);
   fieldForce.push_back(ret);
-  ret->dropExtMod(); // No longer gets fortification bonus. 
-  return ret; 
+  ret->dropExtMod(); // No longer gets fortification bonus.
+  return ret;
 }
 
 void Castle::recruit (Outcome out) {
@@ -195,8 +197,8 @@ void Castle::recruit (Outcome out) {
   if (0 == garrison.size()) {
     if (0 == newSoldiers) delete target;
     else {
-      addGarrison(target); 
-      target->setOwner(getOwner()); 
+      addGarrison(target);
+      target->setOwner(getOwner());
     }
   }
 }
@@ -264,21 +266,21 @@ void Castle::receiveTaxes (TradeGood const* const tg, double received) {
 
 void Castle::setOwner (Player* p) {
   Building::setOwner(p);
-  if (isReal()) mirror->setOwner(p); 
+  if (isReal()) mirror->setOwner(p);
   for (vector<MilUnit*>::iterator u = garrison.begin(); u != garrison.end(); ++u) {
-    (*u)->setOwner(p); 
+    (*u)->setOwner(p);
   }
 }
 
 void Castle::setMirrorState () {
-  mirror->setOwner(getOwner()); 
+  mirror->setOwner(getOwner());
   mirror->support = support;
-  mirror->location = location; 
+  mirror->location = location;
   mirror->recruitType = recruitType;
 
-  mirror->garrison.clear();  
+  mirror->garrison.clear();
   for (std::vector<MilUnit*>::iterator unt = garrison.begin(); unt != garrison.end(); ++unt) {
-    (*unt)->setMirrorState(); 
+    (*unt)->setMirrorState();
     mirror->garrison.push_back((*unt)->getMirror());
   }
   mirror->setAmounts(this);
@@ -454,7 +456,7 @@ void Village::unitTests () {
 
   double labor = testVillage->produceForContract(TradeGood::Labor, 100);
   if (fabs(labor - 100) > 0.1) {
-    sprintf(errorMessage, "Village should have produced 100 labor, got %f", labor);    
+    sprintf(errorMessage, "Village should have produced 100 labor, got %f", labor);
     throw string(errorMessage);
   }
   delete testVillage;
@@ -506,7 +508,7 @@ void Village::unitTests () {
   if (2 != bidlist.size()) throwFormatted("Line %i: Expected 2 bids, got %i, reason %s", __LINE__, bidlist.size(), testVillage->stopReason.c_str());
   labourBought = 0;
   BOOST_FOREACH(MarketBid* mb, bidlist) if (mb->tradeGood == TradeGood::Labor) labourBought += mb->amountToBuy;
-  labourExpected = -1 * ((maslowLevels[0]->getAmount(TradeGood::Money) + maslowLevels[1]->getAmount(TradeGood::Money)) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor); 
+  labourExpected = -1 * ((maslowLevels[0]->getAmount(TradeGood::Money) + maslowLevels[1]->getAmount(TradeGood::Money)) * testVillage->consumption() * prices.getAmount(theGood)) / prices.getAmount(TradeGood::Labor);
   if (0.001 < fabs(labourExpected - labourBought)) throwFormatted("Line %i: Expected to buy %f labour, but bought %f, reason %s",
 								  __LINE__,
 								  labourExpected,
@@ -619,7 +621,7 @@ MilitiaTradition::MilitiaTradition (MilitiaTradition* other)
   : Mirrorable<MilitiaTradition>(other)
 {}
 
-void MilitiaTradition::increaseTradition (MilUnitTemplate const* target) { 
+void MilitiaTradition::increaseTradition (MilUnitTemplate const* target) {
   if (!target) target = getKeyByWeight<MilUnitTemplate const* const>(militiaStrength);
   if (target) militiaStrength[target]++;
 }
@@ -632,16 +634,16 @@ void MilitiaTradition::decayTradition () {
 }
 
 double MilitiaTradition::getRequiredWork () {
-  double ret = 0; 
+  double ret = 0;
   for (map<MilUnitTemplate const* const, int>::iterator i = militiaStrength.begin(); i != militiaStrength.end(); ++i) {
-    ret += drillLevel * (*i).first->recruit_speed * (*i).first->militiaDrill * (*i).second; 
+    ret += drillLevel * (*i).first->recruit_speed * (*i).first->militiaDrill * (*i).second;
   }
-  return ret; 
+  return ret;
 }
 
 int MilitiaTradition::getUnitTypeAmount (MilUnitTemplate const* const ut) const {
-  if (militiaStrength.find(ut) == militiaStrength.end()) return 0; 
-  return ut->recruit_speed * militiaStrength.at(ut); // Use 'at' for const-ness. 
+  if (militiaStrength.find(ut) == militiaStrength.end()) return 0;
+  return ut->recruit_speed * militiaStrength.at(ut); // Use 'at' for const-ness.
 }
 
 string MilitiaTradition::display () const {
@@ -654,13 +656,13 @@ string MilitiaTradition::display () const {
 }
 
 void MilitiaTradition::setMirrorState () {
-  militia->setMirrorState();  
+  militia->setMirrorState();
   mirror->militia = militia->getMirror();
   mirror->militiaStrength.clear();
   for (map<MilUnitTemplate const* const, int>::iterator i = militiaStrength.begin(); i != militiaStrength.end(); ++i) {
     mirror->militiaStrength[(*i).first] = (*i).second;
   }
-  mirror->drillLevel = drillLevel; 
+  mirror->drillLevel = drillLevel;
 }
 
 
@@ -722,11 +724,11 @@ void Village::endOfTurn () {
     deaths += die;
     women.addPop(-die, i);
   }
- 
+
   // Simplifying assumptions:
   // No man ever impregnates an older woman
   // Male fertility is constant, only female fertility matters
-  // No man gets more than one woman pregnant in a year 
+  // No man gets more than one woman pregnant in a year
   // Young men get the first chance at single women
 
   int popIncrease = 0;
@@ -734,11 +736,11 @@ void Village::endOfTurn () {
   for (int mAge = 16; mAge < AgeTracker::maxAge; ++mAge) {
     for (int fAge = 16; fAge <= mAge; ++fAge) {
       int availableWomen = women.getPop(fAge) - takenWomen[fAge];
-      if (1 > availableWomen) continue; 
+      if (1 > availableWomen) continue;
       double pairs = min(availableWomen, males.getPop(mAge)) * pairChance[mAge - fAge];
       double pregnancies = pairs * fertility[fAge] * Calendar::inverseYearLength;
       takenWomen[fAge] += (int) floor(pairs);
-      popIncrease += convertFractionToInt(pregnancies); 
+      popIncrease += convertFractionToInt(pregnancies);
     }
   }
 
@@ -760,21 +762,21 @@ void Village::endOfTurn () {
   males.age();
   women.age();
 
-  milTrad->decayTradition(); 
+  milTrad->decayTradition();
 
-  MilUnitGraphicsInfo* milGraph = (MilUnitGraphicsInfo*) milTrad->militia->getGraphicsInfo();  
+  MilUnitGraphicsInfo* milGraph = (MilUnitGraphicsInfo*) milTrad->militia->getGraphicsInfo();
   if (milGraph) milGraph->updateSprites(milTrad);
 }
 
 void Village::demobMilitia () {
   if (!milTrad) return;
-  milTrad->militia->demobilise(males); 
+  milTrad->militia->demobilise(males);
 }
 
 MilUnit* Village::raiseMilitia () {
   for (map<MilUnitTemplate const* const, int>::iterator i = milTrad->militiaStrength.begin(); i != milTrad->militiaStrength.end(); ++i) {
     for (int j = 0; j < (*i).second; ++j) {
-      produceRecruits((*i).first, milTrad->militia, Neutral); 
+      produceRecruits((*i).first, milTrad->militia, Neutral);
     }
   }
 
@@ -998,7 +1000,7 @@ void Farmer::unitTests () {
   if (foundLabour <= 0) throwFormatted("Expected (again) to buy %s, found %.2f", TradeGood::Labor->getName().c_str(), foundLabour);
   if (foundCapGood <= 0) throwFormatted("Expected (again) to buy %s, found %.2f", testCapGood->getName().c_str(), foundCapGood);
   if (fabs(secondFoundOutput) >= fabs(foundOutput)) throwFormatted("Profit decrease should lead to lower bid offer, found %f -> %f", foundOutput, secondFoundOutput);
-  
+
   deliverGoods(output, -100);
 
   owner = this;
@@ -1043,7 +1045,7 @@ void Farmer::unitTests () {
 								    blockInfo->blockSize,
 								    (*endStatus)->getName().c_str(),
 								    theBlock[**endStatus]);
-  
+
   theBlock[**endStatus] = 0;
   fields[**endStatus] = 100;
   fillBlock(5, theBlock);
@@ -1051,7 +1053,7 @@ void Farmer::unitTests () {
 								    blockInfo->blockSize,
 								    (*endStatus)->getName().c_str(),
 								    theBlock[**endStatus]);
-  
+
   theBlock[**endStatus] = 0;
   fields[**endStatus] = 1;
   fillBlock(1, theBlock);
@@ -1134,7 +1136,7 @@ void Farmer::unitTests () {
 		gameExpected,
 		actual);
 	throw string(errorMessage);
-      }      
+      }
     }
   }
 
@@ -1251,7 +1253,7 @@ void Farmer::fillBlock (int block, vector<int>& theBlock) const {
   static int lastBlock = 0;
   static int lastCounted = 0;
   static FieldStatus::rIter lastStatus = FieldStatus::rstart();
-  
+
   int counted = 0;
   int found = 0;
   FieldStatus::rIter fs = FieldStatus::rstart();
@@ -1285,7 +1287,7 @@ double Farmer::getCapitalSize () const {
 void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCycleLabour) const {
   // Returns the amount of labour needed to tend the
   // fields, on the assumption that the necessary labour
-  // will be spread over the remaining turns in the season. 
+  // will be spread over the remaining turns in the season.
 
   Calendar::Season currSeason = Calendar::getCurrentSeason();
   if (Calendar::Winter == currSeason) return;
@@ -1325,13 +1327,13 @@ void Farmer::getLabourForBlock (int block, vector<jobInfo>& jobs, double& prodCy
       prodCycleLabour += theBlock[**fs] * (*fs)->autumnLabour;
     }
     break;
-      
+
   case Calendar::Autumn:
     for (FieldStatus::Iter fs = FieldStatus::startReap(); fs != FieldStatus::finalReap(); ++fs) {
       searchForMatch(jobs, capFactor * (*fs)->autumnLabour, theBlock[**fs], Calendar::turnsToNextSeason());
       prodCycleLabour += (*fs)->autumnLabour * theBlock[**fs];
     }
-    break; 
+    break;
   }
 
   prodCycleLabour *= capFactor;
@@ -1362,7 +1364,7 @@ double Farmer::getWinterLabour (const GoodsHolder& prices, int lastBlock, double
   if (highestExtraProduction * prices.getAmount(output) >= maxPossible * prices.getAmount(TradeGood::Labor)) {
     return maxPossible;
   }
-  
+
   double lowestFraction = 0;
   double highestFraction = 1;
 
@@ -1392,7 +1394,7 @@ Forest::Forest (Forest* other)
   : Building(other->marginFactor, other->blockSize, other->workableBlocks)
   , Mirrorable<Forest>(other)
   , Collective<Forester, ForestStatus, numOwners>()
-  , yearsSinceLastTick(0)    
+  , yearsSinceLastTick(0)
 {}
 
 Forest::~Forest () {}
@@ -1495,7 +1497,7 @@ void Forester::unitTests () {
   prices.deliverGoods(testCapGood, 1);
   prices.deliverGoods(output, 100);
   getBids(prices, bidlist);
-  
+
   double foundLabour = 0;
   bool foundCapGood = false;
   BOOST_FOREACH(MarketBid* mb, bidlist) {
@@ -1595,7 +1597,7 @@ void Forester::unitTests () {
     for (int blocks = 2; blocks < 5; ++blocks) {
       fields[**lastStatus] = blocks*blockInfo->blockSize;
       createBlockQueue();
-      double gameExpected = 0;      
+      double gameExpected = 0;
       for (int j = 0; j < blocks; ++j) gameExpected += outputOfBlock(j) * pow(mf, j);
       setAmount(output, 0);
       getLabourForBlock(0, jobs, fullCycleLabour);
@@ -1769,7 +1771,7 @@ void Farmland::setMirrorState () {
 double Village::production () const {
   double ret = 0;
   for (int i = 0; i < AgeTracker::maxAge; ++i) {
-    ret += (males.getPop(i) + femaleProduction*women.getPop(i)) * products[i]; 
+    ret += (males.getPop(i) + femaleProduction*women.getPop(i)) * products[i];
   }
 
   ret -= milTrad->getRequiredWork();
@@ -1782,7 +1784,7 @@ double Village::consumption () const {
   for (int i = 0; i < AgeTracker::maxAge; ++i) {
     ret += consume[i]*(males.getPop(i) + femaleConsumption*women.getPop(i));
   }
-  return ret; 
+  return ret;
 }
 
 void Farmland::devastate (int /*devastation*/) {
@@ -1922,18 +1924,18 @@ int Village::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit*
   case Disaster:   luckModifier = 0.75; break;
   case Neutral:
   default:
-    break; 
+    break;
   }
 
   static AgeTracker recruits;
-  recruits.clear(); 
+  recruits.clear();
   int recruited = 0;
   for (int i = 0; i < AgeTracker::maxAge; ++i) {
     int numMen = males.getPop(i);
-    if (1 > numMen) continue; 
+    if (1 > numMen) continue;
     double femaleSurplus = women.getPop(i);
-    femaleSurplus /= numMen; 
-    femaleSurplus -= femaleSurplusZero; 
+    femaleSurplus /= numMen;
+    femaleSurplus -= femaleSurplusZero;
 
     int curr = convertFractionToInt(numMen * recruitChance[i] * luckModifier * exp(femaleSurplusEffect*femaleSurplus));
     if (curr > numMen) curr = numMen;
@@ -1941,13 +1943,13 @@ int Village::produceRecruits (MilUnitTemplate const* const recruitType, MilUnit*
     if (1 > curr) continue;
     recruits.addPop(curr, i);
     males.addPop(-curr, i);
-    recruited += curr; 
-    if (recruited >= recruitType->recruit_speed) break; 
+    recruited += curr;
+    if (recruited >= recruitType->recruit_speed) break;
   }
 
-  target->addElement(recruitType, recruits); 
+  target->addElement(recruitType, recruits);
 
-  return recruited; 
+  return recruited;
 }
 
 Mine::Mine ()

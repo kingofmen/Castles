@@ -1,69 +1,63 @@
 #include "GraphicsInfo.hh"
 #include <cmath>
-#include <sstream> 
-#include "UtilityFunctions.hh" 
-#include "MilUnit.hh" 
+#include <sstream>
+#include "BuildingGraphics.hh"
+#include "UtilityFunctions.hh"
+#include "MilUnit.hh"
 #include "Player.hh"
-#include "Building.hh" 
-#include "Hex.hh" 
-#include "ThreeDSprite.hh" 
+#include "Building.hh"
+#include "Hex.hh"
+#include "ThreeDSprite.hh"
 #include "StructUtils.hh"
 
 double LineGraphicsInfo::maxFlow = 1;
-double LineGraphicsInfo::maxLoss = 1; 
-double* GraphicsInfo::heightMap = 0; 
-vector<int> FarmGraphicsInfo::textureIndices; 
+double LineGraphicsInfo::maxLoss = 1;
+double* GraphicsInfo::heightMap = 0;
 vector<MilUnitSprite*> SpriteContainer::sprites;
 map<MilUnitTemplate*, int> MilUnitGraphicsInfo::indexMap;
-vector<vector<doublet> > MilUnitGraphicsInfo::allFormations; 
-unsigned int VillageGraphicsInfo::supplySpriteIndex = 0;
-int VillageGraphicsInfo::maxCows = 15;
-int VillageGraphicsInfo::suppliesPerCow = 60000;
-vector<doublet> VillageGraphicsInfo::cowPositions;
+vector<vector<doublet> > MilUnitGraphicsInfo::allFormations;
 map<const TextInfo*, vector<DisplayEvent> > TextInfo::recentEvents;
 map<const TextInfo*, vector<DisplayEvent> > TextInfo::savingEvents;
 bool TextInfo::accumulate = true;
 
-double area (GraphicsInfo::FieldShape const& field);
-bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2); 
+bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2);
 
-const double GraphicsInfo::xIncrement = 1.0; // Distance from center of hex to Right vertex. 
-const double GraphicsInfo::yIncrement = sqrt(pow(xIncrement, 2) - pow(0.5*xIncrement, 2)); // Vertical distance from center to Up vertices. 
-const double GraphicsInfo::xSeparation = 0.8; // Horizontal distance from Right vertex of (0, 0) to UpLeft vertex of (1, 0). 
+const double GraphicsInfo::xIncrement = 1.0; // Distance from center of hex to Right vertex.
+const double GraphicsInfo::yIncrement = sqrt(pow(xIncrement, 2) - pow(0.5*xIncrement, 2)); // Vertical distance from center to Up vertices.
+const double GraphicsInfo::xSeparation = 0.8; // Horizontal distance from Right vertex of (0, 0) to UpLeft vertex of (1, 0).
 const double GraphicsInfo::ySeparation = xSeparation/sqrt(3); // Vertical distance from Right to UpLeft as above. Half the width of a Line.
 const double GraphicsInfo::zSeparation = -0.003; // Height of a single step.
-const double GraphicsInfo::zOffset     = -0.003; // Offset to get lines a little above terrain texture. 
+const double GraphicsInfo::zOffset     = -0.003; // Offset to get lines a little above terrain texture.
 
 GraphicsInfo::~GraphicsInfo () {}
 HexGraphicsInfo::~HexGraphicsInfo () {}
 LineGraphicsInfo::~LineGraphicsInfo () {}
-FarmGraphicsInfo::~FarmGraphicsInfo () {}
 MilUnitGraphicsInfo::~MilUnitGraphicsInfo () {}
 VertexGraphicsInfo::~VertexGraphicsInfo () {}
 TextBridge::~TextBridge () {}
 
 int GraphicsInfo::zoneSide = 4;
 
-ZoneGraphicsInfo::ZoneGraphicsInfo () 
+ZoneGraphicsInfo::ZoneGraphicsInfo ()
   : GraphicsInfo()
   , Iterable<ZoneGraphicsInfo>(this)
   , Numbered<ZoneGraphicsInfo>(this)
   , minX(10000000)
   , minY(10000000)
   , maxX(0)
-  , maxY(0)  
+  , maxY(0)
   , width(0)
   , height(0)
 {
   heightMap = new double*[zoneSize];
   for (int i = 0; i < zoneSize; ++i) heightMap[i] = new double[zoneSize];
-  recalc(); 
+  recalc();
 }
 
 void ZoneGraphicsInfo::recalc () {
   width  = maxX - minX;
   height = maxY - minY;
-  grid.push_back(vector<triplet>()); 
+  grid.push_back(vector<triplet>());
 }
 
 void ZoneGraphicsInfo::gridAdd (triplet coords) {
@@ -71,28 +65,28 @@ void ZoneGraphicsInfo::gridAdd (triplet coords) {
   minY = min(minY, coords.y());
   maxX = max(maxX, coords.x());
   maxY = max(maxY, coords.y());
-  grid.back().push_back(coords); 
+  grid.back().push_back(coords);
 }
 
 void ZoneGraphicsInfo::addHex (HexGraphicsInfo* hex) {
   for (int i = 0; i < NoVertex; ++i) {
     gridAdd(hex->getCoords((Vertices) i));
   }
-  recalc(); 
+  recalc();
 }
 
 void ZoneGraphicsInfo::addLine (LineGraphicsInfo* lin) {
   for (int i = 0; i < 4; ++i) {
     gridAdd(lin->getCorner(i));
   }
-  recalc(); 
+  recalc();
 }
 
 void ZoneGraphicsInfo::addVertex (VertexGraphicsInfo* vex) {
   for (int i = 0; i < 3; ++i) {
     gridAdd(vex->getCorner(i));
   }
-  recalc(); 
+  recalc();
 }
 
 int ZoneGraphicsInfo::badLine (triplet one, triplet two) {
@@ -102,7 +96,7 @@ int ZoneGraphicsInfo::badLine (triplet one, triplet two) {
     current.y() = 0.01 * (i*two.y() + (100 - i) * one.y());
     current.z() = 0.01 * (i*two.z() + (100 - i) * one.z());
 
-    // Greater than is correct because larger heights are negative. 
+    // Greater than is correct because larger heights are negative.
     if (current.z() - zOffset*0.33 > calcHeight(current.x(), current.y())) return i;
   }
 
@@ -116,7 +110,7 @@ void ZoneGraphicsInfo::calcGrid () {
       // Remove empty end object.
       if (0 == (*i).size()) {
 	(*zone)->grid.pop_back();
-	break; 
+	break;
       }
 
       vector<triplet> result;
@@ -128,11 +122,11 @@ void ZoneGraphicsInfo::calcGrid () {
       result.push_back((*i).front());
 
       for (unsigned int trip = 1; trip < (*i).size(); ++trip) {
-	int halves = 0; 
+	int halves = 0;
 	loopStart:
 	if (halves++ > 101) {
 	  //Logger::logStream(DebugStartup) << "Reach failure point\n";
-	  break; 
+	  break;
 	}
 	triplet workingPoint = (*i)[trip];
 	bool hadToHalve = false;
@@ -156,20 +150,20 @@ void ZoneGraphicsInfo::calcGrid () {
 }
 
 double ZoneGraphicsInfo::calcHeight (double x, double y) {
-  // Get the height at point (x, y). 
+  // Get the height at point (x, y).
   x -= minX;
   y -= minY;
   x /= width;
   y /= height;
   x *= GraphicsInfo::zoneSize;
   y *= GraphicsInfo::zoneSize;
-  int xval = min((int) floor(x), GraphicsInfo::zoneSize-1); // Deal with roundoff error at edges. 
-  int yval = min((int) floor(y), GraphicsInfo::zoneSize-1);  
+  int xval = min((int) floor(x), GraphicsInfo::zoneSize-1); // Deal with roundoff error at edges.
+  int yval = min((int) floor(y), GraphicsInfo::zoneSize-1);
   return heightMap[xval][yval];
 }
 
 int GraphicsInfo::getHeight (int x, int y) {
-  return heightMap ? heightMap[y*(2 + 3*zoneSide) + x] : 0; 
+  return heightMap ? heightMap[y*(2 + 3*zoneSide) + x] : 0;
 }
 
 void GraphicsInfo::getHeightMapCoords (int& hexX, int& hexY, Vertices dir) {
@@ -197,11 +191,11 @@ void GraphicsInfo::getHeightMapCoords (int& hexX, int& hexY, Vertices dir) {
   case LeftUp:
     realX--;
     realY--;
-    break; 
+    break;
   }
 
   hexX = realX;
-  hexY = realY; 
+  hexY = realY;
 }
 
 GraphicsInfo::GraphicsInfo () {}
@@ -224,14 +218,14 @@ void TextInfo::clearRecentEvents () {
   accumulate = false;
 }
 
-HexGraphicsInfo::HexGraphicsInfo  (Hex* h) 
+HexGraphicsInfo::HexGraphicsInfo  (Hex* h)
   : GraphicsInfo()
   , GBRIDGE(Hex)(h, this)
   , Iterable<HexGraphicsInfo>(this)
   , terrain(h->getType())
   , farmInfo(0)
-{ 
-  pair<int, int> hpos = h->getPos(); 
+{
+  pair<int, int> hpos = h->getPos();
   position.x() = (1.5 * xIncrement + xSeparation) * hpos.first;
   position.y() = (yIncrement + ySeparation) * (2*hpos.second + (hpos.first >= 0 ? hpos.first%2 : -hpos.first%2));
   int hexX = hpos.first;
@@ -241,13 +235,13 @@ HexGraphicsInfo::HexGraphicsInfo  (Hex* h)
 
   // Make room for leftmost and upmost vertices and lines
   position.x()  += xSeparation;
-  position.y() += 2*ySeparation; 
+  position.y() += 2*ySeparation;
 
-  // Minus is due to difference in Qt and OpenGL coordinate systems. 
-  // Also affects the signs in the y increments in the switch. 
+  // Minus is due to difference in Qt and OpenGL coordinate systems.
+  // Also affects the signs in the y increments in the switch.
   cornerRight = position;
   cornerRight.x() += xIncrement;
-  hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, Right); 
+  hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, Right);
   cornerRight.z() = zOffset + zSeparation * getHeight(hexX, hexY);
 
   cornerLeft = position;
@@ -260,7 +254,7 @@ HexGraphicsInfo::HexGraphicsInfo  (Hex* h)
   cornerLeftUp.y() -= yIncrement;
   hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, LeftUp);
   cornerLeftUp.z() = zOffset + zSeparation * getHeight(hexX, hexY);
-  
+
   cornerRightUp = position;
   cornerRightUp.x() += 0.5*xIncrement;
   cornerRightUp.y() -= yIncrement;
@@ -276,7 +270,7 @@ HexGraphicsInfo::HexGraphicsInfo  (Hex* h)
   cornerLeftDown = position;
   cornerLeftDown.x() -= 0.5*xIncrement;
   cornerLeftDown.y() += yIncrement;
-  hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, LeftDown); 
+  hexX = hpos.first; hexY = hpos.second; getHeightMapCoords(hexX, hexY, LeftDown);
   cornerLeftDown.z() = zOffset + zSeparation * getHeight(hexX, hexY);
 
   ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getByIndex(0);
@@ -288,7 +282,7 @@ void HexGraphicsInfo::describe (QTextStream& str) const {
   str << "Hex " << myHex->getName().c_str() << "\n"
       << "  Owner      : " << (myHex->getOwner() ? myHex->getOwner()->getDisplayName().c_str() : "None") << "\n";
   Farmland* farm = myHex->getFarm();
-  Village* village = myHex->getVillage();  
+  Village* village = myHex->getVillage();
   if (village) {
     //str << "Devastation   : " << myHex->getDevastation() << "\n"
     str << "  Population  : " << village->getTotalPopulation() << "\n"
@@ -335,72 +329,72 @@ bool HexGraphicsInfo::isInside (double x, double y) const {
   int intersections = 0;
   triplet center = getCoords(NoVertex);
   triplet radius = getCoords(LeftUp);
-  if (pow(x - center.x(), 2) + pow(y - center.y(), 2) > pow(radius.x() - center.x(), 2) + pow(radius.y() - center.y(), 2)) return false; 
+  if (pow(x - center.x(), 2) + pow(y - center.y(), 2) > pow(radius.x() - center.x(), 2) + pow(radius.y() - center.y(), 2)) return false;
   for (int i = RightUp; i < NoVertex; ++i) {
     triplet coords1 = getCoords((Vertices) (i-1));
-    triplet coords2 = getCoords((Vertices) i); 
-    
-    if (!intersect(x, y, x+10, y+10, coords1.x(), coords1.y(), coords2.x(), coords2.y())) continue; 
+    triplet coords2 = getCoords((Vertices) i);
+
+    if (!intersect(x, y, x+10, y+10, coords1.x(), coords1.y(), coords2.x(), coords2.y())) continue;
     intersections++;
   }
-  triplet coords1 = getCoords(LeftUp); 
-  triplet coords2 = getCoords(Left); 
+  triplet coords1 = getCoords(LeftUp);
+  triplet coords2 = getCoords(Left);
   if (intersect(x, y, x+10, y+10, coords1.x(), coords1.y(), coords2.x(), coords2.y())) intersections++;
   if (0 == intersections % 2) return false;
   return true;
 }
 
 void HexGraphicsInfo::generateShapes () {
-  ZoneGraphicsInfo* zone = ZoneGraphicsInfo::getByIndex(0); 
-  Vertices villageCorner = convertToVertex(rand()); 
-  
+  ZoneGraphicsInfo* zone = ZoneGraphicsInfo::getByIndex(0);
+  Vertices villageCorner = convertToVertex(rand());
+
   FieldShape exercis;
   FieldShape pasture;
   FieldShape village;
 
   triplet zer = getCoords(villageCorner-2);
-  triplet one = getCoords(villageCorner-1);  
-  triplet two = getCoords(villageCorner);  
+  triplet one = getCoords(villageCorner-1);
+  triplet two = getCoords(villageCorner);
   triplet thr = getCoords(villageCorner+1);
   triplet fou = getCoords(villageCorner+2);
-  triplet fiv = getCoords(villageCorner+3);  
+  triplet fiv = getCoords(villageCorner+3);
   triplet direction = (fou - thr);
 
-  
+
   exercis.push_back(thr);
   exercis.push_back(thr + direction/3.0);
   direction = (two - thr);
   exercis.push_back(exercis.back() + direction*(5.0/6));
   exercis.push_back(thr + direction*(5.0/6));
 
-  
+
   direction = (fiv-zer);
   triplet tmp = zer + direction/3.0;
   pasture.push_back(tmp);
-  pasture.push_back(zer);  
+  pasture.push_back(zer);
   direction = (one - zer);
-  pasture.push_back(zer + direction*(5.0/6));  
+  pasture.push_back(zer + direction*(5.0/6));
   pasture.push_back(tmp + direction*(5.0/6));
-  
+
   village.push_back(two);
   direction = (fou - two);
   village.push_back(two + direction/6.0);
   village.push_back(one + direction/6.0);
-  village.push_back(one); 
-   
+  village.push_back(one);
+
   biggerPatches.push_back(exercis);
   biggerPatches.push_back(pasture);
-  biggerPatches.push_back(village); 
-  
+  biggerPatches.push_back(village);
+
   triplet updex = two - thr;
   triplet upsin = one - zer;
   for (int yfield = 0; yfield < 6; ++yfield) {
     triplet sin1  = exercis[1];
-    triplet sin2  = exercis[1];    
+    triplet sin2  = exercis[1];
     triplet dex1 = tmp;
-    triplet dex2 = tmp;    
+    triplet dex2 = tmp;
     sin1 += updex * ((0.0 + yfield) / 6);
-    sin2 += updex * ((1.0 + yfield) / 6);    
+    sin2 += updex * ((1.0 + yfield) / 6);
     dex1 += upsin * ((0.0 + yfield) / 6);
     dex2 += upsin * ((1.0 + yfield) / 6);
 
@@ -411,7 +405,7 @@ void HexGraphicsInfo::generateShapes () {
     right2 /= divisions;
 
     for (int i = 0; i < divisions; ++i) {
-      FieldShape field;          
+      FieldShape field;
       field.push_back(sin1);
       field.push_back(sin1 + right1);
       field.push_back(sin2 + right2);
@@ -421,15 +415,15 @@ void HexGraphicsInfo::generateShapes () {
       sin2 += right2;
 
       for (pit pt = field.begin(); pt != field.end(); ++pt) {
-	(*pt).z() = zone->calcHeight((*pt).x(), (*pt).y()) + zOffset; 
+	(*pt).z() = zone->calcHeight((*pt).x(), (*pt).y()) + zOffset;
       }
-      
+
       spritePatches.push_back(field);
     }
   }
 
   // Now trees.
-  DieRoll deesix(1, 3);   
+  DieRoll deesix(1, 3);
   for (vector<FieldShape>::iterator field = spritePatches.begin(); field != spritePatches.end(); ++field) {
     // How many to generate?
     int numTrees = 0;
@@ -442,13 +436,13 @@ void HexGraphicsInfo::generateShapes () {
     case Plain: numTrees += deesix.roll() - 1;
       break;
     }
-    treesPerField.push_back(numTrees); 
-    
+    treesPerField.push_back(numTrees);
+
     double minX = min(min((*field)[0].x(), (*field)[1].x()), min((*field)[2].x(), (*field)[3].x()));
     double maxX = max(max((*field)[0].x(), (*field)[1].x()), max((*field)[2].x(), (*field)[3].x()));
     double minY = min(min((*field)[0].y(), (*field)[1].y()), min((*field)[2].y(), (*field)[3].y()));
     double maxY = max(max((*field)[0].y(), (*field)[1].y()), max((*field)[2].y(), (*field)[3].y()));
-    
+
     for (int i = 0; i < numTrees; ++i) {
       triplet position(1e25, 1e25, 0);
 
@@ -475,7 +469,7 @@ double HexGraphicsInfo::patchArea () const {
   }
   //for (vector<FieldShape>::const_iterator f = biggerPatches.begin(); f != biggerPatches.end(); ++f) {
   //ret += area(*f);
-  //}  
+  //}
   return ret;
 }
 
@@ -528,36 +522,13 @@ void HexGraphicsInfo::setFarm (FarmGraphicsInfo* f) {
 void HexGraphicsInfo::setVillage (VillageGraphicsInfo* f) {
   if (0 == biggerPatches.size()) generateShapes();
   villageInfo = f;
-  villageInfo->generateShapes(this); 
+  villageInfo->generateShapes(this);
 }
-
-CastleGraphicsInfo::CastleGraphicsInfo (Castle* castle)
-  : GraphicsInfo()
-  , GBRIDGE(Castle)(castle, this)
-{
-  const LineGraphicsInfo* lgi = castle->getLocation()->getGraphicsInfo();
-  const HexGraphicsInfo* hgi = castle->getSupport()->getGraphicsInfo();
-  if ((!lgi) || (!hgi)) return; // Should only happen in unit tests.
-  position = lgi->getPosition();
-  position += hgi->getPosition() * 0.3;
-  position /= 1.3;
-  position.z() = lgi->getPosition().z();
-  angle = lgi->getAngle();
-  normal = lgi->getNormal();
-}
-
-CastleGraphicsInfo::~CastleGraphicsInfo () {}
-
-MarketGraphicsInfo::MarketGraphicsInfo (Market* market)
-  : TBRIDGE(Market)(market)
-{}
-
-MarketGraphicsInfo::~MarketGraphicsInfo () {}
 
 void LineGraphicsInfo::describe (QTextStream& str) const {
   Line* myLine = getGameObject();
   str << "Line: " << myLine->getName().c_str() << "\n";
-  Castle* castle = myLine->getCastle();  
+  Castle* castle = myLine->getCastle();
   if (castle) {
     str << "Castle: \n"
 	<< "  Owner     : " << castle->getOwner()->getDisplayName().c_str() << "\n"
@@ -579,7 +550,7 @@ triplet LineGraphicsInfo::getCorner (int which) const {
   return corner1;
 }
 
-LineGraphicsInfo::LineGraphicsInfo (Line* l, Vertices dir) 
+LineGraphicsInfo::LineGraphicsInfo (Line* l, Vertices dir)
   : GraphicsInfo()
   , TextInfo()
   , GBRIDGE(Line)(l, this)
@@ -589,8 +560,8 @@ LineGraphicsInfo::LineGraphicsInfo (Line* l, Vertices dir)
   const VertexGraphicsInfo* vex1 = myLine->oneEnd()->getGraphicsInfo();
   const VertexGraphicsInfo* vex2 = myLine->twoEnd()->getGraphicsInfo();
   //const HexGraphicsInfo* hex     = myLine->oneHex()->getGraphicsInfo();
-  
-  // Angles are reversed due to Qt/OpenGL mismatch. 
+
+  // Angles are reversed due to Qt/OpenGL mismatch.
   switch (dir) {
   case Right     :
     angle = 0;
@@ -604,28 +575,28 @@ LineGraphicsInfo::LineGraphicsInfo (Line* l, Vertices dir)
     corner1 = vex1->getCorner(0);
     corner2 = vex1->getCorner(2);
     corner3 = vex2->getCorner(1);
-    corner4 = vex2->getCorner(0);    
+    corner4 = vex2->getCorner(0);
     break;
   case RightUp   :
     angle = -60;
     corner1 = vex2->getCorner(2);
     corner2 = vex2->getCorner(1);
     corner3 = vex1->getCorner(1);
-    corner4 = vex1->getCorner(0);    
+    corner4 = vex1->getCorner(0);
     break;
   case LeftUp    :
     angle = -120;
     corner1 = vex2->getCorner(2);
     corner2 = vex2->getCorner(1);
     corner3 = vex1->getCorner(0);
-    corner4 = vex1->getCorner(2);    
+    corner4 = vex1->getCorner(2);
     break;
   case RightDown :
     angle = 60;
     corner1 = vex1->getCorner(2);
     corner2 = vex1->getCorner(1);
     corner3 = vex2->getCorner(0);
-    corner4 = vex2->getCorner(2);    
+    corner4 = vex2->getCorner(2);
     break;
   default:
   case LeftDown  :
@@ -633,16 +604,16 @@ LineGraphicsInfo::LineGraphicsInfo (Line* l, Vertices dir)
     corner1 = vex1->getCorner(2);
     corner2 = vex1->getCorner(1);
     corner3 = vex2->getCorner(1);
-    corner4 = vex2->getCorner(0);    
+    corner4 = vex2->getCorner(0);
     break;
   }
 
   position  = corner1;
   position += corner2;
   position += corner3;
-  position += corner4;  
-  position *= 0.25; 
-  
+  position += corner4;
+  position *= 0.25;
+
   // Normal is vector 1-to-4 cross vector 1-to-2, this gives upwards normal.
   triplet vec1 = corner4;
   vec1 -= corner1;
@@ -654,26 +625,26 @@ LineGraphicsInfo::LineGraphicsInfo (Line* l, Vertices dir)
   ZoneGraphicsInfo::getByIndex(0)->addLine(this);
 }
 
-bool LineGraphicsInfo::isInside (double x, double y) const { 
+bool LineGraphicsInfo::isInside (double x, double y) const {
   if (x < min(min(corner1.x(), corner2.x()), min(corner3.x(), corner4.x()))) return false;
   if (x > max(max(corner1.x(), corner2.x()), max(corner3.x(), corner4.x()))) return false;
   if (y < min(min(corner1.y(), corner2.y()), min(corner3.y(), corner4.y()))) return false;
-  if (y > max(max(corner1.y(), corner2.y()), max(corner3.y(), corner4.y()))) return false;    
-  
+  if (y > max(max(corner1.y(), corner2.y()), max(corner3.y(), corner4.y()))) return false;
+
   int intersections = 0;
   if (intersect(x, y, x+10, y+10, corner1.x(), corner1.y(), corner2.x(), corner2.y())) {intersections++;}
   if (intersect(x, y, x+10, y+10, corner2.x(), corner2.y(), corner3.x(), corner3.y())) {intersections++;}
   if (intersect(x, y, x+10, y+10, corner3.x(), corner3.y(), corner4.x(), corner4.y())) {intersections++;}
   if (intersect(x, y, x+10, y+10, corner4.x(), corner4.y(), corner1.x(), corner1.y())) {intersections++;}
   if (0 == intersections % 2) return false;
-  return true; 
+  return true;
 }
 
 void LineGraphicsInfo::endTurn () {
   maxFlow = 1;
   maxLoss = 1;
   for (Iterator l = start(); l != final(); ++l) {
-    (*l)->flow = (*l)->loss = 0; 
+    (*l)->flow = (*l)->loss = 0;
   }
 }
 
@@ -685,25 +656,25 @@ VertexGraphicsInfo::VertexGraphicsInfo (Vertex* v, HexGraphicsInfo const* hex, V
 {
   corner1 = hex->getCoords(dir);
   corner2 = corner1;
-  corner3 = corner1; 
+  corner3 = corner1;
 
-  pair<int, int> hexPos = hex->getGameObject()->getPos(); 
+  pair<int, int> hexPos = hex->getGameObject()->getPos();
   int hexX = hexPos.first;
   int hexY = hexPos.second;
-  getHeightMapCoords(hexX, hexY, dir); 
-  
+  getHeightMapCoords(hexX, hexY, dir);
+
   // Notice that negative y direction is north on the map, corresponding to 'Up' directions.
-  // corner1 should always have the lowest y coordinate. 
+  // corner1 should always have the lowest y coordinate.
   switch (dir) {
   case Right:
     corner1.x()  += xSeparation;
     corner2.x()  += xSeparation;
     corner1.y()  -= ySeparation;
     corner2.y()  += ySeparation;
-    // Counter-intuitive, happens because the hex grid is skewed relative to the square grid 
-    corner1.z() = zOffset + zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -2 : 1)); 
-    corner2.z() = zOffset + zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -1 : 2)); 
-    corner3.z() = zOffset + zSeparation * getHeight(hexX, hexY);    
+    // Counter-intuitive, happens because the hex grid is skewed relative to the square grid
+    corner1.z() = zOffset + zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -2 : 1));
+    corner2.z() = zOffset + zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -1 : 2));
+    corner3.z() = zOffset + zSeparation * getHeight(hexX, hexY);
     break;
   case Left:
     corner1.x()  -= xSeparation;
@@ -714,25 +685,25 @@ VertexGraphicsInfo::VertexGraphicsInfo (Vertex* v, HexGraphicsInfo const* hex, V
     corner2.z() = zOffset + zSeparation * getHeight(hexX, hexY);
     corner3.z() = zOffset + zSeparation * getHeight(hexX-1, hexY + (0 == hexPos.first%2 ? -1 : 2));
     break;
-    
+
   case RightUp:
     corner1.y()  -= 2*ySeparation;
-    corner2.x()   += xSeparation; 
+    corner2.x()   += xSeparation;
     corner2.y()  -= ySeparation;
     corner1.z() = zOffset + zSeparation * getHeight(hexX, hexY-1);
     corner2.z() = zOffset + zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -2 : 1));
-    corner3.z() = zOffset + zSeparation * getHeight(hexX, hexY); 
+    corner3.z() = zOffset + zSeparation * getHeight(hexX, hexY);
     break;
-    
+
   case RightDown:
     corner2.x()   += xSeparation;
     corner2.y()  += ySeparation;
     corner3.y()  += 2*ySeparation;
     corner1.z() = zOffset + zSeparation * getHeight(hexX, hexY);
-    corner2.z() = zOffset + zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -1 : 2)); 
+    corner2.z() = zOffset + zSeparation * getHeight(hexX+1, hexY + (0 == hexPos.first%2 ? -1 : 2));
     corner3.z() = zOffset + zSeparation * getHeight(hexX, hexY+1);
     break;
-    
+
   case LeftUp:
     corner3.x()   -= xSeparation;
     corner3.y()  -= ySeparation;
@@ -741,7 +712,7 @@ VertexGraphicsInfo::VertexGraphicsInfo (Vertex* v, HexGraphicsInfo const* hex, V
     corner2.z() = zOffset + zSeparation * getHeight(hexX, hexY);
     corner3.z() = zOffset + zSeparation * getHeight(hexX-1, hexY + (0 == hexPos.first%2 ? -2 : 1));
     break;
-    
+
   case LeftDown:
     corner2.y()  += 2*ySeparation;
     corner3.x()  -= xSeparation;
@@ -751,17 +722,17 @@ VertexGraphicsInfo::VertexGraphicsInfo (Vertex* v, HexGraphicsInfo const* hex, V
     corner3.z() = zOffset + zSeparation * getHeight(hexX-1, hexY + (0 == hexPos.first%2 ? -1 : 2));
     break;
 
-  default: break; 
+  default: break;
   }
 
-  // Position is centroid. 
-  position = corner1; 
+  // Position is centroid.
+  position = corner1;
   position.x() += corner2.x();
   position.y() += corner2.y();
-  position.z() += corner2.z();  
+  position.z() += corner2.z();
   position.x() += corner3.x();
   position.y() += corner3.y();
-  position.z() += corner3.z();  
+  position.z() += corner3.z();
   position.x() *= 0.333;
   position.y() *= 0.333;
   position.z() *= 0.333;
@@ -774,7 +745,7 @@ void VertexGraphicsInfo::describe (QTextStream& str) const {
   str << "Vertex: " << myVertex->getName().c_str() << "\n";
   MilUnit* unit = myVertex->getUnit(0);
   if (unit) {
-    unit->getGraphicsInfo()->describe(str); 
+    unit->getGraphicsInfo()->describe(str);
   }
 }
 
@@ -786,7 +757,7 @@ bool VertexGraphicsInfo::isInside (double x, double y) const {
   int intersections = 0;
   if (intersect(x, y, x+10, y+10, corner1.x(), corner1.y(), corner2.x(), corner2.y())) intersections++;
   if (intersect(x, y, x+10, y+10, corner1.x(), corner1.y(), corner3.x(), corner3.y())) intersections++;
-  if (intersect(x, y, x+10, y+10, corner3.x(), corner3.y(), corner2.x(), corner2.y())) intersections++;    
+  if (intersect(x, y, x+10, y+10, corner3.x(), corner3.y(), corner2.x(), corner2.y())) intersections++;
   if (0 == intersections % 2) return false;
   return true;
 }
@@ -803,7 +774,7 @@ string MilUnitGraphicsInfo::strengthString (string indent) const {
     if (1 > num) continue;
     buffer << indent << (*m)->getName().c_str() << ": " << num << "\n";
   }
-  return buffer.str(); 
+  return buffer.str();
 }
 
 void MilUnitGraphicsInfo::describe (QTextStream& str) const {
@@ -834,37 +805,37 @@ void MilUnitGraphicsInfo::updateSprites (MilStrength* dat) {
   // Looking for up to nine sprites, but a minimum of one.
   // Number of sprites is given by percentage of the largest military unit in the world.
   double total = dat->getTotalStrength();
-  int numSprites = (int) floor(9*total / MilStrength::greatestStrength + 0.5); 
+  int numSprites = (int) floor(9*total / MilStrength::greatestStrength + 0.5);
 
   // Until required number is reached: Strongest unit gets a sprite.
   // Then give sprites to other units in order, skipping those whose
   // strength is less than M/(N+1), where M is strongest unit's strength
-  // and N is number of sprites of strongest unit. 
-  
+  // and N is number of sprites of strongest unit.
+
   spriteIndices.clear();
-  formation.clear(); 
+  formation.clear();
   static vector<SortHelper*> forces;
   if (0 == forces.size()) for (int i = 0; i < 9; ++i) forces.push_back(new SortHelper());
-  for (int i = 0; i < 9; ++i) forces[i]->clear(); 
+  for (int i = 0; i < 9; ++i) forces[i]->clear();
 
-  int types = 0; 
+  int types = 0;
   for (map<MilUnitTemplate*, int>::iterator m = indexMap.begin(); m != indexMap.end(); ++m) {
-    if (indexMap.find((*m).first) == indexMap.end()) continue; // Disregard spriteless unit types. 
+    if (indexMap.find((*m).first) == indexMap.end()) continue; // Disregard spriteless unit types.
     forces[types]->unittype = (*m).first;
     forces[types]->strength = dat->getUnitTypeAmount(forces[types]->unittype);
-    types++; 
+    types++;
   }
-  // Greater than for descending order! 
+  // Greater than for descending order!
   sort(forces.begin(), forces.end(), deref<SortHelper>(member_gt(&SortHelper::strength)));
 
   if (0 == types) {
     // No sprites for these units - use a default
     spriteIndices.push_back((*(indexMap.begin())).second);
-    formation.push_back(doublet(0, 0)); 
+    formation.push_back(doublet(0, 0));
     return;
   }
 
-  int firstSprites = 1; // Accounts for +1 in M/(N+1). 
+  int firstSprites = 1; // Accounts for +1 in M/(N+1).
   while ((int) spriteIndices.size() < numSprites) {
     spriteIndices.push_back(indexMap[forces[0]->unittype]);
     firstSprites++;
@@ -882,16 +853,16 @@ void MilUnitGraphicsInfo::updateSprites (MilStrength* dat) {
 }
 
 double area (GraphicsInfo::FieldShape const& field) {
-  double area = 0; 
+  double area = 0;
   for (unsigned int i = 1; i < field.size(); ++i) {
     area += field[i-1].x() * field[i].y();
     area -= field[i-1].y() * field[i].x();
   }
 
   area += field.back().x() * field[0].y();
-  area -= field.back().y() * field[0].x();  
+  area -= field.back().y() * field[0].x();
 
-  return 0.5*abs(area); // Negative for clockwise polygon, but I don't care about that. 
+  return 0.5*abs(area); // Negative for clockwise polygon, but I don't care about that.
 }
 
 bool intersect (triplet const& pt1, triplet const& pt2, triplet const& pt3, triplet const& pt4) {
@@ -902,7 +873,7 @@ bool intersect (triplet const& pt1, triplet const& pt2, triplet const& pt3, trip
   if (max(pt1.x(), pt2.x()) < min(pt3.x(), pt4.x())) return false;
   if (max(pt3.y(), pt4.y()) < min(pt1.y(), pt2.y())) return false;
   if (max(pt1.y(), pt2.y()) < min(pt3.y(), pt4.y())) return false;
-  
+
   // Check whether parallel
   double det = (pt1.x() - pt2.x())*(pt3.y() - pt4.y()) - (pt1.y() - pt2.y())*(pt3.x() - pt4.x());
   if (abs(det) < 1e-6) return false; // Strictly speaking zero, but close enough
@@ -914,21 +885,21 @@ bool intersect (triplet const& pt1, triplet const& pt2, triplet const& pt3, trip
 
   // Check that x is within bounding box
   if (xintersect < min(min(pt1.x(), pt2.x()), min(pt3.x(), pt4.x()))) return false;
-  if (xintersect > max(max(pt1.x(), pt2.x()), max(pt3.x(), pt4.x()))) return false;  
-    
+  if (xintersect > max(max(pt1.x(), pt2.x()), max(pt3.x(), pt4.x()))) return false;
+
   double yintersect = (pt1.x()*pt2.y() - pt1.y()*pt2.x())*(pt3.y() - pt4.y());
   yintersect       -= (pt3.x()*pt4.y() - pt3.y()*pt4.x())*(pt1.y() - pt2.y());
   yintersect       *= det;
   if (yintersect < min(min(pt1.y(), pt2.y()), min(pt3.y(), pt4.y()))) return false;
-  if (yintersect > max(max(pt1.y(), pt2.y()), max(pt3.y(), pt4.y()))) return false;  
+  if (yintersect > max(max(pt1.y(), pt2.y()), max(pt3.y(), pt4.y()))) return false;
 
-  return true; 
+  return true;
 }
 
 bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape const& field2) {
-  // Returns true if the polygons overlap. Overlap test is to check 
+  // Returns true if the polygons overlap. Overlap test is to check
   // whether any lines intersect. Notice this is O(n^2), not nice.
-  
+
   for (unsigned int pt1 = 1; pt1 < field1.size(); ++pt1) {
     triplet one = field1[pt1-1];
     triplet two = field1[pt1];
@@ -956,103 +927,8 @@ bool overlaps (GraphicsInfo::FieldShape const& field1, GraphicsInfo::FieldShape 
 
   triplet thr = field2[field2.size()-2];
   triplet fou = field2[field2.size()-1];
-  if (intersect(one, two, thr, fou)) return true;  
-  
-  return false; 
+  if (intersect(one, two, thr, fou)) return true;
+
+  return false;
 }
 
-FarmGraphicsInfo::FarmGraphicsInfo (Farmland* f)
-  : GraphicsInfo()
-  , TextInfo()
-  , GraphicsBridge<Farmland, FarmGraphicsInfo>(f, this)
-  , SpriteContainer()
-  , Iterable<FarmGraphicsInfo>(this)
-{}
-
-FarmGraphicsInfo::FieldInfo::FieldInfo (FieldShape f) 
-  : shape(f)
-  , area(-1)
-  , status(*FieldStatus::start())
-{}
-
-int FarmGraphicsInfo::FieldInfo::getIndex () const {
-  return textureIndices[*status];
-}
-
-double FarmGraphicsInfo::fieldArea () {
-  double ret = 0;
-  for (fit f = fields.begin(); f != fields.end(); ++f) {
-    if (0 > (*f).area) (*f).area = area((*f).shape)*5000*1.25;
-    // Multiplying numbers on the assumption that 5000 is about the maximum number of
-    // fields, and there's room for about a unit of graphics
-    // in a Hex. The 1.25 is a fudge factor based on visual feedback.
-    // Increase it to make fields sparser, decrease for denser.     
-    ret += (*f).area;
-  }
-  return ret;
-}
-
-void FarmGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
-  double currentArea = 0;
-  while ((currentArea = fieldArea()) < getGameObject()->getTotalFields()) {
-    FieldShape testField = hex->getPatch(); 
-    fields.push_back(FieldInfo(testField));
-  }
-}
-
-void VillageGraphicsInfo::generateShapes (HexGraphicsInfo* hex) {
-  // Reverse order of generation
-  village = hex->getPatch(true);  
-  pasture = hex->getPatch(true);  
-  exercis = hex->getPatch(true);
-}
-
-
-int VillageGraphicsInfo::getHouses () const {
-  return 1 + (int) floor(getGameObject()->getFractionOfMaxPop() * 19 + 0.5); 
-}
-
-void FarmGraphicsInfo::updateFieldStatus () {
-  for (Iterator info = Iterable<FarmGraphicsInfo>::start(); info != Iterable<FarmGraphicsInfo>::final(); ++info) {
-    Farmland* currFarm = (*info)->getGameObject();
-    // Status of fields. 
-    double totalFieldArea = 1.0 / currFarm->getTotalFields();
-    double totalGraphArea = 1.0 / (*info)->fieldArea();
-    fit currentField = (*info)->start(); 
-    for (FieldStatus::Iter fs = FieldStatus::start(); fs != FieldStatus::final(); ++fs) {
-      double percentage = currFarm->getFieldStatus(*fs);
-      percentage *= totalFieldArea;
-      double assigned = 0.005; // Ignore less than half a percent.
-      while (assigned < percentage) {
-	assigned += (*currentField).area * totalGraphArea;
-	(*currentField).status = (*fs);
-	++currentField;
-	if (currentField == (*info)->final()) break;
-      }
-      if (currentField == (*info)->final()) break;      
-    }
-  }
-}
-
-VillageGraphicsInfo::VillageGraphicsInfo (Village* f)
-  : GraphicsInfo()
-  , TextInfo()
-  , GBRIDGE(Village)(f, this)
-  , SpriteContainer()
-  , Iterable<VillageGraphicsInfo>(this)
-{}
-
-VillageGraphicsInfo::~VillageGraphicsInfo () {}
-
-void VillageGraphicsInfo::updateVillageStatus () {
-  for (Iterator info = Iterable<VillageGraphicsInfo>::start(); info != Iterable<VillageGraphicsInfo>::final(); ++info) {
-    (*info)->spriteIndices.clear();
-    (*info)->formation.clear();
-    //int numCows = min(maxCows, (int) floor((*info)->getGameObject()->getAvailableSupplies() / suppliesPerCow));
-    unsigned int numCows = 1;
-    for (unsigned int i = 0; i < numCows; ++i) {
-      (*info)->spriteIndices.push_back(supplySpriteIndex);
-      if (i < cowPositions.size()) (*info)->formation.push_back(cowPositions[i]);
-    }
-  }
-}

@@ -10,7 +10,8 @@
 #include "Logger.hh" 
 #include "Object.hh"
 #include "ThreeDSprite.hh" 
-#include "GraphicsInfo.hh" 
+#include "GraphicsInfo.hh"
+#include "BuildingGraphics.hh"
 #include "StaticInitialiser.hh" 
 
 using namespace std; 
