@@ -7,16 +7,18 @@
 #include <QString>
 #include <string>
 #include "Mirrorable.hh"
-#include "GraphicsInfo.hh"
 #include "Building.hh"
 #include "UtilityFunctions.hh"
 #include "Directions.hh"
+#include "GeoGraphics.hh"
 
 class MilUnit;
 class MilUnitTemplate;
 class Player;
 class Vertex;
 class Line;
+
+enum TerrainType {Mountain = 0, Hill, Plain, Wooded, Ocean, NoTerrain}; 
 
 class Hex : public Mirrorable<Hex>, public Named<Hex>, public Iterable<Hex> {
   friend class Mirrorable<Hex>;

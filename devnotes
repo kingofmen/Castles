@@ -43,6 +43,7 @@ Next gameplay iteration (thoughts, not all to be implemented):
      * Disentangle GraphicsInfo proper from EventList stuff (check)
      * Make graphics classes Iterable (check)
      * Split up humongous GraphicsInfo file
+     * Separate GraphicsInfo concerns
    - Restore clearing of land
    - Normalisation
    - Decay of goods

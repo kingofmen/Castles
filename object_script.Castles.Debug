@@ -7,6 +7,7 @@ INPUT(
 ./debug\CastleWindow.o
 ./debug\Directions.o
 ./debug\EconActor.o
+./debug\GeoGraphics.o
 ./debug\glextensions.o
 ./debug\GraphicsInfo.o
 ./debug\Hex.o
