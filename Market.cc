@@ -1,7 +1,6 @@
 #include "Market.hh"
 #include "boost/range/algorithm/remove_if.hpp"
 #include "boost/bind.hpp"
-#include "GraphicsInfo.hh"
 
 void MarketContract::clear () {
   cashPaid = 0;

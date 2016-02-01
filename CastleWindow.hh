@@ -8,7 +8,7 @@
 #include "Logger.hh"
 #include "Action.hh"
 #include "Hex.hh"
-#include "GraphicsInfo.hh"
+#include "GraphicsBridge.hh"
 #include <iterator>
 #include <vector>
 #include <algorithm>

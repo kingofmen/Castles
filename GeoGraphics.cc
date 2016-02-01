@@ -4,6 +4,7 @@
 #include "Hex.hh"
 #include "MilUnit.hh"
 #include "Player.hh"
+#include "UnitGraphics.hh"
 
 double LineGraphicsInfo::maxFlow = 1;
 double LineGraphicsInfo::maxLoss = 1;

@@ -8,7 +8,8 @@
 #include "Logger.hh"
 #include <cassert>
 #include <cstdio>
-#include <algorithm> 
+#include <algorithm>
+#include "UnitGraphics.hh"
 #include "UtilityFunctions.hh" 
 
 char stringbuffer[1000]; 

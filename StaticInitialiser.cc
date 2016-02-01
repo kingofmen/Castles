@@ -1,23 +1,26 @@
 #include "StaticInitialiser.hh"
-#include "BuildingGraphics.hh"
-#include "Parser.hh"
-#include "Player.hh" 
-#include "Building.hh"
-#include "Market.hh"
-#include "MilUnit.hh" 
-#include "Action.hh"
-#include "EconActor.hh" 
-#include "UtilityFunctions.hh" 
-#include "GraphicsInfo.hh" 
-#include <QGLFramebufferObject>
-#include "CastleWindow.hh" 
-#include <QGLShader>
-#include <QGLShaderProgram>
+
+#include <fstream>
 #include "glextensions.h"
 #include <GL/glu.h>
+#include <QGLFramebufferObject>
+#include <QGLShader>
+#include <QGLShaderProgram>
+
+#include "Action.hh"
+#include "Building.hh"
+#include "BuildingGraphics.hh"
 #include "Calendar.hh"
+#include "CastleWindow.hh"
 #include "Directions.hh" 
-#include <fstream>
+#include "EconActor.hh" 
+#include "Market.hh"
+#include "MilUnit.hh" 
+#include "Parser.hh"
+#include "Player.hh"
+#include "PlayerGraphics.hh"
+#include "UnitGraphics.hh"
+#include "UtilityFunctions.hh" 
 
 int StaticInitialiser::defaultUnitPriority = 4; 
 ThreeDSprite* makeSprite (Object* info); 

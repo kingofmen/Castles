@@ -3,11 +3,8 @@
 
 #include "EconActor.hh"
 #include "GraphicsBridge.hh"
-#include "GraphicsInfo.hh"
 #include "Mirrorable.hh"
 #include "UtilityFunctions.hh"
-
-class MarketGraphicsInfo;
 
 struct MarketBid {
   MarketBid(TradeGood const* tg, double atb, EconActor* b, unsigned int d = 1) : tradeGood(tg), amountToBuy(atb), bidder(b), duration(d) {}

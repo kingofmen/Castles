@@ -2,7 +2,6 @@
 #define BUILDING_GRAPHICS_HH
 
 #include "GraphicsBridge.hh"
-#include "GraphicsInfo.hh"
 
 class Farmland;
 class FieldStatus;

@@ -5,7 +5,7 @@
 #include <string>
 #include <cmath>
 
-#include "GraphicsInfo.hh"
+#include "GraphicsBridge.hh"
 #include "UtilityFunctions.hh"
 
 using namespace std; 
