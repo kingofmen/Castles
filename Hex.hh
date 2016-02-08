@@ -86,7 +86,7 @@ private:
   pair<int, int> pos;
   TerrainType myType;
   Player* owner;
-  HexGraphicsInfo* graphicsInfo;
+  //HexGraphicsInfo* graphicsInfo;
   Farmland* farms;
   Forest* forest;
   Mine* mine;
