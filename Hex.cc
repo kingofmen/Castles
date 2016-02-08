@@ -55,6 +55,7 @@ Hex::Hex (int x, int y, TerrainType t)
   : Mirrorable<Hex>()
   , Named<Hex>()
   , Iterable<Hex>(this)
+  , GBRIDGE(Hex)(this)
   , pos(x, y)
   , myType(t)
   , owner(0)
@@ -267,21 +268,12 @@ void Hex::setFarm (Farmland* f) {
     farms->setDefaultOwner(village);
     village->setFarm(farms);
   }
-  setGraphicsFarm(f);
 } 
 
 void Hex::setForest (Forest* f) {
   forest = f;
   forest->setMarket(getMarket());
   if (village) forest->setDefaultOwner(village);
-}
-
-void Hex::setGraphicsFarm (Farmland* f) {
-  if (graphicsInfo) graphicsInfo->setFarm(new FarmGraphicsInfo(f)); 
-}
-
-void Hex::setGraphicsVillage (Village* f) {
-  if ((graphicsInfo) && (isReal())) graphicsInfo->setVillage(f->getGraphicsInfo());
 }
 
 void Hex::setMine (Mine* m) {
@@ -297,7 +289,6 @@ void Hex::setVillage (Village* f) {
     village->setFarm(farms);
     farms->setDefaultOwner(village); 
   }
-  setGraphicsVillage(f);
 } 
 
 void Hex::setLine (Direction dir, Line* l) {

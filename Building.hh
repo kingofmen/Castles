@@ -444,7 +444,7 @@ private:
   static int _labourToClear;
 };
 
-class Farmland : public Building, public Mirrorable<Farmland>, public Collective<Farmer, FieldStatus, 10> {
+class Farmland : public Building, public Mirrorable<Farmland>, public Collective<Farmer, FieldStatus, 10>, public GraphicsBridge<Farmland, FarmGraphicsInfo> {
   friend class Mirrorable<Farmland>;
   friend class StaticInitialiser;
   friend class FarmGraphicsInfo;

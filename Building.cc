@@ -789,6 +789,7 @@ Farmland::Farmland ()
   : Building(1, 5, 1e6)
   , Mirrorable<Farmland>()
   , Collective<Farmer, FieldStatus, 10>()
+  , GraphicsBridge<Farmland, FarmGraphicsInfo>(this)
   , totalFields(FieldStatus::numTypes(), 0)
 {
   createWorkers(this);

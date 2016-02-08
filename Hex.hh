@@ -20,7 +20,7 @@ class Line;
 
 enum TerrainType {Mountain = 0, Hill, Plain, Wooded, Ocean, NoTerrain}; 
 
-class Hex : public Mirrorable<Hex>, public Named<Hex>, public Iterable<Hex> {
+class Hex : public Mirrorable<Hex>, public Named<Hex>, public Iterable<Hex>, public GBRIDGE(Hex) {
   friend class Mirrorable<Hex>;
   friend class StaticInitialiser;
 public:
@@ -38,7 +38,6 @@ public:
   Direction              getDirection (Line const * const dat) const;
   Farmland*              getFarm () {return farms;}
   Forest*                getForest () {return forest;}
-  HexGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;}
   Line*                  getLine (Direction dir) {return lines[dir];}
   Market*                getMarket () const;
   Mine*                  getMine () {return mine;}
@@ -64,8 +63,6 @@ public:
   void                   setLine (Direction dir, Line* l);
   void                   setFarm (Farmland* f);
   void                   setForest (Forest* f);  
-  void                   setGraphicsFarm (Farmland* f);
-  void                   setGraphicsVillage (Village* v);
   void                   setMine (Mine* m);  
   void                   setVillage (Village* v);
   virtual void           setMirrorState ();

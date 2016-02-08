@@ -455,11 +455,9 @@ void GLDrawer::drawZone (int which) {
     }
     glEnd();
   }
-
 }
 
-void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
-
+void GLDrawer::drawHex (HexGraphicsInfo const* dat, FarmGraphicsInfo const* farmInfo) {
   vector<int> texts; // Not used for trees.
   glDisable(GL_TEXTURE_2D);
   glMatrixMode(GL_MODELVIEW);
@@ -471,10 +469,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   }
   glColor4d(1.0, 1.0, 1.0, 1.0);
 
-
-  FarmGraphicsInfo const* farmInfo = dat->getFarmInfo();
   if (!farmInfo) return;
-  //Farmland* farm = farmInfo->getFarm();
   VillageGraphicsInfo const* villageInfo = dat->getVillageInfo();
   Village* village = villageInfo->getGameObject();
 
@@ -482,7 +477,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   for (FarmGraphicsInfo::cfit field = farmInfo->start(); field != farmInfo->final(); ++field) {
     glBindTexture(GL_TEXTURE_2D, (*field).getIndex());
     glBegin(GL_POLYGON);
-    GraphicsInfo::cpit point = (*field).begin(); // Assume square fields, and just unroll loop.
+    GraphicsInfo::cpit point = (*field).begin(); // Assume square fields, and unroll the loop.
     glTexCoord2d(0, 0);
     glVertex3d((*point).x(), (*point).y(), (*point).z()); ++point;
     glTexCoord2d(0, 1);
@@ -544,7 +539,6 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat) {
   glTranslated(center.x(), center.y(), center.z());
   drawSprites(info, texts, angle);
   glPopMatrix();
-
 
   glBindTexture(GL_TEXTURE_2D, 0);
   texts.clear();
@@ -967,8 +961,9 @@ void GLDrawer::paintGL () {
     drawLine(*line);
   }
 
-  for (HexGraphicsInfo::Iterator hex = HexGraphicsInfo::start(); hex != HexGraphicsInfo::final(); ++hex) {
-    drawHex(*hex);
+  for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
+    Farmland* farm = (*hex)->getFarm();
+    drawHex((*hex)->getGraphicsInfo(), farm ? farm->getGraphicsInfo() : 0);
   }
 
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);

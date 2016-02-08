@@ -632,6 +632,7 @@ void readAgeTrackerFromObject (AgeTracker& age, Object* obj) {
 
 Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   Farmland* ret = new Farmland();
+  ret->initialiseBridge();
   if (0 == farmerFloatMap.size()) {
     farmerFloatMap["extraLabour"] = &Farmer::extraLabour;
     farmerFloatMap["totalWorked"] = &Farmer::totalWorked;
@@ -1192,7 +1193,7 @@ void StaticInitialiser::loadTextures () {
 
 void StaticInitialiser::makeGraphicsInfoObjects () {
   for (Hex::Iterator h = Hex::start(); h != Hex::final(); ++h) {
-    (*h)->graphicsInfo = new HexGraphicsInfo(*h);
+    (*h)->initialiseBridge();
     for (int i = LeftUp; i < NoVertex; ++i) {
       Vertex* vex = (*h)->vertices[i];
       if (vex->graphicsInfo) continue;
@@ -1200,8 +1201,12 @@ void StaticInitialiser::makeGraphicsInfoObjects () {
       vex->position = vex->graphicsInfo->position;
       vex->mirror->position = vex->graphicsInfo->position;
     }
-    if ((*h)->village) (*h)->setGraphicsVillage((*h)->village);
-    if ((*h)->farms) (*h)->setGraphicsFarm((*h)->farms); 
+    if ((*h)->village) {
+      (*h)->getGraphicsInfo()->setVillage((*h)->village->getGraphicsInfo());
+    }
+    if ((*h)->farms) {
+      (*h)->getGraphicsInfo()->setFarm((*h)->farms->getGraphicsInfo());
+    }
   }
   for (Line::Iterator l = Line::start(); l != Line::final(); ++l) {
     (*l)->graphicsInfo = new LineGraphicsInfo((*l), (*l)->vex1->getDirection((*l)->vex2));
