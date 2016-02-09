@@ -361,7 +361,7 @@ void WarfareGame::updateGreatestMilStrength() {
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
     Village* village = (*hex)->getVillage();
     if (!village) continue;
-    largest = max(largest, village->getMilitia()->getTotalStrength());
+    largest = max(largest, village->getMilitiaTradition()->getTotalStrength());
   }
   MilStrength::greatestStrength = largest; 
 }

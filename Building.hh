@@ -297,10 +297,12 @@ public:
   virtual void endOfTurn ();
   virtual void getBids (const GoodsHolder& prices, vector<MarketBid*>& bidlist);
   double getFractionOfMaxPop () const {double ret = getTotalPopulation(); ret /= maxPopulation; return min(1.0, ret);}
-  MilitiaTradition* getMilitia () {return milTrad;} 
   const MilUnitGraphicsInfo* getMilitiaGraphics () const; 
   int getTotalPopulation () const {return males.getTotalPopulation() + women.getTotalPopulation();}
+  // Returns unit pointer without the side effects of mobilising.
+  MilUnit* getMilitia () const {return milTrad->militia;}
   MilUnit* raiseMilitia ();
+  MilitiaTradition* getMilitiaTradition () {return milTrad;}
   virtual double produceForContract (TradeGood const* const tg, double amount);
   virtual double produceForTaxes (TradeGood const* const tg, double amount, ContractInfo::AmountType taxType);
   int produceRecruits (MilUnitTemplate const* const recruitType, MilUnit* target, Outcome dieroll);

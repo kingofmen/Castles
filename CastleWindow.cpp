@@ -240,7 +240,7 @@ VillageInterface::VillageInterface (QWidget*p)
 
 void VillageInterface::changeDrillLevel (int direction) {
   if (!village) return;
-  MilitiaTradition* militia = village->getMilitia();
+  MilitiaTradition* militia = village->getMilitiaTradition();
   if (!militia) return;
   int curr = militia->getDrill();
 
@@ -457,7 +457,10 @@ void GLDrawer::drawZone (int which) {
   }
 }
 
-void GLDrawer::drawHex (HexGraphicsInfo const* dat, FarmGraphicsInfo const* farmInfo, VillageGraphicsInfo const* villageInfo) {
+void GLDrawer::drawHex (HexGraphicsInfo const* dat,
+			FarmGraphicsInfo const* farmInfo,
+			VillageGraphicsInfo const* villageInfo,
+			MilUnitGraphicsInfo const* militiaInfo) {
   vector<int> texts; // Not used for trees.
   glDisable(GL_TEXTURE_2D);
   glMatrixMode(GL_MODELVIEW);
@@ -516,7 +519,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat, FarmGraphicsInfo const* farm
   }
   glPopMatrix();
 
-  const MilUnitGraphicsInfo* info = village->getMilitiaGraphics();
+  const MilUnitGraphicsInfo* militiaInfo2 = village->getMilitiaGraphics();
   glBindTexture(GL_TEXTURE_2D, 0);
   texts.clear();
   texts.push_back(playerToTextureMap[village->getOwner()]);
@@ -536,7 +539,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat, FarmGraphicsInfo const* farm
 
   glPushMatrix();
   glTranslated(center.x(), center.y(), center.z());
-  drawSprites(info, texts, angle);
+  drawSprites(militiaInfo2, texts, angle);
   glPopMatrix();
 
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -963,7 +966,8 @@ void GLDrawer::paintGL () {
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
     Farmland* farm = (*hex)->getFarm();
     Village* village = (*hex)->getVillage();
-    drawHex((*hex)->getGraphicsInfo(), farm ? farm->getGraphicsInfo() : 0, village ? village->getGraphicsInfo() : 0);
+    MilUnit* militia = village ? village->getMilitia() : 0;
+    drawHex((*hex)->getGraphicsInfo(), farm ? farm->getGraphicsInfo() : 0, village ? village->getGraphicsInfo() : 0, militia ? militia->getGraphicsInfo() : 0);
   }
 
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
