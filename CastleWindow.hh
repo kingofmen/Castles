@@ -156,7 +156,7 @@ protected:
 private:
   void drawCastle (Castle* castle) const;
   void drawLine (LineGraphicsInfo const* dat);
-  void drawHex (HexGraphicsInfo const* dat, FarmGraphicsInfo const* farmInfo);
+  void drawHex (HexGraphicsInfo const* dat, FarmGraphicsInfo const* farmInfo, VillageGraphicsInfo const* villageInfo);
   void drawSprites (const SpriteContainer* info, vector<int>& texts, double angle);  
   void drawMilUnit (MilUnit* unit, triplet center, double angle); 
   void drawVertex (VertexGraphicsInfo const* dat);

@@ -457,7 +457,7 @@ void GLDrawer::drawZone (int which) {
   }
 }
 
-void GLDrawer::drawHex (HexGraphicsInfo const* dat, FarmGraphicsInfo const* farmInfo) {
+void GLDrawer::drawHex (HexGraphicsInfo const* dat, FarmGraphicsInfo const* farmInfo, VillageGraphicsInfo const* villageInfo) {
   vector<int> texts; // Not used for trees.
   glDisable(GL_TEXTURE_2D);
   glMatrixMode(GL_MODELVIEW);
@@ -470,7 +470,6 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat, FarmGraphicsInfo const* farm
   glColor4d(1.0, 1.0, 1.0, 1.0);
 
   if (!farmInfo) return;
-  VillageGraphicsInfo const* villageInfo = dat->getVillageInfo();
   Village* village = villageInfo->getGameObject();
 
   glEnable(GL_TEXTURE_2D);
@@ -963,7 +962,8 @@ void GLDrawer::paintGL () {
 
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
     Farmland* farm = (*hex)->getFarm();
-    drawHex((*hex)->getGraphicsInfo(), farm ? farm->getGraphicsInfo() : 0);
+    Village* village = (*hex)->getVillage();
+    drawHex((*hex)->getGraphicsInfo(), farm ? farm->getGraphicsInfo() : 0, village ? village->getGraphicsInfo() : 0);
   }
 
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
