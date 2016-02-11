@@ -3,15 +3,17 @@
 
 #include <string>
 #include <vector>
-#include "EconActor.hh"
-#include "UtilityFunctions.hh"
-class WarfareGame;
-class Action; 
-class MilUnit; 
-class PlayerGraphicsInfo; 
 
-class Player : public Iterable<Player>, public Named<Player>, public EconActor {
-  friend class StaticInitialiser; 
+#include "EconActor.hh"
+#include "GraphicsBridge.hh"
+#include "UtilityFunctions.hh"
+
+class Action;
+class MilUnit;
+class PlayerGraphicsInfo;
+
+class Player : public Iterable<Player>, public Named<Player>, public EconActor, public GBRIDGE(Player) {
+  friend class StaticInitialiser;
 public:
   Player (bool h, std::string d, std::string n);
   virtual ~Player ();
@@ -19,32 +21,30 @@ public:
   bool isEnemy (Player const* const other) {return this != other;}
   bool isFriendly (Player const* const other) {return this == other;}
   bool isHuman () const {return human;}
-  void getAction (); 
+  void getAction ();
   bool turnEnded () const {return doneWithTurn;}
-  void finished () {doneWithTurn = true;} 
-  void newTurn () {doneWithTurn = false;} 
-  std::string getDisplayName () const {return displayName;} 
-  PlayerGraphicsInfo const* getGraphicsInfo () const {return graphicsInfo;} 
+  void finished () {doneWithTurn = true;}
+  void newTurn () {doneWithTurn = false;}
+  std::string getDisplayName () const {return displayName;}
 
-  static void clear (); 
+  static void clear ();
   static void setCurrentPlayerByName (std::string name) {currentPlayer = findByName(name);}
   static void advancePlayer () {currentPlayer = nextPlayer();}
   static Player* getCurrentPlayer () {return currentPlayer;}
   static Player* nextPlayer ();
   static Player* getTestPlayer ();
 
-  private: 
+ private:
   bool human;
   bool doneWithTurn;
   std::string name;
   std::string displayName;
-  PlayerGraphicsInfo* graphicsInfo; 
-  
-  double evaluate (Action act); 
-  double evaluateGlobalStrength (); 
+
+  double evaluate (Action act);
+  double evaluateGlobalStrength ();
   double evaluateAttackStrength (Player* att, Player* def);
   double calculateInfluence ();
-  double calculateUnitStrength (MilUnit* dat, double modifiers); 
+  double calculateUnitStrength (MilUnit* dat, double modifiers);
 
   static Player* currentPlayer;
   static double influenceDecay;
@@ -54,6 +54,6 @@ public:
   static double distancePower;
   static double supplyWeight;
   static double siegeInfluenceValue;
-}; 
+};
 
 #endif

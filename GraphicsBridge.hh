@@ -159,7 +159,7 @@ public:
 
   void initialiseBridge (Model* m) {
     gameObject = m;
-    initialiseBridge();
+    viewObject = new View(m);
   }
 
 protected:

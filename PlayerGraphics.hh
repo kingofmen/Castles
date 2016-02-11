@@ -3,10 +3,14 @@
 
 #include <QtOpenGL>
 
-class PlayerGraphicsInfo {
+#include "GraphicsBridge.hh"
+
+class Player;
+
+class PlayerGraphicsInfo : public GBRIDGE(Player) {
   friend class StaticInitialiser;
 public:
-  PlayerGraphicsInfo ();
+  PlayerGraphicsInfo (Player* p);
   ~PlayerGraphicsInfo ();
 
   int getRed () const {return qRed(colour);}

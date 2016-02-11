@@ -159,7 +159,7 @@ void StaticInitialiser::graphicsInitialisation () {
     GLuint texid;
     glGenTextures(1, &texid);
     texid = loadTexture(pName, Qt::red, texid);
-    (*p)->graphicsInfo->flag_texture_id = texid;
+    (*p)->getGraphicsInfo()->flag_texture_id = texid;
   }
 }
 
@@ -848,13 +848,13 @@ void StaticInitialiser::createPlayer (Object* info) {
   string name = info->safeGetString("name", strbuffer);
   string display = remQuotes(info->safeGetString("displayname", name));
   Player* ret = new Player(human, display, name);
+  ret->initialiseBridge(ret);
   initialiseEcon(ret, info);
-  ret->graphicsInfo = new PlayerGraphicsInfo();
 
   int red = info->safeGetInt("red");
   int green = info->safeGetInt("green");
   int blue = info->safeGetInt("blue");
-  ret->graphicsInfo->colour = qRgb(red, green, blue);
+  ret->getGraphicsInfo()->colour = qRgb(red, green, blue);
 }
 
 double StaticInitialiser::interpolate (double xfrac, double yfrac, int mapWidth, int mapHeight, double* heightMap) {
