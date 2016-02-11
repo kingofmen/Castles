@@ -156,7 +156,11 @@ protected:
 private:
   void drawCastle (Castle* castle) const;
   void drawLine (LineGraphicsInfo const* dat);
-  void drawHex (HexGraphicsInfo const* dat, FarmGraphicsInfo const* farmInfo, VillageGraphicsInfo const* villageInfo, MilUnitGraphicsInfo const* militiaInfo);
+  void drawHex (HexGraphicsInfo const* dat,
+		FarmGraphicsInfo const* farmInfo,
+		VillageGraphicsInfo const* villageInfo,
+		MilUnitGraphicsInfo const* militiaInfo,
+		PlayerGraphicsInfo const* playerInfo);
   void drawSprites (const SpriteContainer* info, vector<int>& texts, double angle);  
   void drawMilUnit (MilUnit* unit, triplet center, double angle); 
   void drawVertex (VertexGraphicsInfo const* dat);
@@ -166,7 +170,6 @@ private:
   int* errors;
   GLuint* terrainTextureIndices;
   GLuint* zoneTextures;  // Zones get their own array because their generation creates new texture names.
-  map<Player*, GLuint> playerToTextureMap; 
 
   ThreeDSprite* cSprite;
   ThreeDSprite* tSprite;

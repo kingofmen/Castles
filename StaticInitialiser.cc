@@ -12,18 +12,18 @@
 #include "BuildingGraphics.hh"
 #include "Calendar.hh"
 #include "CastleWindow.hh"
-#include "Directions.hh" 
-#include "EconActor.hh" 
+#include "Directions.hh"
+#include "EconActor.hh"
 #include "Market.hh"
-#include "MilUnit.hh" 
+#include "MilUnit.hh"
 #include "Parser.hh"
 #include "Player.hh"
 #include "PlayerGraphics.hh"
 #include "UnitGraphics.hh"
-#include "UtilityFunctions.hh" 
+#include "UtilityFunctions.hh"
 
-int StaticInitialiser::defaultUnitPriority = 4; 
-ThreeDSprite* makeSprite (Object* info); 
+int StaticInitialiser::defaultUnitPriority = 4;
+ThreeDSprite* makeSprite (Object* info);
 map<MilUnitTemplate*, Object*> milUnitSpriteObjectMap;
 
 static map<string, int Farmer::*> farmerMap;
@@ -43,7 +43,7 @@ static map<EconActor*, vector<MarketContract*> > marketContractMap;
 void readGoodsHolder (Object* goodsObject, GoodsHolder& goods) {
   goods.zeroGoods();
   if (!goodsObject) return;
-  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {    
+  for (TradeGood::Iter tg = TradeGood::start(); tg != TradeGood::final(); ++tg) {
     goods.deliverGoods((*tg), goodsObject->safeGetFloat((*tg)->getName()));
   }
 }
@@ -88,7 +88,7 @@ void StaticInitialiser::createActionProbabilities (Object* info) {
   createCalculator(info->safeGetObject("raid"), Action::devastateCalculator);
   createCalculator(info->safeGetObject("surrender"), Action::surrenderCalculator);
   createCalculator(info->safeGetObject("recruit"), Action::recruitCalculator);
-  createCalculator(info->safeGetObject("colonise"), Action::colonyCalculator);  
+  createCalculator(info->safeGetObject("colonise"), Action::colonyCalculator);
 }
 
 void StaticInitialiser::loadAiConstants (Object* info) {
@@ -96,15 +96,15 @@ void StaticInitialiser::loadAiConstants (Object* info) {
 
   Player::influenceDecay      = info->safeGetFloat("influenceDecay",      Player::influenceDecay);
   Player::castleWeight        = info->safeGetFloat("castleWeight",        Player::castleWeight);
-  Player::casualtyValue       = info->safeGetFloat("casualtyValue",       Player::casualtyValue); 
+  Player::casualtyValue       = info->safeGetFloat("casualtyValue",       Player::casualtyValue);
   Player::distanceModifier    = info->safeGetFloat("distanceModifier",    Player::distanceModifier);
   Player::distancePower       = info->safeGetFloat("distancePower",       Player::distancePower);
   Player::supplyWeight        = info->safeGetFloat("supplyWeight",        Player::supplyWeight);
-  Player::siegeInfluenceValue = info->safeGetFloat("siegeInfluenceValue", Player::siegeInfluenceValue); 
+  Player::siegeInfluenceValue = info->safeGetFloat("siegeInfluenceValue", Player::siegeInfluenceValue);
 }
 
 void StaticInitialiser::overallInitialisation (Object* info) {
-  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";
   Object* priorityLevels = info->safeGetObject("priorityLevels");
   vector<double> levels;
   if (priorityLevels) {
@@ -112,11 +112,11 @@ void StaticInitialiser::overallInitialisation (Object* info) {
       levels.push_back(atof(priorityLevels->getToken(i).c_str()));
     }
   }
-  MilUnit::setPriorityLevels(levels); 
+  MilUnit::setPriorityLevels(levels);
   defaultUnitPriority = info->safeGetInt("defaultUnitPriority", 4);
 
   Calendar::setWeek(info->safeGetInt("week", 0));
-  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";  
+  Logger::logStream(DebugStartup) << __FILE__ << " " << __LINE__ << "\n";
 }
 
 GLuint loadTexture (string fname, QColor backup, GLuint index) {
@@ -124,13 +124,13 @@ GLuint loadTexture (string fname, QColor backup, GLuint index) {
   if (!b.load(fname.c_str())) {
     b = QImage(32, 32, QImage::Format_RGB888);
     b.fill(backup.rgb());
-    Logger::logStream(DebugStartup) << "Failed to load " << fname << "\n"; 
+    Logger::logStream(DebugStartup) << "Failed to load " << fname << "\n";
   }
-  
+
   QImage t = QGLWidget::convertToGLFormat(b);
-  if (0 == index) glGenTextures(1, &index); // 0 is default, indicating "make me a new one". 
-  
-  glBindTexture(GL_TEXTURE_2D, index); 
+  if (0 == index) glGenTextures(1, &index); // 0 is default, indicating "make me a new one".
+
+  glBindTexture(GL_TEXTURE_2D, index);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -141,11 +141,11 @@ GLuint loadTexture (string fname, QColor backup, GLuint index) {
 }
 
 void StaticInitialiser::graphicsInitialisation () {
-  loadSprites();  
+  loadSprites();
   for (MilUnit::Iterator m = MilUnit::start(); m != MilUnit::final(); ++m) {
     (*m)->graphicsInfo->updateSprites(*m);
   }
-  
+
   for (Hex::Iterator h = Hex::start(); h != Hex::final(); ++h) {
     Village* f = (*h)->getVillage();
     if (!f) continue;
@@ -156,10 +156,10 @@ void StaticInitialiser::graphicsInitialisation () {
 
   for (Player::Iter p = Player::start(); p != Player::final(); ++p) {
     string pName = "gfx/" + (*p)->getName() + ".png";
-    GLuint texid; 
+    GLuint texid;
     glGenTextures(1, &texid);
-    texid = loadTexture(pName, Qt::red, texid); 
-    WarfareWindow::currWindow->hexDrawer->playerToTextureMap[*p] = texid; 
+    texid = loadTexture(pName, Qt::red, texid);
+    (*p)->graphicsInfo->flag_texture_id = texid;
   }
 }
 
@@ -173,14 +173,14 @@ template<class T> void StaticInitialiser::initialiseIndustry(Object* industryObj
   if (T::capital->getAmount(T::output) != 0) {
     throwFormatted("Output %s cannot also be capital in industry %s", T::output->getName().c_str(), industryObject->getKey().c_str());
   }
-  
+
   T::inverseProductionTime = 1.0 / industryObject->safeGetInt("productionCycle", 1);
 }
 
 void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   assert(popInfo);
-  
-  initialiseMaslowHierarchy(popInfo->safeGetObject("pop_needs")); 
+
+  initialiseMaslowHierarchy(popInfo->safeGetObject("pop_needs"));
   Castle::siegeModifier = popInfo->safeGetFloat("siegeModifier", Castle::siegeModifier);
 
   Object* farmInfo = popInfo->getNeededObject("farmland");
@@ -222,7 +222,7 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   }
   Farmer::_labourToClear  = farmInfo->safeGetInt("labourToClear",  Farmer::_labourToClear);
   initialiseIndustry<Farmer>(farmInfo);
-  
+
   Object* forestInfo       = popInfo->getNeededObject("forest");
   Enumerable<const FieldStatus>::thaw();
   Enumerable<const ForestStatus>::clear();
@@ -238,7 +238,7 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Enumerable<const FieldStatus>::freeze();
   Forest::_labourToClear = forestInfo->safeGetInt("labourToClear", Forest::_labourToClear);
   initialiseIndustry<Forester>(forestInfo);
-  
+
   Object* mineInfo       = popInfo->getNeededObject("mine");
   Mine::_amountOfIron    = mineInfo->safeGetInt("amount", Mine::_amountOfIron);
   initialiseIndustry<Miner>(mineInfo);
@@ -251,29 +251,29 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
     new MineStatus(name, reqLabour, winLabour);
   }
   MineStatus::freeze();
-  
+
   Object* femf = popInfo->safeGetObject("femaleFert");
   assert(femf);
   Object* pair = popInfo->safeGetObject("pairChance");
-  assert(pair); 
+  assert(pair);
   Object* femMort = popInfo->safeGetObject("femaleMort");
   assert(femMort);
   Object* malMort = popInfo->safeGetObject("maleMort");
-  assert(malMort);  
+  assert(malMort);
   Object* prod = popInfo->safeGetObject("production");
-  assert(prod); 
+  assert(prod);
   Object* cons = popInfo->safeGetObject("consumption");
-  assert(cons); 
+  assert(cons);
   Object* recr = popInfo->safeGetObject("recruit");
-  assert(recr); 
-  
+  assert(recr);
+
   double lastFmort = atof(femMort->getToken(0).c_str());
   double lastMmort = atof(malMort->getToken(0).c_str());
   double lastPair = atof(pair->getToken(0).c_str());
   double lastPreg = atof(femf->getToken(0).c_str());
   double lastProd = atof(prod->getToken(0).c_str());
   double lastCons = atof(cons->getToken(0).c_str());
-  double lastRecr = atof(recr->getToken(0).c_str());  
+  double lastRecr = atof(recr->getToken(0).c_str());
   for (int i = 0; i < AgeTracker::maxAge; ++i) {
     double curr = (femMort->numTokens() > i ? atof(femMort->getToken(i).c_str()) : lastFmort);
     Village::baseFemaleMortality[i] = curr;
@@ -307,7 +307,7 @@ void StaticInitialiser::initialiseCivilBuildings (Object* popInfo) {
   Village::femaleProduction = popInfo->safeGetFloat("femaleProduction", Village::femaleProduction);
   Village::femaleConsumption = popInfo->safeGetFloat("femaleConsumption", Village::femaleConsumption);
   Village::femaleSurplusEffect = popInfo->safeGetFloat("femaleSurplusEffect", Village::femaleSurplusEffect);
-  Village::femaleSurplusZero = popInfo->safeGetFloat("femaleSurplusZero", Village::femaleSurplusZero);    
+  Village::femaleSurplusZero = popInfo->safeGetFloat("femaleSurplusZero", Village::femaleSurplusZero);
 }
 
 void initialiseObligation (ContractInfo* contract, Object* info) {
@@ -342,7 +342,7 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
   unsigned int id = info->safeGetUint("id");
   if (EconActor::getByIndex(id)) {
     Logger::logStream(DebugStartup) << "Bad econ id " << id << " " << info << " already exists.\n";
-    assert(!EconActor::getByIndex(id)); 
+    assert(!EconActor::getByIndex(id));
   }
   econ->setIdx(id);
 
@@ -389,11 +389,11 @@ void StaticInitialiser::initialiseEcon (EconActor* econ, Object* info) {
 }
 
 inline int heightMapWidth (int zoneSide) {
-  return 2 + 3*zoneSide; 
+  return 2 + 3*zoneSide;
 }
 
 inline int heightMapHeight (int zoneSide) {
-  return 2 + heightMapWidth(zoneSide); // Additional 2 arises from hex/grid skew; check out (rightmost, downmost) RightDown vertex. 
+  return 2 + heightMapWidth(zoneSide); // Additional 2 arises from hex/grid skew; check out (rightmost, downmost) RightDown vertex.
 }
 
 void StaticInitialiser::initialiseGoods (Object* gInfo) {
@@ -417,35 +417,35 @@ void StaticInitialiser::initialiseGoods (Object* gInfo) {
 }
 
 void StaticInitialiser::initialiseGraphics (Object* gInfo) {
-  Logger::logStream(DebugStartup) << "Entering StaticInitialiser::initialiseGraphics\n"; 
+  Logger::logStream(DebugStartup) << "Entering StaticInitialiser::initialiseGraphics\n";
 
-  // Must come after buildMilUnits so templates can check for icons. 
+  // Must come after buildMilUnits so templates can check for icons.
   Object* guiInfo = processFile("./common/gui.txt");
   if (!guiInfo) guiInfo = new Object("guiInfo");
-  setUItexts(guiInfo); 
-  
-  new ZoneGraphicsInfo(); 
+  setUItexts(guiInfo);
+
+  new ZoneGraphicsInfo();
   GraphicsInfo::zoneSide = gInfo->safeGetInt("zoneSide", 4);
   int mapWidth = heightMapWidth(GraphicsInfo::zoneSide);
   int mapHeight = heightMapHeight(GraphicsInfo::zoneSide);
   GraphicsInfo::heightMap = new double[mapWidth*mapHeight];
-  
+
   QImage b("gfx/heightmap.bmp");
-  for (int x = 0; x < mapWidth; ++x) {    
-    for (int y = 0; y < mapHeight; ++y) { 
+  for (int x = 0; x < mapWidth; ++x) {
+    for (int y = 0; y < mapHeight; ++y) {
       QRgb pix = b.pixel(x, y);
       GraphicsInfo::heightMap[mapWidth*y + x] = qRed(pix);
     }
   }
 
   Object* unitFormations = gInfo->getNeededObject("unitformations");
-  MilUnitGraphicsInfo::allFormations.resize(unitFormations->safeGetInt("maxSprites", 9)+1);  
+  MilUnitGraphicsInfo::allFormations.resize(unitFormations->safeGetInt("maxSprites", 9)+1);
   for (unsigned int i = 1; i < MilUnitGraphicsInfo::allFormations.size(); ++i) {
     sprintf(strbuffer, "%i", i);
     Object* formation = unitFormations->safeGetObject(strbuffer);
     if (!formation) {
       for (unsigned int j = 0; j < i; ++j) {
-	MilUnitGraphicsInfo::allFormations[i].push_back(doublet(0 - ((j+1)/2)*0.1, 0 + (((j+1)/2)*0.1)*(-1 + 2*(j%2)))); 
+	MilUnitGraphicsInfo::allFormations[i].push_back(doublet(0 - ((j+1)/2)*0.1, 0 + (((j+1)/2)*0.1)*(-1 + 2*(j%2))));
       }
     }
     else {
@@ -456,12 +456,12 @@ void StaticInitialiser::initialiseGraphics (Object* gInfo) {
 	}
 	else {
 	  MilUnitGraphicsInfo::allFormations[i].push_back(doublet(positions[j]->safeGetFloat("x", 0 - ((j+1)/2)*0.1),
-								  positions[j]->safeGetFloat("y", 0 + (((j+1)/2)*0.1)*(-1 + 2*(j%2))))); 
+								  positions[j]->safeGetFloat("y", 0 + (((j+1)/2)*0.1)*(-1 + 2*(j%2)))));
 	}
-      }      
+      }
     }
   }
-  Logger::logStream(DebugStartup) << "Leaving StaticInitialiser::initialiseGraphics\n";   
+  Logger::logStream(DebugStartup) << "Leaving StaticInitialiser::initialiseGraphics\n";
 }
 
 void StaticInitialiser::initialiseMaslowHierarchy (Object* popNeeds) {
@@ -548,13 +548,13 @@ void StaticInitialiser::buildHex (Object* hInfo) {
     hex->marketVtx->theMarket = new Market();
     hex->marketVtx->theMarket->initialiseBridge();
   }
-  
+
   Object* cinfo = hInfo->safeGetObject("castle");
   if (cinfo) {
     Line* lin = findLine(cinfo, hex);
-    assert(0 == lin->getCastle());             
+    assert(0 == lin->getCastle());
     Castle* castle = new Castle(hex, lin);
-    hex->castle = castle; 
+    hex->castle = castle;
     castle->setOwner(owner);
     initialiseBuilding(castle, cinfo);
     castle->recruitType = MilUnitTemplate::getByName(cinfo->safeGetString("recruiting", (*MilUnitTemplate::start())->getName()));
@@ -573,7 +573,7 @@ void StaticInitialiser::buildHex (Object* hInfo) {
 
   Object* priceInfo = hInfo->safeGetObject("prices");
   if (priceInfo) readGoodsHolder(priceInfo, hex->marketVtx->theMarket->prices);
-  
+
   Object* fInfo = hInfo->safeGetObject("village");
   if (fInfo) {
     Village* village = buildVillage(fInfo);
@@ -614,16 +614,16 @@ ThreeDSprite* makeSprite (Object* info) {
   vector<string> specs;
   objvec svec = info->getValue("separate");
   for (objiter s = svec.begin(); s != svec.end(); ++s) {
-    specs.push_back((*s)->getLeaf()); 
+    specs.push_back((*s)->getLeaf());
   }
   ThreeDSprite* ret = new ThreeDSprite(castleFile, specs);
-  ret->setScale(info->safeGetFloat("xscale", 1.0), info->safeGetFloat("yscale", 1.0), info->safeGetFloat("zscale", 1.0)); 
-  return ret; 
+  ret->setScale(info->safeGetFloat("xscale", 1.0), info->safeGetFloat("yscale", 1.0), info->safeGetFloat("zscale", 1.0));
+  return ret;
 }
 
 
 void readAgeTrackerFromObject (AgeTracker& age, Object* obj) {
-  if (!obj) return; 
+  if (!obj) return;
   for (int i = 0; i < AgeTracker::maxAge; ++i) {
     if (i >= obj->numTokens()) continue;
     age.addPop(obj->tokenAsInt(i), i);
@@ -640,7 +640,7 @@ Farmland* StaticInitialiser::buildFarm (Object* fInfo) {
   initialiseCollective<Farmland>(ret, fInfo, farmerMap, farmerFloatMap);
   ret->countTotals();
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
-  
+
   return ret;
 }
 
@@ -655,7 +655,7 @@ Forest* StaticInitialiser::buildForest (Object* fInfo) {
   BOOST_FOREACH(Forester* f, ret->workers) f->createBlockQueue();
   ret->yearsSinceLastTick = fInfo->safeGetInt("yearsSinceLastTick");
   ret->blockSize = fInfo->safeGetInt("blockSize", ret->blockSize);
-  
+
   return ret;
 }
 
@@ -670,7 +670,7 @@ Mine* StaticInitialiser::buildMine (Object* mInfo) {
 void StaticInitialiser::buildMilitia (Village* target, Object* mInfo) {
   if (0 == mInfo) return;
   for (MilUnitTemplate::Iter i = MilUnitTemplate::start(); i != MilUnitTemplate::final(); ++i) {
-    assert(*i);     
+    assert(*i);
     int amount = mInfo->safeGetInt((*i)->getName());
     if (0 >= amount) continue;
     target->milTrad->militiaStrength[*i] = amount;
@@ -679,9 +679,9 @@ void StaticInitialiser::buildMilitia (Village* target, Object* mInfo) {
 }
 
 MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
-  if (!mInfo) return 0; 
-  static AgeTracker ages; 
-  
+  if (!mInfo) return 0;
+  static AgeTracker ages;
+
   MilUnit* m = new MilUnit();
   for (MilUnitTemplate::Iter ut = MilUnitTemplate::start(); ut != MilUnitTemplate::final(); ++ut) {
     string name = (*ut)->getName();
@@ -691,7 +691,7 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
     if (!strength) continue;
     ages.clear();
     readAgeTrackerFromObject(ages, strength);
-    for (int i = 0; i < 16; ++i) ages.age(); // Quick hack to avoid long strings of initial zeroes in every MilUnit definition. 
+    for (int i = 0; i < 16; ++i) ages.age(); // Quick hack to avoid long strings of initial zeroes in every MilUnit definition.
     m->addElement(MilUnitTemplate::getByName(name), ages);
     string supplyName = element->safeGetString("supply", "None");
     for (vector<SupplyLevel>::const_iterator sl = (*ut)->supplyLevels.begin(); sl != (*ut)->supplyLevels.end(); ++sl) {
@@ -722,7 +722,7 @@ MilUnit* StaticInitialiser::buildMilUnit (Object* mInfo) {
     if (castle) castle->fieldForce.push_back(m);
     else Logger::logStream(DebugStartup) << "Bad supporting-castle ID " << supportingCastleId << " for unit " << m->getIdx() << ", ignoring.\n";
   }
-  return m; 
+  return m;
 }
 
 void StaticInitialiser::buildMilUnitTemplates (Object* info) {
@@ -741,7 +741,7 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
     MilUnitTemplate::drillEffects.push_back(0.55);
     MilUnitTemplate::drillEffects.push_back(0.40);
     MilUnitTemplate::drillEffects.push_back(0.30);
-    MilUnitTemplate::drillEffects.push_back(0.25);    
+    MilUnitTemplate::drillEffects.push_back(0.25);
   }
 
   double mDrill = 1.0 / (MilUnitTemplate::drillEffects.size() - 1);
@@ -755,9 +755,9 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
     string uname = (*unit)->safeGetString("name", "FAIL");
     if (uname == "FAIL") {
       sprintf(strbuffer, "FAIL UNIT TYPE %i", ++failNames);
-      uname = strbuffer; 
+      uname = strbuffer;
     }
-    
+
     MilUnitTemplate* nType   = new MilUnitTemplate(uname);
     nType->base_shock        = (*unit)->safeGetFloat("base_shock");
     nType->base_range        = (*unit)->safeGetFloat("base_range");
@@ -766,8 +766,8 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
     nType->recruit_speed     = (*unit)->safeGetInt("recruit_speed");
     nType->militiaDecay      = (*unit)->safeGetFloat("militiaDecay");
     nType->militiaDrill      = (*unit)->safeGetFloat("militiaDrill");
-   
-    if (nType->militiaDrill > mDrill) nType->militiaDrill = mDrill; 
+
+    if (nType->militiaDrill > mDrill) nType->militiaDrill = mDrill;
 
     // Default supply level, 'None'.
     nType->supplyLevels.push_back(SupplyLevel("None"));
@@ -792,11 +792,11 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
       if (0 == positions.size()) mSprite->positions.push_back(doublet(0, 0));
       else {
 	for (objiter p = positions.begin(); p != positions.end(); ++p) {
-	  mSprite->positions.push_back(doublet((*p)->safeGetFloat("x"), (*p)->safeGetFloat("y"))); 
+	  mSprite->positions.push_back(doublet((*p)->safeGetFloat("x"), (*p)->safeGetFloat("y")));
 	}
       }
       SpriteContainer::sprites.push_back(mSprite);
-      */      
+      */
     }
   }
   MilUnitTemplate::freeze();
@@ -842,62 +842,62 @@ Village* StaticInitialiser::buildVillage (Object* fInfo) {
 
 void StaticInitialiser::createPlayer (Object* info) {
   static int numFactions = 0;
-  
+
   bool human = (info->safeGetString("human", "no") == "yes");
-  sprintf(strbuffer, "\"faction_auto_name_%i\"", numFactions++); 
+  sprintf(strbuffer, "\"faction_auto_name_%i\"", numFactions++);
   string name = info->safeGetString("name", strbuffer);
   string display = remQuotes(info->safeGetString("displayname", name));
   Player* ret = new Player(human, display, name);
-  initialiseEcon(ret, info); 
+  initialiseEcon(ret, info);
   ret->graphicsInfo = new PlayerGraphicsInfo();
 
   int red = info->safeGetInt("red");
   int green = info->safeGetInt("green");
   int blue = info->safeGetInt("blue");
-  ret->graphicsInfo->colour = qRgb(red, green, blue); 
+  ret->graphicsInfo->colour = qRgb(red, green, blue);
 }
 
 double StaticInitialiser::interpolate (double xfrac, double yfrac, int mapWidth, int mapHeight, double* heightMap) {
   const double binWidth = 1.0 / mapWidth;
-  const double binHeight = 1.0 / mapHeight; 
-  
-  int xbin = (int) floor(xfrac * mapWidth);  
+  const double binHeight = 1.0 / mapHeight;
+
+  int xbin = (int) floor(xfrac * mapWidth);
   int ybin = (int) floor(yfrac * mapHeight);
   int nextXbin = min(xbin+1, mapWidth-1);
-  int nextYbin = min(ybin+1, mapHeight-1); 
-  
+  int nextYbin = min(ybin+1, mapHeight-1);
+
   double height1 = heightMap[ybin*mapWidth + xbin];
   double height2 = heightMap[ybin*mapWidth + nextXbin];
   double height3 = heightMap[nextYbin*mapWidth + xbin];
-  double height4 = heightMap[nextYbin*mapWidth + nextXbin];  
+  double height4 = heightMap[nextYbin*mapWidth + nextXbin];
 
-  xfrac -= binWidth*xbin;     
+  xfrac -= binWidth*xbin;
   xfrac /= binWidth;
   yfrac -= binHeight*ybin;
-  yfrac /= binHeight; 
+  yfrac /= binHeight;
 
   double ret = (1-xfrac)*(1-yfrac) * height1;
   ret       +=    xfrac *(1-yfrac) * height2;
   ret       += (1-xfrac)*   yfrac  * height3;
   ret       +=    xfrac *   yfrac  * height4;
 
-  return ret; 
+  return ret;
 }
 
 void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
   static bool shaded[GraphicsInfo::zoneSize];
-  static double lightAngle = tan(30.0 / 180.0 * M_PI); 
+  static double lightAngle = tan(30.0 / 180.0 * M_PI);
   static double invSize = 2.0 / GraphicsInfo::zoneSize;
 
   ZoneGraphicsInfo* zoneInfo = ZoneGraphicsInfo::getByIndex(0);
 
-  // Seed detailed heightmap using coarse one. 
+  // Seed detailed heightmap using coarse one.
   for (int yval = 0; yval < GraphicsInfo::zoneSize; ++yval) {
     for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
       zoneInfo->heightMap[xval][yval] = interpolate(((double) xval)/GraphicsInfo::zoneSize,
 						    ((double) yval)/GraphicsInfo::zoneSize,
 						    heightMapWidth(GraphicsInfo::zoneSide),
-						    heightMapHeight(GraphicsInfo::zoneSide),			    
+						    heightMapHeight(GraphicsInfo::zoneSide),			
 						    GraphicsInfo::heightMap);
     }
   }
@@ -905,12 +905,12 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
   // Square/diamond fractal
   vector<QRect> squares;
   static const int modSize = 129;
-  QRect bigSquare(0, 0, modSize-1, modSize-1); 
+  QRect bigSquare(0, 0, modSize-1, modSize-1);
   squares.push_back(bigSquare);
 
   // From QRect doc for bottom():
   // Note that for historical reasons this function returns top() + height() - 1; use y() + height() to retrieve the true y-coordinate.
-  // Similarly for right(). Hence ugly +1s that appear below. 
+  // Similarly for right(). Hence ugly +1s that appear below.
 
   static double modulate[modSize*modSize];
   static int touched[modSize][modSize];
@@ -922,23 +922,23 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
   }
 
   static const double midValue = 1500;
-  static const double dimValue = 750; 
-  static const double eConst = 0; 
+  static const double dimValue = 750;
+  static const double eConst = 0;
   static const double eBias  = 0.5;
   static const int cutoff = 2;
-  static const double iterPower = 1; 
+  static const double iterPower = 1;
 
-  int iter = 1; 
+  int iter = 1;
   while (0 < squares.size()) {
     QRect curr = squares.back();
     squares.pop_back();
     if (cutoff > curr.width()) continue;
-    if (cutoff > curr.height()) continue;     
-    QPoint midpoint(curr.left() + curr.width()/2, curr.top() + curr.height()/2); 
+    if (cutoff > curr.height()) continue;
+    QPoint midpoint(curr.left() + curr.width()/2, curr.top() + curr.height()/2);
 
     // Set 'diamond' points
     QPoint north(midpoint.x(), curr.top());
-    double newValue = 0; 
+    double newValue = 0;
     newValue += modulate[curr.top()*modSize + curr.left()];
     newValue += modulate[(curr.top())*modSize + curr.right()+1];
     newValue += (curr.top() - midpoint.y() >= 0 ? modulate[(curr.top() - midpoint.y())*modSize + midpoint.x()] : 0);
@@ -947,74 +947,74 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
 
     double extra = rand();
     extra /= RAND_MAX;
-    extra -= eBias;    
+    extra -= eBias;
     extra *= eConst + (dimValue * curr.width());
     extra /= GraphicsInfo::zoneSize;
-    extra /= pow(iter, iterPower);    
+    extra /= pow(iter, iterPower);
     if (0 <= touched[north.x()][north.y()]) {
       modulate[(north.y())*modSize + north.x()] = newValue + extra;
       touched[north.x()][north.y()]++;
     }
 
     QPoint south(midpoint.x(), curr.bottom()+1);
-    newValue = 0; 
+    newValue = 0;
     newValue += modulate[(curr.bottom()+1)*modSize + curr.left()];
     newValue += modulate[(curr.bottom()+1)*modSize + curr.right()+1];
-    newValue += modulate[(midpoint.y())*modSize + midpoint.x()];        
+    newValue += modulate[(midpoint.y())*modSize + midpoint.x()];
     newValue += (midpoint.y() + curr.height() < modSize ? modulate[(midpoint.y() + curr.height())*modSize + midpoint.x()] : 0);
     newValue *= 0.25;
 
     extra = rand();
     extra /= RAND_MAX;
-    extra -= eBias;    
+    extra -= eBias;
     extra *= eConst + (dimValue * curr.width());
     extra /= GraphicsInfo::zoneSize;
     extra /= pow(iter, iterPower);
-    if (0 <= touched[south.x()][south.y()]) {    
+    if (0 <= touched[south.x()][south.y()]) {
       modulate[(south.y())*modSize + south.x()] = newValue + extra;
       touched[south.x()][south.y()]++;
     }
 
     QPoint west(curr.left(), midpoint.y());
-    newValue = 0; 
+    newValue = 0;
     newValue += modulate[(curr.top())*modSize + curr.left()];
     newValue += modulate[(curr.bottom()+1)*modSize + curr.left()];
-    newValue += modulate[(midpoint.y())*modSize + midpoint.x()];        
-    newValue += (midpoint.x() - curr.width() >= 0 ? modulate[(midpoint.y())*modSize + midpoint.x() - curr.width()] : 0);    
+    newValue += modulate[(midpoint.y())*modSize + midpoint.x()];
+    newValue += (midpoint.x() - curr.width() >= 0 ? modulate[(midpoint.y())*modSize + midpoint.x() - curr.width()] : 0);
     newValue *= 0.25;
 
     extra = rand();
     extra /= RAND_MAX;
-    extra -= eBias;    
+    extra -= eBias;
     extra *= eConst + (dimValue * curr.width());
     extra /= GraphicsInfo::zoneSize;
     extra /= pow(iter, iterPower);
-    if (0 <= touched[west.x()][west.y()]) {        
+    if (0 <= touched[west.x()][west.y()]) {
       modulate[(west.y())*modSize + west.x()] = newValue + extra;
       touched[west.x()][west.y()]++;
     }
 
     QPoint east(curr.right()+1, midpoint.y());
-    newValue = 0; 
+    newValue = 0;
     newValue += modulate[(curr.top())*modSize + curr.right()+1];
     newValue += modulate[(curr.bottom()+1)*modSize + curr.right()+1];
-    newValue += modulate[(midpoint.y())*modSize + midpoint.x()];            
-    newValue += (midpoint.x() + curr.width() < modSize ? modulate[(midpoint.y())*modSize + midpoint.x() + curr.width()] : 0);        
+    newValue += modulate[(midpoint.y())*modSize + midpoint.x()];
+    newValue += (midpoint.x() + curr.width() < modSize ? modulate[(midpoint.y())*modSize + midpoint.x() + curr.width()] : 0);
     newValue *= 0.25;
 
     extra = rand();
     extra /= RAND_MAX;
-    extra -= eBias;    
+    extra -= eBias;
     extra *= eConst + (dimValue * curr.width());
     extra /= GraphicsInfo::zoneSize;
     extra /= pow(iter, iterPower);
-    if (0 <= touched[east.x()][east.y()]) {            
+    if (0 <= touched[east.x()][east.y()]) {
       modulate[(east.y())*modSize + east.x()] = newValue + extra;
       touched[east.x()][east.y()]++;
     }
 
-    // Midpoint 
-    newValue = 0; 
+    // Midpoint
+    newValue = 0;
     newValue += modulate[(curr.top())*modSize + curr.left()];
     newValue += modulate[(curr.bottom()+1)*modSize + curr.left()];
     newValue += modulate[(curr.top())*modSize + curr.right()+1];
@@ -1027,7 +1027,7 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
     extra *= eConst + (midValue * curr.width());
     extra /= GraphicsInfo::zoneSize;
     extra /= pow(iter, iterPower);
-    if (0 <= touched[midpoint.x()][midpoint.y()]) {                
+    if (0 <= touched[midpoint.x()][midpoint.y()]) {
       modulate[(midpoint.y())*modSize + midpoint.x()] = newValue + extra;
       touched[midpoint.x()][midpoint.y()]++;
     }
@@ -1037,11 +1037,11 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
     squares.push_back(QRect(curr.left(), midpoint.y(), (midpoint.x() - curr.left()), (curr.bottom()+1 - midpoint.y())));
     squares.push_back(QRect(midpoint.x(), curr.top(), (curr.right()+1 - midpoint.x()), (midpoint.y() - curr.top())));
     squares.push_back(QRect(midpoint.x(), midpoint.y(), (curr.right()+1 - midpoint.x()), (curr.bottom()+1 - midpoint.y())));
-    iter++; 
+    iter++;
   }
 
   for (int yval = 0; yval < GraphicsInfo::zoneSize; ++yval) {
-    for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {  
+    for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
       double xfrac = xval;
       xfrac /= GraphicsInfo::zoneSize;
       double yfrac = yval;
@@ -1051,12 +1051,12 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
   }
 
   for (int yval = 0; yval < GraphicsInfo::zoneSize; ++yval) {
-    // First calculate all the point heights. 
+    // First calculate all the point heights.
     for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
-      shaded[xval] = false; 
+      shaded[xval] = false;
     }
 
-    // For each point, throw a shadow to the right.     
+    // For each point, throw a shadow to the right.
     for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
       double xHeight = zoneInfo->heightMap[xval][yval];
       for (int cand = xval + 1; cand < GraphicsInfo::zoneSize; ++cand) {
@@ -1067,22 +1067,22 @@ void StaticInitialiser::addShadows (QGLFramebufferObject* fbo, GLuint texture) {
       }
     }
 
-    // Draw the shadow texture and scale to graphics step. 
+    // Draw the shadow texture and scale to graphics step.
     for (int xval = 0; xval < GraphicsInfo::zoneSize; ++xval) {
-      zoneInfo->heightMap[xval][yval] *= GraphicsInfo::zSeparation; 
+      zoneInfo->heightMap[xval][yval] *= GraphicsInfo::zSeparation;
       if (!shaded[xval]) continue;
       QRectF point(xval*invSize - 1, yval*invSize - 1, invSize * 1.5, invSize * 1.5);
-      fbo->drawTexture(point, texture); 
+      fbo->drawTexture(point, texture);
     }
   }
 }
 
 void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, double* heightMap, int mapWidth, GLuint texture) {
   // Corners of texture are at (-1, -1) and (1, 1) because drawTexture uses model space
-  // and the glOrtho call above. 
+  // and the glOrtho call above.
 
   int repeats = 3;
-  
+
   double xstep = 2;
   xstep /= (mapWidth-1); // Not calculating bin centers. Last bin edge should be on GraphicsInfo::zoneSize, or 2 in model space.
   double ystep = 2;
@@ -1090,8 +1090,8 @@ void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, dou
 
   xstep /= repeats;
   ystep /= repeats;
-  
-  const static double overlap = 2.00;   
+
+  const static double overlap = 2.00;
 
   for (int x = 0; x < mapWidth; ++x) {
     for (int y = 0; y < mapWidth+2; ++y) {
@@ -1100,19 +1100,19 @@ void createTexture (QGLFramebufferObject* fbo, int minHeight, int maxHeight, dou
 
 
       for (int i = 0; i < repeats; ++i) {
-	double xCenter = -1 + (3*x + i)*xstep;  
+	double xCenter = -1 + (3*x + i)*xstep;
 	for (int j = 0; j < repeats; ++ j) {
 	  glLoadIdentity();
-	  
+	
 	  double yCenter = -1 + (3*y + j)*ystep; // Notice positive y is up, opposite of heightmap
 	  double angle = rand();
 	  angle /= RAND_MAX;
 	  angle *= 360;
 	  // Rotation comes second because matrix multiplication reverses the order.
 	  glTranslated(xCenter + 0.5*overlap*xstep, yCenter + 0.5*overlap*ystep, 0);
-	  glRotated(angle, 0, 0, 1);      
-	  
-	  // Above calculation of step sizes is exact. Multiply texture size by constant factor to create overlap.      
+	  glRotated(angle, 0, 0, 1);
+	
+	  // Above calculation of step sizes is exact. Multiply texture size by constant factor to create overlap.
 	  fbo->drawTexture(QRectF(-0.5*overlap*xstep, -0.5*overlap*ystep, overlap*xstep, overlap*ystep), texture);
 	}
       }
@@ -1133,28 +1133,28 @@ void StaticInitialiser::loadSprites () {
     if (0 == positions.size()) mSprite->positions.push_back(doublet(0, 0));
     else {
       for (objiter p = positions.begin(); p != positions.end(); ++p) {
-	mSprite->positions.push_back(doublet((*p)->safeGetFloat("x"), (*p)->safeGetFloat("y"))); 
+	mSprite->positions.push_back(doublet((*p)->safeGetFloat("x"), (*p)->safeGetFloat("y")));
       }
     }
     SpriteContainer::sprites.push_back(mSprite);
   }
-  
+
   if (WarfareWindow::currWindow->hexDrawer->cSprite) delete WarfareWindow::currWindow->hexDrawer->cSprite;
   if (WarfareWindow::currWindow->hexDrawer->tSprite) delete WarfareWindow::currWindow->hexDrawer->tSprite;
-  if (WarfareWindow::currWindow->hexDrawer->farmSprite) delete WarfareWindow::currWindow->hexDrawer->farmSprite;  
-  
+  if (WarfareWindow::currWindow->hexDrawer->farmSprite) delete WarfareWindow::currWindow->hexDrawer->farmSprite;
+
   Object* ginfo = processFile("gfx/info.txt");
 
   Object* spriteInfo = ginfo->safeGetObject("castlesprite");
   assert(spriteInfo);
   WarfareWindow::currWindow->hexDrawer->cSprite = makeSprite(spriteInfo);
-  
+
   spriteInfo = ginfo->safeGetObject("treesprite");
   assert(spriteInfo);
   WarfareWindow::currWindow->hexDrawer->tSprite = makeSprite(spriteInfo);
 
   spriteInfo = ginfo->safeGetObject("farmsprite");
-  assert(spriteInfo);  
+  assert(spriteInfo);
   WarfareWindow::currWindow->hexDrawer->farmSprite = makeSprite(spriteInfo);
 
   spriteInfo = ginfo->safeGetObject("supplysprite");
@@ -1162,13 +1162,13 @@ void StaticInitialiser::loadSprites () {
   VillageGraphicsInfo::supplySpriteIndex = SpriteContainer::sprites.size();
   ThreeDSprite* cow = makeSprite(spriteInfo);
   MilUnitSprite* mSprite = new MilUnitSprite();
-  mSprite->soldier = cow; 
+  mSprite->soldier = cow;
   mSprite->positions.push_back(doublet(0, 0));
   SpriteContainer::sprites.push_back(mSprite);
   Object* pos = ginfo->getNeededObject("cowPositions");
   objvec cows = pos->getValue("position");
   VillageGraphicsInfo::maxCows = pos->safeGetInt("maxCows", 15);
-  
+
   for (int i = 0; i < VillageGraphicsInfo::maxCows; ++i) {
     if (i >= (int) cows.size()) {
       VillageGraphicsInfo::cowPositions.push_back(doublet((i%3)*0.1, (i/3)*0.1));
@@ -1177,7 +1177,7 @@ void StaticInitialiser::loadSprites () {
       VillageGraphicsInfo::cowPositions.push_back(doublet(cows[i]->safeGetFloat("x", (i%3)*0.1),
 							  cows[i]->safeGetFloat("y", (i/3)*0.1)));
     }
-  }    
+  }
   milUnitSpriteObjectMap.clear();
 }
 
@@ -1219,17 +1219,17 @@ void StaticInitialiser::makeGraphicsInfoObjects () {
 }
 
 void StaticInitialiser::makeZoneTextures (Object* ginfo) {
-  GLDrawer* hexDrawer = WarfareWindow::currWindow->hexDrawer;  
+  GLDrawer* hexDrawer = WarfareWindow::currWindow->hexDrawer;
 
   //const char* names[NoTerrain] = {"mountain.bmp", "hill.bmp", "gfx\\grass.png", "forest.bmp", "ocean.bmp"};
   //QColor colours[NoTerrain] = {Qt::gray, Qt::lightGray, Qt::yellow, Qt::green, Qt::blue};
-  
+
   QGLFramebufferObjectFormat format;
   format.setAttachment(QGLFramebufferObject::NoAttachment);
   // Neither depth nor stencil needed. Stencil causes major issue where
   // areas that have been drawn to can't be drawn to again, which completely
-  // scuppers the intended overlap. 
-  format.setInternalTextureFormat(GL_RGBA); 
+  // scuppers the intended overlap.
+  format.setInternalTextureFormat(GL_RGBA);
   QGLFramebufferObject* fbo = new QGLFramebufferObject(GraphicsInfo::zoneSize, GraphicsInfo::zoneSize, format);
   fbo->bind();
   glViewport(0, 0, fbo->size().width(), fbo->size().height());
@@ -1238,9 +1238,9 @@ void StaticInitialiser::makeZoneTextures (Object* ginfo) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);  
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
   glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA_SATURATE, GL_DST_ALPHA); 
+  glBlendFunc(GL_SRC_ALPHA_SATURATE, GL_DST_ALPHA);
 
   /*
   QGLShader alphaWeightedBlender(QGLShader::Fragment);
@@ -1248,16 +1248,16 @@ void StaticInitialiser::makeZoneTextures (Object* ginfo) {
 
   sourceCode.append("#version 120\n");
   sourceCode.append("uniform sampler2D tex0;\n");
-  sourceCode.append("uniform sampler2D tex1;\n");  
+  sourceCode.append("uniform sampler2D tex1;\n");
   sourceCode.append("void main(void){\n");
   sourceCode.append("  vec4 t0 = texture2D(tex0, gl_TexCoord[0].st);\n");
-  sourceCode.append("  vec4 t1 = texture2D(tex1, vec2(gl_TexCoord[0].s, 1.0 - gl_TexCoord[0].t));\n"); // Blit is upside down relative to drawTexture? 
+  sourceCode.append("  vec4 t1 = texture2D(tex1, vec2(gl_TexCoord[0].s, 1.0 - gl_TexCoord[0].t));\n"); // Blit is upside down relative to drawTexture?
   sourceCode.append("  float t0_alpha = t0.a;\n");
   sourceCode.append("  float t1_alpha = t1.a;\n");
   sourceCode.append("  float t0_weight = t0_alpha / (t0_alpha + t1_alpha);\n");
-  sourceCode.append("  gl_FragColor = mix(t1, t0, t0_weight);\n"); 
+  sourceCode.append("  gl_FragColor = mix(t1, t0, t0_weight);\n");
   sourceCode.append("  gl_FragColor = vec4(t0_weight, (1.0 - t0_weight), 0.0, 1.0);\n");
-  //sourceCode.append("  gl_FragColor = t0;\n"); 
+  //sourceCode.append("  gl_FragColor = t0;\n");
   sourceCode.append("}\n");
 
   //sourceCode.append("");
@@ -1268,22 +1268,22 @@ void StaticInitialiser::makeZoneTextures (Object* ginfo) {
 						 << "\n";
 
   QGLShaderProgram shadProg;
-  success = shadProg.addShader(&alphaWeightedBlender); if (!success) Logger::logStream(DebugStartup) << "Failed to add shader.\n";  
+  success = shadProg.addShader(&alphaWeightedBlender); if (!success) Logger::logStream(DebugStartup) << "Failed to add shader.\n";
   success = shadProg.link();                           if (!success) Logger::logStream(DebugStartup) << "Failed to link shader.\n";
   success = shadProg.bind();                           if (!success) Logger::logStream(DebugStartup) << "Failed to bin shader.\n";
   */
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho(-1.0, 1.0, -1.0, 1.0, 99, -99);
-  gluLookAt(0.0, 0.0, 1.0,  // Stand at 0, 0, 1. (glOrtho will not distort the edges.) 
-	    0.0, 0.0, 0.0,  // Look at origin. 
+  gluLookAt(0.0, 0.0, 1.0,  // Stand at 0, 0, 1. (glOrtho will not distort the edges.)
+	    0.0, 0.0, 0.0,  // Look at origin.
 	    0.0, 1.0, 0.0); // Up is positive y direction.
-  
-  
-  glBindTexture(GL_TEXTURE_2D, fbo->texture()); 
+
+
+  glBindTexture(GL_TEXTURE_2D, fbo->texture());
   glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
- 
+
   glMatrixMode(GL_MODELVIEW);
 
   Object* terrainTextures = ginfo->safeGetObject("terrainTextures");
@@ -1295,45 +1295,45 @@ void StaticInitialiser::makeZoneTextures (Object* ginfo) {
   for (unsigned int i = 0; i < terrains.size(); ++i) {
     hexDrawer->terrainTextureIndices[i] = loadTexture(remQuotes(terrains[i]->safeGetString("file")), Qt::blue);
     int minHeight = terrains[i]->safeGetInt("minimum");
-    int maxHeight = terrains[i]->safeGetInt("maximum");    
-    createTexture(fbo, minHeight, maxHeight, GraphicsInfo::heightMap, heightMapWidth(GraphicsInfo::zoneSide), hexDrawer->terrainTextureIndices[i]);   
+    int maxHeight = terrains[i]->safeGetInt("maximum");
+    createTexture(fbo, minHeight, maxHeight, GraphicsInfo::heightMap, heightMapWidth(GraphicsInfo::zoneSide), hexDrawer->terrainTextureIndices[i]);
   }
 
   GLuint shadowTexture = 0;
-  glGenTextures(1, &shadowTexture); 
-  // 2x2 matrix of half-transparent black. 
+  glGenTextures(1, &shadowTexture);
+  // 2x2 matrix of half-transparent black.
   uchar bits[16] = {0};
   bits[3] = bits[7] = bits[11] = bits[15] = 128;
-  
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);   
-  glLoadIdentity();  
+
+  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  glLoadIdentity();
   glBindTexture(GL_TEXTURE_2D, shadowTexture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, bits);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   addShadows(fbo, shadowTexture);
 
   fbo->release();
   hexDrawer->setViewport();
-  hexDrawer->zoneTextures[0] = fbo->texture();  
+  hexDrawer->zoneTextures[0] = fbo->texture();
 
-  //shadProg.release(); 
+  //shadProg.release();
 }
 
 void StaticInitialiser::setUItexts (Object* tInfo) {
   static const string badString("UNKNOWN STRING WANTED");
   Object* icons = tInfo->getNeededObject("icons");
-  
+
   WarfareWindow::currWindow->plainMapModeButton.setToolTip(remQuotes(tInfo->safeGetString("plainMapMode", badString)).c_str());
   string iconfile = icons->safeGetString("plain", badString);
   if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) WarfareWindow::currWindow->plainMapModeButton.setIcon(QIcon(iconfile.c_str()));
 
   WarfareWindow::currWindow->supplyMapModeButton.setToolTip(remQuotes(tInfo->safeGetString("supplyMapMode", badString)).c_str());
   iconfile = icons->safeGetString("supply", badString);
-  if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) WarfareWindow::currWindow->supplyMapModeButton.setIcon(QIcon(iconfile.c_str()));  
+  if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) WarfareWindow::currWindow->supplyMapModeButton.setIcon(QIcon(iconfile.c_str()));
 
   WarfareWindow::currWindow->unitInterface->increasePriorityButton.setToolTip(remQuotes(tInfo->safeGetString("incPrior", badString)).c_str());
   iconfile = icons->safeGetString("incPriority", badString);
@@ -1352,8 +1352,8 @@ void StaticInitialiser::setUItexts (Object* tInfo) {
   WarfareWindow::currWindow->castleInterface->decreaseRecruitButton.setToolTip(remQuotes(tInfo->safeGetString("decRecruit", badString)).c_str());
   for (MilUnitTemplate::Iter unit = MilUnitTemplate::start(); unit != MilUnitTemplate::final(); ++unit) {
     iconfile = icons->safeGetString((*unit)->getName(), badString);
-    Logger::logStream(DebugStartup) << "Setting icon " << iconfile << "\n"; 
-    if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) CastleInterface::icons[*unit] = QIcon(iconfile.c_str()); 
+    Logger::logStream(DebugStartup) << "Setting icon " << iconfile << "\n";
+    if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) CastleInterface::icons[*unit] = QIcon(iconfile.c_str());
   }
 
   WarfareWindow::currWindow->villageInterface->increaseDrillButton.setToolTip(remQuotes(tInfo->safeGetString("incDrill", badString)).c_str());
@@ -1361,7 +1361,7 @@ void StaticInitialiser::setUItexts (Object* tInfo) {
   if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) {
     WarfareWindow::currWindow->villageInterface->increaseDrillButton.setArrowType(Qt::NoArrow);
     WarfareWindow::currWindow->villageInterface->increaseDrillButton.setIcon(QIcon(iconfile.c_str()));
-  }  
+  }
   WarfareWindow::currWindow->villageInterface->decreaseDrillButton.setToolTip(remQuotes(tInfo->safeGetString("decDrill", badString)).c_str());
   iconfile = icons->safeGetString("decDrill", badString);
   if ((iconfile != badString) && (QFile::exists(iconfile.c_str()))) {
@@ -1426,11 +1426,11 @@ void StaticInitialiser::writeAgeInfoToObject (AgeTracker& age, Object* obj, int 
   int firstZero = age.people.size();
   for (int i = firstZero-1; i >= 0; --i) {
     if (age.people[i] > 0) break;
-    firstZero = i; 
+    firstZero = i;
   }
 
   for (int i = skip; i < firstZero; ++i) {
-    obj->addToList(age.people[i]); 
+    obj->addToList(age.people[i]);
   }
 }
 
@@ -1481,7 +1481,7 @@ void StaticInitialiser::writeGoodsHolderIntoObject (const GoodsHolder& goodsHold
     double amount = goodsHolder.getAmount(*tg);
     if (fabs(amount) < 0.001) continue;
     string gname = (*tg)->getName();
-    info->setLeaf(gname, amount); 
+    info->setLeaf(gname, amount);
   }
 }
 
@@ -1492,11 +1492,11 @@ void StaticInitialiser::writeGameToFile (string fname) {
   Object* pLevels = new Object("priorityLevels");
   pLevels->setObjList();
   for (vector<double>::iterator i = MilUnit::priorityLevels.begin(); i != MilUnit::priorityLevels.end(); ++i) {
-    pLevels->addToList(*i); 
+    pLevels->addToList(*i);
   }
   game->setValue(pLevels);
-  game->setLeaf("defaultPriority", defaultUnitPriority); 
-  
+  game->setLeaf("defaultPriority", defaultUnitPriority);
+
   for (Player::Iter p = Player::start(); p != Player::final(); ++p) {
     Object* faction = new Object("faction");
     faction->setLeaf("name", (*p)->getName());
@@ -1507,11 +1507,11 @@ void StaticInitialiser::writeGameToFile (string fname) {
     faction->setLeaf("green", pgInfo->getGreen());
     faction->setLeaf("blue",  pgInfo->getBlue());
     writeEconActorIntoObject((*p), faction);
-    
-    game->setValue(faction); 
+
+    game->setValue(faction);
   }
 
-  game->setLeaf("currentplayer", Player::getCurrentPlayer()->getName()); 
+  game->setLeaf("currentplayer", Player::getCurrentPlayer()->getName());
 
   int maxx = -1;
   int maxy = -1;
@@ -1523,7 +1523,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
   Object* hexgrid = new Object("hexgrid");
   hexgrid->setLeaf("x", maxx+1);
   hexgrid->setLeaf("y", maxy+1);
-  game->setValue(hexgrid); 
+  game->setValue(hexgrid);
 
   map<Vertex*, bool> writtenMarkets;
   for (Hex::Iterator hex = Hex::start(); hex != Hex::final(); ++hex) {
@@ -1547,7 +1547,7 @@ void StaticInitialiser::writeGameToFile (string fname) {
 	Object* garrObject = new Object("garrison");
 	castleObject->setValue(garrObject);
 	writeUnitToObject(castle->getGarrison(i), garrObject);
-	writeEconActorIntoObject(castle->getGarrison(i), garrObject); 
+	writeEconActorIntoObject(castle->getGarrison(i), garrObject);
       }
     }
 
@@ -1561,16 +1561,16 @@ void StaticInitialiser::writeGameToFile (string fname) {
     if (village) {
       Object* villageInfo = new Object("village");
       hexInfo->setValue(villageInfo);
-      writeEconActorIntoObject(village, villageInfo); 
+      writeEconActorIntoObject(village, villageInfo);
       Object* males = new Object("males");
       writeAgeInfoToObject(village->males, males);
       villageInfo->setValue(males);
 
-      males = new Object("females");      
+      males = new Object("females");
       writeAgeInfoToObject(village->women, males);
       villageInfo->setValue(males);
     }
-    
+
     Farmland* farm = (*hex)->getFarm();
     if (farm) {
       Object* farmInfo = new Object("farmland");
@@ -1599,13 +1599,13 @@ void StaticInitialiser::writeGameToFile (string fname) {
       mineInfo->setLeaf("veinsPerShaft", mine->workableBlocks);
     }
   }
-  
+
   for (Vertex::Iterator vtx = Vertex::start(); vtx != Vertex::final(); ++vtx) {
     if (0 == (*vtx)->numUnits()) continue;
-    MilUnit* unit = (*vtx)->getUnit(0); 
+    MilUnit* unit = (*vtx)->getUnit(0);
     Object* uinfo = new Object("unit");
     uinfo->setLeaf("player", unit->getOwner()->getName());
-    writeUnitToObject(unit, uinfo); 
+    writeUnitToObject(unit, uinfo);
     game->setValue(uinfo);
   }
 

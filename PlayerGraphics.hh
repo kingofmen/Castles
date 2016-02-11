@@ -4,18 +4,19 @@
 #include <QtOpenGL>
 
 class PlayerGraphicsInfo {
-  friend class StaticInitialiser; 
+  friend class StaticInitialiser;
 public:
   PlayerGraphicsInfo ();
   ~PlayerGraphicsInfo ();
 
   int getRed () const {return qRed(colour);}
   int getGreen () const {return qGreen(colour);}
-  int getBlue () const {return qBlue(colour);}  
-  
+  int getBlue () const {return qBlue(colour);}
+  GLuint getFlagTexture () const {return flag_texture_id;}
+
 private:
   QRgb colour;
-  GLuint flag_texture_id; 
+  GLuint flag_texture_id;
 };
 
 #endif

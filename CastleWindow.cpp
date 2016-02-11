@@ -11,6 +11,7 @@
 #include "Logger.hh"
 #include "MilUnit.hh"
 #include "Object.hh"
+#include "PlayerGraphics.hh"
 #include "RiderGame.hh"
 #include "StaticInitialiser.hh"
 #include "ThreeDSprite.hh"
@@ -306,7 +307,7 @@ void GLDrawer::drawCastle (Castle* castle) const {
 
   triplet castlePos = cgi->getPosition();
   vector<int> texts;
-  texts.push_back((*(playerToTextureMap.find(castle->getOwner()))).second);
+  texts.push_back(castle->getOwner()->getGraphicsInfo()->getFlagTexture());
 
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
@@ -359,7 +360,7 @@ void GLDrawer::drawSprites (const SpriteContainer* info, vector<int>& texts, dou
 
 void GLDrawer::drawMilUnit (MilUnit* unit, triplet center, double angle) {
   vector<int> texts;
-  texts.push_back(playerToTextureMap[unit->getOwner()]);
+  texts.push_back(unit->getOwner()->getGraphicsInfo()->getFlagTexture());
 
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
@@ -460,7 +461,8 @@ void GLDrawer::drawZone (int which) {
 void GLDrawer::drawHex (HexGraphicsInfo const* dat,
 			FarmGraphicsInfo const* farmInfo,
 			VillageGraphicsInfo const* villageInfo,
-			MilUnitGraphicsInfo const* militiaInfo) {
+			MilUnitGraphicsInfo const* militiaInfo,
+			PlayerGraphicsInfo const* playerInfo) {
   vector<int> texts; // Not used for trees.
   glDisable(GL_TEXTURE_2D);
   glMatrixMode(GL_MODELVIEW);
@@ -473,8 +475,6 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat,
   glColor4d(1.0, 1.0, 1.0, 1.0);
 
   if (!farmInfo) return;
-  Village* village = villageInfo->getGameObject();
-
   glEnable(GL_TEXTURE_2D);
   for (FarmGraphicsInfo::cfit field = farmInfo->start(); field != farmInfo->final(); ++field) {
     glBindTexture(GL_TEXTURE_2D, (*field).getIndex());
@@ -519,10 +519,9 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat,
   }
   glPopMatrix();
 
-  const MilUnitGraphicsInfo* militiaInfo2 = village->getMilitiaGraphics();
   glBindTexture(GL_TEXTURE_2D, 0);
   texts.clear();
-  texts.push_back(playerToTextureMap[village->getOwner()]);
+  if (playerInfo) texts.push_back(playerInfo->getFlagTexture());
 
   point1 = villageInfo->startDrill();
   point2 = villageInfo->startDrill(); ++point2;
@@ -539,7 +538,7 @@ void GLDrawer::drawHex (HexGraphicsInfo const* dat,
 
   glPushMatrix();
   glTranslated(center.x(), center.y(), center.z());
-  drawSprites(militiaInfo2, texts, angle);
+  drawSprites(militiaInfo, texts, angle);
   glPopMatrix();
 
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -967,7 +966,12 @@ void GLDrawer::paintGL () {
     Farmland* farm = (*hex)->getFarm();
     Village* village = (*hex)->getVillage();
     MilUnit* militia = village ? village->getMilitia() : 0;
-    drawHex((*hex)->getGraphicsInfo(), farm ? farm->getGraphicsInfo() : 0, village ? village->getGraphicsInfo() : 0, militia ? militia->getGraphicsInfo() : 0);
+    Player* owner = (*hex)->getOwner();
+    drawHex((*hex)->getGraphicsInfo(),
+	    farm ? farm->getGraphicsInfo() : 0,
+	    village ? village->getGraphicsInfo() : 0,
+	    militia ? militia->getGraphicsInfo() : 0,
+	    owner ? owner->getGraphicsInfo() : 0);
   }
 
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
