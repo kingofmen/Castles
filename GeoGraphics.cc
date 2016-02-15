@@ -18,7 +18,6 @@ HexGraphicsInfo::HexGraphicsInfo  (Hex* h)
   : GraphicsInfo()
   , GBRIDGE(Hex)(h, this)
   , Iterable<HexGraphicsInfo>(this)
-  , farmInfo(0)
 {
   pair<int, int> hpos = h->getPos();
   position.x() = (1.5 * xIncrement + xSeparation) * hpos.first;
@@ -286,18 +285,6 @@ GraphicsInfo::FieldShape HexGraphicsInfo::getPatch (bool large) {
     treesPerField.pop_back();
   }
   return ret;
-}
-
-void HexGraphicsInfo::setFarm (FarmGraphicsInfo* f) {
-  if (0 == spritePatches.size()) generateShapes();
-  farmInfo = f;
-  farmInfo->generateShapes(this);
-}
-
-void HexGraphicsInfo::setVillage (VillageGraphicsInfo* f) {
-  if (0 == biggerPatches.size()) generateShapes();
-  villageInfo = f;
-  villageInfo->generateShapes(this);
 }
 
 void LineGraphicsInfo::describe (QTextStream& str) const {

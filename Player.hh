@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "PlayerGraphics.hh"
 #include "EconActor.hh"
 #include "GraphicsBridge.hh"
 #include "UtilityFunctions.hh"

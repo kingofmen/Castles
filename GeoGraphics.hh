@@ -6,18 +6,15 @@
 #include "GraphicsBridge.hh"
 
 class HexGraphicsInfo : public GraphicsInfo, public TextInfo, public GBRIDGE(Hex), public Iterable<HexGraphicsInfo> {
+  friend class StaticInitialiser;
 public:
   HexGraphicsInfo (Hex* h); 
   ~HexGraphicsInfo ();
 
   virtual void describe (QTextStream& str) const;  
   triplet getCoords (Vertices v) const;
-  FarmGraphicsInfo const* getFarmInfo () const {return farmInfo;}
-  VillageGraphicsInfo const* getVillageInfo () const {return villageInfo;}
   FieldShape getPatch (bool large = false); 
   bool isInside (double x, double y) const;
-  void setFarm (FarmGraphicsInfo* f);
-  void setVillage (VillageGraphicsInfo* f);  
   static void getHeights (); 
 
   cpit startTrees () const {return trees.begin();}
@@ -33,8 +30,6 @@ private:
   triplet cornerLeft;
   triplet cornerLeftUp;
   triplet cornerRightUp;  
-  FarmGraphicsInfo* farmInfo;
-  VillageGraphicsInfo* villageInfo;
   vector<FieldShape> spritePatches; // Places to put sprites - hand out to subordinates.
   vector<FieldShape> biggerPatches; // For larger shapes like drill grounds.   
   FieldShape trees; // Not a polygon.

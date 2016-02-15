@@ -1194,18 +1194,20 @@ void StaticInitialiser::loadTextures () {
 void StaticInitialiser::makeGraphicsInfoObjects () {
   for (Hex::Iterator h = Hex::start(); h != Hex::final(); ++h) {
     (*h)->initialiseBridge();
+    HexGraphicsInfo* hexGraphics = (*h)->getGraphicsInfo();
+    hexGraphics->generateShapes();
     for (int i = LeftUp; i < NoVertex; ++i) {
       Vertex* vex = (*h)->vertices[i];
       if (vex->graphicsInfo) continue;
-      vex->graphicsInfo = new VertexGraphicsInfo(vex, (*h)->getGraphicsInfo(), convertToVertex(i));
+      vex->graphicsInfo = new VertexGraphicsInfo(vex, hexGraphics, convertToVertex(i));
       vex->position = vex->graphicsInfo->position;
       vex->mirror->position = vex->graphicsInfo->position;
     }
     if ((*h)->village) {
-      (*h)->getGraphicsInfo()->setVillage((*h)->village->getGraphicsInfo());
+      (*h)->village->getGraphicsInfo()->generateShapes(hexGraphics);
     }
     if ((*h)->farms) {
-      (*h)->getGraphicsInfo()->setFarm((*h)->farms->getGraphicsInfo());
+      (*h)->farms->getGraphicsInfo()->generateShapes(hexGraphics);
     }
   }
   for (Line::Iterator l = Line::start(); l != Line::final(); ++l) {
