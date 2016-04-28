@@ -832,8 +832,8 @@ void WarfareWindow::chooseTask (string fname, int task) {
 
 void WarfareWindow::newGame () {
   QString filename = QFileDialog::getOpenFileName(this, tr("Select file"), QString("./scenarios/"), QString("*.txt"));
-  string fn(filename.toAscii().data());
-  if (fn == "") return;
+  string fn = filename.toStdString();
+  if (fn.empty()) return;
   newGame(fn);
 }
 
@@ -848,15 +848,15 @@ void WarfareWindow::newGame (string fname) {
 
 void WarfareWindow::loadGame () {
   QString filename = QFileDialog::getOpenFileName(this, tr("Select file"), QString("./savegames/"), QString("*.txt"));
-  string fn(filename.toAscii().data());
-  if (fn == "") return;
+  string fn = filename.toStdString();
+  if (fn.empty()) return;
   newGame(fn);
 }
 
 void WarfareWindow::saveGame () {
   QString filename = QFileDialog::getSaveFileName(this, tr("Select file"), QString("./savegames/"), QString("*.txt"));
-  string fn(filename.toAscii().data());
-  if (fn == "") return;
+  string fn = filename.toStdString();
+  if (fn.empty()) return;
 
   StaticInitialiser::writeGameToFile(fn);
 }

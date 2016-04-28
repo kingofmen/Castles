@@ -145,7 +145,7 @@ public:
     marginalLabourRatio *= inverseExpectedRatio;
 
     // Should equal 1 when ratio is 1, approach 3 (make adjustable?) asymptotically upwards, and 0 downwards.
-    double fractionToSell = 1 + (marginalLabourRatio >= 1 ? 2 : 1) * atan(marginalLabourRatio) * M_2_PI;
+    double fractionToSell = 1 + (marginalLabourRatio >= 1 ? 2 : 1) * atan(marginalLabourRatio) * M_HALF_PI;
     fractionToSell *= inverseProductionTime;
     fractionToSell *= getAmount(output);
     fractionToSell -= soldThisTurn.getAmount(output);

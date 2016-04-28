@@ -1,10 +1,10 @@
 #include "Logger.hh"
-#include <cassert> 
-#include "Parser.hh" 
+#include <cassert>
+#include "Parser.hh"
 
-std::map<int, Logger*> Logger::logs; 
+std::map<int, Logger*> Logger::logs;
 
-Logger::Logger () 
+Logger::Logger ()
   : active(true)
   , buffer()
   , precision(-1)
@@ -18,7 +18,7 @@ Logger& Logger::append (unsigned int prec, double val) {
   sprintf(str, "%%.%if", prec);
   sprintf(str2, str, val);
   buffer.append(str2);
-  return *this; 
+  return *this;
 }
 
 Logger& Logger::operator<< (std::string dat) {
@@ -28,24 +28,24 @@ Logger& Logger::operator<< (std::string dat) {
   else {
     buffer.append(dat.substr(0, linebreak).c_str());
     clearBuffer();
-    (*this) << dat.substr(linebreak+1); 
+    (*this) << dat.substr(linebreak+1);
   }
-  return *this; 
+  return *this;
 }
 
 Logger& Logger::operator<< (Object* dat) {
   if (!active) return *this;
-  static int indent = 0; 
+  static int indent = 0;
   for (int i = 0; i < indent; i++) {
-    *this << "  "; 
+    *this << "  ";
   }
   if (dat->isLeaf()) {
-    *this << dat->getKey() << " = " << dat->getLeaf() << "\n"; 
-    return *this; 
+    *this << dat->getKey() << " = " << dat->getLeaf() << "\n";
+    return *this;
   }
   if (0 != dat->numTokens()) {
     *this << dat->getKey() << " = { " << dat->getLeaf() << " }\n";
-    return *this; 
+    return *this;
   }
 
   if (dat != Parser::topLevel) {
@@ -54,26 +54,26 @@ Logger& Logger::operator<< (Object* dat) {
   }
   objvec leaves = dat->getLeaves();
   for (objiter i = leaves.begin(); i != leaves.end(); ++i) {
-    *this << (*i); 
+    *this << (*i);
   }
   if (dat != Parser::topLevel) {
-    indent--; 
+    indent--;
     for (int i = 0; i < indent; i++) {
-      *this << "  "; 
+      *this << "  ";
     }
     *this << "} \n";
   }
-  return *this; 
+  return *this;
 }
 
 Logger& Logger::operator<< (char* dat) {
   if (!active) return *this;
-  return ((*this) << std::string(dat)); 
+  return ((*this) << std::string(dat));
 }
 
 Logger& Logger::operator<< (const char* dat) {
   if (!active) return *this;
-  return ((*this) << std::string(dat)); 
+  return ((*this) << std::string(dat));
 }
 
 Logger& Logger::operator<< (QString dat) {
@@ -83,61 +83,61 @@ Logger& Logger::operator<< (QString dat) {
   else {
     buffer.append(dat.mid(0, linebreak));
     clearBuffer();
-    (*this) << dat.mid(linebreak+1); 
+    (*this) << dat.mid(linebreak+1);
   }
-  
-  return *this;  
+
+  return *this;
 }
 
 Logger& Logger::operator<< (int dat) {
   if (!active) return *this;
-  buffer.append(QString("%1").arg(dat)); 
-  return *this; 
+  buffer.append(QString("%1").arg(dat));
+  return *this;
 }
 
 Logger& Logger::operator<< (void* dat) {
   if (!active) return *this;
   static char strbuf[100];
   sprintf(strbuf, "%p", dat);
-  buffer.append(strbuf); 
-  return *this; 
+  buffer.append(strbuf);
+  return *this;
 }
 
 Logger& Logger::operator<< (unsigned int dat) {
   if (!active) return *this;
-  buffer.append(QString("%1").arg(dat)); 
-  return *this; 
+  buffer.append(QString("%1").arg(dat));
+  return *this;
 }
 
 Logger& Logger::operator<< (double dat) {
   if (!active) return *this;
   if (precision > 0) append(precision, dat);
-  else buffer.append(QString("%1").arg(dat)); 
-  return *this; 
+  else buffer.append(QString("%1").arg(dat));
+  return *this;
 }
 
 Logger& Logger::operator<< (char dat) {
   if (!active) return *this;
   if ('\n' == dat) clearBuffer();
   else buffer.append(dat);
-  return *this; 
+  return *this;
 }
 
 void Logger::createStream (int idx) {
-  logs[idx] = new Logger(); 
+  logs[idx] = new Logger();
 }
 
 Logger& Logger::logStream (int idx) {
-  assert(logs[idx]); 
-  return *(logs[idx]); 
+  assert(logs[idx]);
+  return *(logs[idx]);
 }
 
 void Logger::clearBuffer () {
-  emit message(buffer); 
+  emit message(buffer);
   buffer.clear();
 }
 
-FileLog::FileLog (std::string fname) 
+FileLog::FileLog (std::string fname)
   : writer()
   , filename(fname)
 {}
@@ -146,11 +146,11 @@ FileLog::~FileLog () {}
 
 void FileLog::message (QString str) {
   writer.open(filename.c_str(), std::ios_base::out | std::ios_base::app);
-  writer << str.toAscii().data() << std::endl; 
+  writer << str.toStdString() << std::endl;
   writer.close();
   // Intended for debugging crashes,
   // so clean after every write even though it
-  // may well be rather slow. 
+  // may well be rather slow.
 }
 
 

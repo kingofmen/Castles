@@ -349,7 +349,7 @@ void MilUnit::lootHex (Hex* hex) {
   // these two scenarios. Scale everything by our aggression.
 
   // Scale 0-infinity ratio onto 0-1 using arctan.
-  ratio = atan(ratio) * M_2_PI;
+  ratio = atan(ratio) * M_HALF_PI;
 
   int ourCasualties = takeCasualties((1.0 - ratio) * FORAGE_CASUALTY_RATE * aggression);
   GoodsHolder looted = hex->loot(FORAGE_LOOT_RATE * ratio * aggression);
