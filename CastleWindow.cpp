@@ -358,9 +358,9 @@ void GLDrawer::drawSprites (const SpriteContainer* info, vector<int>& texts, dou
   }
 }
 
-void GLDrawer::drawMilUnit (MilUnit* unit, triplet center, double angle) {
+void GLDrawer::drawMilUnit (const SpriteContainer* unit, Player* player, triplet center, double angle) {
   vector<int> texts;
-  texts.push_back(unit->getOwner()->getGraphicsInfo()->getFlagTexture());
+  texts.push_back(player->getGraphicsInfo()->getFlagTexture());
 
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
@@ -383,7 +383,7 @@ void GLDrawer::drawMilUnit (MilUnit* unit, triplet center, double angle) {
   glEnd();
   glPopMatrix();
 
-  drawSprites(unit->getGraphicsInfo(), texts, angle);
+  drawSprites(unit, texts, angle);
   glPopMatrix();
 }
 
@@ -409,7 +409,7 @@ void GLDrawer::drawVertex (VertexGraphicsInfo const* gInfo) {
   case LeftUp    : angle =  60; break;
   }
 
-  drawMilUnit(unit, center, angle);
+  drawMilUnit(unit->getGraphicsInfo(), unit->getOwner(), center, angle);
 }
 
 void GLDrawer::drawZone (int which) {

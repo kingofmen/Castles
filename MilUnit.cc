@@ -773,6 +773,7 @@ TransportUnit::TransportUnit (MilUnit* t)
   : Unit()
   , Iterable<TransportUnit>(this)
   , Mirrorable<TransportUnit>()
+  , GBRIDGE(TransportUnit)(this)
   , target(t)
 {}
 
@@ -782,6 +783,7 @@ TransportUnit::TransportUnit (TransportUnit* other)
   : Unit()
   , Iterable<TransportUnit>(0)
   , Mirrorable<TransportUnit>(other)
+  , GBRIDGE(TransportUnit)()
 {}
 
 void TransportUnit::setMirrorState () {

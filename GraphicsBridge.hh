@@ -14,6 +14,7 @@ class Line;
 class MilStrength;
 class MilUnit;
 class MilUnitTemplate;
+class TransportUnit;
 class Vertex;
 class VillageGraphicsInfo;
 

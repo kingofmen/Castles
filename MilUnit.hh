@@ -10,6 +10,7 @@
 #include "EconActor.hh"
 #include "Hex.hh"
 #include "Mirrorable.hh"
+#include "UnitGraphics.hh"
 #include "UtilityFunctions.hh"
 
 class Castle;
@@ -180,7 +181,7 @@ struct BattleResult {
   Outcome dieRoll;
 };
 
-class TransportUnit : public Unit, public Iterable<TransportUnit>, public Mirrorable<TransportUnit> {
+class TransportUnit : public Unit, public Iterable<TransportUnit>, public Mirrorable<TransportUnit>, public GBRIDGE(TransportUnit) {
   friend class StaticInitialiser;
   friend class Mirrorable<TransportUnit>;
 public:

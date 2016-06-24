@@ -19,4 +19,16 @@ private:
   static vector<vector<doublet> > allFormations;
 };
 
+class TransportUnitGraphicsInfo : public GBRIDGE(TransportUnit) {
+  friend class StaticInitialiser;
+ public:
+  TransportUnitGraphicsInfo(TransportUnit* dat);
+  virtual ~TransportUnitGraphicsInfo();
+
+  virtual void describe (QTextStream& str) const {str << "Transport unit";}
+
+ private:
+  
+};
+
 #endif

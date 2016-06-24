@@ -99,3 +99,7 @@ void MilUnitGraphicsInfo::updateSprites (MilStrength* dat) {
     formation.push_back(allFormations[spriteIndices.size()][i]);
   }
 }
+
+TransportUnitGraphicsInfo::TransportUnitGraphicsInfo (TransportUnit* dat) : GBRIDGE(TransportUnit)(dat) {}
+TransportUnitGraphicsInfo::~TransportUnitGraphicsInfo () {}
+

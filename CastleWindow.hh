@@ -62,65 +62,65 @@ private:
 
 class CastleInterface : public QLabel {
   Q_OBJECT
-  friend class StaticInitialiser; 
+  friend class StaticInitialiser;
 public:
   CastleInterface (QWidget* p);
   void setCastle (Castle* dat);
-  void updateCastleInfo (); 
-			   
+  void updateCastleInfo ();
+
 public slots:
   void changeRecruitment (int direction);
-  
-signals: 
+
+signals:
 
 private:
   QToolButton increaseRecruitButton;
   QToolButton decreaseRecruitButton;
   Castle* castle;
 
-  static map<MilUnitTemplate const* const, QIcon> icons; 
+  static map<MilUnitTemplate const* const, QIcon> icons;
 };
 
 class VillageInterface : public QLabel {
   Q_OBJECT
-  friend class StaticInitialiser; 
+  friend class StaticInitialiser;
 public:
   VillageInterface (QWidget* p);
   void setVillage (Village* dat) {village = dat;}
-  void updateFarmInfo (); 
-			   
+  void updateFarmInfo ();
+
 public slots:
   void changeDrillLevel (int direction);
-  
-signals: 
+
+signals:
 
 private:
   QToolButton increaseDrillButton;
   QToolButton decreaseDrillButton;
-  Village* village; 
+  Village* village;
 };
 
 class HexDrawer {
 public:
   HexDrawer (QWidget* p);
-  virtual ~HexDrawer (); 
+  virtual ~HexDrawer ();
 
-  virtual void draw () = 0; 
+  virtual void draw () = 0;
   virtual Hex* findHex (double x, double y) = 0;
   virtual Vertex* findVertex (double x, double y) = 0;
   virtual Line* findLine (double x, double y) = 0;
   virtual void setTranslate (int x, int y) {translateX = x; translateY = y;}
   void zoom (int delta);
-  void rotate (double amount) {radial += amount;} 
-  void azimate (double amount); 
-  
+  void rotate (double amount) {radial += amount;}
+  void azimate (double amount);
+
 protected:
-  QWidget* parent; 
+  QWidget* parent;
   int translateX;
   int translateY;
-  int zoomLevel;  // Distance of viewer from scene. Lower number is closer zoom. 
+  int zoomLevel;  // Distance of viewer from scene. Lower number is closer zoom.
   double azimuth;
-  double radial; 
+  double radial;
 };
 
 class MapOverlay {
@@ -130,29 +130,29 @@ public:
 
 class SupplyMode : public MapOverlay {
 public:
-  virtual void drawLine (LineGraphicsInfo const* dat); 
-}; 
+  virtual void drawLine (LineGraphicsInfo const* dat);
+};
 
 class GLDrawer : public HexDrawer, public QGLWidget {
-  friend class StaticInitialiser; 
+  friend class StaticInitialiser;
 public:
   GLDrawer (QWidget* p);
   ~GLDrawer () {}
-  virtual void draw (); 
+  virtual void draw ();
   virtual Hex* findHex (double x, double y);
   virtual Vertex* findVertex (double x, double y);
   virtual Line* findLine (double x, double y);
   virtual void setTranslate (int x, int y);
-  void setViewport (); 
-  void assignColour (Player* p); 
-  void setOverlayMode (MapOverlay* m) {overlayMode = m;} 
-  
+  void setViewport ();
+  void assignColour (Player* p);
+  void setOverlayMode (MapOverlay* m) {overlayMode = m;}
+
 protected:
-  void convertToOGL (double& x, double& y); 
+  void convertToOGL (double& x, double& y);
   virtual void paintGL ();
   virtual void initializeGL ();
-  virtual void resizeGL ();   
-  
+  virtual void resizeGL ();
+
 private:
   void drawCastle (Castle* castle) const;
   void drawLine (LineGraphicsInfo const* dat);
@@ -161,11 +161,11 @@ private:
 		VillageGraphicsInfo const* villageInfo,
 		MilUnitGraphicsInfo const* militiaInfo,
 		PlayerGraphicsInfo const* playerInfo);
-  void drawSprites (const SpriteContainer* info, vector<int>& texts, double angle);  
-  void drawMilUnit (MilUnit* unit, triplet center, double angle); 
+  void drawSprites (const SpriteContainer* info, vector<int>& texts, double angle);
+  void drawMilUnit (const SpriteContainer* unit, Player* player, triplet center, double angle);
   void drawVertex (VertexGraphicsInfo const* dat);
-  void drawZone (int which); 
-  ThreeDSprite* makeSprite (Object* info); 
+  void drawZone (int which);
+  ThreeDSprite* makeSprite (Object* info);
 
   int* errors;
   GLuint* terrainTextureIndices;
@@ -173,45 +173,45 @@ private:
 
   ThreeDSprite* cSprite;
   ThreeDSprite* tSprite;
-  ThreeDSprite* farmSprite;  
+  ThreeDSprite* farmSprite;
 
-  MapOverlay* overlayMode; 
-}; 
+  MapOverlay* overlayMode;
+};
 
 
 
 class WarfareWindow : public QMainWindow {
   Q_OBJECT
-  friend class StaticInitialiser; 
+  friend class StaticInitialiser;
 
 public:
-  WarfareWindow (QWidget* parent = 0); 
+  WarfareWindow (QWidget* parent = 0);
   ~WarfareWindow ();
 
   QPlainTextEdit* textWindow;
   void initialiseColours ();
-  void clearGame (); 
-  void newGame (string fname); 
-  void chooseTask (string fname, int task); 
-				  
+  void clearGame ();
+  void newGame (string fname);
+  void chooseTask (string fname, int task);
+				
 public slots:
-  void newGame ();  
-  void loadGame ();  
+  void newGame ();
+  void loadGame ();
   void saveGame ();
   void endTurn ();
-  void message (QString m); 
-  void setMapMode (int m); 
+  void message (QString m);
+  void setMapMode (int m);
   void update ();
-  void copyHistory (); 
-  
+  void copyHistory ();
+
 signals:
-  
+
 protected:
   void paintEvent(QPaintEvent *event);
   void mouseReleaseEvent (QMouseEvent* event);
   void mousePressEvent (QMouseEvent* event);
   void keyReleaseEvent (QKeyEvent* event);
-  void wheelEvent (QWheelEvent* event); 
+  void wheelEvent (QWheelEvent* event);
 private:
   GLDrawer* hexDrawer;
   TextInfoDisplay* selDrawer;
@@ -219,31 +219,31 @@ private:
   EventList* marketDrawer;
   UnitInterface* unitInterface;
   CastleInterface* castleInterface;
-  VillageInterface* villageInterface;   
-  SupplyMode supplyMode; 
-  
-  void humanAction (Action& act); 
+  VillageInterface* villageInterface;
+  SupplyMode supplyMode;
+
+  void humanAction (Action& act);
   bool turnEnded ();
   void endOfTurn ();
-  void initialiseGraphics(); 
-  void runNonHumans (); 
-  Player* gameOver (); 
+  void initialiseGraphics();
+  void runNonHumans ();
+  Player* gameOver ();
 
   void selectObject ();
-  
+
   WarfareGame* currentGame;
   Hex* selectedHex;
-  Line* selectedLine; 
-  Vertex* selectedVertex; 
-  
+  Line* selectedLine;
+  Vertex* selectedVertex;
+
   int mouseDownX;
   int mouseDownY;
 
   QToolButton plainMapModeButton;
   QToolButton supplyMapModeButton;
-  
+
   static map<int, Logger*> logs;
-  static WarfareWindow* currWindow; 
+  static WarfareWindow* currWindow;
 };
 
 #endif
