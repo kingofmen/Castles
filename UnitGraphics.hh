@@ -19,7 +19,7 @@ private:
   static vector<vector<doublet> > allFormations;
 };
 
-class TransportUnitGraphicsInfo : public GBRIDGE(TransportUnit) {
+class TransportUnitGraphicsInfo : public GBRIDGE(TransportUnit), public SpriteContainer {
   friend class StaticInitialiser;
  public:
   TransportUnitGraphicsInfo(TransportUnit* dat);
@@ -28,7 +28,7 @@ class TransportUnitGraphicsInfo : public GBRIDGE(TransportUnit) {
   virtual void describe (QTextStream& str) const {str << "Transport unit";}
 
  private:
-  
+  static unsigned int spriteIndex;
 };
 
 #endif

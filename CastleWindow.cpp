@@ -360,7 +360,7 @@ void GLDrawer::drawSprites (const SpriteContainer* info, vector<int>& texts, dou
 
 void GLDrawer::drawMilUnit (const SpriteContainer* unit, Player* player, triplet center, double angle) {
   vector<int> texts;
-  texts.push_back(player->getGraphicsInfo()->getFlagTexture());
+  if (player) texts.push_back(player->getGraphicsInfo()->getFlagTexture());
 
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
@@ -979,6 +979,13 @@ void GLDrawer::paintGL () {
     drawVertex(*vertex);
   }
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+  for (TransportUnit::Iterator transport = TransportUnit::start(); transport != TransportUnit::final(); ++transport) {
+    Vertex* dat = (*transport)->getLocation();
+    //glEnable(GL_TEXTURE_2D);
+    triplet center = dat->getGraphicsInfo()->getPosition();
+    drawMilUnit((*transport)->getGraphicsInfo(), (*transport)->getOwner(), center, 0.0);
+  }
 }
 
 void WarfareWindow::paintEvent (QPaintEvent* /*event*/) {

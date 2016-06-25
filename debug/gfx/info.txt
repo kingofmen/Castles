@@ -49,3 +49,8 @@ cowPositions = {
   position = { x = 0.07 y = 0.67 }
 
 }
+
+transportSprite = {
+  filename = gfx/wagon.obj
+  zscale = -1
+}

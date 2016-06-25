@@ -10,6 +10,7 @@
 vector<MilUnitSprite*> SpriteContainer::sprites;
 map<MilUnitTemplate*, int> MilUnitGraphicsInfo::indexMap;
 vector<vector<doublet> > MilUnitGraphicsInfo::allFormations;
+unsigned int TransportUnitGraphicsInfo::spriteIndex = 0;
 
 MilUnitGraphicsInfo::MilUnitGraphicsInfo (MilUnit* dat) : GBRIDGE(MilUnit)(dat), TextInfo() {}
 MilUnitGraphicsInfo::~MilUnitGraphicsInfo () {}
@@ -77,7 +78,7 @@ void MilUnitGraphicsInfo::updateSprites (MilStrength* dat) {
   sort(forces.begin(), forces.end(), deref<SortHelper>(member_gt(&SortHelper::strength)));
 
   if (0 == types) {
-    // No sprites for these units - use a default
+    // No sprites for these units - use a default.
     spriteIndices.push_back((*(indexMap.begin())).second);
     formation.push_back(doublet(0, 0));
     return;
@@ -100,6 +101,11 @@ void MilUnitGraphicsInfo::updateSprites (MilStrength* dat) {
   }
 }
 
-TransportUnitGraphicsInfo::TransportUnitGraphicsInfo (TransportUnit* dat) : GBRIDGE(TransportUnit)(dat) {}
+TransportUnitGraphicsInfo::TransportUnitGraphicsInfo (TransportUnit* dat) : GBRIDGE(TransportUnit)(dat) {
+  Logger::logStream(DebugStartup) << "Sprite index " << spriteIndex << "\n";
+  spriteIndices.push_back(spriteIndex);
+  formation.push_back(doublet(0, 0));
+}
+
 TransportUnitGraphicsInfo::~TransportUnitGraphicsInfo () {}
 

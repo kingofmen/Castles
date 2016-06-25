@@ -161,6 +161,11 @@ void StaticInitialiser::graphicsInitialisation () {
     texid = loadTexture(pName, Qt::red, texid);
     (*p)->getGraphicsInfo()->flag_texture_id = texid;
   }
+
+  // Compensate for bad ordering of "create units" and "create sprites".
+  for (TransportUnit::Iterator transport = TransportUnit::start(); transport != TransportUnit::final(); ++transport) {
+    (*transport)->getGraphicsInfo()->spriteIndices[0] = TransportUnitGraphicsInfo::spriteIndex;
+  }
 }
 
 template<class T> void StaticInitialiser::initialiseIndustry(Object* industryObject) {
@@ -783,20 +788,6 @@ void StaticInitialiser::buildMilUnitTemplates (Object* info) {
     Object* spriteInfo = (*unit)->safeGetObject("sprite");
     if (spriteInfo) {
       milUnitSpriteObjectMap[nType] = spriteInfo;
-      /*
-      ThreeDSprite* nSprite = makeSprite(spriteInfo);
-      MilUnitGraphicsInfo::indexMap[nType] = SpriteContainer::sprites.size();
-      MilUnitSprite* mSprite = new MilUnitSprite();
-      mSprite->soldier = nSprite;
-      objvec positions = spriteInfo->getValue("position");
-      if (0 == positions.size()) mSprite->positions.push_back(doublet(0, 0));
-      else {
-	for (objiter p = positions.begin(); p != positions.end(); ++p) {
-	  mSprite->positions.push_back(doublet((*p)->safeGetFloat("x"), (*p)->safeGetFloat("y")));
-	}
-      }
-      SpriteContainer::sprites.push_back(mSprite);
-      */
     }
   }
   MilUnitTemplate::freeze();
@@ -1179,6 +1170,15 @@ void StaticInitialiser::loadSprites () {
     }
   }
   milUnitSpriteObjectMap.clear();
+
+  spriteInfo = ginfo->safeGetObject("transportSprite");
+  if (!spriteInfo) throwFormatted("No transport sprite");
+  TransportUnitGraphicsInfo::spriteIndex = SpriteContainer::sprites.size();
+  ThreeDSprite* wagon = makeSprite(spriteInfo);
+  MilUnitSprite* wSprite = new MilUnitSprite();
+  wSprite->soldier = wagon;
+  wSprite->positions.push_back(doublet(0, 0));
+  SpriteContainer::sprites.push_back(wSprite);
 }
 
 void StaticInitialiser::loadTextures () {

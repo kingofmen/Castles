@@ -773,9 +773,11 @@ TransportUnit::TransportUnit (MilUnit* t)
   : Unit()
   , Iterable<TransportUnit>(this)
   , Mirrorable<TransportUnit>()
-  , GBRIDGE(TransportUnit)(this)
+  , GBRIDGE(TransportUnit)(this, new TransportUnitGraphicsInfo(this))
   , target(t)
-{}
+{
+  setOwner(t->getOwner());
+}
 
 TransportUnit::~TransportUnit () {}
 
