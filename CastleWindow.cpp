@@ -15,7 +15,7 @@
 #include "RiderGame.hh"
 #include "StaticInitialiser.hh"
 #include "ThreeDSprite.hh"
-#include "UnitGraphics.hh"
+#include "graphics/UnitGraphics.hh"
 
 using namespace std;
 const triplet xaxis(1, 0, 0);

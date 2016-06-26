@@ -19,7 +19,7 @@
 #include "Parser.hh"
 #include "Player.hh"
 #include "PlayerGraphics.hh"
-#include "UnitGraphics.hh"
+#include "graphics/UnitGraphics.hh"
 #include "UtilityFunctions.hh"
 
 int StaticInitialiser::defaultUnitPriority = 4;

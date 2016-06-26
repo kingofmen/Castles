@@ -6,7 +6,7 @@
 #include "BuildingGraphics.hh"
 #include "Hex.hh"
 #include "MilUnit.hh"
-#include "UnitGraphics.hh"
+#include "graphics/UnitGraphics.hh"
 #include "UtilityFunctions.hh"
 #include "Calendar.hh"
 

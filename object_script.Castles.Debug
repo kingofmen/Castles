@@ -21,8 +21,8 @@ INPUT(
 ./debug/RoadButton.o
 ./debug/StaticInitialiser.o
 ./debug/ThreeDSprite.o
-./debug/UnitGraphics.o
 ./debug/UtilityFunctions.o
+./debug/UnitGraphics.o
 ./debug/moc_CastleWindow.o
 ./debug/moc_Logger.o
 ./debug/moc_RoadButton.o

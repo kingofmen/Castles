@@ -5,7 +5,7 @@
 #include "Logger.hh" 
 #include "Calendar.hh"
 #include "Player.hh"
-#include "UnitGraphics.hh"
+#include "graphics/UnitGraphics.hh"
 
 typedef std::vector<MilUnitElement*>::const_iterator CElmIter;
 typedef std::vector<MilUnitElement*>::iterator ElmIter;

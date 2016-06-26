@@ -3,7 +3,7 @@
 #include "RiderGame.hh"
 #include "Hex.hh"
 #include "MilUnit.hh"
-#include "UnitGraphics.hh"
+#include "graphics/UnitGraphics.hh"
 #include "Logger.hh" 
 #include <cassert> 
 

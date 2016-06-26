@@ -21,8 +21,8 @@ INPUT(
 ./release/RoadButton.o
 ./release/StaticInitialiser.o
 ./release/ThreeDSprite.o
-./release/UnitGraphics.o
 ./release/UtilityFunctions.o
+./release/UnitGraphics.o
 ./release/moc_CastleWindow.o
 ./release/moc_Logger.o
 ./release/moc_RoadButton.o

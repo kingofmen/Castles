@@ -9,7 +9,7 @@
 #include <cassert>
 #include <cstdio>
 #include <algorithm>
-#include "UnitGraphics.hh"
+#include "graphics/UnitGraphics.hh"
 #include "UtilityFunctions.hh" 
 
 char stringbuffer[1000]; 

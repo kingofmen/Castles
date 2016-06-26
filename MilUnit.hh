@@ -10,7 +10,7 @@
 #include "EconActor.hh"
 #include "Hex.hh"
 #include "Mirrorable.hh"
-#include "UnitGraphics.hh"
+#include "graphics/UnitGraphics.hh"
 #include "UtilityFunctions.hh"
 
 class Castle;
