@@ -17,8 +17,8 @@ INPUT(
 ./debug/RiderGame.o
 ./debug/RoadButton.o
 ./debug/StaticInitialiser.o
-./debug/ThreeDSprite.o
 ./debug/UtilityFunctions.o
+./debug/ThreeDSprite.o
 ./debug/GeoGraphics.o
 ./debug/PlayerGraphics.o
 ./debug/UnitGraphics.o

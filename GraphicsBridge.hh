@@ -3,7 +3,7 @@
 
 #include <type_traits>
 
-#include "ThreeDSprite.hh"
+#include "graphics/ThreeDSprite.hh"
 #include "UtilityFunctions.hh"
 #include "Directions.hh"
 

@@ -17,8 +17,8 @@ INPUT(
 ./release/RiderGame.o
 ./release/RoadButton.o
 ./release/StaticInitialiser.o
-./release/ThreeDSprite.o
 ./release/UtilityFunctions.o
+./release/ThreeDSprite.o
 ./release/GeoGraphics.o
 ./release/PlayerGraphics.o
 ./release/UnitGraphics.o

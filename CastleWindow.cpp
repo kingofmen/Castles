@@ -14,7 +14,7 @@
 #include "graphics/PlayerGraphics.hh"
 #include "RiderGame.hh"
 #include "StaticInitialiser.hh"
-#include "ThreeDSprite.hh"
+#include "graphics/ThreeDSprite.hh"
 #include "graphics/UnitGraphics.hh"
 
 using namespace std;
