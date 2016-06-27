@@ -10,7 +10,7 @@
 #include "Building.hh"
 #include "UtilityFunctions.hh"
 #include "Directions.hh"
-#include "GeoGraphics.hh"
+#include "graphics/GeoGraphics.hh"
 
 class MilUnit;
 class MilUnitTemplate;
