@@ -7,7 +7,6 @@ INPUT(
 ./debug/Directions.o
 ./debug/EconActor.o
 ./debug/glextensions.o
-./debug/GraphicsBridge.o
 ./debug/Hex.o
 ./debug/Logger.o
 ./debug/Market.o
@@ -18,6 +17,7 @@ INPUT(
 ./debug/RoadButton.o
 ./debug/StaticInitialiser.o
 ./debug/UtilityFunctions.o
+./debug/GraphicsBridge.o
 ./debug/ThreeDSprite.o
 ./debug/GeoGraphics.o
 ./debug/PlayerGraphics.o

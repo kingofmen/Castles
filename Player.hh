@@ -6,7 +6,7 @@
 
 #include "graphics/PlayerGraphics.hh"
 #include "EconActor.hh"
-#include "GraphicsBridge.hh"
+#include "graphics/GraphicsBridge.hh"
 #include "UtilityFunctions.hh"
 
 class Action;

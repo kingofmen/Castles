@@ -2,7 +2,7 @@
 #define MARKET_HH
 
 #include "EconActor.hh"
-#include "GraphicsBridge.hh"
+#include "graphics/GraphicsBridge.hh"
 #include "Mirrorable.hh"
 #include "UtilityFunctions.hh"
 

@@ -7,7 +7,6 @@ INPUT(
 ./release/Directions.o
 ./release/EconActor.o
 ./release/glextensions.o
-./release/GraphicsBridge.o
 ./release/Hex.o
 ./release/Logger.o
 ./release/Market.o
@@ -18,6 +17,7 @@ INPUT(
 ./release/RoadButton.o
 ./release/StaticInitialiser.o
 ./release/UtilityFunctions.o
+./release/GraphicsBridge.o
 ./release/ThreeDSprite.o
 ./release/GeoGraphics.o
 ./release/PlayerGraphics.o

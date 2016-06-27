@@ -9,7 +9,7 @@
 #include "AgeTracker.hh" 
 #include "UtilityFunctions.hh" 
 #include "EconActor.hh"
-#include "GraphicsBridge.hh"
+#include "graphics/GraphicsBridge.hh"
 
 class MilUnit;
 class MilUnitTemplate;
