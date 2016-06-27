@@ -16,12 +16,12 @@ INPUT(
 ./debug/MilUnit.o
 ./debug/Mirrorable.o
 ./debug/Player.o
-./debug/PlayerGraphics.o
 ./debug/RiderGame.o
 ./debug/RoadButton.o
 ./debug/StaticInitialiser.o
 ./debug/ThreeDSprite.o
 ./debug/UtilityFunctions.o
+./debug/PlayerGraphics.o
 ./debug/UnitGraphics.o
 ./debug/moc_CastleWindow.o
 ./debug/moc_Logger.o

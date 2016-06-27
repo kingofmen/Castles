@@ -11,7 +11,7 @@
 #include "Logger.hh"
 #include "MilUnit.hh"
 #include "Object.hh"
-#include "PlayerGraphics.hh"
+#include "graphics/PlayerGraphics.hh"
 #include "RiderGame.hh"
 #include "StaticInitialiser.hh"
 #include "ThreeDSprite.hh"

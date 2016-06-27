@@ -16,12 +16,12 @@ INPUT(
 ./release/MilUnit.o
 ./release/Mirrorable.o
 ./release/Player.o
-./release/PlayerGraphics.o
 ./release/RiderGame.o
 ./release/RoadButton.o
 ./release/StaticInitialiser.o
 ./release/ThreeDSprite.o
 ./release/UtilityFunctions.o
+./release/PlayerGraphics.o
 ./release/UnitGraphics.o
 ./release/moc_CastleWindow.o
 ./release/moc_Logger.o

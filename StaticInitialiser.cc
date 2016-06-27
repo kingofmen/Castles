@@ -18,7 +18,7 @@
 #include "MilUnit.hh"
 #include "Parser.hh"
 #include "Player.hh"
-#include "PlayerGraphics.hh"
+#include "graphics/PlayerGraphics.hh"
 #include "graphics/UnitGraphics.hh"
 #include "UtilityFunctions.hh"
 
