@@ -6,7 +6,7 @@
 #include <QPainter>
 #include <QVector2D>
 
-#include "BuildingGraphics.hh"
+#include "graphics/BuildingGraphics.hh"
 #include "Hex.hh"
 #include "Logger.hh"
 #include "MilUnit.hh"

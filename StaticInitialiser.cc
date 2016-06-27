@@ -9,7 +9,7 @@
 
 #include "Action.hh"
 #include "Building.hh"
-#include "BuildingGraphics.hh"
+#include "graphics/BuildingGraphics.hh"
 #include "Calendar.hh"
 #include "CastleWindow.hh"
 #include "Directions.hh"

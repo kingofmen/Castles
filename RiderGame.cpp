@@ -1,5 +1,5 @@
 #include "RiderGame.hh"
-#include "BuildingGraphics.hh"
+#include "graphics/BuildingGraphics.hh"
 #include <QtCore>
 #include <ctype.h>
 #include <list>

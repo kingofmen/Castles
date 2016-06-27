@@ -2,7 +2,6 @@ INPUT(
 ./debug/Action.o
 ./debug/AgeTracker.o
 ./debug/Building.o
-./debug/BuildingGraphics.o
 ./debug/Calendar.o
 ./debug/CastleWindow.o
 ./debug/Directions.o
@@ -23,6 +22,7 @@ INPUT(
 ./debug/GeoGraphics.o
 ./debug/PlayerGraphics.o
 ./debug/UnitGraphics.o
+./debug/BuildingGraphics.o
 ./debug/moc_CastleWindow.o
 ./debug/moc_Logger.o
 ./debug/moc_RoadButton.o

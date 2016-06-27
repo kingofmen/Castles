@@ -2,7 +2,6 @@ INPUT(
 ./release/Action.o
 ./release/AgeTracker.o
 ./release/Building.o
-./release/BuildingGraphics.o
 ./release/Calendar.o
 ./release/CastleWindow.o
 ./release/Directions.o
@@ -23,6 +22,7 @@ INPUT(
 ./release/GeoGraphics.o
 ./release/PlayerGraphics.o
 ./release/UnitGraphics.o
+./release/BuildingGraphics.o
 ./release/moc_CastleWindow.o
 ./release/moc_Logger.o
 ./release/moc_RoadButton.o

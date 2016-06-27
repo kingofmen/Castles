@@ -1,6 +1,6 @@
 #include "Hex.hh" 
 #include "MilUnit.hh"
-#include "BuildingGraphics.hh"
+#include "graphics/BuildingGraphics.hh"
 #include <string> 
 #include "Player.hh" 
 #include <set> 

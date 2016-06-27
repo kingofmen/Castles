@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "BuildingGraphics.hh"
+#include "graphics/BuildingGraphics.hh"
 #include "Hex.hh"
 #include "MilUnit.hh"
 #include "graphics/UnitGraphics.hh"
