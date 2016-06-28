@@ -5,7 +5,7 @@
 
 #include "graphics/BuildingGraphics.hh"
 #include "Hex.hh"
-#include "MilUnit.hh"
+#include "game/MilUnit.hh"
 #include "graphics/UnitGraphics.hh"
 #include "UtilityFunctions.hh"
 #include "Calendar.hh"

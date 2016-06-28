@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-#include "MilUnit.hh"
+#include "game/MilUnit.hh"
 #include "Player.hh"
 #include "StructUtils.hh"
 #include "ThreeDSprite.hh"

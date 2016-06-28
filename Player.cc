@@ -5,7 +5,7 @@
 #include <cassert> 
 #include "Action.hh"
 #include "UtilityFunctions.hh" 
-#include "MilUnit.hh" 
+#include "game/MilUnit.hh" 
 #include "Logger.hh" 
 #include <queue>
 

@@ -9,7 +9,7 @@
 #include "graphics/BuildingGraphics.hh"
 #include "Hex.hh"
 #include "Logger.hh"
-#include "MilUnit.hh"
+#include "game/MilUnit.hh"
 #include "Object.hh"
 #include "graphics/PlayerGraphics.hh"
 #include "RiderGame.hh"

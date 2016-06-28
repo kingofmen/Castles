@@ -15,7 +15,7 @@
 #include "Directions.hh"
 #include "EconActor.hh"
 #include "Market.hh"
-#include "MilUnit.hh"
+#include "game/MilUnit.hh"
 #include "Parser.hh"
 #include "Player.hh"
 #include "graphics/PlayerGraphics.hh"

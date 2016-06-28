@@ -6,7 +6,7 @@
 #include "boost/function.hpp"
 #include "boost/bind.hpp"
 #include "Market.hh"
-#include "MilUnit.hh"
+#include "game/MilUnit.hh"
 #include "Hex.hh"
 #include "Player.hh"
 #include <set>

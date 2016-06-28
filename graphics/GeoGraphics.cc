@@ -2,7 +2,7 @@
 
 #include "BuildingGraphics.hh"
 #include "Hex.hh"
-#include "MilUnit.hh"
+#include "game/MilUnit.hh"
 #include "Player.hh"
 #include "graphics/UnitGraphics.hh"
 

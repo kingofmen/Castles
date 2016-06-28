@@ -10,7 +10,6 @@ INPUT(
 ./release/Hex.o
 ./release/Logger.o
 ./release/Market.o
-./release/MilUnit.o
 ./release/Mirrorable.o
 ./release/Player.o
 ./release/RiderGame.o
@@ -21,6 +20,7 @@ INPUT(
 ./release/ThreeDSprite.o
 ./release/GeoGraphics.o
 ./release/PlayerGraphics.o
+./release/MilUnit.o
 ./release/UnitGraphics.o
 ./release/BuildingGraphics.o
 ./release/moc_CastleWindow.o
