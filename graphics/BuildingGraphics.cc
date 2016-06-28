@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "Building.hh"
-#include "Hex.hh"
+#include "game/Building.hh"
+#include "game/Hex.hh"
 
 vector<int> FarmGraphicsInfo::textureIndices;
 unsigned int VillageGraphicsInfo::supplySpriteIndex = 0;

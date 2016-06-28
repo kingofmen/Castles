@@ -4,10 +4,10 @@
 #include <QtGui>
 #include <QObject>
 #include "RiderGame.hh"
-#include "Player.hh"
+#include "game/Player.hh"
 #include "Logger.hh"
-#include "Action.hh"
-#include "Hex.hh"
+#include "game/Action.hh"
+#include "game/Hex.hh"
 #include "graphics/GraphicsBridge.hh"
 #include <iterator>
 #include <vector>

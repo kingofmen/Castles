@@ -15,7 +15,7 @@ class TransportUnit;
 class Unit;
 class Village;
 
-#include "Action.hh"
+#include "game/Action.hh"
 
 class StaticInitialiser {
   // In effect a namespace, for all those functions that get called once at startup. 

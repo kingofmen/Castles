@@ -6,7 +6,7 @@
 #include <map>
 #include <QtCore>
 #include <string> 
-#include "Hex.hh" 
+#include "game/Hex.hh" 
 
 class Hex;
 class Vertex;

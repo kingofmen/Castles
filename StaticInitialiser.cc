@@ -7,17 +7,17 @@
 #include <QGLShader>
 #include <QGLShaderProgram>
 
-#include "Action.hh"
-#include "Building.hh"
+#include "game/Action.hh"
+#include "game/Building.hh"
 #include "graphics/BuildingGraphics.hh"
 #include "Calendar.hh"
 #include "CastleWindow.hh"
 #include "Directions.hh"
-#include "EconActor.hh"
-#include "Market.hh"
+#include "game/EconActor.hh"
+#include "game/Market.hh"
 #include "game/MilUnit.hh"
 #include "Parser.hh"
-#include "Player.hh"
+#include "game/Player.hh"
 #include "graphics/PlayerGraphics.hh"
 #include "graphics/UnitGraphics.hh"
 #include "UtilityFunctions.hh"

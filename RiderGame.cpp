@@ -5,13 +5,13 @@
 #include <list>
 #include "boost/function.hpp"
 #include "boost/bind.hpp"
-#include "Market.hh"
+#include "game/Market.hh"
 #include "game/MilUnit.hh"
-#include "Hex.hh"
-#include "Player.hh"
+#include "game/Hex.hh"
+#include "game/Player.hh"
 #include <set>
 #include "Logger.hh"
-#include "Building.hh"
+#include "game/Building.hh"
 #include <cassert>
 #include <ctime>
 #include "Parser.hh"

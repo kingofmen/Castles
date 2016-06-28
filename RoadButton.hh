@@ -1,7 +1,7 @@
 #ifndef ROAD_BUTTON_HH
 #define ROAD_BUTTON_HH
 
-#include "Hex.hh"
+#include "game/Hex.hh"
 #include "QPushButton.h"
 
 class RoadButton : public QPushButton {

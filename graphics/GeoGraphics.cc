@@ -1,10 +1,10 @@
 #include "GeoGraphics.hh"
 
 #include "BuildingGraphics.hh"
-#include "Hex.hh"
+#include "game/Hex.hh"
 #include "game/MilUnit.hh"
-#include "Player.hh"
-#include "graphics/UnitGraphics.hh"
+#include "game/Player.hh"
+#include "UnitGraphics.hh"
 
 double LineGraphicsInfo::maxFlow = 1;
 double LineGraphicsInfo::maxLoss = 1;

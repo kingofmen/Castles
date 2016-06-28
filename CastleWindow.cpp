@@ -7,7 +7,8 @@
 #include <QVector2D>
 
 #include "graphics/BuildingGraphics.hh"
-#include "Hex.hh"
+#include "graphics/GeoGraphics.hh"
+#include "game/Hex.hh"
 #include "Logger.hh"
 #include "game/MilUnit.hh"
 #include "Object.hh"

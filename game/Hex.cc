@@ -1,5 +1,5 @@
 #include "Hex.hh" 
-#include "game/MilUnit.hh"
+#include "MilUnit.hh"
 #include "graphics/BuildingGraphics.hh"
 #include <string> 
 #include "Player.hh" 
